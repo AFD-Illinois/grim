@@ -365,6 +365,7 @@ PetscErrorCode InitialCondition(DM da, Vec Xvec, void *ptr)
         {
             PetscInt i, j;
             PetscScalar xcoord, ycoord, r;
+            PetscScalar vx, vy, gamma;
 
             PetscScalar ***x;
             DMDAVecGetArrayDOF(da, Xvec, &x);
@@ -376,18 +377,20 @@ PetscErrorCode InitialCondition(DM da, Vec Xvec, void *ptr)
                     r = PetscSqrtScalar((xcoord-.5)*(xcoord-.5) + 
                                         (ycoord-.5)*(ycoord-.5));
 
-                    if (r < 0.45)
-                        x[j][i][rho] = 3./2 + PetscCosScalar(2.*PETSC_PI*r/0.45);
-                    else
-                        x[j][i][rho] = 1.;
 
 //                    x[j][i][rho] = 1. + PetscExpScalar(-r*r/(0.1*0.1));
-                    x[j][i][u] = 3.;
-                    x[j][i][ux] = 4.95;
-                    x[j][i][uy] = 4.95;
+                    x[j][i][rho] = 25./(36.*M_PI);
+                    x[j][i][u] = 5./(12.*M_PI*(5./3 - 1.));
+                    vx = -0.5*PetscSinScalar(2*M_PI*ycoord);
+                    vy = 0.5*PetscSinScalar(2*M_PI*xcoord);
+                    gamma = 1./PetscSqrtScalar(1 - vx*vx - vy*vy);
+                    x[j][i][ux] = gamma*vx;
+                    x[j][i][uy] = gamma*vy;
                     x[j][i][uz] = 0.0;
-                    x[j][i][bx] = 0.0;
-                    x[j][i][by] = 0.0;
+                    x[j][i][bx] =
+                        -1./PetscSqrtScalar(4*M_PI)*PetscSinScalar(2*M_PI*ycoord);
+                    x[j][i][by] =
+                        1./PetscSqrtScalar(4*M_PI)*PetscSinScalar(4*M_PI*xcoord);
                     x[j][i][bz] = 0.0;
                 }
             }
@@ -514,7 +517,7 @@ PetscErrorCode ComputeFlux2D(PetscScalar ***flux, PetscScalar ***x,
 
     for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++) 
         for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
-            P = (4./3 - 1)*x[j][i][u];
+            P = (5./3 - 1)*x[j][i][u];
 
             gamma = PetscSqrtScalar(1. + x[j][i][ux]*x[j][i][ux] + x[j][i][uy]*x[j][i][uy] +
                                          x[j][i][uz]*x[j][i][uz]);
@@ -821,12 +824,12 @@ PetscErrorCode ComputedU_dt1D(PetscScalar **dU_dt,
         db_con_dt[2] = -(x[i][by] + b_con[0]*u_con[2])*du_con_dt[0]/
                         (u_con[0]*u_con[0]) + 
                         (dx_dt[i][by] + b_con[0]*du_con_dt[2] + 
-                         db_con_dt[0]*u_con[1])/u_con[0];
+                         db_con_dt[0]*u_con[2])/u_con[0];
 
         db_con_dt[3] = -(x[i][bz] + b_con[0]*u_con[3])*du_con_dt[0]/
                         (u_con[0]*u_con[0]) + 
                         (dx_dt[i][bz] + b_con[0]*du_con_dt[3] + 
-                         db_con_dt[0]*u_con[1])/u_con[0];
+                         db_con_dt[0]*u_con[3])/u_con[0];
 
         b_cov[0] = -b_con[0];
         b_cov[1] = b_con[1];
@@ -846,14 +849,11 @@ PetscErrorCode ComputedU_dt1D(PetscScalar **dU_dt,
 
         dU_dt[i][rho] = dx_dt[i][rho]*u_con[dir] + x[i][rho]*du_con_dt[dir];
 
-        dU_dt[i][bx] = db_con_dt[1]*u_con[dir] + b_con[1]*du_con_dt[dir] - 
-                       db_con_dt[dir]*u_con[1] - b_con[dir]*du_con_dt[1];
+        dU_dt[i][bx] = dx_dt[i][bx];
 
-        dU_dt[i][by] = db_con_dt[2]*u_con[dir] + b_con[2]*du_con_dt[dir] - 
-                       db_con_dt[dir]*u_con[2] - b_con[dir]*du_con_dt[2];
+        dU_dt[i][by] = dx_dt[i][by];
 
-        dU_dt[i][bz] = db_con_dt[3]*u_con[dir] + b_con[3]*du_con_dt[dir] - 
-                       db_con_dt[dir]*u_con[3] - b_con[dir]*du_con_dt[3];
+        dU_dt[i][bz] = dx_dt[i][bz];
 
         dU_dt[i][u] = (dP_dt + dx_dt[i][rho] + dx_dt[i][u] +
                        db_sqr_dt)*u_con[dir]*u_cov[0] + 
@@ -900,13 +900,13 @@ PetscErrorCode ComputedU_dt2D(PetscScalar ***dU_dt,
 
     for (j=ctx->ystart; j<ctx->ystart + ctx->ysize; j++)
         for (i=ctx->xstart; i<ctx->xstart + ctx->xsize; i++) {
-            P = (4./3 - 1)*x[j][i][u];
-            dP_dt = (4./3 - 1)*dx_dt[j][i][u];
+            P = (5./3 - 1)*x[j][i][u];
+            dP_dt = (5./3 - 1)*dx_dt[j][i][u];
 
             gamma = PetscSqrtScalar(1. + x[j][i][ux]*x[j][i][ux] + x[j][i][uy]*x[j][i][uy] +
                                          x[j][i][uz]*x[j][i][uz]);
             dgamma_dt = (x[j][i][ux]*dx_dt[j][i][ux] + x[j][i][uy]*dx_dt[j][i][uy] +
-                        x[j][i][uz]*dx_dt[j][i][uz])/gamma;
+                         x[j][i][uz]*dx_dt[j][i][uz])/gamma;
 
             u_con[0] = gamma;
             u_con[1] = x[j][i][ux];
@@ -945,12 +945,12 @@ PetscErrorCode ComputedU_dt2D(PetscScalar ***dU_dt,
             db_con_dt[2] = -(x[j][i][by] + b_con[0]*u_con[2])*du_con_dt[0]/
                             (u_con[0]*u_con[0]) + 
                             (dx_dt[j][i][by] + b_con[0]*du_con_dt[2] + 
-                             db_con_dt[0]*u_con[1])/u_con[0];
+                             db_con_dt[0]*u_con[2])/u_con[0];
 
             db_con_dt[3] = -(x[j][i][bz] + b_con[0]*u_con[3])*du_con_dt[0]/
                             (u_con[0]*u_con[0]) + 
                             (dx_dt[j][i][bz] + b_con[0]*du_con_dt[3] + 
-                             db_con_dt[0]*u_con[1])/u_con[0];
+                             db_con_dt[0]*u_con[3])/u_con[0];
 
             b_cov[0] = -b_con[0];
             b_cov[1] = b_con[1];
@@ -970,14 +970,20 @@ PetscErrorCode ComputedU_dt2D(PetscScalar ***dU_dt,
 
             dU_dt[j][i][rho] = dx_dt[j][i][rho]*u_con[dir] + x[j][i][rho]*du_con_dt[dir];
 
-            dU_dt[j][i][bx] = db_con_dt[1]*u_con[dir] + b_con[1]*du_con_dt[dir] - 
-                           db_con_dt[dir]*u_con[1] - b_con[dir]*du_con_dt[1];
+            dU_dt[j][i][bx] = dx_dt[j][i][bx];
 
-            dU_dt[j][i][by] = db_con_dt[2]*u_con[dir] + b_con[2]*du_con_dt[dir] - 
-                           db_con_dt[dir]*u_con[2] - b_con[dir]*du_con_dt[2];
+            dU_dt[j][i][by] = dx_dt[j][i][by];
 
-            dU_dt[j][i][bz] = db_con_dt[3]*u_con[dir] + b_con[3]*du_con_dt[dir] - 
-                           db_con_dt[dir]*u_con[3] - b_con[dir]*du_con_dt[3];
+            dU_dt[j][i][bz] = dx_dt[j][i][bz];
+
+//        dU_dt[j][i][bx] = db_con_dt[1]*u_con[dir] + b_con[1]*du_con_dt[dir] - 
+//                       db_con_dt[dir]*u_con[1] - b_con[dir]*du_con_dt[1];
+//
+//        dU_dt[j][i][by] = db_con_dt[2]*u_con[dir] + b_con[2]*du_con_dt[dir] - 
+//                       db_con_dt[dir]*u_con[2] - b_con[dir]*du_con_dt[2];
+//
+//        dU_dt[j][i][bz] = db_con_dt[3]*u_con[dir] + b_con[3]*du_con_dt[dir] - 
+//                       db_con_dt[dir]*u_con[3] - b_con[dir]*du_con_dt[3];
 
             dU_dt[j][i][u] = (dP_dt + dx_dt[j][i][rho] + dx_dt[j][i][u] +
                            db_sqr_dt)*u_con[dir]*u_cov[0] + 
@@ -1068,12 +1074,12 @@ PetscErrorCode ComputedU_dt3D(PetscScalar ****dU_dt,
                 db_con_dt[2] = -(x[k][j][i][by] + b_con[0]*u_con[2])*du_con_dt[0]/
                                 (u_con[0]*u_con[0]) + 
                                 (dx_dt[k][j][i][by] + b_con[0]*du_con_dt[2] + 
-                                 db_con_dt[0]*u_con[1])/u_con[0];
+                                 db_con_dt[0]*u_con[2])/u_con[0];
 
                 db_con_dt[3] = -(x[k][j][i][bz] + b_con[0]*u_con[3])*du_con_dt[0]/
                                 (u_con[0]*u_con[0]) + 
                                 (dx_dt[k][j][i][bz] + b_con[0]*du_con_dt[3] + 
-                                 db_con_dt[0]*u_con[1])/u_con[0];
+                                 db_con_dt[0]*u_con[3])/u_con[0];
 
                 b_cov[0] = -b_con[0];
                 b_cov[1] = b_con[1];
@@ -1093,14 +1099,11 @@ PetscErrorCode ComputedU_dt3D(PetscScalar ****dU_dt,
 
                 dU_dt[k][j][i][rho] = dx_dt[k][j][i][rho]*u_con[dir] + x[k][j][i][rho]*du_con_dt[dir];
 
-                dU_dt[k][j][i][bx] = db_con_dt[1]*u_con[dir] + b_con[1]*du_con_dt[dir] - 
-                                  db_con_dt[dir]*u_con[1] - b_con[dir]*du_con_dt[1];
+                dU_dt[k][j][i][bx] = dx_dt[k][j][i][bx];
 
-                dU_dt[k][j][i][by] = db_con_dt[2]*u_con[dir] + b_con[2]*du_con_dt[dir] - 
-                                  db_con_dt[dir]*u_con[2] - b_con[dir]*du_con_dt[2];
+                dU_dt[k][j][i][by] = dx_dt[k][j][i][by];
 
-                dU_dt[k][j][i][bz] = db_con_dt[3]*u_con[dir] + b_con[3]*du_con_dt[dir] - 
-                                  db_con_dt[dir]*u_con[3] - b_con[dir]*du_con_dt[3];
+                dU_dt[k][j][i][bz] = dx_dt[k][j][i][bz];
 
                 dU_dt[k][j][i][u] = (dP_dt + dx_dt[k][j][i][rho] + dx_dt[k][j][i][u] +
                                   db_sqr_dt)*u_con[dir]*u_cov[0] + 
@@ -1132,6 +1135,41 @@ PetscErrorCode ComputedU_dt3D(PetscScalar ****dU_dt,
 
     }
     return(0);
+}
+
+PetscErrorCode FluxCT2D(PetscScalar ***flux_x,
+                        PetscScalar ***flux_y, AppCtx *ctx)
+{
+    if (ctx->dim!=2) 
+        SETERRQ1(PETSC_COMM_SELF, 1, "2D FluxCT called for %d dim\n", ctx->dim);
+
+    PetscInt i, j;
+
+    for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
+        for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
+            flux_x[j][i][bx] = 0.0;
+            
+            flux_y[j][i][by] = 0.0;
+
+            flux_y[j][i][bx] = 0.125*(2.*flux_y[j][i][bx] +
+                                      flux_y[j][i+1][bx] + 
+                                      flux_y[j][i-1][bx] -
+                                      flux_x[j][i][by] -
+                                      flux_x[j][i+1][by] -
+                                      flux_x[j-1][i][by] -
+                                      flux_x[j-1][i+1][by]);
+
+            flux_x[j][i][by] = 0.125*(2.*flux_x[j][i][by] +
+                                      flux_x[j+1][i][by] +
+                                      flux_x[j-1][i][by] -
+                                      flux_y[j][i][bx] -
+                                      flux_y[j+1][i][bx] -
+                                      flux_y[j][i-1][bx] -
+                                      flux_y[j+1][i-1][bx]);
+        }
+
+    return(0);
+
 }
 
 PetscErrorCode RiemannSolver1D(PetscScalar **flux_x, 
@@ -1367,6 +1405,8 @@ PetscErrorCode ResFunction(TS ts,
                             flux_ly, flux_ry,
                             U_lx, U_rx, 
                             U_ly, U_ry, ctx);
+
+            FluxCT2D(flux_x, flux_y, ctx);
 
             for (j=ctx->ystart; j<ctx->ystart + ctx->ysize; j++)
                 for (i=ctx->xstart; i<ctx->xstart + ctx->xsize; i++)

@@ -1,13 +1,13 @@
 ALL: grim
 
-PETSC_DIR=/home/mc/Downloads/petsc_optimized
+PETSC_DIR=/home/mc/Downloads/petsc_icc
 
-#CFLAGS = -g
+CFLAGS = -O3 -xHOST -ipo -no-prec-div -xsse4.2 -msse4.2 -mkl -parallel -vec-report2 -align
 #CFLAGS = -ftree-vectorizer-verbose=2
 
 FFLAGS =
 
-#CPPFLAGS = -g
+CPPFLAGS = -O3 -xHOST -ipo -no-prec-div -xsse4.2 -msse4.2 -mkl -parallel -vec-report2 -align
 #CPPFLAGS = -ftree-vectorizer-verbose=2
 
 FPPFLAGS =
