@@ -32,7 +32,6 @@ typedef struct {
     Vec *flux, U;
 } AppCtx;
 
-
 PETSC_EXTERN PetscErrorCode InitialCondition(DM da, Vec X, void *ptr);
 PETSC_EXTERN PetscErrorCode ResFunction(TS ts, PetscScalar t, 
                                         Vec Xvec, Vec dX_dt, Vec F, void *ptr);
@@ -41,22 +40,22 @@ PETSC_EXTERN PetscScalar slope_lim(PetscScalar y1, PetscScalar y2,
                                    PetscScalar y3, AppCtx *ctx);
 
 PETSC_EXTERN PetscErrorCode Reconstruct1D(PetscScalar **prim_lx, 
-                                       PetscScalar **prim_rx,
-                                       PetscScalar **x, AppCtx *ctx);
+                                          PetscScalar **prim_rx,
+                                          PetscScalar **x, AppCtx *ctx);
 
 PETSC_EXTERN PetscErrorCode Reconstruct2D(PetscScalar ***prim_lx, 
-                                       PetscScalar ***prim_rx,
-                                       PetscScalar ***prim_ly,
-                                       PetscScalar ***prim_ry,
-                                       PetscScalar ***x, AppCtx *ctx);
+                                          PetscScalar ***prim_rx,
+                                          PetscScalar ***prim_ly,
+                                          PetscScalar ***prim_ry,
+                                          PetscScalar ***x, AppCtx *ctx);
 
 PETSC_EXTERN PetscErrorCode Reconstruct3D(PetscScalar ****prim_lx, 
-                                       PetscScalar ****prim_rx,
-                                       PetscScalar ****prim_ly,
-                                       PetscScalar ****prim_ry,
-                                       PetscScalar ****prim_lz,
-                                       PetscScalar ****prim_rz,
-                                       PetscScalar ****x, AppCtx *ctx);
+                                          PetscScalar ****prim_rx,
+                                          PetscScalar ****prim_ly,
+                                          PetscScalar ****prim_ry,
+                                          PetscScalar ****prim_lz,
+                                          PetscScalar ****prim_rz,
+                                          PetscScalar ****x, AppCtx *ctx);
 
 PETSC_EXTERN PetscErrorCode ComputeFlux1D(PetscScalar **flux, 
                                           PetscScalar **x, PetscInt dir, 
@@ -125,7 +124,6 @@ int main(int argc, char **argv)
 {
     AppCtx ctx; 
     TS ts;
-    SNES snes;
     Vec soln;
     DM da;
     PetscErrorCode ierr;
@@ -138,11 +136,11 @@ int main(int argc, char **argv)
     ctx.ymin = 0.; ctx.ymax = 1.;
     ctx.zmin = 0.; ctx.zmax = 1.;
     ctx.cfl = 0.5;
-    ctx.nghost = 2;
+    ctx.nghost = 3;
     ctx.bdry_x = BDRY_PERIODIC;
     ctx.bdry_y = BDRY_PERIODIC;
     ctx.bdry_z = BDRY_PERIODIC;
-    ctx.lim = LIM_MC;
+    ctx.lim = LIM_MINM;
     // Initialization
     ctx.xstart = 0; ctx.xsize = 0;
     ctx.ystart = 0; ctx.ysize = 0;
@@ -182,7 +180,7 @@ int main(int argc, char **argv)
         case 1: 
         {
             ierr = DMDACreate1d(PETSC_COMM_WORLD,
-                                DMDA_BOUNDARY_PERIODIC, -30, 
+                                DMDA_BOUNDARY_PERIODIC, -28, 
                                 dof, ctx.nghost, PETSC_NULL, &da); CHKERRQ(ierr);
 
             DMDAGetInfo(da, 
@@ -198,15 +196,14 @@ int main(int argc, char **argv)
         
          
             break;
-
         }
 
         case 2:
         {
             ierr = DMDACreate2d(PETSC_COMM_WORLD, 
                              DMDA_BOUNDARY_PERIODIC, DMDA_BOUNDARY_PERIODIC,
-                             DMDA_STENCIL_STAR,
-                             -30, -30,
+                             DMDA_STENCIL_BOX,
+                             -28, -28,
                              PETSC_DECIDE, PETSC_DECIDE,
                              dof, ctx.nghost, PETSC_NULL, PETSC_NULL, &da); CHKERRQ(ierr);
 
@@ -229,8 +226,8 @@ int main(int argc, char **argv)
             ierr = DMDACreate3d(PETSC_COMM_WORLD, 
                              DMDA_BOUNDARY_PERIODIC, DMDA_BOUNDARY_PERIODIC,
                              DMDA_BOUNDARY_PERIODIC,
-                             DMDA_STENCIL_STAR,
-                             -30, -30, -30,
+                             DMDA_STENCIL_BOX,
+                             -28, -28, -28,
                              PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                              dof, ctx.nghost, PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
                              CHKERRQ(ierr);
@@ -303,8 +300,6 @@ int main(int argc, char **argv)
     VecView(soln, viewer);
     PetscViewerDestroy(&viewer);
 
-
-
     VecDestroy(&soln);
     VecDestroy(&ctx.U);
 
@@ -325,6 +320,7 @@ int main(int argc, char **argv)
     PetscFinalize();
     return(0);
 }
+
 
 PetscErrorCode InitialCondition(DM da, Vec Xvec, void *ptr)
 {
@@ -364,8 +360,10 @@ PetscErrorCode InitialCondition(DM da, Vec Xvec, void *ptr)
         case 2:
         {
             PetscInt i, j;
-            PetscScalar xcoord, ycoord, r;
-            PetscScalar vx, vy, gamma;
+            PetscScalar xcoord, ycoord, xcenter, ycenter, r;
+            //vx, vy, vz are components of the 3-velocity and gamma is the
+            //lorentz factor as a function of the 3-velocity.
+            PetscScalar vx, vy, vz, gamma; 
 
             PetscScalar ***x;
             DMDAVecGetArrayDOF(da, Xvec, &x);
@@ -374,23 +372,76 @@ PetscErrorCode InitialCondition(DM da, Vec Xvec, void *ptr)
                 ycoord = ctx->ymin + ctx->dy/2. + j*ctx->dy;
                 for (i=ctx->xstart; i<ctx->xstart+ctx->xsize; i++) {
                     xcoord = ctx->xmin + ctx->dx/2. + i*ctx->dx;
-                    r = PetscSqrtScalar((xcoord-.5)*(xcoord-.5) + 
-                                        (ycoord-.5)*(ycoord-.5));
+                    xcenter = (ctx->xmax + ctx->xmin)/2.;
+                    ycenter = (ctx->ymax + ctx->ymin)/2.;
+                    r = PetscSqrtScalar((xcoord-xcenter)*(xcoord-xcenter) + 
+                                        (ycoord-ycenter)*(ycoord-ycenter));
 
 
-//                    x[j][i][rho] = 1. + PetscExpScalar(-r*r/(0.1*0.1));
+//                  Orzag-Tang with gamma = 5/3
                     x[j][i][rho] = 25./(36.*M_PI);
                     x[j][i][u] = 5./(12.*M_PI*(5./3 - 1.));
                     vx = -0.5*PetscSinScalar(2*M_PI*ycoord);
                     vy = 0.5*PetscSinScalar(2*M_PI*xcoord);
-                    gamma = 1./PetscSqrtScalar(1 - vx*vx - vy*vy);
+                    vz = 0.;
+                    gamma = 1./PetscSqrtScalar(1 - vx*vx - vy*vy - vz*vz);
                     x[j][i][ux] = gamma*vx;
                     x[j][i][uy] = gamma*vy;
-                    x[j][i][uz] = 0.0;
+                    x[j][i][uz] = gamma*vz;
                     x[j][i][bx] =
                         -1./PetscSqrtScalar(4*M_PI)*PetscSinScalar(2*M_PI*ycoord);
                     x[j][i][by] =
                         1./PetscSqrtScalar(4*M_PI)*PetscSinScalar(4*M_PI*xcoord);
+                    x[j][i][bz] = 0.0;
+
+//                  Magnetized field loop advection
+//                    x[j][i][rho] = 1.;
+//                    x[j][i][u] = 3./(5./3 - 1.);
+//                    vx = 0.2/PetscSqrtScalar(6);
+//                    vy = 0.1/PetscSqrtScalar(6);
+//                    vz = 0.1/PetscSqrtScalar(6);
+//                    gamma = 1./PetscSqrtScalar(1 - vx*vx - vy*vy - vz*vz);
+//                    x[j][i][ux] = gamma*vx;
+//                    x[j][i][uy] = gamma*vy;
+//                    x[j][i][uz] = gamma*vz;
+//                    PetscScalar A0 = 1e-3, R = 0.2;
+//                    x[j][i][bx] = -2*A0*ycoord/(R*R)*PetscExpScalar(-r*r/(R*R));
+//                    x[j][i][by] = 2*A0*xcoord/(R*R)*PetscExpScalar(-r*r/(R*R));
+//                    x[j][i][bz] = 0.0;
+
+//                  Komissarov strong cylindrical explosion
+                    PetscScalar R = 1.;
+                    PetscScalar rho_outside = 1e-4, rho_inside = 1e-2;
+                    PetscScalar u_outside = 3e-5/(5./3 - 1); 
+                    PetscScalar u_inside = 1./(5./3 - 1);
+                    PetscScalar alpha = 20.;
+                    PetscScalar norm_factor = (1. - tanh(-R))/2.;
+
+                    x[j][i][rho] = ((rho_inside - rho_outside)*
+                                    (1. - tanh(pow(r, alpha)-R))
+                                    /2./norm_factor + rho_outside);
+
+                    x[j][i][u] = ((u_inside - u_outside)*
+                                  (1. - tanh(pow(r, alpha)-R))
+                                  /2./norm_factor + u_outside);
+
+//                    x[j][i][rho] = PetscLogScalar((rho_inside - rho_outside)*
+//                                                  (1. - tanh(pow(r, alpha)-R))
+//                                                  /2./norm_factor + rho_outside);
+//
+//                    x[j][i][u] = PetscLogScalar((u_inside - u_outside)*
+//                                                (1. - tanh(pow(r, alpha)-R))
+//                                                /2./norm_factor + u_outside);
+
+                    vx = 0.;
+                    vy = 0.;
+                    vz = 0.;
+                    gamma = 1.;
+                    x[j][i][ux] = gamma*vx;
+                    x[j][i][uy] = gamma*vy;
+                    x[j][i][uz] = gamma*vz;
+                    x[j][i][bx] = 0.1;
+                    x[j][i][by] = 0.;
                     x[j][i][bz] = 0.0;
                 }
             }
@@ -458,7 +509,7 @@ PetscErrorCode ComputeFlux1D(PetscScalar **flux, PetscScalar **x,
     PetscInt i;
     PetscScalar gamma, u_cov[4], u_con[4], b_cov[4], b_con[4], b_sqr, P;
 
-    for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
+    for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++) {
         P = (4./3 - 1)*x[i][u];
 
         gamma = PetscSqrtScalar(1. + x[i][ux]*x[i][ux] + x[i][uy]*x[i][uy] +
@@ -515,8 +566,8 @@ PetscErrorCode ComputeFlux2D(PetscScalar ***flux, PetscScalar ***x,
     PetscInt i, j;
     PetscScalar gamma, u_cov[4], u_con[4], b_cov[4], b_con[4], b_sqr, P;
 
-    for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++) 
-        for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
+    for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++) 
+        for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++) {
             P = (5./3 - 1)*x[j][i][u];
 
             gamma = PetscSqrtScalar(1. + x[j][i][ux]*x[j][i][ux] + x[j][i][uy]*x[j][i][uy] +
@@ -573,9 +624,9 @@ PetscErrorCode ComputeFlux3D(PetscScalar ****flux, PetscScalar ****x,
     PetscInt i, j, k;
     PetscScalar gamma, u_cov[4], u_con[4], b_cov[4], b_con[4], b_sqr, P;
 
-    for (k=ctx->zstart-1; k<ctx->zstart + ctx->zsize+1; k++)
-        for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-            for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
+    for (k=ctx->zstart-2; k<ctx->zstart + ctx->zsize+2; k++)
+        for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++)
+            for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++) {
                 P = (4./3 - 1)*x[k][j][i][u];
 
                 gamma = PetscSqrtScalar(1. + x[k][j][i][ux]*x[k][j][i][ux] + x[k][j][i][uy]*x[k][j][i][uy] +
@@ -686,7 +737,7 @@ PetscErrorCode Reconstruct1D(PetscScalar **prim_lx, PetscScalar **prim_rx,
     PetscInt i, var;
     PetscScalar slope;
 
-    for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
         for (var=0; var<dof; var++) {
             slope = slope_lim(x[i-1][var], x[i][var], x[i+1][var], ctx);
                     
@@ -708,8 +759,8 @@ PetscErrorCode Reconstruct2D(PetscScalar ***prim_lx, PetscScalar ***prim_rx,
     PetscInt i, j, var;
     PetscScalar slope;
 
-    for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-        for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++)
+        for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
             for (var=0; var<dof; var++) {
                 slope = slope_lim(x[j][i-1][var], x[j][i][var],
                                   x[j][i+1][var], ctx);
@@ -739,9 +790,9 @@ PetscErrorCode Reconstruct3D(PetscScalar ****prim_lx, PetscScalar ****prim_rx,
     PetscInt i, j, k, var;
     PetscScalar slope;
 
-    for (k=ctx->zstart-1; k<ctx->zstart + ctx->zsize+1; k++)
-        for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-            for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (k=ctx->zstart-2; k<ctx->zstart + ctx->zsize+2; k++)
+        for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++)
+            for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
                 for (var=0; var<dof; var++) {
                     slope = slope_lim(x[k][j][i-1][var],
                                       x[k][j][i][var],
@@ -976,14 +1027,6 @@ PetscErrorCode ComputedU_dt2D(PetscScalar ***dU_dt,
 
             dU_dt[j][i][bz] = dx_dt[j][i][bz];
 
-//        dU_dt[j][i][bx] = db_con_dt[1]*u_con[dir] + b_con[1]*du_con_dt[dir] - 
-//                       db_con_dt[dir]*u_con[1] - b_con[dir]*du_con_dt[1];
-//
-//        dU_dt[j][i][by] = db_con_dt[2]*u_con[dir] + b_con[2]*du_con_dt[dir] - 
-//                       db_con_dt[dir]*u_con[2] - b_con[dir]*du_con_dt[2];
-//
-//        dU_dt[j][i][bz] = db_con_dt[3]*u_con[dir] + b_con[3]*du_con_dt[dir] - 
-//                       db_con_dt[dir]*u_con[3] - b_con[dir]*du_con_dt[3];
 
             dU_dt[j][i][u] = (dP_dt + dx_dt[j][i][rho] + dx_dt[j][i][u] +
                            db_sqr_dt)*u_con[dir]*u_cov[0] + 
@@ -1143,29 +1186,34 @@ PetscErrorCode FluxCT2D(PetscScalar ***flux_x,
     if (ctx->dim!=2) 
         SETERRQ1(PETSC_COMM_SELF, 1, "2D FluxCT called for %d dim\n", ctx->dim);
 
-    PetscInt i, j;
+    PetscInt i, j, i_local, j_local;
+    PetscScalar emf[ctx->ysize+ctx->nghost][ctx->xsize+ctx->nghost];
 
-    for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-        for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++) {
-            flux_x[j][i][bx] = 0.0;
+    for (j=ctx->ystart; j<ctx->ystart + ctx->ysize + 2; j++)
+        for (i=ctx->xstart; i<ctx->xstart + ctx->xsize + 2; i++) {
+            i_local = i - ctx->xstart;
+            j_local = j - ctx->ystart;
+
+            emf[j_local][i_local] = 0.25*(flux_x[j][i][by]  + 
+                                          flux_x[j-1][i][by] -
+                                          flux_y[j][i][bx] - 
+                                          flux_y[j][i-1][bx]);
+        }
+
+    for (j=ctx->ystart; j<ctx->ystart + ctx->ysize + 1; j++)
+        for (i=ctx->xstart; i<ctx->xstart + ctx->xsize + 1; i++) {
+            i_local = i - ctx->xstart;
+            j_local = j - ctx->ystart;
+
+            flux_x[j][i][bx] = 0.;
             
+            flux_x[j][i][by] = 0.5*(emf[j_local][i_local]  +
+                                    emf[j_local+1][i_local]);
+
+            flux_y[j][i][bx] = -0.5*(emf[j_local][i_local] + 
+                                     emf[j_local][i_local+1]);
+
             flux_y[j][i][by] = 0.0;
-
-            flux_y[j][i][bx] = 0.125*(2.*flux_y[j][i][bx] +
-                                      flux_y[j][i+1][bx] + 
-                                      flux_y[j][i-1][bx] -
-                                      flux_x[j][i][by] -
-                                      flux_x[j][i+1][by] -
-                                      flux_x[j-1][i][by] -
-                                      flux_x[j-1][i+1][by]);
-
-            flux_x[j][i][by] = 0.125*(2.*flux_x[j][i][by] +
-                                      flux_x[j+1][i][by] +
-                                      flux_x[j-1][i][by] -
-                                      flux_y[j][i][bx] -
-                                      flux_y[j+1][i][bx] -
-                                      flux_y[j][i-1][bx] -
-                                      flux_y[j+1][i-1][bx]);
         }
 
     return(0);
@@ -1183,7 +1231,7 @@ PetscErrorCode RiemannSolver1D(PetscScalar **flux_x,
 
     PetscInt i, var;
 
-    for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
         for (var=0; var<dof; var++)
             flux_x[i][var] = 0.5*(flux_lx[i][var] + flux_rx[i-1][var] -
                                   (U_lx[i][var] - U_rx[i-1][var]));
@@ -1208,8 +1256,8 @@ PetscErrorCode RiemannSolver2D(PetscScalar ***flux_x,
 
     PetscInt i, j, var;
 
-    for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-        for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++)
+        for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
             for (var=0; var<dof; var++) {
                 flux_x[j][i][var] = 0.5*(flux_lx[j][i][var] + flux_rx[j][i-1][var] -
                                         (U_lx[j][i][var] - U_rx[j][i-1][var]));
@@ -1242,9 +1290,9 @@ PetscErrorCode RiemannSolver3D(PetscScalar ****flux_x,
 
     PetscInt i, j, k, var;
 
-    for (k=ctx->zstart-1; k<ctx->zstart + ctx->zsize+1; k++)
-        for (j=ctx->ystart-1; j<ctx->ystart + ctx->ysize+1; j++)
-            for (i=ctx->xstart-1; i<ctx->xstart + ctx->xsize+1; i++)
+    for (k=ctx->zstart-2; k<ctx->zstart + ctx->zsize+2; k++)
+        for (j=ctx->ystart-2; j<ctx->ystart + ctx->ysize+2; j++)
+            for (i=ctx->xstart-2; i<ctx->xstart + ctx->xsize+2; i++)
                 for (var=0; var<dof; var++) {
 
                     flux_x[k][j][i][var] = 0.5*(flux_lx[k][j][i][var] + 
@@ -1384,6 +1432,14 @@ PetscErrorCode ResFunction(TS ts,
             DMDAVecGetArrayDOF(da, ctx->U_l[Y], &U_ly);
             DMDAVecGetArrayDOF(da, ctx->U_r[Y], &U_ry);
 
+//            for (j=ctx->ystart-ctx->nghost; j<ctx->ystart +
+//                 ctx->ysize + ctx->nghost; j++)
+//                for (i=ctx->xstart-ctx->nghost; i<ctx->xstart + 
+//                     ctx->xsize + ctx->nghost; i++) {
+//                    x[j][i][rho] = PetscExpScalar(x[j][i][rho]);
+//                    x[j][i][u] = PetscExpScalar(x[j][i][u]);
+//                }
+
             ComputedU_dt2D(f, x, dx_dt, ctx);
 
             Reconstruct2D(prim_lx, prim_rx,
@@ -1413,9 +1469,9 @@ PetscErrorCode ResFunction(TS ts,
                     for (var=0; var<dof; var++) {
                         f[j][i][var] =  f[j][i][var] + 
                                         (flux_x[j][i+1][var] - 
-                                        flux_x[j][i][var])/ctx->dx +
+                                         flux_x[j][i][var])/ctx->dx +
                                         (flux_y[j+1][i][var] -
-                                        flux_y[j][i][var])/ctx->dy;
+                                         flux_y[j][i][var])/ctx->dy;
                     }
 
 
