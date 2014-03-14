@@ -1,13 +1,13 @@
 ALL: grim
 
-#PETSC_DIR=/home/mc/Downloads/petsc_optimized
-PETSC_DIR=/home/mc/Downloads/petsc_debug
+PETSC_DIR=/home/mc/Downloads/petsc_optimized
+#PETSC_DIR=/home/mc/Downloads/petsc_debug
 
-CFLAGS = -fpermissive -std=c++0x -lOpenCL
+CFLAGS = -std=c++0x -lOpenCL -O3 
 
 FFLAGS =
 
-CPPFLAGS = -fpermissive -std=c++0x -lOpenCL
+CPPFLAGS = -std=c++0x -lOpenCL -O3
 
 FPPFLAGS =
 
