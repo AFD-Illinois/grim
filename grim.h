@@ -1,17 +1,14 @@
 #ifndef _GRIM_H
 #define _GRIM_H
 
-//#define VIENNACL_BUILD_INFO
-//#define VIENNACL_WITH_OPENCL
-
 #include <petsc.h>
 #include <petscdmda.h>
-//#include <petscviennacl.h>
+#include <petscsnes.h>
 #include <CL/cl.hpp>
 #include <fstream>
 #include <ctime>
 #include <petscviewerhdf5.h>
-#include "constants.h"
+#include "inputs.h"
 
 static const char help[] = 
     "GRIM -- General Relativistic Implicit Magnetohydrodynamics";
@@ -23,8 +20,6 @@ cl::Context context;
 cl::CommandQueue queue;
 cl::Program program;
 cl::Kernel kernel;
-
-//viennacl::ocl::program program;
 
 PetscErrorCode CheckCLErrors(cl_int clErr, std::string errMsg)
 {
@@ -46,4 +41,9 @@ extern PetscErrorCode Monitor(TS ts,
                               Vec Prim,
                               void *ptr);
 
+
+extern PetscErrorCode SNESMonitor(SNES snes,
+                                  PetscInt its,
+                                  PetscReal norm,
+                                  void *ptr);
 #endif

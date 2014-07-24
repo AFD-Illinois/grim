@@ -3,13 +3,9 @@ ALL: grim
 PETSC_DIR=/home/mc/Downloads/petsc_optimized
 #PETSC_DIR=/home/mc/Downloads/petsc_debug
 
-CFLAGS = -std=c++0x -lOpenCL -O3 
+CFLAGS = -std=c++0x -O3 
 
-FFLAGS =
-
-CPPFLAGS = -std=c++0x -lOpenCL -O3
-
-FPPFLAGS =
+CPPFLAGS = -std=c++0x -O3
 
 include ${PETSC_DIR}/conf/variables
 
