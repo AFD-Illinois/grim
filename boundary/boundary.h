@@ -1,6 +1,22 @@
 #ifndef GRIM_BOUNDARY_H_
 #define GRIM_BOUNDARY_H_
 
+#include "../inputs.h"
+#include "../gridzone/gridzone.h"
+#include "../physics/physics.h"
+
+#define OUTFLOW                       (0)
+#define MIRROR                        (1)
+#define CONSTANT                      (2)
+
+#define GET_DATA_FROM_LOCAL_ARRAY     (3)
+
+/* Periodic boundary conditions are handled by Petsc since data needs to be
+ * copied if running on more than 1 MPI node. Petsc does all that and puts the
+ * appropriate data in the local array. Simply copy that */
+#define PERIODIC (GET_DATA_FROM_LOCAL_ARRAY)
+
+
 /** TILE_BOUNDARY flag set in gridZone2D struct:
  *
  *                      A                             C
@@ -104,11 +120,11 @@
  *  boundary. It is in the bulk of the domain.
 */
 
-void setZone2DBoundaryFlags(struct gridZone2D zone);
+void setZoneBoundaryFlags(struct gridZone* restrict zone);
 
 
-void applyTileBoundaryConditions(const struct gridZone2D zone,
-                                 const REAL restrict *globalPrimArray,
-                                 REAL restrict *tile);
+void applyTileBoundaryConditions(const struct gridZone* restrict zone,
+                                 const REAL* restrict primLocal,
+                                 REAL* restrict tile);
 
 #endif /* GRIM_BOUNDARY_H_ */

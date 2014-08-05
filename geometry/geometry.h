@@ -64,4 +64,6 @@ void gConFunc(const REAL gCov[NDIM][NDIM],
               const REAL gDet,
               REAL gCon[NDIM][NDIM]);
 
+void XTox(const REAL X[NDIM], REAL x[NDIM]);
+
 #endif /* GRIM_GEOMETRY_H_ */
