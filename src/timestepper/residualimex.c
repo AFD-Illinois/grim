@@ -62,7 +62,7 @@ PetscErrorCode computeResidualIMEX(SNES snes,
       for (int iTile=0; iTile<x1Size/TILE_SIZE_X1; iTile++)
       {
         REAL primTile[TILE_SIZE];
-        REAL fluxX1[TILE_SIZE], fluxX2[TILE_SIZE];
+        REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
         REAL fluxTileLeft[TILE_SIZE], fluxTileRight[TILE_SIZE];
         REAL conservedVarsTileLeft[TILE_SIZE], conservedVarsTileRight[TILE_SIZE];
 
@@ -137,9 +137,8 @@ PetscErrorCode computeResidualIMEX(SNES snes,
             setGeometry(XCoords, &geom);
             setFluidElement(primEdge, &geom, &elem);
   
-            computeFluxes(&elem, &geom, 1,
-                          &fluxTileLeft[INDEX_TILE(zone, 0)]);
-            computeFluxes(&elem, &geom, 0,
+            computeFluxesAndConservedVars(&elem, &geom, 1,
+                          &fluxTileLeft[INDEX_TILE(zone, 0)],
                           &conservedVarsTileLeft[INDEX_TILE(zone, 0)]);
 
             /* Right Edge */
@@ -151,9 +150,8 @@ PetscErrorCode computeResidualIMEX(SNES snes,
             setGeometry(XCoords, &geom);
             setFluidElement(primEdge, &geom, &elem);
   
-            computeFluxes(&elem, &geom, 1,
-                          &fluxTileRight[INDEX_TILE(zone, 0)]);
-            computeFluxes(&elem, &geom, 0,
+            computeFluxesAndConservedVars(&elem, &geom, 1,
+                          &fluxTileRight[INDEX_TILE(zone, 0)],
                           &conservedVarsTileRight[INDEX_TILE(zone, 0)]);
 
           }
@@ -174,7 +172,7 @@ PetscErrorCode computeResidualIMEX(SNES snes,
                           fluxX1TileLeft[INDEX_TILE(zone, 0)],
                       conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X1(zone, 0)],
                       conservedVarsTileLeft[INDEX_TILE(zone, 0)],
-                      fluxX1[INDEX_TILE(zone, var)]);
+                      fluxX1Tile[INDEX_TILE(zone, var)]);
           }
 
 #if (COMPUTE_DIM==2)
@@ -206,9 +204,8 @@ PetscErrorCode computeResidualIMEX(SNES snes,
             setGeometry(XCoords, &geom);
             setFluidElement(primEdge, &geom, &elem);
   
-            computeFluxes(&elem, &geom, 1,
-                          &fluxTileLeft[INDEX_TILE(zone, 0)]);
-            computeFluxes(&elem, &geom, 0,
+            computeFluxesAndConservedVars(&elem, &geom, 2,
+                          &fluxTileLeft[INDEX_TILE(zone, 0)],
                           &conservedVarsTileLeft[INDEX_TILE(zone, 0)]);
 
             /* Right Edge */
@@ -220,9 +217,8 @@ PetscErrorCode computeResidualIMEX(SNES snes,
             setGeometry(XCoords, &geom);
             setFluidElement(primEdge, &geom, &elem);
   
-            computeFluxes(&elem, &geom, 1,
-                          &fluxTileRight[INDEX_TILE(zone, 0)]);
-            computeFluxes(&elem, &geom, 0,
+            computeFluxesAndConservedVars(&elem, &geom, 2,
+                          &fluxTileRight[INDEX_TILE(zone, 0)],
                           &conservedVarsTileRight[INDEX_TILE(zone, 0)]);
 
           }
@@ -242,10 +238,53 @@ PetscErrorCode computeResidualIMEX(SNES snes,
                           fluxX1TileLeft[INDEX_TILE(zone, 0)],
                       conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X2(zone, 0)],
                       conservedVarsTileLeft[INDEX_TILE(zone, 0)],
-                      fluxX2[INDEX_TILE(zone, var)]);
+                      fluxX2Tile[INDEX_TILE(zone, var)]);
           }
         }
 #endif /* COMPUTE_DIM==2 */
+
+#if (COMPUTE_DIM==2)
+        for (int jInTile=0; jInTile<TILE_SIZE_X2; jInTile++)
+#endif
+          for (int iInTile=0; iInTile<TILE_SIZE_X1; iInTile++)
+          {
+            setGridZone(iTile, jTile,
+                        iInTile, jInTile,
+                        x1Start, x2Start, 
+                        x1Size, x2Size, 
+                        &zone);
+
+            REAL XCoords[NDIM], sourceTerms[DOF];
+
+            getXCoords(zone, CENTER, XCoords);
+            setGeometry(XCoords, &geom);
+            setFluidElement(primTile[INDEX_TILE(zone, 0)], &geom, &elem);
+
+            /* Using sourceTerms in place of the fluxes argument cause we do not
+             * need fluxes and I don't want to create fluxes[DOF] */
+            computeFluxesAndConservedVars(&elem, &geom, 0,
+                                          sourceTerms, conservedVars);
+
+            computeSourceTerms(&elem, &geom, XCoords, sourceTerms);
+
+            for (int var=0; var<DOF; var++)
+            {
+              divFluxOldGlobal[INDEX_GLOBAL(zone, var)] = 
+                (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(zone, var)]
+                 - fluxX1Tile[INDEX_TILE(zone, var)]
+                )/zone->dX1
+              + 
+                (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(zone, var)]
+                 - fluxX2Tile[INDEX_TILE(zone, var)]
+                )/zone->dX2;
+
+              sourceTermsOldGlobal[INDEX_GLOBAL(zone, var)] = 
+                sourceTerms[var];
+
+              conservedVarsOldGlobal[INDEX_GLOBAL(zone, var)] = 
+                conservedVars[var];
+            }
+          }
 
       } /* End of iTile loop */
     } /* End of jTile loop */
@@ -287,7 +326,7 @@ PetscErrorCode computeResidualIMEX(SNES snes,
   DMDAVecGetArray(ts->dmdaWithoutGhostZones,
                   ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
 
-  struct gridZone1D zone;
+  struct gridZone zone;
   struct geometry geom;
   struct fluidElement elem;
 

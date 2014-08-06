@@ -32,14 +32,14 @@ struct geometry
 
 /* User functions */
 void setGeometry(const REAL X[NDIM], 
-                 struct geometry geom);
+                 struct geometry* restrict geom);
 
 void covToCon(const REAL vecCov[NDIM],
-              const struct geometry geom,
+              const struct geometry* restrict geom,
               REAL vecCon[NDIM]);
 
 void conToCov(const REAL vecCon[NDIM],
-              const struct geometry geom,
+              const struct geometry* restrict geom,
               REAL vecCov[NDIM]);
 
 REAL covDotCon(const REAL vecCov[NDIM],
@@ -49,11 +49,6 @@ REAL gammaDownDownDown(const int eta,
                        const int mu, 
                        const int nu,
                        const REAL X[NDIM]);
-
-REAL connectionTerm(const REAL TUpDown[NDIM][NDIM],
-                    const struct geometry geom,
-                    const int nu, const REAL X[NDIM])
-
 
 /* Functions called by internally inside the geometry module */
 void gCovFunc(const REAL X[NDIM], REAL gCov[NDIM][NDIM]);

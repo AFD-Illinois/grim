@@ -508,30 +508,3 @@ REAL gammaDownDownDown(const int eta, const int mu, const int nu,
 
   return ans;
 }
-
-/*  Returns sqrt(-gDet) * T^kappa_lamda * Gamma^lamda_nu_kappa for a given nu.
- * 
- *  = sqrt(-gDet)*T^kappa_lamda * g^lamda^mu * Gamma_mu_nu_kappa
- *
-*/
-
-REAL connectionTerm(const REAL TUpDown[NDIM][NDIM],
-                    const struct geometry* restrict geom,
-                    const int nu, const REAL X[NDIM])
-{
-  REAL ans = 0., g = geom->sqrt(-gDet);
-
-  for (int kappa=0; kappa<NDIM; kappa++)
-  {
-    for (int lamda=0; lamda<NDIM; lamda++)
-    {
-      for (int mu=0; mu<NDIM; mu++)
-      {
-        ans +=   g * TUpDown[kappa][lamda] * geom->gCon[lamda][mu]
-               * gammaDownDownDown(mu, nu, kappa, X);
-      }
-    }
-  }
-
-  return ans;
-}
