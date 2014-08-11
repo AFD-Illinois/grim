@@ -5,9 +5,9 @@
 #include "../physics/physics.h"
 
 /* Only Monotonized central slope limiter implemented so far. */
-void slopeLim(REAL left[DOF],
-              REAL mid[DOF],
-              REAL right[DOF],
+void slopeLim(const REAL left[ARRAY_ARGS DOF],
+              const REAL mid[ARRAY_ARGS DOF],
+              const REAL right[ARRAY_ARGS DOF],
               REAL ans[DOF]);
 
 #endif /* REAPER_RECONSTRUCT_H_ */

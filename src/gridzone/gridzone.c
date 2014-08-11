@@ -94,10 +94,10 @@ void setGridZone(const int iTile,
                  const int jTile,
                  const int iInTile,
                  const int jInTile,
-                 const int x1Start,
-                 const int x2Start,
-                 const int x1Size,
-                 const int x2Size,
+                 const int X1Start,
+                 const int X2Start,
+                 const int X1Size,
+                 const int X2Size,
                  struct gridZone zone[ARRAY_ARGS 1])
 {
   zone->iTile = iTile;
@@ -106,11 +106,11 @@ void setGridZone(const int iTile,
   zone->iInTile = iInTile;
   zone->jInTile = jInTile;
 
-  zone->x1Size = x1Size;
-  zone->x2Size = x2Size;
+  zone->X1Size = X1Size;
+  zone->X2Size = X2Size;
 
-  zone->i = x1Start + iInTile + iTile*TILE_SIZE_X1;
-  zone->j = x2Start + jInTile + jTile*TILE_SIZE_X2;
+  zone->i = X1Start + iInTile + iTile*TILE_SIZE_X1;
+  zone->j = X2Start + jInTile + jTile*TILE_SIZE_X2;
 
   zone->dX1 = (X1_B - X1_A)/((REAL)N1);
   zone->dX2 = (X2_B - X2_A)/((REAL)N2);

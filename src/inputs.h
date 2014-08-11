@@ -24,6 +24,7 @@
 #define PHYSICAL_BOUNDARY_TOP_EDGE   (PERIODIC)
 #define PHYSICAL_BOUNDARY_BOTTOM_EDGE  (PERIODIC)
 
+#define TIME_STEPPING EXPLICIT
 
 /* Double or float precision? */
 #define REAL  double

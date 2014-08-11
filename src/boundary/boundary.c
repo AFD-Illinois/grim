@@ -73,80 +73,80 @@ void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1])
 }
 
 
-void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
+void applyTileBoundaryConditions(const struct gridZone zone,
                                  const REAL primLocal[ARRAY_ARGS TILE_SIZE],
                                  REAL tile[ARRAY_ARGS TILE_SIZE])
 {
 #if (COMPUTE_DIM==1 || COMPUTE_DIM==2)
     /* LEFT EDGE */
-  if (zone->leftEdge == GET_DATA_FROM_LOCAL_ARRAY)
+  if (zone.leftEdge == GET_DATA_FROM_LOCAL_ARRAY)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
         /* Get data from primLocal */
-        tile[INDEX_TILE_MANUAL(iGhost, zone->jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i+iGhost, zone->j, zone, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone.jInTile, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone.i+iGhost, zone.j, zone, var)];
       }
     }
   }
-  else if (zone->leftEdge == OUTFLOW)
+  else if (zone.leftEdge == OUTFLOW)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(iGhost, zone->jTile, var)] =
-        tile[INDEX_TILE_MANUAL(0, zone->jTile, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] =
+        tile[INDEX_TILE_MANUAL(0, zone.jTile, var)];
       }
     }
   }
-  else if (zone->leftEdge == MIRROR)
+  else if (zone.leftEdge == MIRROR)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
         /* Mirror the left edge of the tile */
-        tile[INDEX_TILE_MANUAL(iGhost, zone->jTile, var)] = 
-        tile[INDEX_TILE_MANUAL(-iGhost-1, zone->jTile, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] = 
+        tile[INDEX_TILE_MANUAL(-iGhost-1, zone.jTile, var)];
       }
     }
   }
   /* END OF LEFT EDGE */
 
     /* RIGHT EDGE */
-  if (zone->rightEdge == GET_DATA_FROM_LOCAL_ARRAY)
+  if (zone.rightEdge == GET_DATA_FROM_LOCAL_ARRAY)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i+1+iGhost, zone->j, zone, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone.i+1+iGhost, zone.j, zone, var)];
       }
     }
   }
-  else if (zone->rightEdge == OUTFLOW)
+  else if (zone.rightEdge == OUTFLOW)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1, zone->jInTile, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1, zone.jInTile, var)];
       }
     }
   }
-  else if (zone->rightEdge == MIRROR)
+  else if (zone.rightEdge == MIRROR)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1-iGhost, zone->jInTile, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1-iGhost, zone.jInTile, var)];
       }
     }
   }
@@ -155,72 +155,72 @@ void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
 
 #if (COMPUTE_DIM==2)
     /* TOP EDGE */
-  if (zone->topEdge == GET_DATA_FROM_LOCAL_ARRAY)
+  if (zone.topEdge == GET_DATA_FROM_LOCAL_ARRAY)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] = 
-        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+jGhost, zone, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] = 
+        primLocal[INDEX_LOCAL_MANUAL(zone.i, zone.j+jGhost, zone, var)];
       }
     }
   }
-  else if (zone->topEdge == OUTFLOW)
+  else if (zone.topEdge == OUTFLOW)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] =
-        tile[INDEX_TILE_MANUAL(zone->iInTile, 0, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] =
+        tile[INDEX_TILE_MANUAL(zone.iInTile, 0, var)];
       }
     }
   }
-  else if (zone->topEdge == MIRROR)
+  else if (zone.topEdge == MIRROR)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone->iInTile, -jGhost-1, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone.iInTile, -jGhost-1, var)];
       }
     } 
   }
   /* END OF TOP EDGE */
 
   /* BOTTOM EDGE */
-  if (zone->bottomEdge == GET_DATA_FROM_LOCAL_ARRAY)
+  if (zone.bottomEdge == GET_DATA_FROM_LOCAL_ARRAY)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+1+jGhost, zone, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone.i, zone.j+1+jGhost, zone, var)];
       }
     }
   }
-  else if (zone->bottomEdge == OUTFLOW)
+  else if (zone.bottomEdge == OUTFLOW)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2-1, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2-1, var)];
       }
     }
   }
-  else if (zone->bottomEdge == MIRROR)
+  else if (zone.bottomEdge == MIRROR)
   {
     for (int var=0; var<DOF; var++)
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2-1-jGhost, var)];
+        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2-1-jGhost, var)];
       }
     }
   }

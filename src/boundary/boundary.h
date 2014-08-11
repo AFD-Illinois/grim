@@ -127,7 +127,7 @@ void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1]);
  * number of procs used and is only known at runtime. However it is definitely
  * larger the TILE_SIZE and we can use this for ARRAY_ARGS since the keyword
  * static only tells the complier the _minimum_ size of the array */
-void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
+void applyTileBoundaryConditions(const struct gridZone zone,
                                  const REAL primLocal[ARRAY_ARGS TILE_SIZE],
                                  REAL tile[ARRAY_ARGS TILE_SIZE]);
 

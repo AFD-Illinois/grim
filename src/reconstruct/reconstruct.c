@@ -1,9 +1,9 @@
 #include "reconstruct.h"
 
-void slopeLim(REAL left[DOF],
-              REAL mid[DOF],
-              REAL right[DOF],
-              REAL ans[DOF])
+void slopeLim(const REAL left[ARRAY_ARGS DOF],
+              const REAL mid[ARRAY_ARGS DOF],
+              const REAL right[ARRAY_ARGS DOF],
+              REAL ans[ARRAY_ARGS DOF])
 {
 #pragma ivdep
   for (int var=0; var<DOF; var++)

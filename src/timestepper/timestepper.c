@@ -60,6 +60,7 @@ void timeStepperInit(struct timeStepper *ts)
                  &ts->X1Size, &ts->X2Size, &ts->X3Size);
   
   DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecOld);
+  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecHalfStep);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->divFluxPetscVecOld);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->conservedVarsPetscVecOld);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->sourceTermsPetscVecOld);
@@ -67,6 +68,7 @@ void timeStepperInit(struct timeStepper *ts)
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->primPetscVec);
 
   VecSet(ts->primPetscVecOld, 0.);
+  VecSet(ts->primPetscVecHalfStep, 0.);
   VecSet(ts->divFluxPetscVecOld, 0.);
   VecSet(ts->conservedVarsPetscVecOld, 0.);
   VecSet(ts->sourceTermsPetscVecOld, 0.);
@@ -81,7 +83,11 @@ void timeStepperInit(struct timeStepper *ts)
   ts->dt = DT;
   ts->t = START_TIME;
 
-  ts->computedOldSourceTermsAndOldFluxes = 0;
+  ts->computeOldSourceTermsAndOldDivOfFluxes = 0;
+  ts->computeDivOfFluxAtTimeN = 0;
+  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
+  ts->computeSourceTermsAtTimeN = 0;
+  ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
   PetscPrintf(PETSC_COMM_WORLD, "|--------------------------|\n");
   PetscPrintf(PETSC_COMM_WORLD, "|Memory allocation complete|\n");
@@ -126,9 +132,9 @@ void timeStep(struct timeStepper *ts)
 #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
   /* First go from t=n to t=n+1/2 */
-  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
-  ts->computeGradOfFluxAtTimeN = 1;
-  ts->computeGradOfFluxAtTimeNPlusHalf = 0;
+  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+  ts->computeDivOfFluxAtTimeN = 1;
+  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
   ts->computeSourceTermsAtTimeN = 1;
   ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
@@ -149,9 +155,9 @@ void timeStep(struct timeStepper *ts)
    * 2) IMEX time stepping
    * fluxes computed using primitive variables at t=n+1/2 whereas sources
    * computed using 0.5*(Sources^n + Sources^(n-1))*/
-  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
-  ts->computeGradOfFluxAtTimeN = 0;
-  ts->computeGradOfFluxAtTimeNPlusHalf = 1;
+  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+  ts->computeDivOfFluxAtTimeN = 0;
+  ts->computeDivOfFluxAtTimeNPlusHalf = 1;
 #if (TIME_STEPPING==EXPLICIT)
   ts->computeSourceTermsAtTimeN = 0;
   ts->computeSourceTermsAtTimeNPlusHalf = 1;
@@ -170,9 +176,9 @@ void timeStep(struct timeStepper *ts)
 
 #elif (TIME_STEPPING==IMPLICIT)
 
-  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
-  ts->computeGradOfFluxAtTimeN = 1;
-  ts->computeGradOfFluxAtTimeNPlusHalf = 0;
+  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+  ts->computeDivOfFluxAtTimeN = 1;
+  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
   ts->computeSourceTermsAtTimeN = 1;
   ts->computeSourceTermsAtTimeNPlusHalf = 0;
 

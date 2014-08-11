@@ -7,7 +7,9 @@
 #include "../gridzone/gridzone.h"
 #include "../boundary/boundary.h"
 #include "../reconstruct/reconstruct.h"
-#include "../reaper.h"
+
+#define DT (.01)
+#define START_TIME (0.)
 
 #define EXPLICIT (0)
 #define IMPLICIT (1)
@@ -42,13 +44,14 @@ struct timeStepper
   Vec primPetscVec;
   Vec residualPetscVec;
   Vec primPetscVecOld;
+  Vec primPetscVecHalfStep;
   Vec sourceTermsPetscVecOld;
   Vec divFluxPetscVecOld;
   Vec conservedVarsPetscVecOld;
 
-  int computedOldSourceTermsAndOldFluxes;
-  int computeGradOfFluxAtTimeN;
-  int computeGradOfFluxAtTimeNPlusHalf;
+  int computeOldSourceTermsAndOldDivOfFluxes;
+  int computeDivOfFluxAtTimeN;
+  int computeDivOfFluxAtTimeNPlusHalf;
   int computeSourceTermsAtTimeN;
   int computeSourceTermsAtTimeNPlusHalf;
 
@@ -72,4 +75,10 @@ PetscErrorCode computeResidual(SNES snes,
                                Vec residalPetscVec,
                                void *ptr);
 
+void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
+                           const int iTile, const int jTile,
+                           const int X1Start, const int X2Start,
+                           const int X1Size, const int X2Size,
+                           REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
+                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]);
 #endif /* REAPER_TIMESTEPPER_H_ */
