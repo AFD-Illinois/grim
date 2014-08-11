@@ -120,11 +120,15 @@
  *  boundary. It is in the bulk of the domain.
 */
 
-void setZoneBoundaryFlags(struct gridZone* restrict zone);
+void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1]);
 
 
-void applyTileBoundaryConditions(const struct gridZone* restrict zone,
-                                 const REAL* restrict primLocal,
-                                 REAL* restrict tile);
+/* Note: The size of primLocal is unknown at compile time. It depends on the
+ * number of procs used and is only known at runtime. However it is definitely
+ * larger the TILE_SIZE and we can use this for ARRAY_ARGS since the keyword
+ * static only tells the complier the _minimum_ size of the array */
+void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
+                                 const REAL primLocal[ARRAY_ARGS TILE_SIZE],
+                                 REAL tile[ARRAY_ARGS TILE_SIZE]);
 
 #endif /* GRIM_BOUNDARY_H_ */

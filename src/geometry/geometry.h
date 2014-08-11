@@ -1,7 +1,16 @@
 #ifndef GRIM_GEOMETRY_H_
 #define GRIM_GEOMETRY_H_
 
-#include "inputs.h"
+#include <math.h>
+#include "../inputs.h"
+#include "../gridzone/gridzone.h"
+
+#define MINKOWSKI   (0)
+#define KERRSCHILD  (1)
+
+#define M_PI (3.14)
+#define H_SLOPE (0.3)
+#define A_SPIN (0.9)
 
 /* struct geometry
  *
@@ -31,34 +40,36 @@ struct geometry
 
 
 /* User functions */
-void setGeometry(const REAL X[NDIM], 
-                 struct geometry* restrict geom);
+void setGeometry(const REAL X[ARRAY_ARGS NDIM], 
+                 struct geometry geom[ARRAY_ARGS 1]);
 
-void covToCon(const REAL vecCov[NDIM],
-              const struct geometry* restrict geom,
-              REAL vecCon[NDIM]);
+void covToCon(const REAL vecCov[ARRAY_ARGS NDIM],
+              const struct geometry geom[ARRAY_ARGS 1],
+              REAL vecCon[ARRAY_ARGS NDIM]);
 
-void conToCov(const REAL vecCon[NDIM],
-              const struct geometry* restrict geom,
-              REAL vecCov[NDIM]);
+void conToCov(const REAL vecCon[ARRAY_ARGS NDIM],
+              const struct geometry geom[ARRAY_ARGS 1],
+              REAL vecCov[ARRAY_ARGS NDIM]);
 
-REAL covDotCon(const REAL vecCov[NDIM],
-               const REAL vecCon[NDIM]);
+REAL covDotCon(const REAL vecCov[ARRAY_ARGS NDIM],
+               const REAL vecCon[ARRAY_ARGS NDIM]);
 
 REAL gammaDownDownDown(const int eta,
                        const int mu, 
                        const int nu,
-                       const REAL X[NDIM]);
+                       const REAL X[ARRAY_ARGS NDIM]);
 
 /* Functions called by internally inside the geometry module */
-void gCovFunc(const REAL X[NDIM], REAL gCov[NDIM][NDIM]);
+void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
+              REAL gCov[ARRAY_ARGS NDIM][NDIM]);
 
-void gDetFunc(const REAL gCov[NDIM][NDIM], REAL gDet);
+REAL gDetFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM]);
 
-void gConFunc(const REAL gCov[NDIM][NDIM],
+void gConFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM],
               const REAL gDet,
-              REAL gCon[NDIM][NDIM]);
+              REAL gCon[ARRAY_ARGS NDIM][NDIM]);
 
-void XTox(const REAL X[NDIM], REAL x[NDIM]);
+void XTox(const REAL X[ARRAY_ARGS NDIM], 
+          REAL x[ARRAY_ARGS NDIM]);
 
 #endif /* GRIM_GEOMETRY_H_ */

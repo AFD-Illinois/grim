@@ -1,7 +1,7 @@
 #include "physics.h"
 
-void setGamma(const struct geometry* restrict geom,
-              struct fluidElement* restrict elem)
+void setGamma(const struct geometry geom[ARRAY_ARGS 1],
+              struct fluidElement elem[ARRAY_ARGS 1])
 {
   elem->gamma = 
     sqrt(1 + geom->gCov[1][1]*elem->primVars[U1]*elem->primVars[U1]
@@ -15,8 +15,8 @@ void setGamma(const struct geometry* restrict geom,
         );
 }
 
-void setUCon(const struct geometry* restrict geom,
-             struct fluidElement* restrict elem)
+void setUCon(const struct geometry geom[ARRAY_ARGS 1],
+             struct fluidElement elem[ARRAY_ARGS 1])
 {
   elem->uCon[0] = elem->gamma/geom->alpha;
 
@@ -27,16 +27,16 @@ void setUCon(const struct geometry* restrict geom,
   }
 }
 
-void setBCon(const struct geometry* restrict geom,
-             struct fluidElement* restrict elem)
+void setBCon(const struct geometry geom[ARRAY_ARGS 1],
+             struct fluidElement elem[ARRAY_ARGS 1])
 {
   REAL uCov[NDIM];
 
   conToCov(elem->uCon, geom, uCov);
 
-  elem->bCon[0] =   elem->primVars[B1]*elem->uCov[1]
-                  + elem->primVars[B2]*elem->uCov[2] 
-                  + elem->primVars[B3]*elem->uCov[3];
+  elem->bCon[0] =   elem->primVars[B1]*uCov[1]
+                  + elem->primVars[B2]*uCov[2] 
+                  + elem->primVars[B3]*uCov[3];
   
   for (int i=1; i<NDIM; i++)
   {
@@ -46,9 +46,9 @@ void setBCon(const struct geometry* restrict geom,
   }
 }
 
-void setFluidElement(const REAL primVars[DOF],
-                     const struct geometry* restrict geom,
-                     struct fluidElement* restrict elem)
+void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
+                     const struct geometry geom[ARRAY_ARGS 1],
+                     struct fluidElement elem[ARRAY_ARGS 1])
 {
   for (int var=0; var<DOF; var++)
   {
@@ -60,99 +60,67 @@ void setFluidElement(const REAL primVars[DOF],
   setGamma(geom, elem);
   setUCon(geom, elem);
   setBCon(geom, elem);
+  computeMoments(geom, elem);
 }
 
-void matterCurrent(const struct fluidElement* restrict elem,
-                   const struct geometry* restrict geom,
-                   REAL NUp[NDIM])
-{
-  for (int mu=0; mu<NDIM; mu++)
-  {
-    NUp[mu] = elem->primVars[RHO]*elem->uCon[mu];
-  }
-}
-
-void stressTensor(const struct fluidElement* restrict elem,
-                  const struct geometry* restrict geom,
-                  REAL TUpDown[NDIM][NDIM])
+void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
+                    struct fluidElement elem[ARRAY_ARGS 1])
 {
   REAL pressure = (ADIABATIC_INDEX - 1.)*elem->primVars[UU];
-  REAL bCov[NDIM], uCov[NDIM], bSqr;
+  REAL bCov[NDIM], bSqr;
   
   conToCov(elem->bCon, geom, bCov);
   bSqr = covDotCon(bCov, elem->bCon);
 
-  conToCov(elem->uCon, geom, uCov);
-
   for (int mu=0; mu<NDIM; mu++)
   {
+    elem->moments[N_UP(mu)] = elem->primVars[RHO]*elem->uCon[mu];
+
     for (int nu=0; nu<NDIM; nu++)
     {
-      TUpDown[mu][nu] =   (  elem->primVars[RHO] + elem->primVars[UU] 
+      elem->moments[T_UP_UP(mu,nu)] =   
+                          (  elem->primVars[RHO] + elem->primVars[UU]
                            + pressure + bSqr
-                          )*elem->uCon[mu]*uCov[nu]
+                          )*elem->uCon[mu]*elem->uCon[nu]
 
                         + (pressure + 0.5*bSqr)*DELTA(mu, nu)
 
-                        - elem->bCon[mu]*bCov[nu];
+                        - elem->bCon[mu]*elem->bCon[nu];
     }
   }
 
 }
 
-void computeFluxesAndConservedVars(const struct fluidElement* restrict elem,
-                                   const struct geometry* restrict geom,
-                                   const int dir,
-                                   REAL fluxes[DOF],
-                                   REAL conservedVars[DOF])
+void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
+                   const struct geometry geom[ARRAY_ARGS 1],
+                   const int dir,
+                   REAL fluxes[ARRAY_ARGS DOF])
 {
-  REAL NUp[NDIM], TUpDown[NDIM][NDIM];
   REAL g = sqrt(-geom->gDet);
 
-  matterCurrent(elem, geom, NUp);
-  stressTensor(elem, geom, TUpDown);
- 
-  fluxes[RHO] = g*NUp[dir];
+  fluxes[RHO] = g*elem->moments[N_UP(dir)];
 
-  fluxes[UU] = g*TUpDown[dir][0];
-  fluxes[U1] = g*TUpDown[dir][1];
-  fluxes[U2] = g*TUpDown[dir][2];
-  fluxes[U3] = g*TUpDown[dir][3];
+  fluxes[UU] = g*elem->moments[T_UP_UP(dir, 0)];
+  fluxes[U1] = g*elem->moments[T_UP_UP(dir, 1)];
+  fluxes[U2] = g*elem->moments[T_UP_UP(dir, 2)];
+  fluxes[U3] = g*elem->moments[T_UP_UP(dir, 3)];
 
   fluxes[B1] = g*(elem->bCon[1]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[1]);
   fluxes[B2] = g*(elem->bCon[2]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[2]);
   fluxes[B3] = g*(elem->bCon[3]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[3]);
-
-  conservedVars[RHO] = g*NUp[0];
-
-  conservedVars[UU] = g*TUpDown[0][0];
-  conservedVars[U1] = g*TUpDown[0][1];
-  conservedVars[U2] = g*TUpDown[0][2];
-  conservedVars[U3] = g*TUpDown[0][3];
-
-  conservedVars[B1] = g*(  elem->bCon[1]*elem->uCon[0] 
-                         - elem->bCon[0]*elem->uCon[1]);
-
-  conservedVars[B2] = g*(  elem->bCon[2]*elem->uCon[0] 
-                         - elem->bCon[0]*elem->uCon[2]);
-
-  conservedVars[B3] = g*(  elem->bCon[3]*elem->uCon[0] 
-                         - elem->bCon[0]*elem->uCon[3]);
 }
 
-/*  Returns sqrt(-gDet) * T^kappa_lamda * Gamma^lamda_nu_kappa for each nu (Eqn
- *  (4) of HARM paper).
+/*  Returns sqrt(-gDet) * T^kappa^lamda * Gamma_lamda_nu_kappa for each nu.
+ *  (Eqn (4) of HARM paper)
  * 
- *  = sqrt(-gDet)*T^kappa_lamda * g^lamda^mu * Gamma_mu_nu_kappa
- *
 */
 
-void computeSourceTerms(const struct fluidElement* restrict elem,
-                        const struct geometry* restrict geom,
-                        const REAL X[NDIM],
-                        REAL sourceTerms[DOF])
+void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
+                        const struct geometry geom[ARRAY_ARGS 1],
+                        const REAL X[ARRAY_ARGS NDIM],
+                        REAL sourceTerms[ARRAY_ARGS DOF])
 {
-  REAL g = geom->sqrt(-gDet);
+  REAL g = sqrt(-geom->gDet);
 
   sourceTerms[RHO] = 0.;
   sourceTerms[B1] = 0.;
@@ -162,6 +130,7 @@ void computeSourceTerms(const struct fluidElement* restrict elem,
   for (int nu=0; nu<NDIM; nu++)
   {
     sourceTerms[RHO+nu] = 0.;
+
     for (int kappa=0; kappa<NDIM; kappa++)
     {
       for (int lamda=0; lamda<NDIM; lamda++)
@@ -169,8 +138,8 @@ void computeSourceTerms(const struct fluidElement* restrict elem,
         for (int mu=0; mu<NDIM; mu++)
         {
           sourceTerms[RHO+nu] +=   
-               g * TUpDown[kappa][lamda] * geom->gCon[lamda][mu]
-                 * gammaDownDownDown(mu, nu, kappa, X);
+               g * elem->moments[T_UP_UP(kappa, lamda)]
+                 * gammaDownDownDown(lamda, nu, kappa, X);
         }
       }
     }

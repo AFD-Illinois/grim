@@ -9,10 +9,10 @@
  *         X2
  *         
  *         (i,j)  (i+0.5,j)
- *           +-----F1-----+
+ *           +-----F2-----+
  *           |            |
  *           |            |
- * (i,j+0.5) F2    C      |
+ * (i,j+0.5) F1    C      |
  *           |            |
  *           |            |
  *           +------------+
@@ -25,9 +25,9 @@
  * @param input: location, Location inside the zone where the coordinates are needed
  * @param output: X, The coordinates X^mu
 */
-void getXCoords(const struct gridZone* restrict zone,
+void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
                 const int location,
-                REAL X[NDIM])
+                REAL X[ARRAY_ARGS NDIM])
 {
 #if (COMPUTE_DIM==2)
   if (location==CENTER) // (i+0.5,j+0.5)
@@ -37,17 +37,31 @@ void getXCoords(const struct gridZone* restrict zone,
     X[2] = X2_A + (zone->j + 0.5)*zone->dX2;
     X[3] = 0.;
   } 
-  else if (location==FACE_X1) // (i+0.5,j)
+  else if (location==FACE_X2) // (i+0.5,j)
   {
     X[0] = 0.;
     X[1] = X1_A + (zone->i + 0.5)*zone->dX1;
     X[2] = X2_A + zone->j*zone->dX2;
     X[3] = 0.;
   }
-  else if (location==FACE_X2) // (i,j+0.5)
+  else if (location==FACE_X1) // (i,j+0.5)
   {
     X[0] = 0.;
     X[1] = X1_A + zone->i*zone->dX1;
+    X[2] = X2_A + (zone->j + 0.5)*zone->dX2;
+    X[3] = 0.;
+  }
+  else if (location==FACE_X2_PLUS_ONE) // (i+0.5,j+1)
+  {
+    X[0] = 0.;
+    X[1] = X1_A + (zone->i + 0.5)*zone->dX1;
+    X[2] = X2_A + (zone->j+1)*zone->dX2;
+    X[3] = 0.;
+  }
+  else if (location==FACE_X1_PLUS_ONE) // (i+1,j+0.5)
+  {
+    X[0] = 0.;
+    X[1] = X1_A + (zone->i+1)*zone->dX1;
     X[2] = X2_A + (zone->j + 0.5)*zone->dX2;
     X[3] = 0.;
   }
@@ -79,12 +93,12 @@ void getXCoords(const struct gridZone* restrict zone,
 void setGridZone(const int iTile,
                  const int jTile,
                  const int iInTile,
-                 const int jIntTile,
+                 const int jInTile,
                  const int x1Start,
                  const int x2Start,
                  const int x1Size,
                  const int x2Size,
-                 struct gridZone* restrict zone)
+                 struct gridZone zone[ARRAY_ARGS 1])
 {
   zone->iTile = iTile;
   zone->jTile = jTile;
@@ -96,7 +110,7 @@ void setGridZone(const int iTile,
   zone->x2Size = x2Size;
 
   zone->i = x1Start + iInTile + iTile*TILE_SIZE_X1;
-  zone->j = x2Start + jIntTile + jTIle*TILE_SIZE_X2;
+  zone->j = x2Start + jInTile + jTile*TILE_SIZE_X2;
 
   zone->dX1 = (X1_B - X1_A)/((REAL)N1);
   zone->dX2 = (X2_B - X2_A)/((REAL)N2);

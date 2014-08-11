@@ -18,15 +18,16 @@
  *  @param X Computational coordinates X^mu = {t, X1, X2, phi}
  *  @param x Physical coordinates x^mu = {t, r, theta, phi}
 */
-void XTox(const REAL X[NDIM], REAL x[NDIM])
+void XTox(const REAL X[ARRAY_ARGS NDIM], 
+          REAL x[ARRAY_ARGS NDIM])
 {
-#if (GEOMETRY==KERR)
+#if (METRIC==KERRSCHILD)
   x[0] = X[0];        // t = t'
   x[1] = exp(X[1]);   // r = exp(X1)
   x[2] = M_PI*X[2] + 0.5*(1 - H_SLOPE)*sin(2*M_PI*X[2]); 
                       // theta = pi*X2 + 0.5*(1 - H_SLOPE)*X2
   x[3] = X[3];        // phi = phi'
-#elif (GEOMETRY==MINKOWSKI)
+#elif (METRIC==MINKOWSKI)
   x[0] = X[0];
   x[1] = X[1];
   x[2] = X[2];
@@ -51,11 +52,11 @@ void XTox(const REAL X[NDIM], REAL x[NDIM])
  *                  geometrical quantities are needed, REAL X[NDIM] array.
  * @param Output: geom, The geometry struct at those coordinates.
 */
-void setGeometry(const REAL X[NDIM],
-                 struct geometry* restrict geom)
+void setGeometry(const REAL X[ARRAY_ARGS NDIM], 
+                 struct geometry geom[ARRAY_ARGS 1])
 {
   gCovFunc(X, geom->gCov);
-  geom->gDet = gDet(geom->gCov, geom->gDet);
+  geom->gDet = gDetFunc(geom->gCov);
   gConFunc(geom->gCov, geom->gDet, geom->gCon);
 
   geom->alpha = 1./sqrt(-geom->gCon[0][0]);
@@ -78,15 +79,16 @@ void setGeometry(const REAL X[NDIM],
  * @param Input: X, X^mu coordinates REAL X[NDIM] array
  * @param Output: gCov, The covariant metric, REAL gCov[NDIM][NDIM] array
 */
-void gCovFunc(const REAL X[NDIM], REAL gCov[NDIM][NDIM])
+void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
+              REAL gCov[ARRAY_ARGS NDIM][NDIM])
 {
 
-#if (GEOMETRY==KERR)
+#if (METRIC==KERRSCHILD)
   /* x^mu = {t, r, theta, phi}, X^mu = {t, X1, X2, phi} */
 
   REAL x[NDIM];
 
-  Xtox(X, x);
+  XTox(X, x);
 
   /* Easier to read with (r, theta) than (x[1], x[2]) */
   REAL r = x[1];
@@ -153,7 +155,7 @@ void gCovFunc(const REAL X[NDIM], REAL gCov[NDIM][NDIM])
   gCov[3][3] = (sin(theta)*sin(theta)
                 *(sigma + A_SPIN*A_SPIN*(1. + 2*r/sigma) ) );
 
-#elif (GEOMETRY==MINKOWSKI)
+#elif (METRIC==MINKOWSKI)
   gCov[0][0] = -1.;
   gCov[0][1] = 0.;
   gCov[0][2] = 0.;
@@ -183,7 +185,7 @@ void gCovFunc(const REAL X[NDIM], REAL gCov[NDIM][NDIM])
  * @param Input: gCov, The covariant metric gCov[NDIM][NDIM] array.
  * @param Output: gDet, The determinant of the metric, a single REAL number.
 */
-REAL gDet(const REAL gCov[NDIM][NDIM])
+REAL gDetFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM])
 {
   REAL ans = 
           gCov[0][0]*gCov[1][1]*gCov[2][2]*gCov[3][3] 
@@ -221,9 +223,9 @@ REAL gDet(const REAL gCov[NDIM][NDIM])
  * @param Input: gDet, The determinant of the metric, a single REAL number.
  * @param Output: gCon, The contravariant metric: REAL gCon[NDIM][NDIM] array.
 */
-void gConFunc(const REAL gCov[NDIM][NDIM],
+void gConFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM],
               const REAL gDet,
-              REAL gCon[NDIM][NDIM])
+              REAL gCon[ARRAY_ARGS NDIM][NDIM])
 {
   gCon[0][0] = 
       (  gCov[1][1]*gCov[2][2]*gCov[3][3]
@@ -321,9 +323,9 @@ void gConFunc(const REAL gCov[NDIM][NDIM],
  * @param Input: geom, The geometry struct.
  * @param Output: vecCon, The contravariant vector, REAL vecCon[NDIM] array.
 */
-void covToCon(const REAL vecCov[NDIM],
-              const struct geometry* restrict geom,
-              REAL vecCon[NDIM])
+void covToCon(const REAL vecCov[ARRAY_ARGS NDIM],
+              const struct geometry geom[ARRAY_ARGS 1],
+              REAL vecCon[ARRAY_ARGS NDIM])
 {
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -341,9 +343,9 @@ void covToCon(const REAL vecCov[NDIM],
  * @param Input: geom, The geometry struct.
  * @param Output: vecCov, The covariant vector, REAL vecCov[NDIM] array.
 */
-void conToCov(const REAL vecCon[NDIM],
-              const struct geometry* restrict geom,
-              REAL vecCov[NDIM])
+void conToCov(const REAL vecCon[ARRAY_ARGS NDIM],
+              const struct geometry geom[ARRAY_ARGS 1],
+              REAL vecCov[ARRAY_ARGS NDIM])
 {
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -361,8 +363,8 @@ void conToCov(const REAL vecCon[NDIM],
  * @param Input: vecCon, The contravariant vector, REAL vecCon[NDIM] array.
  * @return Output: dot, The dot product, a single REAL number.
 */
-REAL covDotCon(const REAL vecCov[NDIM],
-               const REAL vecCon[NDIM])
+REAL covDotCon(const REAL vecCov[ARRAY_ARGS NDIM],
+               const REAL vecCon[ARRAY_ARGS NDIM])
 {
   REAL ans = 0.;
   for (int mu=0; mu<NDIM; mu++)
@@ -427,8 +429,10 @@ REAL covDotCon(const REAL vecCov[NDIM],
  *                 Christoffel symbols of the first kind for the specific
  *                 indices {mu, nu, eta}.
 */
-REAL gammaDownDownDown(const int eta, const int mu, const int nu,
-                       const REAL X[NDIM])
+REAL gammaDownDownDown(const int eta,
+                       const int mu, 
+                       const int nu,
+                       const REAL X[ARRAY_ARGS NDIM])
 {
   /* Handle the three differentiations seperately to save storage space */
   REAL XEpsilon[NDIM];

@@ -5,6 +5,11 @@
 #include "../inputs.h"
 #include "../geometry/geometry.h"
 
+#define X1_A (0.)
+#define X2_A (0.)
+#define X1_B (0.)
+#define X2_B (0.)
+
 #define CENTER  (0)
 #define FACE_X1 (1)
 #define FACE_X2 (2)
@@ -27,22 +32,22 @@
 #if (COMPUTE_DIM==1)
 
 #define TILE_SIZE ((TILE_SIZE_X1+2*NG)*DOF)
-#define INDEX_TILE(zone,var) (var + DOF*(zone.iInTile + NG) )
+#define INDEX_TILE(zone,var) (var + DOF*(zone->iInTile + NG) )
 
-#define INDEX_TILE_PLUS_ONE_X1(zone,var) (var + DOF*(zone.iInTile + 1 + NG) )
+#define INDEX_TILE_PLUS_ONE_X1(zone,var) (var + DOF*(zone->iInTile + 1 + NG) )
 
-#define INDEX_TILE_PLUS_TWO_X1(zone,var) (var + DOF*(zone.iInTile + 2 + NG ) )
+#define INDEX_TILE_PLUS_TWO_X1(zone,var) (var + DOF*(zone->iInTile + 2 + NG ) )
 
-#define INDEX_TILE_MINUS_ONE_X1(zone,var) (var + DOF*(zone.iInTile - 1 + NG) )
+#define INDEX_TILE_MINUS_ONE_X1(zone,var) (var + DOF*(zone->iInTile - 1 + NG) )
 
-#define INDEX_TILE_MINUS_TWO_X1(zone,var) (var + DOF*(zone.iInTile - 2 + NG) )
+#define INDEX_TILE_MINUS_TWO_X1(zone,var) (var + DOF*(zone->iInTile - 2 + NG) )
 
 #define INDEX_TILE_MANUAL(iInTile,jInTile,var) (var + DOF*(iInTile + NG) )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*(zone.i))
+#define INDEX_LOCAL(zone,var) (var + DOF*(zone->i))
 #define INDEX_LOCAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
 
-#define INDEX_GLOBAL(zone,var) (var + DOF*(zone.i))
+#define INDEX_GLOBAL(zone,var) (var + DOF*(zone->i))
 #define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
 
 
@@ -50,65 +55,65 @@
 
 #define TILE_SIZE ((TILE_SIZE_X1+2*NG)*(TILE_SIZE_X2+2*NG)*DOF)
 #define INDEX_TILE(zone,var) (var + DOF*(\
-                                          zone.iInTile + NG \
+                                          zone->iInTile + NG \
                                          +(TILE_SIZE_X1+2*NG)\
-                                         *(zone.jInTile + NG)\
+                                         *(zone->jInTile + NG)\
                                         )\
                              )
 
 #define INDEX_TILE_PLUS_ONE_X1(zone,var) (var + DOF*(\
-                                                      zone.iInTile + 1 + NG \
+                                                      zone->iInTile + 1 + NG \
                                                      +(TILE_SIZE_X1+2*NG)\
-                                                     *(zone.jInTile + NG)\
+                                                     *(zone->jInTile + NG)\
                                                     )\
                                          )
 
 #define INDEX_TILE_PLUS_TWO_X1(zone,var) (var + DOF*(\
-                                                      zone.iInTile + 2 + NG \
+                                                      zone->iInTile + 2 + NG \
                                                      +(TILE_SIZE_X1+2*NG)\
-                                                     *(zone.jInTile + NG)\
+                                                     *(zone->jInTile + NG)\
                                                     )\
                                          )
 
 #define INDEX_TILE_MINUS_ONE_X1(zone,var) (var + DOF*(\
-                                                      zone.iInTile - 1 + NG \
+                                                      zone->iInTile - 1 + NG \
                                                       +(TILE_SIZE_X1+2*NG)\
-                                                      *(zone.jInTile + NG)\
+                                                      *(zone->jInTile + NG)\
                                                      )\
                                           )
 
 #define INDEX_TILE_MINUS_TWO_X1(zone,var) (var + DOF*(\
-                                                      zone.iInTile - 2 + NG \
+                                                      zone->iInTile - 2 + NG \
                                                       +(TILE_SIZE_X1 + 2*NG)\
-                                                      *(zone.jInTile + NG)\
+                                                      *(zone->jInTile + NG)\
                                                      )\
                                           )
 
 #define INDEX_TILE_PLUS_ONE_X2(zone,var) (var + DOF*(\
-                                                      zone.iInTile + NG \
+                                                      zone->iInTile + NG \
                                                      +(TILE_SIZE_X1 + 2*NG)\
-                                                     *(zone.jInTile + 1 + NG)\
+                                                     *(zone->jInTile + 1 + NG)\
                                                     )\
                                          )
 
 #define INDEX_TILE_PLUS_TWO_X2(zone,var) (var + DOF*(\
-                                                      zone.iInTile + NG \
+                                                      zone->iInTile + NG \
                                                      +(TILE_SIZE_X1 + 2*NG)\
-                                                     *(zone.jInTile + 2 + NG)\
+                                                     *(zone->jInTile + 2 + NG)\
                                                     )\
                                          )
 
 #define INDEX_TILE_MINUS_ONE_X2(zone,var) (var + DOF*(\
-                                                      zone.iInTile + NG \
+                                                      zone->iInTile + NG \
                                                       +(TILE_SIZE_X1 + 2*NG)\
-                                                      *(zone.jInTile - 1 + NG)\
+                                                      *(zone->jInTile - 1 + NG)\
                                                      )\
                                           )
 
 #define INDEX_TILE_MINUS_TWO_X2(zone,var) (var + DOF*(\
-                                                      zone.iInTile + NG \
+                                                      zone->iInTile + NG \
                                                       +(TILE_SIZE_X1 + 2*NG)\
-                                                      *(zone.jInTile - 2 + NG)\
+                                                      *(zone->jInTile - 2 + NG)\
                                                      )\
                                           )
 
@@ -120,22 +125,22 @@
                                                      )\
                                           )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*(zone.i + (\
-                                                     zone.x1Size+2*NG\
+#define INDEX_LOCAL(zone,var) (var + DOF*(zone->i + (\
+                                                     zone->x1Size+2*NG\
                                                    )\
-                                                  *(zone.j) \
+                                                  *(zone->j) \
                                          ) \
                               )
 #define INDEX_LOCAL_MANUAL(i,j,zone,var)\
                               (var + DOF*(i + (\
-                                               zone.x1Size+2*NG\
+                                               zone->x1Size+2*NG\
                                               )\
                                              *(j) \
                                          ) \
                               )
 
-#define INDEX_GLOBAL(zone,var) (var + DOF*(zone.i + zone.x1Size*(zone.j)))
-#define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i + zone.x1Size*(j)))
+#define INDEX_GLOBAL(zone,var) (var + DOF*(zone->i + zone->x1Size*(zone->j)))
+#define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i + zone->x1Size*(j)))
 
 #endif
 
@@ -155,16 +160,18 @@ struct gridZone
   int bottomEdge, topEdge;
 };
 
-void getXCoords(const struct gridZone* restrict zone,
+void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
                 const int location,
-                REAL X[NDIM]);
+                REAL X[ARRAY_ARGS NDIM]);
 
 void setGridZone(const int iTile,
                  const int jTile,
                  const int iInTile,
                  const int jIntTile,
-                 const REAL x1Start,
-                 const REAL x2Start,
-                 struct gridZone* restrict zone);
+                 const int x1Start,
+                 const int x2Start,
+                 const int x1Size,
+                 const int x2Size,
+                 struct gridZone zone[ARRAY_ARGS 1]);
 
 #endif /* GRIM_GRIDZONE_H_ */

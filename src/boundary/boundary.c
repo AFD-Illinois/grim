@@ -1,7 +1,7 @@
 #include "boundary.h"
 
 
-void setZoneBoundaryFlags(struct gridZone* restrict zone)
+void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1])
 {
 #if (COMPUTE_DIM==1 || COMPUTE_DIM==2)
   /* Zone is at the left end of a tile */
@@ -73,21 +73,21 @@ void setZoneBoundaryFlags(struct gridZone* restrict zone)
 }
 
 
-void applyTileBoundaryConditions(const struct gridZone* restrict zone,
-                                 const REAL* restrict primLocal,
-                                 REAL* restrict tile)
+void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
+                                 const REAL primLocal[ARRAY_ARGS TILE_SIZE],
+                                 REAL tile[ARRAY_ARGS TILE_SIZE])
 {
 #if (COMPUTE_DIM==1 || COMPUTE_DIM==2)
     /* LEFT EDGE */
   if (zone->leftEdge == GET_DATA_FROM_LOCAL_ARRAY)
   {
-    for (int var=0; var<DOF: var++)
+    for (int var=0; var<DOF; var++)
     {
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
         /* Get data from primLocal */
-        tile[INDEX_TILE_MANUAL(iGhost, zone.jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone.i+iGhost, zone.j, zone, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone->jInTile, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone->i+iGhost, zone->j, zone, var)];
       }
     }
   }
@@ -97,8 +97,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] =
-        tile[INDEX_TILE_MANUAL(0, zone.jTile, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone->jTile, var)] =
+        tile[INDEX_TILE_MANUAL(0, zone->jTile, var)];
       }
     }
   }
@@ -109,8 +109,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
       for (int iGhost=-NG; iGhost<0; iGhost++)
       {
         /* Mirror the left edge of the tile */
-        tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] = 
-        tile[INDEX_TILE_MANUAL(-iGhost-1, zone.jTile, var)];
+        tile[INDEX_TILE_MANUAL(iGhost, zone->jTile, var)] = 
+        tile[INDEX_TILE_MANUAL(-iGhost-1, zone->jTile, var)];
       }
     }
   }
@@ -123,8 +123,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone.i+1+iGhost, zone.j, zone, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone->i+1+iGhost, zone->j, zone, var)];
       }
     }
   }
@@ -134,8 +134,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
-        tile[INDEX_TILE(TILE_SIZE_X1-1, zone.jInTile, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1, zone->jInTile, var)];
       }
     }
   }
@@ -145,8 +145,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
-        tile[INDEX_TILE(TILE_SIZE_X1+iGhost, zone.jInTile, var)] =
-        tile[INDEX_TILE(TILE_SIZE_X1-1-iGhost, zone.jInTile, var)];
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
+        tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1-iGhost, zone->jInTile, var)];
       }
     }
   }
@@ -161,8 +161,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] = 
-        primLocal[INDEX_LOCAL_MANUAL(zone.i, zone.j+jGhost, zone, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] = 
+        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+jGhost, zone, var)];
       }
     }
   }
@@ -172,8 +172,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] =
-        tile[INDEX_TILE_MANUAL(zone.iInTile, 0, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] =
+        tile[INDEX_TILE_MANUAL(zone->iInTile, 0, var)];
       }
     }
   }
@@ -183,8 +183,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone.iInTile, -jGhost-1, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone->iInTile, -jGhost-1, var)];
       }
     } 
   }
@@ -197,8 +197,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone.i, zone.j+1+jGhost, zone, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] =
+        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+1+jGhost, zone, var)];
       }
     }
   }
@@ -208,8 +208,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2-1, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2-1, var)];
       }
     }
   }
@@ -219,8 +219,8 @@ void applyTileBoundaryConditions(const struct gridZone* restrict zone,
     {
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
-        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, var)] = 
-        tile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2-1-jGhost, var)];
+        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] = 
+        tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2-1-jGhost, var)];
       }
     }
   }

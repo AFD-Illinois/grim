@@ -56,8 +56,8 @@ void timeStepperInit(struct timeStepper *ts)
 #endif
 
   DMDAGetCorners(ts->dmdaWithGhostZones,
-                 &ts->x1Start, &ts->x2Start, &ts->x3Start,
-                 &ts->x1Size, &ts->x2Size, &ts->x3Size);
+                 &ts->X1Start, &ts->X2Start, &ts->X3Start,
+                 &ts->X1Size, &ts->X2Size, &ts->X3Size);
   
   DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecOld);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->divFluxPetscVecOld);
@@ -88,14 +88,100 @@ void timeStepperInit(struct timeStepper *ts)
   PetscPrintf(PETSC_COMM_WORLD, "|--------------------------|\n");
 }
 
+/* Explicit time stepping:
+ * -----------------------
+ * The time stepping is done in two stages:
+ *
+ * 1) Get prim at t=n+1/2 using:
+ *    
+ *    (U^(n+1/2) - U^n)/(.5*dt) + grad(F)^(n-1) + sources^(n-1) = 0
+ *    
+ * 2) Now using prim at t=n+1/2, compute fluxes and sources and go from t=n to
+ *    t=n+1:
+ *
+ *    (U^(n+1) - U^n)/dt + grad(F)^(n+1/2) + sources^(n+1/2) = 0
+ *
+ * IMEX time stepping:
+ * -------------------
+ * The time stepping is done in two stages:
+ *
+ * 1) Get prim at t=n+1/2 using:
+ *    
+ *    (U^(n+1/2) - U^n)/(.5*dt) + grad(F)^(n-1) + sources^(n-1) = 0
+ *    
+ * 2) Now using prim at t=n+1/2, compute fluxes but compute sources as a
+ *    combination of sources at t=n and t=n+1 and go from t=n to t=n+1:
+ *
+ *    (U^(n+1) - U^n)/dt + grad(F)^(n+1/2) + 0.5*(sources^n + sources^(n+1)) = 0
+ * 
+ * Implicit time stepping:
+ * -----------------------
+ * Go directly from t=n to t=n+1 using
+ * 
+ *    (U^(n+1) - U^n)/dt + 0.5*(grad(F)^n + grad(F)^(n+1))
+ *                       + 0.5*(sources^n + sources^(n+1)) = 0
+ */
 void timeStep(struct timeStepper *ts)
 {
-  ts->computedOldSourceTermsAndOldFluxes = 0;
+#if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
+
+  /* First go from t=n to t=n+1/2 */
+  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
+  ts->computeGradOfFluxAtTimeN = 1;
+  ts->computeGradOfFluxAtTimeNPlusHalf = 0;
+  ts->computeSourceTermsAtTimeN = 1;
+  ts->computeSourceTermsAtTimeNPlusHalf = 0;
+
+  ts->dt = DT/2.;
+
+  VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
+  SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
+
+  /* Current state:
+   * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
+   * ts->primPetscVecOld has the primitive variables at t = n
+   */
+
+  /* Now go from t=n to t=n+1 using
+   * 1) EXPLICIT time stepping:
+   * fluxes and sources computed using primitive variables at t=n+1/2.
+   * 
+   * 2) IMEX time stepping
+   * fluxes computed using primitive variables at t=n+1/2 whereas sources
+   * computed using 0.5*(Sources^n + Sources^(n-1))*/
+  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
+  ts->computeGradOfFluxAtTimeN = 0;
+  ts->computeGradOfFluxAtTimeNPlusHalf = 1;
+#if (TIME_STEPPING==EXPLICIT)
+  ts->computeSourceTermsAtTimeN = 0;
+  ts->computeSourceTermsAtTimeNPlusHalf = 1;
+#elif (TIME_STEPPING==IMEX)
+  ts->computeSourceTermsAtTimeN = 0;
+  ts->computeSourceTermsAtTimeNPlusHalf = 0;
+#endif
+
+  ts->dt = DT;
+
+  VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
+  
+  SNESSolve(ts->snes, NULL, ts->primPetscVec);
+
+  ts->t = ts->t + ts->dt;
+
+#elif (TIME_STEPPING==IMPLICIT)
+
+  ts->computeOldSourceTermsAndOldGradOfFluxes = 1;
+  ts->computeGradOfFluxAtTimeN = 1;
+  ts->computeGradOfFluxAtTimeNPlusHalf = 0;
+  ts->computeSourceTermsAtTimeN = 1;
+  ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
   VecCopy(ts->primPetscVecOld, ts->primPetscVec);
   SNESSolve(ts->snes, NULL, ts->primPetscVec);
 
   ts->t = ts->t + ts->dt;
+
+#endif
 }
 
 void timeStepperDestroy(struct timeStepper *ts)
