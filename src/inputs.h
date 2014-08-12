@@ -9,12 +9,16 @@
 #define N2                  (64)
 
 /* Number of ghost zones */
-#define NG                  (2)
+#define NG                  (3)
 
 /* Choose the metric here:
  * KERRSCHILD or MINKOWSKI
 */
 #define METRIC (MINKOWSKI)
+#define M_PI (3.14159265359)
+#define H_SLOPE (0.3)
+#define A_SPIN (0.9)
+
 #define EPS (1e-5) /* Constant needed for numerical differentiation of metric
                     * to compute the connection coefficients */
 
@@ -24,7 +28,15 @@
 #define PHYSICAL_BOUNDARY_TOP_EDGE   (PERIODIC)
 #define PHYSICAL_BOUNDARY_BOTTOM_EDGE  (PERIODIC)
 
+#define X1_A (0.)
+#define X2_A (0.)
+#define X1_B (0.)
+#define X2_B (0.)
+
 #define TIME_STEPPING EXPLICIT
+
+#define ADIABATIC_INDEX (4./3)
+#define CONDUCTION      (0)
 
 /* Double or float precision? */
 #define REAL  double

@@ -4,8 +4,6 @@
 #include "../inputs.h"
 #include "../geometry/geometry.h"
 
-#define ADIABATIC_INDEX (4./3)
-
 /* Primitive variable mnemonics */
 #define RHO             (0)
 #define UU              (1)

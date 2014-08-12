@@ -8,10 +8,6 @@
 #define MINKOWSKI   (0)
 #define KERRSCHILD  (1)
 
-#define M_PI (3.14)
-#define H_SLOPE (0.3)
-#define A_SPIN (0.9)
-
 /* struct geometry
  *
  * Data structure containing all the geometry related data for a particular

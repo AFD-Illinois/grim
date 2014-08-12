@@ -83,8 +83,8 @@ PetscErrorCode computeResidual(SNES snes,
 #pragma ivdep
           for (int var=0; var<DOF; var++)
           {
-            primTile[INDEX_TILE(zone, var)] =
-            primOldLocal[INDEX_LOCAL(zone, var)];
+            primTile[INDEX_TILE(&zone, var)] =
+            primOldLocal[INDEX_LOCAL(&zone, var)];
           }
         }
       } 
@@ -101,8 +101,8 @@ PetscErrorCode computeResidual(SNES snes,
 #pragma ivdep
           for (int var=0; var<DOF; var++)
           {
-            primTile[INDEX_TILE(zone, var)] =
-            primHalfStepLocal[INDEX_LOCAL(zone, var)];
+            primTile[INDEX_TILE(&zone, var)] =
+            primHalfStepLocal[INDEX_LOCAL(&zone, var)];
           }
         }
       }
@@ -121,7 +121,7 @@ PetscErrorCode computeResidual(SNES snes,
         
         setZoneBoundaryFlags(&zone);
   
-        applyTileBoundaryConditions(zone, primOldLocal, primTile);
+        applyTileBoundaryConditions(&zone, primOldLocal, primTile);
       }
 
       /* Sync point */
@@ -150,20 +150,20 @@ PetscErrorCode computeResidual(SNES snes,
         /* Now we need to compute conservedVarsOld using data from
          * primOldLocal. */
         struct fluidElement elem;
-        setFluidElement(&primOldLocal[INDEX_LOCAL(zone, 0)], &geom, &elem);
+        setFluidElement(&primOldLocal[INDEX_LOCAL(&zone, 0)], &geom, &elem);
         computeFluxes(&elem, &geom, 0, conservedVars);
         for (int var=0; var<DOF; var++)
         {
-          conservedVarsOldGlobal[INDEX_GLOBAL(zone, var)] = 
+          conservedVarsOldGlobal[INDEX_GLOBAL(&zone, var)] = 
             conservedVars[var];
 
-          divFluxOldGlobal[INDEX_GLOBAL(zone, var)] = 
-            (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(zone, var)]
-             - fluxX1Tile[INDEX_TILE(zone, var)]
+          divFluxOldGlobal[INDEX_GLOBAL(&zone, var)] = 
+            (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(&zone, var)]
+             - fluxX1Tile[INDEX_TILE(&zone, var)]
             )/zone.dX1
           + 
-            (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(zone, var)]
-             - fluxX2Tile[INDEX_TILE(zone, var)]
+            (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(&zone, var)]
+             - fluxX2Tile[INDEX_TILE(&zone, var)]
             )/zone.dX2;
         }
 
@@ -173,20 +173,20 @@ PetscErrorCode computeResidual(SNES snes,
 
           for (int var=0; var<DOF; var++)
           {
-            sourceTermsOldGlobal[INDEX_GLOBAL(zone, var)] =
+            sourceTermsOldGlobal[INDEX_GLOBAL(&zone, var)] =
               sourceTerms[var];
           }
         }
         else if (ts->computeSourceTermsAtTimeNPlusHalf)
         {
-          setFluidElement(&primHalfStepLocal[INDEX_LOCAL(zone, 0)],
+          setFluidElement(&primHalfStepLocal[INDEX_LOCAL(&zone, 0)],
                           &geom, &elem);
 
           computeSourceTerms(&elem, &geom, XCoords, sourceTerms);
 
           for (int var=0; var<DOF; var++)
           {
-            sourceTermsOldGlobal[INDEX_GLOBAL(zone, var)] =
+            sourceTermsOldGlobal[INDEX_GLOBAL(&zone, var)] =
               sourceTerms[var];
           }
         }
@@ -276,8 +276,8 @@ PetscErrorCode computeResidual(SNES snes,
 #pragma ivdep
       for (int var=0; var<DOF; var++)
       {
-        primTile[INDEX_TILE(zone, var)] =
-        primGlobal[INDEX_GLOBAL(zone, var)];
+        primTile[INDEX_TILE(&zone, var)] =
+        primGlobal[INDEX_GLOBAL(&zone, var)];
       }
     }
 #elif (TIME_STEPPING==IMPLICIT)
@@ -292,8 +292,8 @@ PetscErrorCode computeResidual(SNES snes,
 #pragma ivdep
       for (int var=0; var<DOF; var++)
       {
-        primTile[INDEX_TILE(zone, var)] =
-        primLocal[INDEX_LOCAL(zone, var)];
+        primTile[INDEX_TILE(&zone, var)] =
+        primLocal[INDEX_LOCAL(&zone, var)];
       }
     }
     /* Sync point */
@@ -310,7 +310,7 @@ PetscErrorCode computeResidual(SNES snes,
       
       setZoneBoundaryFlags(&zone);
   
-      applyTileBoundaryConditions(zone, primLocal, primTile);
+      applyTileBoundaryConditions(&zone, primLocal, primTile);
     }
 
     REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
@@ -336,7 +336,7 @@ PetscErrorCode computeResidual(SNES snes,
       getXCoords(&zone, CENTER, XCoords);
       struct geometry geom; setGeometry(XCoords, &geom);
       struct fluidElement elem;
-      setFluidElement(&primTile[INDEX_TILE(zone, 0)], &geom, &elem);
+      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
 
       REAL conservedVars[DOF];
       computeFluxes(&elem, &geom, 0, conservedVars);
@@ -344,29 +344,29 @@ PetscErrorCode computeResidual(SNES snes,
       for (int var=0; var<DOF; var++)
       {
 #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-        residualGlobal[INDEX_GLOBAL(zone, var)] = 
+        residualGlobal[INDEX_GLOBAL(&zone, var)] = 
         (  conservedVars[var]
-         - conservedVarsOldGlobal[INDEX_GLOBAL(zone, var)]
+         - conservedVarsOldGlobal[INDEX_GLOBAL(&zone, var)]
         )/ts->dt
-      + divFluxOldGlobal[INDEX_GLOBAL(zone, var)]
-      - sourceTermsOldGlobal[INDEX_GLOBAL(zone, var)]; 
+      + divFluxOldGlobal[INDEX_GLOBAL(&zone, var)]
+      - sourceTermsOldGlobal[INDEX_GLOBAL(&zone, var)]; 
 
 #elif (TIME_STEPPING==IMPLICIT)
-        residualGlobal[INDEX_GLOBAL(zone, var)] = 
+        residualGlobal[INDEX_GLOBAL(&zone, var)] = 
         (  conservedVars[var]
-         - conservedVarsOldGlobal[INDEX_GLOBAL(zone, var)]
+         - conservedVarsOldGlobal[INDEX_GLOBAL(&zone, var)]
         )/ts->dt
-      + 0.5*(  divFluxOldGlobal[INDEX_GLOBAL(zone, var)]
+      + 0.5*(  divFluxOldGlobal[INDEX_GLOBAL(&zone, var)]
              + 
-               (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(zone, var)]
-                - fluxX1Tile[INDEX_TILE(zone, var)]
+               (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(&zone, var)]
+                - fluxX1Tile[INDEX_TILE(&zone, var)]
                )/zone.dX1
               + 
-               (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(zone, var)]
-                - fluxX2Tile[INDEX_TILE(zone, var)]
+               (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(&zone, var)]
+                - fluxX2Tile[INDEX_TILE(&zone, var)]
                )/zone.dX2;
             )
-      - sourceTermsOldGlobal[INDEX_GLOBAL(zone, var)]; 
+      - sourceTermsOldGlobal[INDEX_GLOBAL(&zone, var)]; 
 #endif
       }
     }
