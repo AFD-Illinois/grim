@@ -1,5 +1,5 @@
-#ifndef REAPER_TIMESTEPPER_H_
-#define REAPER_TIMESTEPPER_H_
+#ifndef GRIM_TIMESTEPPER_H_
+#define GRIM_TIMESTEPPER_H_
 
 #include <petsc.h>
 #include "../inputs.h"
@@ -7,6 +7,7 @@
 #include "../gridzone/gridzone.h"
 #include "../boundary/boundary.h"
 #include "../reconstruct/reconstruct.h"
+#include "../riemannsolver/riemannsolver.h"
 
 #define DT (.01)
 #define START_TIME (0.)
@@ -81,4 +82,4 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                            const int X1Size, const int X2Size,
                            REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
                            REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]);
-#endif /* REAPER_TIMESTEPPER_H_ */
+#endif /* GRIM_TIMESTEPPER_H_ */
