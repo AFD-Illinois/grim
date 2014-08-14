@@ -1,0 +1,101 @@
+# Dump folder
+set(OUTPUT_DIR "\"/home/mc/PhD/grim_petsc/build/\"")
+
+# Time stepping options: EXPLICIT, IMEX or IMPLICIT
+set(TIME_STEPPING "EXPLICIT")
+
+# Domain size. If the problem is 1D then N2 is ignored.
+set(COMPUTE_DIM "2")
+set(N1 "64")
+set(N2 "64")
+
+# The entire global domain is divided into tiles that are small enough to fit
+# into the cache of the compute node or an accelerator. This technique
+# optimizes cache usage and makes explicit use of the deep memory hierarchies
+# which are prevalent in all kinds of processors and accelerators. 
+# 
+# Caution: 1) The tile sizes need to divide the global domain size in each
+#             direction exactly!
+#          2) We want a tile size that is as large as the cache. Too large a
+#             size and the code can fail silently because local memory in the
+#             OpenCL specification is a different amount for different 
+#             machines.
+#             NEED TO PUT A CHECK FOR THIS.
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
+
+# Physics variables
+set(ADIABATIC_INDEX "4./3")
+set(CONDUCTION "OFF")
+
+# Geometry
+set(METRIC "MINKOWSKI")
+
+# Boundary conditions
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "PERIODIC")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
+set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
+set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
+
+# Initial condition parameters 
+# V1, V2, V3 -- 3 velocities
+# A0, R -- magnitude and width of the field loop
+set(V1 "0.2/sqrt(6)")
+set(V2 "0.1/sqrt(6)")
+set(V3 "0.1/sqrt(6)")
+set(A0 "1e-3")
+set(R  "0.2")
+
+# Floor values
+set(RHO_FLOOR "1e-5")
+SET(UU_FLOOR "1e-7")
+
+message("")
+message("#########################")
+message("# Configuration options #")
+message("#########################")
+message("")
+message("Problem          : " ${PROBLEM})
+message("Output dir       : " ${OUTPUT_DIR})
+message("Time stepping    : " ${TIME_STEPPING})
+message("Dimensions       : " ${COMPUTE_DIM})
+message("Resolution       : " ${N1} " x " ${N2})
+message("Tile size        : " ${TILE_SIZE_X1} " x " ${TILE_SIZE_X2})
+message("Metric           : " ${METRIC})
+
+message("")
+message("##############")
+message("# Boundaries #")
+message("##############")
+message("")
+message("left edge          : " ${PHYSICAL_BOUNDARY_LEFT_EDGE})
+message("right edge         : " ${PHYSICAL_BOUNDARY_RIGHT_EDGE})
+message("top edge           : " ${PHYSICAL_BOUNDARY_TOP_EDGE})
+message("bottom edge        : " ${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
+
+message("")
+message("###################")
+message("# Physics options #")
+message("###################")
+message("")
+message("Adiabatic index  : " ${ADIABATIC_INDEX})
+message("Conduction       : " ${CONDUCTION})
+
+message("")
+message("######################")
+message("# Initial conditions #")
+message("######################")
+message("")
+message("V1   : " ${V1})
+message("V2   : " ${V2})
+message("V3   : " ${V3})
+message("A0   : " ${A0})
+message("R    : " ${R})
+
+message("")
+message("##########")
+message("# Floors #")
+message("##########")
+message("")
+message("Density floor            : " ${RHO_FLOOR})
+message("Internal energy floor    : " ${UU_FLOOR})

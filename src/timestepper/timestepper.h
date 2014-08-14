@@ -9,9 +9,6 @@
 #include "../reconstruct/reconstruct.h"
 #include "../riemannsolver/riemannsolver.h"
 
-#define DT (.01)
-#define START_TIME (0.)
-
 #define EXPLICIT (0)
 #define IMPLICIT (1)
 #define IMEX     (2)
