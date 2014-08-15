@@ -48,7 +48,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
                PETSC_DECIDE, PETSC_DECIDE,
                DOF, 0, PETSC_NULL, PETSC_NULL, &ts->dmdaWithoutGhostZones);
 #endif /* Choose dimension */
+
   SNESSetDM(ts->snes, ts->dmdaWithoutGhostZones);
+
 #elif (TIME_STEPPING==IMPLICIT)
   /* If implicit time stepping, then use the DM created earlier which has ghost
    * zones, in SNES */

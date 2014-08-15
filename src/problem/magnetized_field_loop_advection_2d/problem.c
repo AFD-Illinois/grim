@@ -2,10 +2,8 @@
 
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
-
   REAL *primOldGlobal;
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones, ts->primPetscVecOld,
-                  &primOldGlobal);
+  VecGetArray(ts->primPetscVecOld, &primOldGlobal);
 
   LOOP_OVER_TILES(ts->X2Size, ts->X1Size)
   {
@@ -48,8 +46,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
     }
   }
   
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones, ts->primPetscVecOld,
-                      &primOldGlobal);
+  VecRestoreArray(ts->primPetscVecOld, &primOldGlobal);
 }
 
 

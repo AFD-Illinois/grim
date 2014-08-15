@@ -41,8 +41,8 @@
 
 #define INDEX_TILE_MANUAL(iInTile,jInTile,var) (var + DOF*(iInTile + NG) )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i))
-#define INDEX_LOCAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
+#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i + NG))
+#define INDEX_LOCAL_MANUAL(i,j,zone,var) (var + DOF*(i + NG) )
 
 #define INDEX_GLOBAL(zone,var) (var + DOF*((zone)->i))
 #define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
@@ -124,17 +124,19 @@
                                                      )\
                                           )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i + (\
+#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i + NG \
+                                                  + (\
                                                      (zone)->X1Size+2*NG\
-                                                   )\
-                                                  *((zone)->j) \
+                                                    )\
+                                                   *((zone)->j+NG) \
                                          ) \
                               )
 #define INDEX_LOCAL_MANUAL(i,j,zone,var)\
-                              (var + DOF*(i + (\
+                              (var + DOF*(i + NG \
+                                            + (\
                                                (zone)->X1Size+2*NG\
                                               )\
-                                             *(j) \
+                                             *(j + NG) \
                                          ) \
                               )
 

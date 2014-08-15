@@ -47,20 +47,11 @@ PetscErrorCode computeResidual(SNES snes,
     REAL *primOldLocal, *primHalfStepLocal;
     REAL *divFluxOldGlobal, *sourceTermsOldGlobal, *conservedVarsOldGlobal;
     
-    DMDAVecGetArray(ts->dmdaWithGhostZones,
-                    primPetscVecOldLocal, &primOldLocal);
-
-    DMDAVecGetArray(ts->dmdaWithGhostZones,
-                    primPetscVecHalfStepLocal, &primHalfStepLocal);
-    
-    DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                    ts->divFluxPetscVecOld, &divFluxOldGlobal);
-
-    DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                    ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
-                    
-    DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                    ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
+    VecGetArray(primPetscVecOldLocal, &primOldLocal);
+    VecGetArray(primPetscVecHalfStepLocal, &primHalfStepLocal);
+    VecGetArray(ts->divFluxPetscVecOld, &divFluxOldGlobal);
+    VecGetArray(ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal);           
+    VecGetArray(ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
 
     /* Loop through tiles. We use tiles to maximize cache usage.*/
     LOOP_OVER_TILES(X1Size, X2Size)
@@ -195,23 +186,13 @@ PetscErrorCode computeResidual(SNES snes,
 
     } /* End of LOOP_OVER_TILES */
 
-    DMDAVecRestoreArray(ts->dmdaWithGhostZones,
-                        primPetscVecOldLocal, &primOldLocal);
-
-    DMDAVecRestoreArray(ts->dmdaWithGhostZones,
-                        primPetscVecHalfStepLocal, &primHalfStepLocal);
-    
-    DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                        ts->divFluxPetscVecOld, &divFluxOldGlobal);
-
-    DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                        ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
-                    
-    DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                        ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
+    VecRestoreArray(primPetscVecOldLocal, &primOldLocal);
+    VecRestoreArray(primPetscVecHalfStepLocal, &primHalfStepLocal);
+    VecRestoreArray(ts->divFluxPetscVecOld, &divFluxOldGlobal);
+    VecRestoreArray(ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
+    VecRestoreArray(ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
 
     DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecOldLocal);
-
     DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecHalfStepLocal);
 
     /* All old sources and divFluxes have now been computed */
@@ -222,23 +203,15 @@ PetscErrorCode computeResidual(SNES snes,
   REAL *residualGlobal;
   REAL *divFluxOldGlobal, *sourceTermsOldGlobal, *conservedVarsOldGlobal;
 
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                  residualPetscVec, &residualGlobal);
-
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                  ts->divFluxPetscVecOld, &divFluxOldGlobal);
-
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                  ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
-
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                  ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
+  VecGetArray(residualPetscVec, &residualGlobal);
+  VecGetArray(ts->divFluxPetscVecOld, &divFluxOldGlobal);
+  VecGetArray(ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
+  VecGetArray(ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
 
 #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
   REAL *primGlobal;
 
-  DMDAVecGetArray(ts->dmdaWithoutGhostZones,
-                  primPetscVec, &primGlobal);
+  VecGetArray(primPetscVec, &primGlobal);
 
 #elif (TIME_STEPPING==IMPLICIT)
   Vec primPetscVecLocal;
@@ -256,8 +229,7 @@ PetscErrorCode computeResidual(SNES snes,
 
   REAL *primLocal;
   
-  DMDAVecGetArray(ts->dmdaWithGhostZones,
-                  primPetscVecOldLocal, &primOldLocal);
+  VecGetArray(primPetscVecOldLocal, &primOldLocal);
 #endif
 
   LOOP_OVER_TILES(X1Size, X2Size)
@@ -374,27 +346,18 @@ PetscErrorCode computeResidual(SNES snes,
   }
 
 #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                      primPetscVec, &primGlobal);
+  VecRestoreArray(primPetscVec, &primGlobal);
 
 #elif (TIME_STEPPING==IMPLICIT)
   DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
 
-  DMDAVecRestoreArray(ts->dmdaWithGhostZones,
-                      primPetscVecOldLocal, &primOldLocal);
+  VecRestoreArray(primPetscVecOldLocal, &primOldLocal);
 #endif
 
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                      residualPetscVec, &residualGlobal);
-
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                      ts->divFluxPetscVecOld, &divFluxOldGlobal);
-
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                      ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
-
-  DMDAVecRestoreArray(ts->dmdaWithoutGhostZones,
-                      ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
+  VecRestoreArray(residualPetscVec, &residualGlobal);
+  VecRestoreArray(ts->divFluxPetscVecOld, &divFluxOldGlobal);
+  VecRestoreArray(ts->sourceTermsPetscVecOld, &sourceTermsOldGlobal); 
+  VecRestoreArray(ts->conservedVarsPetscVecOld, &conservedVarsOldGlobal); 
 
   return(0);
 }

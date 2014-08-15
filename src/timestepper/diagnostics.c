@@ -28,9 +28,9 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     DMCreateGlobalVector(connectionDMDA, &connectionPetscVec);
 
     REAL *gCovGlobal, *gConGlobal, *connectionGlobal;
-    DMDAVecGetArray(metricDMDA, gCovPetscVec, &gCovGlobal);
-    DMDAVecGetArray(metricDMDA, gConPetscVec, &gConGlobal);
-    DMDAVecGetArray(metricDMDA, connectionPetscVec, &connectionGlobal);
+    VecGetArray(gCovPetscVec, &gCovGlobal);
+    VecGetArray(gConPetscVec, &gConGlobal);
+    VecGetArray(connectionPetscVec, &connectionGlobal);
 
     LOOP_OVER_TILES(ts->X2Size, ts->X1Size)
     {
@@ -74,9 +74,9 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
       }
     }
 
-    DMDAVecRestoreArray(metricDMDA, gCovPetscVec, &gCovGlobal);
-    DMDAVecRestoreArray(metricDMDA, gConPetscVec, &gConGlobal);
-    DMDAVecRestoreArray(metricDMDA, connectionPetscVec, &connectionGlobal);
+    VecRestoreArray(gCovPetscVec, &gCovGlobal);
+    VecRestoreArray(gConPetscVec, &gConGlobal);
+    VecRestoreArray(connectionPetscVec, &connectionGlobal);
 
     char gCovFileName[50], gConFileName[50], connectionFileName[50];
     sprintf(gCovFileName, "gcov.h5");
