@@ -15,7 +15,7 @@ project(grim)
 
 
 # ------------------------------USER OPTIONS----------------------------------#
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -g")
 
 # Set custom install folders here
 set(PETSC_DIR "/home/mc/Downloads/petsc_optimized/")

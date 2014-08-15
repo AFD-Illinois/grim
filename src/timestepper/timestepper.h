@@ -2,6 +2,7 @@
 #define GRIM_TIMESTEPPER_H_
 
 #include <petsc.h>
+#include <petscviewerhdf5.h>
 #include "../inputs.h"
 #include "../geometry/geometry.h"
 #include "../gridzone/gridzone.h"
@@ -20,8 +21,8 @@ for (int jTile=0; jTile<(X2Size)/TILE_SIZE_X2; jTile++) \
 #if (COMPUTE_DIM==2)
 
 #define LOOP_INSIDE_TILE(iStart, iEnd, jStart, jEnd) \
-for (int jInTile=jStart; jInTile<jEnd; jInTile++) \
-  for (int iInTile=iStart; iInTile<iEnd; iInTile++)
+for (int jInTile=(jStart); jInTile<(jEnd); jInTile++) \
+  for (int iInTile=(iStart); iInTile<(iEnd); iInTile++)
 
 #elif (COMPUTE_DIM==1)
 
@@ -33,8 +34,9 @@ for (int iInTile=iStart, jInTile=0; iInTile<iEnd; iInTile++)
 
 struct timeStepper
 {
-  REAL t, dt;
-  
+  REAL t, dt, tDump;
+  int timeStepCounter;
+
   SNES snes;
   DM dmdaWithGhostZones;
   DM dmdaWithoutGhostZones;
@@ -60,11 +62,11 @@ struct timeStepper
 
 /* User functions */
 
-void timeStepperInit(struct timeStepper *ts);
+void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1]);
 
-void timeStep(struct timeStepper *ts);
+void timeStep(struct timeStepper ts[ARRAY_ARGS 1]);
 
-void timeStepperDestroy(struct timeStepper *ts);
+void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1]);
 
 /* Internal functions */
 
@@ -79,4 +81,7 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                            const int X1Size, const int X2Size,
                            REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
                            REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]);
+
+void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
+
 #endif /* GRIM_TIMESTEPPER_H_ */

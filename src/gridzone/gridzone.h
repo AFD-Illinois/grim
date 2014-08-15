@@ -47,6 +47,8 @@
 #define INDEX_GLOBAL(zone,var) (var + DOF*((zone)->i))
 #define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
 
+#define INDEX_METRIC_GLOBAL(zone,mu,nu) (mu + NDIM*(nu + NDIM*((zone)->i)))
+#define INDEX_GAMMA_GLOBAL(zone,eta,mu,nu) (eta + NDIM*(mu + NDIM*(nu+NDIM*((zone)->i))))
 
 #elif (COMPUTE_DIM==2)
 
@@ -138,6 +140,19 @@
 
 #define INDEX_GLOBAL(zone,var) (var + DOF*((zone)->i + (zone)->X1Size*((zone)->j)))
 #define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i + (zone)->X1Size*(j)))
+
+#define INDEX_METRIC_GLOBAL(zone,mu,nu) (mu + NDIM*(nu + NDIM*(\
+                                      (zone)->i + (zone)->X1Size*((zone)->j) \
+                                                              ) \
+                                                   ) \
+                                        )
+
+#define INDEX_GAMMA_GLOBAL(zone,eta,mu,nu) (eta + NDIM*(mu + NDIM*(nu + NDIM*(\
+                                      (zone)->i + (zone)->X1Size*((zone)->j) \
+                                                                             )\
+                                                                  ) \
+                                                       )\
+                                           )
 
 #endif
 

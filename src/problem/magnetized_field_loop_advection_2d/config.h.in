@@ -8,7 +8,12 @@
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
-#cmakedefine    TIME_STEPPING    (${TIME_STEPPING})
+#cmakedefine    DUMP_FILE_PREFIX ${DUMP_FILE_PREFIX}
+#cmakedefine    TIME_STEPPING    ${TIME_STEPPING}
+#cmakedefine    DT              (${DT})
+#cmakedefine    DT_DUMP         (${DT_DUMP})
+#cmakedefine    START_TIME      (${START_TIME})
+#cmakedefine    COURANT         (${COURANT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
 
@@ -34,6 +39,13 @@
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})
+#cmakedefine    EPS                 (${EPS})
+
+/* Domain */
+#cmakedefine    X1_A  (${X1_A})
+#cmakedefine    X1_B  (${X1_B})
+#cmakedefine    X2_A  (${X2_A})
+#cmakedefine    X2_B  (${X2_B})
 
 /* Boundary conditions */
 #cmakedefine    PHYSICAL_BOUNDARY_LEFT_EDGE   (${PHYSICAL_BOUNDARY_LEFT_EDGE})
