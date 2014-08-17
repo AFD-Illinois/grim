@@ -27,56 +27,61 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     DMCreateGlobalVector(metricDMDA, &gConPetscVec);
     DMCreateGlobalVector(connectionDMDA, &connectionPetscVec);
 
-    REAL *gCovGlobal, *gConGlobal, *connectionGlobal;
-    VecGetArray(gCovPetscVec, &gCovGlobal);
-    VecGetArray(gConPetscVec, &gConGlobal);
-    VecGetArray(connectionPetscVec, &connectionGlobal);
+    ARRAY(gCovGlobal);
+    ARRAY(gConGlobal);
+    ARRAY(connectionGlobal);
+    DMDAVecGetArrayDOF(metricDMDA, gCovPetscVec, &gCovGlobal);
+    DMDAVecGetArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
+    DMDAVecGetArrayDOF(connectionDMDA, connectionPetscVec, &connectionGlobal);
 
-    LOOP_OVER_TILES(ts->X2Size, ts->X1Size)
-    {
-      LOOP_INSIDE_TILE(0, TILE_SIZE_X2, 0, TILE_SIZE_X1)
-      {
-        
-        struct gridZone zone;
-        setGridZone(iTile, jTile,
-                    iInTile, jInTile,
-                    ts->X1Start, ts->X2Start,
-                    ts->X1Size, ts->X2Size,
-                    &zone);
+//    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+//    {
+//      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+//      {
+//        
+//        struct gridZone zone;
+//        setGridZone(iTile, jTile,
+//                    iInTile, jInTile,
+//                    ts->X1Start, ts->X2Start,
+//                    ts->X1Size, ts->X2Size,
+//                    &zone);
+//
+//        REAL XCoords[NDIM];
+//        getXCoords(&zone, CENTER, XCoords);
+//
+//        struct geometry geom;
+//        setGeometry(XCoords, &geom);
+//
+//        for (int mu=0; mu<NDIM; mu++)
+//        {
+//          for (int nu=0; nu<NDIM; nu++)
+//          {
+//            gCovGlobal[] = geom.gCov[mu][nu];
+//            gCovGlobal[] = geom.gCov[mu][nu];
+//          }
+//        }
+//
+//        for (int eta=0; eta<NDIM; eta++)
+//        {
+//          for (int mu=0; mu<NDIM; mu++)
+//          {
+//            for (int nu=0; nu<NDIM; nu++)
+//            {
+//              connectionGlobal[] =
+//                gammaDownDownDown(eta, mu, nu, XCoords);
+//            }
+//          }
+//        }
+//
+//      }
+//    }
 
-        REAL XCoords[NDIM];
-        getXCoords(&zone, CENTER, XCoords);
-
-        struct geometry geom;
-        setGeometry(XCoords, &geom);
-
-        for (int mu=0; mu<NDIM; mu++)
-        {
-          for (int nu=0; nu<NDIM; nu++)
-          {
-            gCovGlobal[INDEX_METRIC_GLOBAL(&zone, mu, nu)] = geom.gCov[mu][nu];
-            gCovGlobal[INDEX_METRIC_GLOBAL(&zone, mu, nu)] = geom.gCov[mu][nu];
-          }
-        }
-
-        for (int eta=0; eta<NDIM; eta++)
-        {
-          for (int mu=0; mu<NDIM; mu++)
-          {
-            for (int nu=0; nu<NDIM; nu++)
-            {
-              connectionGlobal[INDEX_GAMMA_GLOBAL(&zone, eta, mu, nu)] =
-                gammaDownDownDown(eta, mu, nu, XCoords);
-            }
-          }
-        }
-
-      }
-    }
-
-    VecRestoreArray(gCovPetscVec, &gCovGlobal);
-    VecRestoreArray(gConPetscVec, &gConGlobal);
-    VecRestoreArray(connectionPetscVec, &connectionGlobal);
+    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, gCovPetscVec,
+                           &gCovGlobal);
+    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, gConPetscVec,
+                           &gConGlobal);
+    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, connectionPetscVec,
+                           &connectionGlobal);
 
     char gCovFileName[50], gConFileName[50], connectionFileName[50];
     sprintf(gCovFileName, "gcov.h5");

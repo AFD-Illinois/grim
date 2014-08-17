@@ -14,24 +14,6 @@
 #define IMPLICIT (1)
 #define IMEX     (2)
 
-#define LOOP_OVER_TILES(X1Size, X2Size) \
-for (int jTile=0; jTile<(X2Size)/TILE_SIZE_X2; jTile++) \
-  for (int iTile=0; iTile<(X1Size)/TILE_SIZE_X1; iTile++)
-
-#if (COMPUTE_DIM==2)
-
-#define LOOP_INSIDE_TILE(iStart, iEnd, jStart, jEnd) \
-for (int jInTile=(jStart); jInTile<(jEnd); jInTile++) \
-  for (int iInTile=(iStart); iInTile<(iEnd); iInTile++)
-
-#elif (COMPUTE_DIM==1)
-
-#define LOOP_INSIDE_TILE(iStart, iEnd, jStart, jEnd) \
-for (int iInTile=iStart, jInTile=0; iInTile<iEnd; iInTile++)
-
-#endif /* LOOP_INSIDE_TILE for different COMPUTE_DIM */
-
-
 struct timeStepper
 {
   REAL t, dt, tDump;
@@ -59,6 +41,10 @@ struct timeStepper
   int X2Start, X2Size;
   int X3Start, X3Size;
 };
+
+/* The problem library requires timeStepper struct, so put this include after
+ * the definition of the struct */
+#include "../problem/problem.h"
 
 /* User functions */
 

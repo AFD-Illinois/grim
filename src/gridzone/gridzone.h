@@ -41,14 +41,8 @@
 
 #define INDEX_TILE_MANUAL(iInTile,jInTile,var) (var + DOF*(iInTile + NG) )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i + NG))
-#define INDEX_LOCAL_MANUAL(i,j,zone,var) (var + DOF*(i + NG) )
-
-#define INDEX_GLOBAL(zone,var) (var + DOF*((zone)->i))
-#define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i) )
-
-#define INDEX_METRIC_GLOBAL(zone,mu,nu) (mu + NDIM*(nu + NDIM*((zone)->i)))
-#define INDEX_GAMMA_GLOBAL(zone,eta,mu,nu) (eta + NDIM*(mu + NDIM*(nu+NDIM*((zone)->i))))
+#define INDEX_PETSC(ptr,zone,var) (ptr[(zone)->i][var])
+#define INDEX_PETSC_MANUAL(ptr,i,zone,var) (ptr[i][var])
 
 #elif (COMPUTE_DIM==2)
 
@@ -124,39 +118,30 @@
                                                      )\
                                           )
 
-#define INDEX_LOCAL(zone,var) (var + DOF*((zone)->i + NG \
-                                                  + (\
-                                                     (zone)->X1Size+2*NG\
-                                                    )\
-                                                   *((zone)->j+NG) \
-                                         ) \
-                              )
-#define INDEX_LOCAL_MANUAL(i,j,zone,var)\
-                              (var + DOF*(i + NG \
-                                            + (\
-                                               (zone)->X1Size+2*NG\
-                                              )\
-                                             *(j + NG) \
-                                         ) \
-                              )
-
-#define INDEX_GLOBAL(zone,var) (var + DOF*((zone)->i + (zone)->X1Size*((zone)->j)))
-#define INDEX_GLOBAL_MANUAL(i,j,zone,var) (var + DOF*(i + (zone)->X1Size*(j)))
-
-#define INDEX_METRIC_GLOBAL(zone,mu,nu) (mu + NDIM*(nu + NDIM*(\
-                                      (zone)->i + (zone)->X1Size*((zone)->j) \
-                                                              ) \
-                                                   ) \
-                                        )
-
-#define INDEX_GAMMA_GLOBAL(zone,eta,mu,nu) (eta + NDIM*(mu + NDIM*(nu + NDIM*(\
-                                      (zone)->i + (zone)->X1Size*((zone)->j) \
-                                                                             )\
-                                                                  ) \
-                                                       )\
-                                           )
+#define INDEX_PETSC(ptr,zone,var) (ptr[(zone)->j][(zone)->i][var])
+#define INDEX_PETSC_MANUAL(ptr,i,j,var) (ptr[j][i][var])
 
 #endif
+
+#define LOOP_OVER_TILES(X1Size, X2Size) \
+  for (int jTile=0; jTile<(X2Size)/TILE_SIZE_X2; jTile++) \
+    for (int iTile=0; iTile<(X1Size)/TILE_SIZE_X1; iTile++)
+
+#if (COMPUTE_DIM==2)
+
+  #define LOOP_INSIDE_TILE(iStart, iEnd, jStart, jEnd) \
+    for (int jInTile=(jStart); jInTile<(jEnd); jInTile++) \
+      for (int iInTile=(iStart); iInTile<(iEnd); iInTile++)
+
+  #define ARRAY(ptr) REAL ***ptr
+
+#elif (COMPUTE_DIM==1)
+  #define LOOP_INSIDE_TILE(iStart, iEnd, jStart, jEnd) \
+    for (int iInTile=(iStart), jInTile=0; iInTile<(iEnd); iInTile++)
+
+  #define ARRAY(ptr) REAL **ptr
+
+#endif /* LOOP_INSIDE_TILE for different COMPUTE_DIM */
 
 
 struct gridZone

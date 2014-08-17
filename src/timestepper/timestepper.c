@@ -171,62 +171,66 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
  */
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
-#if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
-  /* First go from t=n to t=n+1/2 */
-  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
-  ts->computeDivOfFluxAtTimeN = 1;
-  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
-  ts->computeSourceTermsAtTimeN = 1;
-  ts->computeSourceTermsAtTimeNPlusHalf = 0;
+  PetscPrintf(PETSC_COMM_WORLD, "Step %d, time = %f\n", 
+              ts->timeStepCounter, ts->t);
 
-  REAL dt = ts->dt;
-  ts->dt = dt/2.;
+  #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
-  VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
-  SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
+    /* First go from t=n to t=n+1/2 */
+    ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+    ts->computeDivOfFluxAtTimeN = 1;
+    ts->computeDivOfFluxAtTimeNPlusHalf = 0;
+    ts->computeSourceTermsAtTimeN = 1;
+    ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
-  /* Current state:
-   * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
-   * ts->primPetscVecOld has the primitive variables at t = n
-   */
+    REAL dt = ts->dt;
+    ts->dt = dt/2.;
 
-  /* Now go from t=n to t=n+1 using
-   * 1) EXPLICIT time stepping:
-   * fluxes and sources computed using primitive variables at t=n+1/2.
-   * 
-   * 2) IMEX time stepping
-   * fluxes computed using primitive variables at t=n+1/2 whereas sources
-   * computed using 0.5*(Sources^n + Sources^(n-1))*/
-  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
-  ts->computeDivOfFluxAtTimeN = 0;
-  ts->computeDivOfFluxAtTimeNPlusHalf = 1;
-#if (TIME_STEPPING==EXPLICIT)
-  ts->computeSourceTermsAtTimeN = 0;
-  ts->computeSourceTermsAtTimeNPlusHalf = 1;
-#elif (TIME_STEPPING==IMEX)
-  ts->computeSourceTermsAtTimeN = 0;
-  ts->computeSourceTermsAtTimeNPlusHalf = 0;
-#endif
+    VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
+    SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
 
-  ts->dt = dt;
+    /* Current state:
+    * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
+    * ts->primPetscVecOld has the primitive variables at t = n
+    */
 
-  VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
-  
-  SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    /* Now go from t=n to t=n+1 using
+    * 1) EXPLICIT time stepping:
+    * fluxes and sources computed using primitive variables at t=n+1/2.
+    * 
+    * 2) IMEX time stepping
+    * fluxes computed using primitive variables at t=n+1/2 whereas sources
+    * computed using 0.5*(Sources^n + Sources^(n-1))*/
+    ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+    ts->computeDivOfFluxAtTimeN = 0;
+    ts->computeDivOfFluxAtTimeNPlusHalf = 1;
 
-#elif (TIME_STEPPING==IMPLICIT)
+    #if (TIME_STEPPING==EXPLICIT)
+      ts->computeSourceTermsAtTimeN = 0;
+      ts->computeSourceTermsAtTimeNPlusHalf = 1;
+    #elif (TIME_STEPPING==IMEX)
+      ts->computeSourceTermsAtTimeN = 0;
+      ts->computeSourceTermsAtTimeNPlusHalf = 0;
+    #endif
 
-  ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
-  ts->computeDivOfFluxAtTimeN = 1;
-  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
-  ts->computeSourceTermsAtTimeN = 1;
-  ts->computeSourceTermsAtTimeNPlusHalf = 0;
+    ts->dt = dt;
 
-  VecCopy(ts->primPetscVecOld, ts->primPetscVec);
-  SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
+    SNESSolve(ts->snes, NULL, ts->primPetscVec);
 
-#endif
+  #elif (TIME_STEPPING==IMPLICIT)
+
+    ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+    ts->computeDivOfFluxAtTimeN = 1;
+    ts->computeDivOfFluxAtTimeNPlusHalf = 0;
+    ts->computeSourceTermsAtTimeN = 1;
+    ts->computeSourceTermsAtTimeNPlusHalf = 0;
+
+    VecCopy(ts->primPetscVecOld, ts->primPetscVec);
+    SNESSolve(ts->snes, NULL, ts->primPetscVec);
+
+  #endif
 
   ts->t = ts->t + ts->dt;
 

@@ -5,6 +5,7 @@
 #include "../inputs.h"
 #include "../timestepper/timestepper.h"
 #include "../gridzone/gridzone.h"
+#include "../geometry/geometry.h"
 #include "../boundary/boundary.h"
 #include "../physics/physics.h"
 

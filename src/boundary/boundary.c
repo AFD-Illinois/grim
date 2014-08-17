@@ -74,7 +74,7 @@ void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1])
 
 
 void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
-                                 const REAL primLocal[ARRAY_ARGS TILE_SIZE],
+                                 ARRAY(primLocal),
                                  REAL tile[ARRAY_ARGS TILE_SIZE])
 {
 #if (COMPUTE_DIM==1 || COMPUTE_DIM==2)
@@ -87,7 +87,7 @@ void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
       {
         /* Get data from primLocal */
         tile[INDEX_TILE_MANUAL(iGhost, zone->jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i+iGhost, zone->j, zone, var)];
+        INDEX_PETSC_MANUAL(primLocal, zone->i+iGhost, zone->j, var);
       }
     }
   }
@@ -124,7 +124,7 @@ void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
       for (int iGhost=0; iGhost<NG; iGhost++)
       {
         tile[INDEX_TILE_MANUAL(TILE_SIZE_X1+iGhost, zone->jInTile, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i+1+iGhost, zone->j, zone, var)];
+        INDEX_PETSC_MANUAL(primLocal, zone->i+1+iGhost, zone->j, var);
       }
     }
   }
@@ -162,7 +162,7 @@ void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
       for (int jGhost=-NG; jGhost<0; jGhost++)
       {
         tile[INDEX_TILE_MANUAL(zone->iInTile, jGhost, var)] = 
-        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+jGhost, zone, var)];
+        INDEX_PETSC_MANUAL(primLocal, zone->i, zone->j+jGhost, var);
       }
     }
   }
@@ -198,7 +198,7 @@ void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
       for (int jGhost=0; jGhost<NG; jGhost++)
       {
         tile[INDEX_TILE_MANUAL(zone->iInTile, TILE_SIZE_X2+jGhost, var)] =
-        primLocal[INDEX_LOCAL_MANUAL(zone->i, zone->j+1+jGhost, zone, var)];
+        INDEX_PETSC_MANUAL(primLocal, zone->i, zone->j+1+jGhost, var);
       }
     }
   }

@@ -7,8 +7,9 @@ int main(int argc, char **argv)
   struct timeStepper ts;
   timeStepperInit(&ts);
   
-  timeStepperDestroy(&ts);
+  timeStep(&ts);
 
+  timeStepperDestroy(&ts);
   PetscFinalize();  
   return(0);
 }

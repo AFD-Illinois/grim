@@ -13,8 +13,8 @@ set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "16")
-set(N2 "16")
+set(N1 "64")
+set(N2 "64")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
