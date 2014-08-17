@@ -344,7 +344,7 @@ PetscErrorCode computeResidual(SNES snes,
                  + 
                   (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(&zone, var)]
                    - fluxX2Tile[INDEX_TILE(&zone, var)]
-                  )/zone.dX2;
+                  )/zone.dX2
                 )
           - INDEX_PETSC(sourceTermsOldGlobal, &zone, var); 
         #endif

@@ -5,7 +5,7 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMPLICIT")
 set(DT "0.01")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
@@ -13,8 +13,8 @@ set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "64")
-set(N2 "64")
+set(N1 "70")
+set(N2 "70")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -28,8 +28,8 @@ set(N2 "64")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "8")
-set(TILE_SIZE_X2 "8")
+set(TILE_SIZE_X1 "10")
+set(TILE_SIZE_X2 "10")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
