@@ -1,5 +1,5 @@
 # Dump folder
-set(OUTPUT_DIR "\"/home/mc/PhD/grim_petsc/build/\"")
+set(OUTPUT_DIR "\"/home/mc/data/mc/PhD/grim/build/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
