@@ -321,9 +321,15 @@ PetscErrorCode computeResidual(SNES snes,
       REAL conservedVars[DOF];
       computeFluxes(&elem, &geom, 0, conservedVars);
 
+      #if (TIME_STEPPING==IMEX)
+        REAL sourceTerms[DOF];
+        computeSourceTerms(&elem, &geom, XCoords, sourceTerms);
+      #endif
+
       for (int var=0; var<DOF; var++)
       {
-        #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
+        #if (TIME_STEPPING==EXPLICIT)
+
           INDEX_PETSC(residualGlobal, &zone, var) = 
           (  conservedVars[var]
            - INDEX_PETSC(conservedVarsOldGlobal, &zone, var)
@@ -331,7 +337,19 @@ PetscErrorCode computeResidual(SNES snes,
           + INDEX_PETSC(divFluxOldGlobal, &zone, var)
           - INDEX_PETSC(sourceTermsOldGlobal, &zone, var); 
 
+        #elif (TIME_STEPPING==IMEX)
+
+          INDEX_PETSC(residualGlobal, &zone, var) = 
+          (  conservedVars[var]
+           - INDEX_PETSC(conservedVarsOldGlobal, &zone, var)
+          )/ts->dt
+          + INDEX_PETSC(divFluxOldGlobal, &zone, var)
+          - 0.5*(  INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
+                 + sourceTerms[var]
+                ); 
+
         #elif (TIME_STEPPING==IMPLICIT)
+
           INDEX_PETSC(residualGlobal, &zone, var) = 
           (  conservedVars[var]
           - INDEX_PETSC(conservedVarsOldGlobal, &zone, var)

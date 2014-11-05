@@ -129,7 +129,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     PetscPrintf(PETSC_COMM_WORLD, "\n");
     
     char dumpFileName[50];
-    sprintf(dumpFileName, "%s%04d.h5", DUMP_FILE_PREFIX, ts->timeStepCounter);
+    sprintf(dumpFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->timeStepCounter);
 
     PetscViewer viewer;
     PetscViewerHDF5Open(PETSC_COMM_WORLD, dumpFileName,

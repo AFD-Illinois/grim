@@ -27,23 +27,49 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                      pow((XCoords[2] - X2Center), 2.)
                    );
 
-      INDEX_PETSC(primOldGlobal, &zone, RHO) = 1.;
-      INDEX_PETSC(primOldGlobal, &zone, UU) = 1./(ADIABATIC_INDEX - 1.);
+//      INDEX_PETSC(primOldGlobal, &zone, RHO) = 1.;
+//      INDEX_PETSC(primOldGlobal, &zone, UU) = 1./(ADIABATIC_INDEX - 1.);
+//
+//      REAL gamma = 1./sqrt(1. - V1*V1 - V2*V2 - V3*V3);
+//
+//      INDEX_PETSC(primOldGlobal, &zone, U1) = gamma*V1;
+//      INDEX_PETSC(primOldGlobal, &zone, U2) = gamma*V2;
+//      INDEX_PETSC(primOldGlobal, &zone, U3) = gamma*V3;
+//
+//      INDEX_PETSC(primOldGlobal, &zone, B1) =
+//        -2*A0*XCoords[2]/(R*R)*exp(-r*r/(R*R));
+//
+//      INDEX_PETSC(primOldGlobal, &zone, B2) =
+//        -2*A0*XCoords[1]/(R*R)*exp(-r*r/(R*R));
+//
+//      INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
 
-      REAL gamma = 1./sqrt(1. - V1*V1 - V2*V2 - V3*V3);
+//      INDEX_PETSC(primOldGlobal, &zone, RHO) = 1 + exp(-r*r/0.01);
+//      INDEX_PETSC(primOldGlobal, &zone, UU) = 1./(ADIABATIC_INDEX - 1.);
+//      INDEX_PETSC(primOldGlobal, &zone, U1) = 4.95;
+//      INDEX_PETSC(primOldGlobal, &zone, U2) = 4.95;
+//      INDEX_PETSC(primOldGlobal, &zone, U3) = 0.;
+//      INDEX_PETSC(primOldGlobal, &zone, B1) = 0.;
+//      INDEX_PETSC(primOldGlobal, &zone, B2) = 0.;
+//      INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
 
-      INDEX_PETSC(primOldGlobal, &zone, U1) = gamma*V1;
-      INDEX_PETSC(primOldGlobal, &zone, U2) = gamma*V2;
-      INDEX_PETSC(primOldGlobal, &zone, U3) = gamma*V3;
+      REAL M_PI = 3.14159265359;
+      INDEX_PETSC(primOldGlobal, &zone, RHO) = 25./(36.*M_PI);
+      INDEX_PETSC(primOldGlobal, &zone, UU) = 5./(12.*M_PI*(ADIABATIC_INDEX - 1.));
 
-      INDEX_PETSC(primOldGlobal, &zone, B1) =
-        -2*A0*XCoords[2]/(R*R)*exp(-r*r/(R*R));
+      REAL v1 = -0.5*sin(2*M_PI*XCoords[2]);
+      REAL v2 = 0.5*sin(2*M_PI*XCoords[1]);
+      REAL v3 = 0.;
+      REAL gamma = 1./sqrt(1 - v1*v1 - v2*v2 - v3*v3);
 
+      INDEX_PETSC(primOldGlobal, &zone, U1) = gamma*v1;
+      INDEX_PETSC(primOldGlobal, &zone, U2) = gamma*v2;
+      INDEX_PETSC(primOldGlobal, &zone, U3) = gamma*v3;
+      INDEX_PETSC(primOldGlobal, &zone, B1) = 
+        -1./sqrt(4*M_PI)*sin(2*M_PI*XCoords[2]);
       INDEX_PETSC(primOldGlobal, &zone, B2) =
-        -2*A0*XCoords[1]/(R*R)*exp(-r*r/(R*R));
-
+        1./sqrt(4*M_PI)*sin(4*M_PI*XCoords[1]);
       INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
-
     }
   }
   

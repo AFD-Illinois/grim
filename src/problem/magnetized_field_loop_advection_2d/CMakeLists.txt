@@ -6,7 +6,7 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.001")
+set(DT "0.002")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
 set(FINAL_TIME "20.")
