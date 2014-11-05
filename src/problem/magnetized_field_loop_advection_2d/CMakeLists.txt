@@ -6,15 +6,16 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.01")
-set(DT_DUMP "1.")
+set(DT "0.001")
+set(DT_DUMP ".1")
 set(START_TIME "0.")
+set(FINAL_TIME "20.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "70")
-set(N2 "70")
+set(N1 "280")
+set(N2 "280")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique

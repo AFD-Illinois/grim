@@ -155,50 +155,50 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &geom, 2, &fluxX2Tile[INDEX_TILE(&zone, 0)]);
   }
 
-//  /* Flux CT */
-//  REAL emf[TILE_SIZE];
-//  LOOP_INSIDE_TILE(0, TILE_SIZE_X1+2, 0, TILE_SIZE_X2+2)
-//  {
-//    struct gridZone zone;
-//    setGridZone(iTile, jTile,
-//                iInTile, jInTile,
-//                X1Start, X2Start, 
-//                X1Size, X2Size, 
-//                &zone);
-//
-//    emf[INDEX_TILE(&zone, 0)] = 
-//                  0.25*(  fluxX1Tile[INDEX_TILE(&zone, B2)]
-//                        + fluxX1Tile[INDEX_TILE_MINUS_ONE_X2(&zone, B2)]
-//                        - fluxX2Tile[INDEX_TILE(&zone, B1)]
-//                        - fluxX2Tile[INDEX_TILE_MINUS_ONE_X1(&zone, B1)]
-//                       );
-//          
-//  }
-//
-//  LOOP_INSIDE_TILE(0, TILE_SIZE_X1+1, 0, TILE_SIZE_X2+1)
-//  {
-//    struct gridZone zone;
-//    setGridZone(iTile, jTile,
-//                iInTile, jInTile,
-//                X1Start, X2Start, 
-//                X1Size, X2Size, 
-//                &zone);
-//
-//    fluxX1Tile[INDEX_TILE(&zone, B1)] = 0.;
-//
-//    fluxX1Tile[INDEX_TILE(&zone, B2)] = 
-//                                  0.5*(  emf[INDEX_TILE(&zone, 0)]
-//                                       + emf[INDEX_TILE_PLUS_ONE_X2(&zone, 0)]
-//                                      );
-//
-//    fluxX2Tile[INDEX_TILE(&zone, B1)] = 
-//                                 -0.5*(  emf[INDEX_TILE(&zone, 0)]
-//                                       + emf[INDEX_TILE_PLUS_ONE_X1(&zone, 0)]
-//                                      );
-//
-//    fluxX2Tile[INDEX_TILE(&zone, B2)] = 0.;
-//
-//  }                                         
+  /* Flux CT */
+  REAL emf[TILE_SIZE];
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1+2, 0, TILE_SIZE_X2+2)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start, 
+                X1Size, X2Size, 
+                &zone);
+
+    emf[INDEX_TILE(&zone, 0)] = 
+                  0.25*(  fluxX1Tile[INDEX_TILE(&zone, B2)]
+                        + fluxX1Tile[INDEX_TILE_MINUS_ONE_X2(&zone, B2)]
+                        - fluxX2Tile[INDEX_TILE(&zone, B1)]
+                        - fluxX2Tile[INDEX_TILE_MINUS_ONE_X1(&zone, B1)]
+                       );
+          
+  }
+
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1+1, 0, TILE_SIZE_X2+1)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start, 
+                X1Size, X2Size, 
+                &zone);
+
+    fluxX1Tile[INDEX_TILE(&zone, B1)] = 0.;
+
+    fluxX1Tile[INDEX_TILE(&zone, B2)] = 
+                                  0.5*(  emf[INDEX_TILE(&zone, 0)]
+                                       + emf[INDEX_TILE_PLUS_ONE_X2(&zone, 0)]
+                                      );
+
+    fluxX2Tile[INDEX_TILE(&zone, B1)] = 
+                                 -0.5*(  emf[INDEX_TILE(&zone, 0)]
+                                       + emf[INDEX_TILE_PLUS_ONE_X1(&zone, 0)]
+                                      );
+
+    fluxX2Tile[INDEX_TILE(&zone, B2)] = 0.;
+
+  }                                         
 #endif /* COMPUTE_DIM==2 */
 
 }
