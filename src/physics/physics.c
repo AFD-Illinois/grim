@@ -22,7 +22,7 @@ void setUCon(const struct geometry geom[ARRAY_ARGS 1],
 
   for (int i=1; i<NDIM; i++)
   {
-    elem->uCon[i] =   elem->primVars[UU+i] 
+    elem->uCon[i] =  elem->primVars[UU+i] 
                    - elem->gamma*geom->gCon[0][i]*geom->alpha;
   }
 }
@@ -83,7 +83,7 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
                            + pressure + bSqr
                           )*elem->uCon[mu]*elem->uCon[nu]
 
-                        + (pressure + 0.5*bSqr)*DELTA(mu, nu)
+                        + (pressure + 0.5*bSqr)*geom->gCon[mu][nu]
 
                         - elem->bCon[mu]*elem->bCon[nu];
     }

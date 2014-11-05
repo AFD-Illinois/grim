@@ -34,47 +34,49 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     DMDAVecGetArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
     DMDAVecGetArrayDOF(connectionDMDA, connectionPetscVec, &connectionGlobal);
 
-//    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-//    {
-//      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-//      {
-//        
-//        struct gridZone zone;
-//        setGridZone(iTile, jTile,
-//                    iInTile, jInTile,
-//                    ts->X1Start, ts->X2Start,
-//                    ts->X1Size, ts->X2Size,
-//                    &zone);
-//
-//        REAL XCoords[NDIM];
-//        getXCoords(&zone, CENTER, XCoords);
-//
-//        struct geometry geom;
-//        setGeometry(XCoords, &geom);
-//
-//        for (int mu=0; mu<NDIM; mu++)
-//        {
-//          for (int nu=0; nu<NDIM; nu++)
-//          {
+    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+    {
+      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+      {
+        
+        struct gridZone zone;
+        setGridZone(iTile, jTile,
+                    iInTile, jInTile,
+                    ts->X1Start, ts->X2Start,
+                    ts->X1Size, ts->X2Size,
+                    &zone);
+
+        REAL XCoords[NDIM];
+        getXCoords(&zone, CENTER, XCoords);
+
+        struct geometry geom;
+        setGeometry(XCoords, &geom);
+
+        for (int mu=0; mu<NDIM; mu++)
+        {
+          for (int nu=0; nu<NDIM; nu++)
+          {
+            /* TODO: Need to put the indices for gCov and gCon */
 //            gCovGlobal[] = geom.gCov[mu][nu];
-//            gCovGlobal[] = geom.gCov[mu][nu];
-//          }
-//        }
-//
-//        for (int eta=0; eta<NDIM; eta++)
-//        {
-//          for (int mu=0; mu<NDIM; mu++)
-//          {
-//            for (int nu=0; nu<NDIM; nu++)
-//            {
+//            gConGlobal[] = geom.gCon[mu][nu];
+          }
+        }
+
+        for (int eta=0; eta<NDIM; eta++)
+        {
+          for (int mu=0; mu<NDIM; mu++)
+          {
+            for (int nu=0; nu<NDIM; nu++)
+            {
+              /* TODO: Need to put the indices for connectionGlobal */
 //              connectionGlobal[] =
 //                gammaDownDownDown(eta, mu, nu, XCoords);
-//            }
-//          }
-//        }
-//
-//      }
-//    }
+            }
+          }
+        }
+
+      }
+    }
 
     DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, gCovPetscVec,
                            &gCovGlobal);

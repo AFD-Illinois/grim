@@ -5,7 +5,7 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMPLICIT")
+set(TIME_STEPPING "EXPLICIT")
 set(DT "0.01")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
@@ -28,8 +28,8 @@ set(N2 "70")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "10")
-set(TILE_SIZE_X2 "10")
+set(TILE_SIZE_X1 "5")
+set(TILE_SIZE_X2 "5")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")

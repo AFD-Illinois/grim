@@ -72,7 +72,12 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->conservedVarsPetscVecOld);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->sourceTermsPetscVecOld);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->residualPetscVec);
-  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->primPetscVec);
+
+  #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
+    DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->primPetscVec);
+  #elif (TIME_STEPPING==IMPLICIT)
+    DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVec);
+  #endif
 
   VecSet(ts->primPetscVecOld, 0.);
   VecSet(ts->primPetscVecHalfStep, 0.);
@@ -138,6 +143,10 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
     /* Set initialConditions from problem */
     initialConditions(ts);
 
+    /* Output the initial conditions */
+    VecCopy(ts->primPetscVecOld, ts->primPetscVec);
+    diagnostics(ts);
+
   #endif /* RESTART option */
 }
 
@@ -177,7 +186,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
 
-  PetscPrintf(PETSC_COMM_WORLD, "Step %d, time = %f\n", 
+  PetscPrintf(PETSC_COMM_WORLD, "Step %d, time = %.3f\n", 
               ts->timeStepCounter, ts->t);
 
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
@@ -193,36 +202,41 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->dt = dt/2.;
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
+    Vec randomVec;
+    VecDuplicate(ts->primPetscVecHalfStep, &randomVec);
+    VecSetRandom(randomVec, NULL);
+    VecAXPY(ts->primPetscVecHalfStep, 0.00, randomVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
 
-    /* Current state:
-    * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
-    * ts->primPetscVecOld has the primitive variables at t = n
-    */
-
-    /* Now go from t=n to t=n+1 using
-    * 1) EXPLICIT time stepping:
-    * fluxes and sources computed using primitive variables at t=n+1/2.
-    * 
-    * 2) IMEX time stepping
-    * fluxes computed using primitive variables at t=n+1/2 whereas sources
-    * computed using 0.5*(Sources^n + Sources^(n-1))*/
-    ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
-    ts->computeDivOfFluxAtTimeN = 0;
-    ts->computeDivOfFluxAtTimeNPlusHalf = 1;
-
-    #if (TIME_STEPPING==EXPLICIT)
-      ts->computeSourceTermsAtTimeN = 0;
-      ts->computeSourceTermsAtTimeNPlusHalf = 1;
-    #elif (TIME_STEPPING==IMEX)
-      ts->computeSourceTermsAtTimeN = 0;
-      ts->computeSourceTermsAtTimeNPlusHalf = 0;
-    #endif
-
-    ts->dt = dt;
-
-    VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
-    SNESSolve(ts->snes, NULL, ts->primPetscVec);
+//    /* Current state:
+//    * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
+//    * ts->primPetscVecOld has the primitive variables at t = n
+//    */
+//
+//    /* Now go from t=n to t=n+1 using
+//    * 1) EXPLICIT time stepping:
+//    * fluxes and sources computed using primitive variables at t=n+1/2.
+//    * 
+//    * 2) IMEX time stepping
+//    * fluxes computed using primitive variables at t=n+1/2 whereas sources
+//    * computed using 0.5*(Sources^n + Sources^(n-1))*/
+//    ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
+//    ts->computeDivOfFluxAtTimeN = 0;
+//    ts->computeDivOfFluxAtTimeNPlusHalf = 1;
+//
+//    #if (TIME_STEPPING==EXPLICIT)
+//      ts->computeSourceTermsAtTimeN = 0;
+//      ts->computeSourceTermsAtTimeNPlusHalf = 1;
+//    #elif (TIME_STEPPING==IMEX)
+//      ts->computeSourceTermsAtTimeN = 0;
+//      ts->computeSourceTermsAtTimeNPlusHalf = 0;
+//    #endif
+//
+//    ts->dt = dt;
+//
+//    VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
+//    SNESSolve(ts->snes, NULL, ts->primPetscVec);
+//    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #elif (TIME_STEPPING==IMPLICIT)
 
@@ -233,7 +247,12 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
+    Vec randomVec;
+    VecDuplicate(ts->primPetscVec, &randomVec);
+    VecSetRandom(randomVec, NULL);
+    VecAXPY(ts->primPetscVec, 0.01, randomVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #endif
 
