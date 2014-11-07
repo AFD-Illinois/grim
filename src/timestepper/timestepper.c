@@ -243,10 +243,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
-    Vec randomVec;
-    VecDuplicate(ts->primPetscVec, &randomVec);
-    VecSetRandom(randomVec, NULL);
-    VecAXPY(ts->primPetscVec, 0.01, randomVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
     VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 

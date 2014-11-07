@@ -28,7 +28,7 @@ void riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
                        - cLaxFriedrichs*(  conservedVarsRight[var]
                                          - conservedVarsLeft[var]
                                         )
-                    );
+                      );
                          
   }
 }

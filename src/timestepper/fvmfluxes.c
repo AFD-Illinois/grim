@@ -11,7 +11,13 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
   REAL fluxTileLeft[TILE_SIZE], fluxTileRight[TILE_SIZE];
   REAL conservedVarsTileLeft[TILE_SIZE], conservedVarsTileRight[TILE_SIZE];
 
-  /* Requires NG=3 */
+  reconstruct(primTile, X1,
+              iTile, jTile, 
+              X1Start, X2Start,
+              X1Size, X2Size,
+              primVarsLeft, primVarsRight);
+
+  /* Requires NG>=3 */
   LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)
   {
     struct gridZone zone;
@@ -20,27 +26,8 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                 X1Start, X2Start, 
                 X1Size, X2Size, 
                 &zone);
-    
-    REAL slope[DOF];
-
-    slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
-             &primTile[INDEX_TILE(&zone, 0)],
-             &primTile[INDEX_TILE_PLUS_ONE_X1(&zone, 0)],
-             slope);
 
     REAL XCoords[NDIM];
-  
-    for (int var=0; var<DOF; var++)
-    {
-      /* Left Edge */
-      primVarsLeft[INDEX_TILE(&zone, var)] =
-        primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
-
-      /* Right Edge */
-      primVarsRight[INDEX_TILE(&zone, var)] =
-        primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
-    }
-
     getXCoords(&zone, FACE_X1, XCoords);
     struct geometry geom; setGeometry(XCoords, &geom);
     struct fluidElement elem;
@@ -84,6 +71,12 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
   }
 
 #if (COMPUTE_DIM==2)
+  reconstruct(primTile, X2,
+              iTile, jTile, 
+              X1Start, X2Start,
+              X1Size, X2Size,
+              primVarsLeft, primVarsRight);
+
   LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)
   {
     struct gridZone zone;
@@ -92,27 +85,8 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                 X1Start, X2Start, 
                 X1Size, X2Size, 
                 &zone);
-    
-    REAL slope[DOF];
-
-    slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
-             &primTile[INDEX_TILE(&zone, 0)],
-             &primTile[INDEX_TILE_PLUS_ONE_X2(&zone, 0)],
-             slope);
 
     REAL XCoords[NDIM];
-  
-    for (int var=0; var<DOF; var++)
-    {
-      /* Left Edge */
-      primVarsLeft[INDEX_TILE(&zone, var)] =
-        primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
-
-      /* Right Edge */
-      primVarsRight[INDEX_TILE(&zone, var)] =
-        primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
-    }
-
     getXCoords(&zone, FACE_X2, XCoords);
     struct geometry geom; setGeometry(XCoords, &geom);
     struct fluidElement elem;

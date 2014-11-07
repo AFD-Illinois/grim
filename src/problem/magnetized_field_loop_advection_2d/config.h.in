@@ -4,7 +4,7 @@
 /* Immutable constants. Should not be changed */
 #define NDIM                  (4)
 /* Number of ghost zones */
-#define NG                    (3)
+#define NG                    (4)
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
