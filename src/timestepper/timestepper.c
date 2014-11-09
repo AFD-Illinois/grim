@@ -186,7 +186,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
 
-  PetscPrintf(PETSC_COMM_WORLD, "\nStep %d, time = %.3f\n", 
+  PetscPrintf(PETSC_COMM_WORLD, "\nStep %d, time = %.5f\n", 
               ts->timeStepCounter, ts->t);
 
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)

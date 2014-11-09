@@ -27,26 +27,16 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                      pow((XCoords[2] - X2Center), 2.)
                    );
 
-      INDEX_PETSC(primOldGlobal, &zone, RHO) = 1.;
-      INDEX_PETSC(primOldGlobal, &zone, UU) = 1./(ADIABATIC_INDEX - 1.);
-
       REAL gamma = 1./sqrt(1. - V1*V1 - V2*V2 - V3*V3);
 
+      INDEX_PETSC(primOldGlobal, &zone, RHO) = 1 + exp(-r*r/0.01);
+      INDEX_PETSC(primOldGlobal, &zone, UU) = 1./(ADIABATIC_INDEX - 1.);
       INDEX_PETSC(primOldGlobal, &zone, U1) = gamma*V1;
       INDEX_PETSC(primOldGlobal, &zone, U2) = gamma*V2;
       INDEX_PETSC(primOldGlobal, &zone, U3) = gamma*V3;
-
       INDEX_PETSC(primOldGlobal, &zone, B1) = 0.;
       INDEX_PETSC(primOldGlobal, &zone, B2) = 0.;
       INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
-
-      if (r < R)
-      {
-        INDEX_PETSC(primOldGlobal, &zone, B1) = -A0*XCoords[2]/r;
-
-        INDEX_PETSC(primOldGlobal, &zone, B2) = A0*XCoords[1]/r;
-      }
-
     }
   }
   

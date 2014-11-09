@@ -9,7 +9,7 @@ set(TIME_STEPPING "EXPLICIT")
 set(DT "0.002")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
-set(FINAL_TIME "10.")
+set(FINAL_TIME "5.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -52,16 +52,6 @@ set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
-# Initial condition parameters 
-# V1, V2, V3 -- 3 velocities
-# A0, R -- magnitude and width of the field loop
-# Parameters taken from K. Beckwith and J. Stone, 2011
-set(V1 "0.2/sqrt(6)")
-set(V2 "0.1/sqrt(6)")
-set(V3 "0.1/sqrt(6)")
-set(A0 "1e-3")
-set(R  "0.3")
-
 # Floor values
 set(RHO_FLOOR "1e-5")
 SET(UU_FLOOR "1e-7")
@@ -101,17 +91,6 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
-
-message("")
-message("######################")
-message("# Initial conditions #")
-message("######################")
-message("")
-message("V1   : " ${V1})
-message("V2   : " ${V2})
-message("V3   : " ${V3})
-message("A0   : " ${A0})
-message("R    : " ${R})
 
 message("")
 message("##########")

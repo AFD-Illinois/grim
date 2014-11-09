@@ -64,6 +64,7 @@ PetscErrorCode computeResidual(SNES snes,
                        &conservedVarsOldGlobal); 
 
     /* Loop through tiles. We use tiles to maximize cache usage.*/
+    #pragma omp parallel for
     LOOP_OVER_TILES(X1Size, X2Size)
     {
       REAL primTile[TILE_SIZE];
