@@ -5,6 +5,7 @@
 #define NDIM                  (4)
 /* Number of ghost zones */
 #define NG                    (4)
+#define M_PI                  (3.14159265359)
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
@@ -31,18 +32,22 @@
 
 
 /* Initial condition parameters */
-#cmakedefine    V1                  (${V1})
-#cmakedefine    V2                  (${V2})
-#cmakedefine    V3                  (${V3})
-
-#cmakedefine    A0                  (${A0})
-#cmakedefine    R                   (${R})
+#cmakedefine    R_PRESSURE_MAX      (${R_PRESSURE_MAX})
+#cmakedefine    R_INNER_EDGE        (${R_INNER_EDGE})
+#cmakedefine    ADIABAT             (${ADIABAT})
+#cmakedefine    PLASMA_BETA         (${PLASMA_BETA})
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})
 #cmakedefine    EPS                 (${EPS})
+#cmakedefine    M                   (${M})
+#cmakedefine    BH_SPIN             (${BH_SPIN})
+#cmakedefine    H_SLOPE             (${H_SLOPE})
 
 /* Domain */
+#cmakedefine    R_A   (${R_A})
+#cmakedefine    R_B   (${R_B})
+
 #cmakedefine    X1_A  (${X1_A})
 #cmakedefine    X1_B  (${X1_B})
 #cmakedefine    X2_A  (${X2_A})
@@ -55,7 +60,12 @@
 #cmakedefine    PHYSICAL_BOUNDARY_BOTTOM_EDGE (${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
 
 /* Floor values */
-#cmakedefine    RHO_FLOOR (${RHO_FLOOR})
-#cmakedefine    UU_FLOOR  (${UU_FLOOR})
+#cmakedefine    RHO_FLOOR               (${RHO_FLOOR})
+#cmakedefine    UU_FLOOR                (${UU_FLOOR})
+#cmakedefine    RHO_FLOOR_FALLOFF       (${RHO_FLOOR_FALLOFF})
+#cmakedefine    UU_FLOOR_FALLOFF        (${UU_FLOOR_FALLOFF})
+#cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
+#cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
+#cmakedefine    GAMMA_MAX               (${GAMMA_MAX})
 
 #endif /* GRIM_INPUT_H_ */

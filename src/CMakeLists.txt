@@ -1,4 +1,4 @@
-# To compiler the code, make a seperate build folder and then do the following:
+# To compile the code, make a seperate build folder and then do the following:
 #
 # cd /location/to/build
 # cmake /location/to/grim/src
@@ -15,7 +15,7 @@ project(grim)
 
 
 # ------------------------------USER OPTIONS----------------------------------#
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -ftree-vectorizer-verbose=1")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
 set(PETSC_DIR "/home/mc/Downloads/petsc_optimized")
@@ -43,7 +43,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) equilibrium_torus_2d
 # 13) torus_2d
 # 14) mti_test_2d
-set(PROBLEM "magnetized_field_loop_advection_2d")
+set(PROBLEM "torus_2d")
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

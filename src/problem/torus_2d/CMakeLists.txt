@@ -37,34 +37,42 @@ set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
 
 # Geometry
-set(METRIC "MINKOWSKI")
-set(EPS    "1e-5")
+set(METRIC  "KERRSCHILD")
+set(EPS     "1e-5")
+set(M       "1.")
+set(BH_SPIN "0.9375")
+set(H_SLOPE "0.3")
 
 # Domain
-set(X1_A  "0.")
-set(X1_B  "1.")
-set(X2_A  "0.")
-set(X2_B  "1.")
+set(R_A     "0.98*(1. + sqrt(1. - BH_SPIN*BH_SPIN))")
+set(R_B     "40.")
+
+set(X1_A  "log(R_A)")
+set(X1_B  "log(R_B)")
+set(X2_A  "1e-10")
+set(X2_B  "1. - 1e-10")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "PERIODIC")
-set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
-set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
-set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
+set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
+set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Initial condition parameters 
-# V1, V2, V3 -- 3 velocities
-# A0, R -- magnitude and width of the field loop
-# Parameters taken from K. Beckwith and J. Stone, 2011
-set(V1 "0.2/sqrt(6)")
-set(V2 "0.1/sqrt(6)")
-set(V3 "0.1/sqrt(6)")
-set(A0 "1e-3")
-set(R  "0.3")
+# Everything in units of M
+set(R_PRESSURE_MAX  "12.")
+set(R_INNER_EDGE    "6.")
+set(ADIABAT         "1e-3")
+set(PLASMA_BETA     "1e2")
 
 # Floor values
-set(RHO_FLOOR "1e-5")
-SET(UU_FLOOR "1e-7")
+set(RHO_FLOOR         "1e-5")
+set(UU_FLOOR          "1e-7")
+set(RHO_FLOOR_FALLOFF "-1.5")
+set(UU_FLOOR_FALLOFF  "-2.5")
+set(RHO_FLOOR_MIN     "1e-15")
+set(UU_FLOOR_MIN      "1e-15")
+set(GAMMA_MAX         "50.")
 
 message("")
 message("#########################")
@@ -107,16 +115,16 @@ message("######################")
 message("# Initial conditions #")
 message("######################")
 message("")
-message("V1   : " ${V1})
-message("V2   : " ${V2})
-message("V3   : " ${V3})
-message("A0   : " ${A0})
-message("R    : " ${R})
+message("R_PRESSURE_MAX   : " ${R_PRESSURE_MAX})
+message("R_INNER_EDGE     : " ${R_INNER_EDGE})
+message("ADIABAT          : " ${ADIABAT})
+message("PLASMA_BETA      : " ${PLASMA_BETA})
 
 message("")
 message("##########")
 message("# Floors #")
 message("##########")
 message("")
-message("Density floor            : " ${RHO_FLOOR})
-message("Internal energy floor    : " ${UU_FLOOR})
+message("Density floor          : ${RHO_FLOOR} x r^${RHO_FLOOR_FALLOFF}")
+message("Internal energy floor  : ${UU_FLOOR} x r^${UU_FLOOR_FALLOFF}")
+message("Maximum Lorentz factor : "   ${GAMMA_MAX})

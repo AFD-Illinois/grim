@@ -6,7 +6,6 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
               const REAL right[ARRAY_ARGS DOF],
               REAL ans[ARRAY_ARGS DOF])
 {
-#pragma ivdep
   for (int var=0; var<DOF; var++)
   {
     /* Monotonized Central slope limiter */

@@ -101,10 +101,7 @@ void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
      => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
   REAL dtheta_dX2 = M_PI + M_PI*(1 - H_SLOPE)*cos(2*M_PI*X[2]);
 
-  REAL sigma = r*r + A_SPIN*A_SPIN*cos(theta)*cos(theta);
-  REAL delta = r*r - 2*r + A_SPIN*A_SPIN;
-  REAL A = pow(r*r + A_SPIN*A_SPIN, 2.0) - 
-           A_SPIN*A_SPIN*delta*sin(theta)*sin(theta);
+  REAL sigma = r*r + BH_SPIN*BH_SPIN*cos(theta)*cos(theta);
 
   /* -(1 - 2*r/sigma) dt^2 */
   gCov[0][0] = -(1. - 2.*r/sigma);     
@@ -116,7 +113,7 @@ void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
   gCov[0][2] = 0.; 
 
   /* -(4*a*r*sin(theta)^2/sigma) dt dphi */
-  gCov[0][3] = -(2.*A_SPIN*r*sin(theta)*sin(theta)/sigma);
+  gCov[0][3] = -(2.*BH_SPIN*r*sin(theta)*sin(theta)/sigma);
 
   /* (4*r/sigma * dr/dX1) dX1 dt */
   gCov[1][0] = gCov[0][1];
@@ -128,7 +125,7 @@ void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
   gCov[1][2] = 0.;
 
   /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX1) dX1 dphi */
-  gCov[1][3] = -A_SPIN*(1. + 2.*r/sigma)*sin(theta)*sin(theta)*dr_dX1;
+  gCov[1][3] = -BH_SPIN*(1. + 2.*r/sigma)*sin(theta)*sin(theta)*dr_dX1;
 
   /* (0) dX2 dt */
   gCov[2][0] = gCov[0][2];
@@ -153,7 +150,7 @@ void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
 
   /* (sin(theta)^2*(sigma + a^2*(1. + 2*r/sigma)*sin(theta)^2) dphi dphi */
   gCov[3][3] = (sin(theta)*sin(theta)
-                *(sigma + A_SPIN*A_SPIN*(1. + 2*r/sigma) ) );
+                *(sigma + BH_SPIN*BH_SPIN*(1. + 2*r/sigma) ) );
 
 #elif (METRIC==MINKOWSKI)
   gCov[0][0] = -1.;

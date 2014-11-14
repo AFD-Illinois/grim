@@ -82,7 +82,6 @@ PetscErrorCode computeResidual(SNES snes,
                       X1Start, X2Start, 
                       X1Size, X2Size, 
                       &zone);
-          #pragma ivdep
           for (int var=0; var<DOF; var++)
           {
             primTile[INDEX_TILE(&zone, var)] =
@@ -100,7 +99,6 @@ PetscErrorCode computeResidual(SNES snes,
                       X1Start, X2Start, 
                       X1Size, X2Size, 
                       &zone);
-          #pragma ivdep
           for (int var=0; var<DOF; var++)
           {
             primTile[INDEX_TILE(&zone, var)] =
