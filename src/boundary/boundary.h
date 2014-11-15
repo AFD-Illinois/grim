@@ -7,14 +7,13 @@
 
 #define OUTFLOW                       (0)
 #define MIRROR                        (1)
-#define CONSTANT                      (2)
+#define PERIODIC                      (2)
+#define DIRICHLET                     (3)
 
-#define GET_DATA_FROM_LOCAL_ARRAY     (3)
 
 /* Periodic boundary conditions are handled by Petsc since data needs to be
  * copied if running on more than 1 MPI node. Petsc does all that and puts the
  * appropriate data in the local array. Simply copy that */
-#define PERIODIC (GET_DATA_FROM_LOCAL_ARRAY)
 
 
 /** TILE_BOUNDARY flag set in gridZone2D struct:
@@ -120,13 +119,11 @@
  *  boundary. It is in the bulk of the domain.
 */
 
-void setZoneBoundaryFlags(struct gridZone zone[ARRAY_ARGS 1]);
-
-
 /* Note: The size of primLocal is unknown at compile time. It depends on the
  * number of procs used and is only known at runtime. */
-void applyTileBoundaryConditions(const struct gridZone zone[ARRAY_ARGS 1],
+void applyTileBoundaryConditions(const int iTile, const int jTile,
+                                 const int X1Start, const int X2Start,
+                                 const int X1Size, const int X2Size,
                                  ARRAY(primLocal),
                                  REAL tile[ARRAY_ARGS TILE_SIZE]);
-
 #endif /* GRIM_BOUNDARY_H_ */

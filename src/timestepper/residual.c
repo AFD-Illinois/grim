@@ -109,20 +109,10 @@ PetscErrorCode computeResidual(SNES snes,
 
       /* Sync point */
       
-//      /* Apply boundary conditions on each tile */
-//      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-//      {
-//        struct gridZone zone;
-//        setGridZone(iTile, jTile,
-//                    iInTile, jInTile,
-//                    X1Start, X2Start, 
-//                    X1Size, X2Size, 
-//                    &zone);
-//        
-//        setZoneBoundaryFlags(&zone);
-//  
-//        applyTileBoundaryConditions(&zone, primOldLocal, primTile);
-//      }
+      applyTileBoundaryConditions(iTile, jTile,
+                                  X1Start, X2Start,
+                                  X1Size, X2Size,
+                                  primOldLocal, primTile);
 
       /* Sync point */
   
@@ -264,7 +254,6 @@ PetscErrorCode computeResidual(SNES snes,
                     X1Start, X2Start, 
                     X1Size, X2Size, 
                     &zone);
-        #pragma ivdep
         for (int var=0; var<DOF; var++)
         {
           primTile[INDEX_TILE(&zone, var)] =
@@ -274,19 +263,10 @@ PetscErrorCode computeResidual(SNES snes,
       /* Sync point */
     
       /* Apply boundary conditions on each tile */
-//      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-//      {
-//        struct gridZone zone;
-//        setGridZone(iTile, jTile,
-//                    iInTile, jInTile,
-//                    X1Start, X2Start, 
-//                    X1Size, X2Size, 
-//                    &zone);
-//      
-//        setZoneBoundaryFlags(&zone);
-//  
-//        applyTileBoundaryConditions(&zone, primLocal, primTile);
-//      }
+      applyTileBoundaryConditions(iTile, jTile,
+                                  X1Start, X2Start,
+                                  X1Size, X2Size,
+                                  primOldLocal, primTile);
 
       REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
       computeFluxesOverTile(primTile, 

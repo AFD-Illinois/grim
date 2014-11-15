@@ -348,13 +348,13 @@ void applyFloor(const int iTile, const int jTile,
     }
 
     /* Inflow check at the inner radial boundary */
-    if (X1Start==0 && iInTile < 0)
+    if (zone.i < 0)
     {
       inflowCheck(&zone, XCoords, primTile);
     }
 
     /* Inflow check at the outer radial boundary */
-    if (X1Start+X1Size==N1-1 && iInTile > TILE_SIZE_X1)
+    if (zone.i > N1-1)
     {
       inflowCheck(&zone, XCoords, primTile);
     }
@@ -378,8 +378,8 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
   struct fluidElement elem;
   setFluidElement(&primTile[INDEX_TILE(zone, 0)], &geom, &elem);
 
-  int inflowInnerBoundary = (zone->iInTile < 0 && elem.uCon[1] > 0);
-  int inflowOuterBoundary = (zone->iInTile >= TILE_SIZE_X1 && elem.uCon[1] < 0);
+  int inflowInnerBoundary = (zone->i < 0 && elem.uCon[1] > 0);
+  int inflowOuterBoundary = (zone->i >= N1 && elem.uCon[1] < 0);
 
   if (inflowInnerBoundary || inflowOuterBoundary)
   {
