@@ -5,7 +5,7 @@
 #define NDIM                  (4)
 /* Number of ghost zones */
 #define NG                    (4)
-#define M_PI                  (3.14159265359)
+#define M_PI                  (3.141592653589793238462643383279)
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}

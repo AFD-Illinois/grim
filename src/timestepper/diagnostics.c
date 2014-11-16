@@ -124,9 +124,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
   if (ts->t >= ts->tDump)
   {
-    PetscPrintf(PETSC_COMM_WORLD, "\n");
-    PetscPrintf(PETSC_COMM_WORLD, "Dumping data\n");
-    PetscPrintf(PETSC_COMM_WORLD, "\n");
+    PetscPrintf(PETSC_COMM_WORLD, "\nDumping data\n\n");
     
     char dumpFileName[50];
     sprintf(dumpFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->timeStepCounter);

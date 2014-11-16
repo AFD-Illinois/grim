@@ -92,9 +92,10 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
+  REAL rhoMax=RHO_FLOOR_MIN, uMax=UU_FLOOR_MIN;
+
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
-    REAL rhoMax=0., uMax=0.;
     REAL primTile[TILE_SIZE];
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -136,8 +137,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       /* Region outside the torus */
       if (lnOfh < 0. || r < R_INNER_EDGE)
       {
-        primTile[INDEX_TILE(&zone, RHO)] = 1e-15;
-        primTile[INDEX_TILE(&zone, UU)] = 1e-15;
+        primTile[INDEX_TILE(&zone, RHO)] = RHO_FLOOR_MIN;
+        primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
         primTile[INDEX_TILE(&zone, U1)] = 0.;
         primTile[INDEX_TILE(&zone, U2)] = 0.;
         primTile[INDEX_TILE(&zone, U3)] = 0.;
@@ -160,12 +161,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         REAL A = computeA(BH_SPIN, r, theta);
         REAL Sigma = computeSigma(BH_SPIN, r, theta);
         REAL Delta = computeDelta(BH_SPIN, r, theta);
-        REAL l = lFishboneMoncrief(BH_SPIN, r, theta);
+        REAL l = lFishboneMoncrief(BH_SPIN, R_PRESSURE_MAX, M_PI/2.);
 
 			  REAL expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
         REAL uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi)
                                )/2.
-                              );
+                             );
         REAL uConPhiBL =   2.*BH_SPIN*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
                           /sqrt(A*Sigma*Delta)
                         + sqrt(Sigma/A)*uCovPhiBL/sin(theta);
@@ -173,7 +174,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         REAL uConBL[NDIM];
         uConBL[0] = 0.;
         uConBL[1] = 0.;
-        uConBL[2] = uConPhiBL;
+        uConBL[2] = 0.;
+        uConBL[3] = uConPhiBL;
 
         REAL gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
         REAL transformBLToMKS[NDIM][NDIM];
@@ -269,10 +271,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primTile[INDEX_TILE(&zone, U3)] =   
           uConMKS[3] + pow(geom.alpha, 2.)*geom.gCon[0][3]*uConMKS[0];
 
-        primTile[INDEX_TILE(&zone, B1)] = 0.;
-        primTile[INDEX_TILE(&zone, B2)] = 0.;
-        primTile[INDEX_TILE(&zone, B3)] = 0.;
+
       }
+
+      primTile[INDEX_TILE(&zone, B1)] = 0.;
+      primTile[INDEX_TILE(&zone, B2)] = 0.;
+      primTile[INDEX_TILE(&zone, B3)] = 0.;
   
     }
 
@@ -284,6 +288,34 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                   ts->X1Start, ts->X2Start,
                   ts->X1Size, ts->X2Size,
                   &zone);
+      
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primOldGlobal, &zone, var) =
+          primTile[INDEX_TILE(&zone, var)];
+      }
+    }
+
+  }
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] = 
+          INDEX_PETSC(primOldGlobal, &zone, var);
+      }
 
       primTile[INDEX_TILE(&zone, RHO)] = 
         primTile[INDEX_TILE(&zone, RHO)]/rhoMax;
@@ -296,8 +328,24 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                ts->X1Size, ts->X2Size,
                primTile);
 
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primOldGlobal, &zone, var) = 
+          primTile[INDEX_TILE(&zone, var)];
+      }
+    }
 
   }
+
   
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
                          ts->primPetscVecOld, &primOldGlobal);
@@ -337,12 +385,15 @@ void applyFloor(const int iTile, const int jTile,
       uFloor = UU_FLOOR_MIN;
     }
 
-    if (primTile[INDEX_TILE(&zone, RHO)] < rhoFloor)
+    REAL rho = primTile[INDEX_TILE(&zone, RHO)];
+    REAL u = primTile[INDEX_TILE(&zone, UU)];
+
+    if (isnan(rho) || rho < rhoFloor)
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
     }
 
-    if (primTile[INDEX_TILE(&zone, UU)] < uFloor)
+    if (isnan(u) || u < uFloor)
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
     }
@@ -359,6 +410,22 @@ void applyFloor(const int iTile, const int jTile,
       inflowCheck(&zone, XCoords, primTile);
     }
 
+    struct geometry geom;
+    setGeometry(XCoords, &geom);
+
+    struct fluidElement elem;
+    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+
+    if (elem.gamma > GAMMA_MAX)
+    {
+      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
+                         /(elem.gamma*elem.gamma-1.)
+                        );
+
+      primTile[INDEX_TILE(&zone, U1)] *= factor;
+      primTile[INDEX_TILE(&zone, U2)] *= factor;
+      primTile[INDEX_TILE(&zone, U3)] *= factor;
+    }
   }
 
 }

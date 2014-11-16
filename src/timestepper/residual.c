@@ -114,6 +114,11 @@ PetscErrorCode computeResidual(SNES snes,
                                   X1Size, X2Size,
                                   primOldLocal, primTile);
 
+      applyFloor(iTile, jTile,
+                 X1Start, X2Start,
+                 X1Size, X2Size,
+                 primTile);
+
       /* Sync point */
   
       /* Work on the tiles.*/
@@ -243,9 +248,9 @@ PetscErrorCode computeResidual(SNES snes,
 
   LOOP_OVER_TILES(X1Size, X2Size)
   {
-    #if (TIME_STEPPING==IMPLICIT)
-      REAL primTile[TILE_SIZE];
+    REAL primTile[TILE_SIZE];
 
+    #if (TIME_STEPPING==IMPLICIT)
       LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
       {
         struct gridZone zone;
@@ -268,6 +273,11 @@ PetscErrorCode computeResidual(SNES snes,
                                   X1Size, X2Size,
                                   primOldLocal, primTile);
 
+      applyFloor(iTile, jTile,
+                 X1Start, X2Start,
+                 X1Size, X2Size,
+                 primTile);
+
       REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
       computeFluxesOverTile(primTile, 
                             iTile, jTile,
@@ -286,16 +296,23 @@ PetscErrorCode computeResidual(SNES snes,
                   X1Size, X2Size, 
                   &zone);
 
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primGlobal, &zone, var);
+      }
+
+      applyFloor(iTile, jTile,
+                 X1Start, X2Start,
+                 X1Size, X2Size,
+                 primTile);
+
       REAL XCoords[NDIM];
 
       getXCoords(&zone, CENTER, XCoords);
       struct geometry geom; setGeometry(XCoords, &geom);
       struct fluidElement elem;
-      #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-        setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elem);
-      #elif (TIME_STEPPING==IMPLICIT)
-        setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-      #endif
+      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
 
       REAL conservedVars[DOF];
       computeFluxes(&elem, &geom, 0, conservedVars);

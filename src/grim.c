@@ -1,7 +1,5 @@
 #include "grim.h"
 
-Vec conservedPetscVecOld;
-
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
