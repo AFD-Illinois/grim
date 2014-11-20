@@ -388,44 +388,44 @@ void applyFloor(const int iTile, const int jTile,
     REAL rho = primTile[INDEX_TILE(&zone, RHO)];
     REAL u = primTile[INDEX_TILE(&zone, UU)];
 
-    if (isnan(rho) || rho < rhoFloor)
+    if (rho < rhoFloor)
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
     }
 
-    if (isnan(u) || u < uFloor)
+    if (u < uFloor)
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
     }
 
-    /* Inflow check at the inner radial boundary */
-    if (zone.i < 0)
-    {
-      inflowCheck(&zone, XCoords, primTile);
-    }
+//    /* Inflow check at the inner radial boundary */
+//    if (zone.i < 0)
+//    {
+//      inflowCheck(&zone, XCoords, primTile);
+//    }
+//
+//    /* Inflow check at the outer radial boundary */
+//    if (zone.i > N1-1)
+//    {
+//      inflowCheck(&zone, XCoords, primTile);
+//    }
 
-    /* Inflow check at the outer radial boundary */
-    if (zone.i > N1-1)
-    {
-      inflowCheck(&zone, XCoords, primTile);
-    }
-
-    struct geometry geom;
-    setGeometry(XCoords, &geom);
-
-    struct fluidElement elem;
-    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-
-    if (elem.gamma > GAMMA_MAX)
-    {
-      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
-                         /(elem.gamma*elem.gamma-1.)
-                        );
-
-      primTile[INDEX_TILE(&zone, U1)] *= factor;
-      primTile[INDEX_TILE(&zone, U2)] *= factor;
-      primTile[INDEX_TILE(&zone, U3)] *= factor;
-    }
+//    struct geometry geom;
+//    setGeometry(XCoords, &geom);
+//
+//    struct fluidElement elem;
+//    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+//
+//    if (elem.gamma > GAMMA_MAX)
+//    {
+//      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
+//                         /(elem.gamma*elem.gamma-1.)
+//                        );
+//
+//      primTile[INDEX_TILE(&zone, U1)] *= factor;
+//      primTile[INDEX_TILE(&zone, U2)] *= factor;
+//      primTile[INDEX_TILE(&zone, U3)] *= factor;
+//    }
   }
 
 }

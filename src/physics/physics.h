@@ -14,10 +14,10 @@
 #define B2              (6)
 #define B3              (7)
 #if (CONDUCTION)
-#define PHI             (8)
-#define DOF             (9)
+  #define PHI             (8)
+  #define DOF             (9)
 #else
-#define DOF             (8)
+  #define DOF             (8)
 #endif
 
 

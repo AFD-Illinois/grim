@@ -25,7 +25,7 @@ void XTox(const REAL X[ARRAY_ARGS NDIM],
   x[0] = X[0];        // t = t'
   x[1] = exp(X[1]);   // r = exp(X1)
   x[2] = M_PI*X[2] + 0.5*(1 - H_SLOPE)*sin(2*M_PI*X[2]); 
-                      // theta = pi*X2 + 0.5*(1 - H_SLOPE)*X2
+                      // theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2)
   x[3] = X[3];        // phi = phi'
 #elif (METRIC==MINKOWSKI)
   x[0] = X[0];
@@ -149,10 +149,14 @@ void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
   gCov[3][2] = gCov[2][3];
 
   /* (sin(theta)^2*(sigma + a^2*(1. + 2*r/sigma)*sin(theta)^2) dphi dphi */
-  gCov[3][3] = (sin(theta)*sin(theta)
-                *(sigma + BH_SPIN*BH_SPIN*(1. + 2*r/sigma) ) );
+  gCov[3][3] = (  sin(theta)*sin(theta)
+                * (   sigma + BH_SPIN*BH_SPIN*sin(theta)*sin(theta)
+                    * (1. + 2*r/sigma)
+                  )
+               );
 
 #elif (METRIC==MINKOWSKI)
+
   gCov[0][0] = -1.;
   gCov[0][1] = 0.;
   gCov[0][2] = 0.;
@@ -306,11 +310,11 @@ void gConFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM],
   gCon[3][2] = gCon[2][3];
 
   gCon[3][3] =
-      (  gCov[0][0]*gCov[1][1]*gCov[2][2] + 
-       + gCov[0][1]*gCov[1][2]*gCov[2][0] + 
-       + gCov[0][2]*gCov[1][0]*gCov[2][1] - 
-       - gCov[0][0]*gCov[1][2]*gCov[2][1] - 
-       - gCov[0][1]*gCov[1][0]*gCov[2][2] - 
+      (  gCov[0][0]*gCov[1][1]*gCov[2][2]  
+       + gCov[0][1]*gCov[1][2]*gCov[2][0]  
+       + gCov[0][2]*gCov[1][0]*gCov[2][1]  
+       - gCov[0][0]*gCov[1][2]*gCov[2][1]  
+       - gCov[0][1]*gCov[1][0]*gCov[2][2]  
        - gCov[0][2]*gCov[1][1]*gCov[2][0])/gDet;
 }
 
@@ -466,7 +470,6 @@ REAL gammaDownDownDown(const int eta,
   /* End of d(g_eta_mu)/dX^nu */
 
 
-
   /* Now, d(g_eta_nu)/dX^mu */
   /* +EPS first */
   for (int alpha=0; alpha<NDIM; alpha++)
@@ -495,7 +498,7 @@ REAL gammaDownDownDown(const int eta,
   }
   XEpsilon[eta] += EPS;
   gCovFunc(XEpsilon, gCovEpsilon);
-  ans += 0.5*(gCovEpsilon[mu][nu])/(2.*EPS);
+  ans -= 0.5*(gCovEpsilon[mu][nu])/(2.*EPS);
 
   /* Now do -EPS */
   for (int alpha=0; alpha<NDIM; alpha++)
@@ -504,7 +507,7 @@ REAL gammaDownDownDown(const int eta,
   }
   XEpsilon[eta] -= EPS;
   gCovFunc(XEpsilon, gCovEpsilon);
-  ans -= 0.5*gCovEpsilon[mu][nu]/(2.*EPS);
+  ans += 0.5*gCovEpsilon[mu][nu]/(2.*EPS);
   /* End of d(g_mu_nu)/dX^eta */
 
   return ans;

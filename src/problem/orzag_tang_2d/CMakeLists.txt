@@ -6,10 +6,10 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.002")
-set(DT_DUMP ".1")
+set(DT "0.001")
+set(DT_DUMP ".05")
 set(START_TIME "0.")
-set(FINAL_TIME "5.")
+set(FINAL_TIME "1.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -33,7 +33,7 @@ set(TILE_SIZE_X1 "10")
 set(TILE_SIZE_X2 "10")
 
 # Physics variables
-set(ADIABATIC_INDEX "4./3")
+set(ADIABATIC_INDEX "5./3")
 set(CONDUCTION "OFF")
 
 # Geometry

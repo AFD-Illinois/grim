@@ -56,9 +56,13 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
         {
           for (int nu=0; nu<NDIM; nu++)
           {
-            /* TODO: Need to put the indices for gCov and gCon */
-//            gCovGlobal[] = geom.gCov[mu][nu];
-//            gConGlobal[] = geom.gCon[mu][nu];
+            #if (COMPUTE_DIM==1)
+              gCovGlobal[zone.i][nu + NDIM*mu] = geom.gCov[mu][nu];
+              gConGlobal[zone.i][nu + NDIM*mu] = geom.gCon[mu][nu];
+            #elif (COMPUTE_DIM==2)
+              gCovGlobal[zone.j][zone.i][nu + NDIM*mu] = geom.gCov[mu][nu];
+              gConGlobal[zone.j][zone.i][nu + NDIM*mu] = geom.gCon[mu][nu];
+            #endif
           }
         }
 
@@ -68,9 +72,13 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
           {
             for (int nu=0; nu<NDIM; nu++)
             {
-              /* TODO: Need to put the indices for connectionGlobal */
-//              connectionGlobal[] =
-//                gammaDownDownDown(eta, mu, nu, XCoords);
+              #if (COMPUTE_DIM==1) 
+                connectionGlobal[zone.i][nu + NDIM*(mu + NDIM*eta)] =
+                  gammaDownDownDown(eta, mu, nu, XCoords);
+              #elif (COMPUTE_DIM==2) 
+                connectionGlobal[zone.j][zone.i][nu + NDIM*(mu + NDIM*eta)] =
+                  gammaDownDownDown(eta, mu, nu, XCoords);
+              #endif
             }
           }
         }
@@ -102,7 +110,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
                         FILE_MODE_WRITE, &connectionViewer);
 
     PetscObjectSetName((PetscObject) gCovPetscVec, "gCov");
-    PetscObjectSetName((PetscObject) gConPetscVec, "gCov");
+    PetscObjectSetName((PetscObject) gConPetscVec, "gCon");
     PetscObjectSetName((PetscObject) connectionPetscVec,
                        "gammadowndowndown");
 
