@@ -285,39 +285,23 @@ PetscErrorCode computeResidual(SNES snes,
                             X1Size, X2Size,
                             fluxX1Tile, fluxX2Tile);
 
-    #endif
-
-    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-    {
-      struct gridZone zone;
-      setGridZone(iTile, jTile,
-                  iInTile, jInTile,
-                  X1Start, X2Start, 
-                  X1Size, X2Size, 
-                  &zone);
-
-      for (int var=0; var<DOF; var++)
+    #else
+      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
       {
-        #if (TIME_STEPPING == IMPLICIT)
-          primTile[INDEX_TILE(&zone, var)] =
-            INDEX_PETSC(primLocal, &zone, var);
-        #else 
+        struct gridZone zone;
+        setGridZone(iTile, jTile,
+                    iInTile, jInTile,
+                    X1Start, X2Start, 
+                    X1Size, X2Size, 
+                    &zone);
+
+        for (int var=0; var<DOF; var++)
+        {
           primTile[INDEX_TILE(&zone, var)] =
             INDEX_PETSC(primGlobal, &zone, var);
-        #endif
+        }
       }
-
-    }
-
-    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-    {
-      struct gridZone zone;
-      setGridZone(iTile, jTile,
-                  iInTile, jInTile,
-                  X1Start, X2Start, 
-                  X1Size, X2Size, 
-                  &zone);
-    }
+    #endif
 
     applyFloor(iTile, jTile,
                X1Start, X2Start,
