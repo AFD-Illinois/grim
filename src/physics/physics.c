@@ -128,64 +128,21 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
     sourceTerms[var] = 0.;
   }
 
-//  for (int nu=0; nu<NDIM; nu++)
-//  {
-//    sourceTerms[UU+nu] = 0.;
-//
-//    for (int kappa=0; kappa<NDIM; kappa++)
-//    {
-//      for (int lamda=0; lamda<NDIM; lamda++)
-//      {
-//        for (int mu=0; mu<NDIM; mu++)
-//        {
-//          sourceTerms[RHO+nu] +=   
-//               g * elem->moments[T_UP_UP(kappa, lamda)]
-//                 * gammaDownDownDown(lamda, nu, kappa, X);
-//        }
-//      }
-//    }
-//  }
-
-
-  REAL conntmp[NDIM][NDIM][NDIM], conn[NDIM][NDIM][NDIM];
-  REAL Xl[NDIM], Xh[NDIM];
-  struct geometry geomh, geoml;
-  
-  for (int k = 0; k < NDIM; k++) {
-    Xl[0] = 0.; Xl[1] = X[1]; Xl[2] = X[2]; Xl[3] = 0.;
-    Xh[0] = 0.; Xh[1] = X[1]; Xh[2] = X[2]; Xh[3] = 0.;
-    Xl[k] = Xl[k] - EPS;
-    Xh[k] = Xh[k] + EPS;
-    
-    setGeometry(Xh, &geomh);
-    setGeometry(Xl, &geoml);
-    for (int i = 0; i < NDIM; i++) {
-      for (int j = 0; j < NDIM; j++) {
-        conn[i][j][k] = (geomh.gCov[i][j] - geoml.gCov[i][j])/(Xh[k] - Xl[k]);
+  for (int nu=0; nu<NDIM; nu++)
+  {
+    for (int kappa=0; kappa<NDIM; kappa++)
+    {
+      for (int lamda=0; lamda<NDIM; lamda++)
+      {
+        for (int mu=0; mu<NDIM; mu++)
+        {
+          sourceTerms[RHO+nu] +=   
+               g * elem->moments[T_UP_UP(kappa, lamda)]
+                 * gammaDownDownDown(lamda, nu, kappa, X);
+        }
       }
     }
   }
-  /* now rearrange to find \Gamma_{ijk} */
-  for (int i = 0; i < NDIM; i++)
-    for (int j = 0; j < NDIM; j++)
-      for (int k = 0; k < NDIM; k++)
-        conntmp[i][j][k] =
-          0.5 * (conn[j][i][k] + conn[k][i][j] - conn[k][j][i]);
 
-  for (int i = 0; i < NDIM; i++)
-    for (int j = 0; j < NDIM; j++)
-      for (int k = 0; k < NDIM; k++) {
-        conn[i][j][k] = 0.;
-        for (int l = 0; l < NDIM; l++)
-          conn[i][j][k] += geom->gCon[i][l]*conntmp[l][j][k];
-      }
-
-   for (int j=0; j<NDIM; j++)
-    for (int k=0; k<NDIM; k++) {
-      sourceTerms[UU] =  g*(elem->moments[T_UP_UP(j,k)]*conntmp[k][0][j]);
-      sourceTerms[U1] =  g*(elem->moments[T_UP_UP(j,k)]*conntmp[k][1][j]);
-      sourceTerms[U2] =  g*(elem->moments[T_UP_UP(j,k)]*conntmp[k][2][j]);
-      sourceTerms[U3] =  g*(elem->moments[T_UP_UP(j,k)]*conntmp[k][3][j]);
-    }
 
 }
