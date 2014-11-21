@@ -92,8 +92,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
-  REAL rhoMax=RHO_FLOOR_MIN, uMax=UU_FLOOR_MIN;
-
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
@@ -255,10 +253,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         uConMKS[2] = uConKS[2]/hFactor;
         uConMKS[3] = uConKS[3];
 
-
-        if (rho > rhoMax) rhoMax = rho;
-        if (u > uMax) uMax = u;
-
         primTile[INDEX_TILE(&zone, RHO)] = rho;
         primTile[INDEX_TILE(&zone, UU)] = u;
 
@@ -297,6 +291,10 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
     }
 
   }
+
+  REAL rhoMax, uMax;
+  VecStrideMax(ts->primPetscVecOld, RHO, NULL, &rhoMax);
+  VecStrideMax(ts->primPetscVecOld, UU, NULL, &uMax);
 
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
@@ -339,7 +337,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       for (int var=0; var<DOF; var++)
       {
-        INDEX_PETSC(primOldGlobal, &zone, var) = 
+        INDEX_PETSC(primOldGlobal, &zone, var) =
           primTile[INDEX_TILE(&zone, var)];
       }
     }

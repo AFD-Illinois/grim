@@ -5,7 +5,7 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMPLICIT")
+set(TIME_STEPPING "EXPLICIT")
 set(DT "0.01")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
