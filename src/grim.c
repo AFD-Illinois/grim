@@ -7,10 +7,10 @@ int main(int argc, char **argv)
   struct timeStepper ts;
   timeStepperInit(&ts);
   
-//  while (ts.t < FINAL_TIME)
-//  {
-//    timeStep(&ts);
-//  }
+  while (ts.t < FINAL_TIME)
+  {
+    timeStep(&ts);
+  }
 
   timeStepperDestroy(&ts);
 

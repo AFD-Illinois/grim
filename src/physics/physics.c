@@ -134,15 +134,11 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
     {
       for (int lamda=0; lamda<NDIM; lamda++)
       {
-        for (int mu=0; mu<NDIM; mu++)
-        {
-          sourceTerms[RHO+nu] +=   
-               g * elem->moments[T_UP_UP(kappa, lamda)]
-                 * gammaDownDownDown(lamda, nu, kappa, X);
-        }
+        sourceTerms[UU+nu] +=   
+              g * elem->moments[T_UP_UP(kappa, lamda)]
+                * gammaDownDownDown(lamda, nu, kappa, X);
       }
     }
   }
-
 
 }
