@@ -119,11 +119,8 @@
  *  boundary. It is in the bulk of the domain.
 */
 
-/* Note: The size of primLocal is unknown at compile time. It depends on the
- * number of procs used and is only known at runtime. */
 void applyTileBoundaryConditions(const int iTile, const int jTile,
                                  const int X1Start, const int X2Start,
                                  const int X1Size, const int X2Size,
-                                 ARRAY(primLocal),
                                  REAL tile[ARRAY_ARGS TILE_SIZE]);
 #endif /* GRIM_BOUNDARY_H_ */

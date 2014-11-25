@@ -3,7 +3,6 @@
 void applyTileBoundaryConditions(const int iTile, const int jTile,
                                  const int X1Start, const int X2Start,
                                  const int X1Size, const int X2Size,
-                                 ARRAY(primLocal),
                                  REAL tile[ARRAY_ARGS TILE_SIZE])
 {
   LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -23,12 +22,12 @@ void applyTileBoundaryConditions(const int iTile, const int jTile,
         for (int iGhost=-NG; iGhost<0; iGhost++)
         {
           #if (PHYSICAL_BOUNDARY_LEFT_EDGE == OUTFLOW)
-            tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] =
-            tile[INDEX_TILE_MANUAL(0, zone.jTile, var)];
+            tile[INDEX_TILE_MANUAL(iGhost, zone.jInTile, var)] =
+            tile[INDEX_TILE_MANUAL(0, zone.jInTile, var)];
           #elif (PHYSICAL_BOUNDARY_LEFT_EDGE == MIRROR)
             /* Mirror the left edge of the tile */
-            tile[INDEX_TILE_MANUAL(iGhost, zone.jTile, var)] = 
-            tile[INDEX_TILE_MANUAL(-iGhost-1, zone.jTile, var)];
+            tile[INDEX_TILE_MANUAL(iGhost, zone.jInTile, var)] = 
+            tile[INDEX_TILE_MANUAL(-iGhost-1, zone.jInTile, var)];
           #endif
         }
       }

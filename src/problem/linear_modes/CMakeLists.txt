@@ -6,16 +6,16 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.002")
-set(DT_DUMP ".1")
+set(DT "0.001")
+set(DT_DUMP ".001")
 set(START_TIME "0.")
-set(FINAL_TIME "10.")
+set(FINAL_TIME ".2")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "35")
-set(N2 "35")
+set(N1 "560")
+set(N2 "560")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -31,10 +31,6 @@ set(N2 "35")
 #             NEED TO PUT A CHECK FOR THIS.
 set(TILE_SIZE_X1 "5")
 set(TILE_SIZE_X2 "5")
-
-# Physics variables
-set(ADIABATIC_INDEX "4./3")
-set(CONDUCTION "OFF")
 
 # Geometry
 set(METRIC "MINKOWSKI")
@@ -53,11 +49,15 @@ set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
 # Initial condition parameters 
-# V1, V2, V3 -- 3 velocities
-# Parameters taken from the HARM paper, section 4.3
-set(V1 "0.7")
-set(V2 "0.7")
-set(V3 "0.")
+set(AMPLITUDE "1e-3")
+set(MODE      "HYDRO_SOUND_MODE_1D")
+
+# Physics options set automatically by the choice of the mode being tested
+if (${MODE} STREQUAL "HYDRO_SOUND_MODE_1D")
+  set(ADIABATIC_INDEX "4./3")
+  set(CONDUCTION "OFF")
+endif(${MODE} STREQUAL "HYDRO_SOUND_MODE_1D")
+
 
 # Floor values
 set(RHO_FLOOR "1e-5")
@@ -92,6 +92,14 @@ message("    (" ${X1_A},${X2_A} ")+-----------+" "(" ${X1_B},${X2_A} ")" )
 message("              " ${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
 
 message("")
+message("######################")
+message("# Initial conditions #")
+message("######################")
+message("")
+message("Mode       : " ${MODE})
+message("Amplitude  : " ${AMPLITUDE})
+
+message("")
 message("###################")
 message("# Physics options #")
 message("###################")
@@ -99,14 +107,6 @@ message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
 
-message("")
-message("######################")
-message("# Initial conditions #")
-message("######################")
-message("")
-message("V1   : " ${V1})
-message("V2   : " ${V2})
-message("V3   : " ${V3})
 
 message("")
 message("##########")

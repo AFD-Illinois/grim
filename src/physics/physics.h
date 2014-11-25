@@ -14,10 +14,10 @@
 #define B2              (6)
 #define B3              (7)
 #if (CONDUCTION)
-  #define PHI             (8)
-  #define DOF             (9)
+  #define PHI           (8)
+  #define DOF           (9)
 #else
-  #define DOF             (8)
+  #define DOF           (8)
 #endif
 
 
@@ -29,7 +29,7 @@
 
 /* Indices for elem.moments[] */
 #define N_UP(mu) (mu)
-#define T_UP_UP(mu, nu) (nu + NDIM*(mu) + NDIM)
+#define T_UP_DOWN(mu, nu) (nu + NDIM*(mu) + NDIM)
 
 struct fluidElement
 {

@@ -186,9 +186,6 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
 
-  PetscPrintf(PETSC_COMM_WORLD, "\nStep %d, time = %.5f\n", 
-              ts->timeStepCounter, ts->t);
-
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
     /* First go from t=n to t=n+1/2 */
@@ -249,11 +246,14 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
   #endif
 
   ts->t = ts->t + ts->dt;
+  ts->timeStepCounter++;
+
+  PetscPrintf(PETSC_COMM_WORLD, "\nCompleted step %d, time = %.5f\n\n", 
+              ts->timeStepCounter, ts->t);
 
   diagnostics(ts);
   problemDiagnostics(ts);
 
-  ts->timeStepCounter++;
 }
 
 void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])

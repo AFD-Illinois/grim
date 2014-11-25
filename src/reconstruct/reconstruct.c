@@ -228,43 +228,43 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   X1Size, X2Size, 
                   &zone);
     
-//      REAL slope[DOF];
-//  
-//      slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
-//               &primTile[INDEX_TILE(&zone, 0)],
-//               &primTile[INDEX_TILE_PLUS_ONE_X1(&zone, 0)],
-//               slope);
-//
-//      for (int var=0; var<DOF; var++)
-//      {
-//        /* Left Edge */
-//        primVarsLeft[INDEX_TILE(&zone, var)] =
-//          primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
-//
-//        /* Right Edge */
-//        primVarsRight[INDEX_TILE(&zone, var)] =
-//          primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
-//      }
-    
+      REAL slope[DOF];
+  
+      slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
+               &primTile[INDEX_TILE(&zone, 0)],
+               &primTile[INDEX_TILE_PLUS_ONE_X1(&zone, 0)],
+               slope);
+
       for (int var=0; var<DOF; var++)
       {
-        primVarsRight[INDEX_TILE(&zone, var)] = 
-          MP5_Reconstruct(
-              primTile[INDEX_TILE_MINUS_TWO_X1(&zone, var)],
-              primTile[INDEX_TILE_MINUS_ONE_X1(&zone, var)],
-              primTile[INDEX_TILE(&zone, var)],
-              primTile[INDEX_TILE_PLUS_ONE_X1(&zone, var)],
-              primTile[INDEX_TILE_PLUS_TWO_X1(&zone, var)], zone.dX1);
+        /* Left Edge */
+        primVarsLeft[INDEX_TILE(&zone, var)] =
+          primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
 
-        primVarsLeft[INDEX_TILE(&zone, var)] = 
-          MP5_Reconstruct(
-              primTile[INDEX_TILE_PLUS_TWO_X1(&zone, var)],
-              primTile[INDEX_TILE_PLUS_ONE_X1(&zone, var)],
-              primTile[INDEX_TILE(&zone, var)],
-              primTile[INDEX_TILE_MINUS_ONE_X1(&zone, var)],
-              primTile[INDEX_TILE_MINUS_TWO_X1(&zone, var)], zone.dX1);
-
+        /* Right Edge */
+        primVarsRight[INDEX_TILE(&zone, var)] =
+          primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
       }
+    
+//      for (int var=0; var<DOF; var++)
+//      {
+//        primVarsRight[INDEX_TILE(&zone, var)] = 
+//          MP5_Reconstruct(
+//              primTile[INDEX_TILE_MINUS_TWO_X1(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_ONE_X1(&zone, var)],
+//              primTile[INDEX_TILE(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_ONE_X1(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_TWO_X1(&zone, var)], zone.dX1);
+//
+//        primVarsLeft[INDEX_TILE(&zone, var)] = 
+//          MP5_Reconstruct(
+//              primTile[INDEX_TILE_PLUS_TWO_X1(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_ONE_X1(&zone, var)],
+//              primTile[INDEX_TILE(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_ONE_X1(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_TWO_X1(&zone, var)], zone.dX1);
+//
+//      }
 
     }
 
@@ -280,43 +280,43 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   X1Size, X2Size, 
                   &zone);
     
-//      REAL slope[DOF];
-//  
-//      slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
-//               &primTile[INDEX_TILE(&zone, 0)],
-//               &primTile[INDEX_TILE_PLUS_ONE_X2(&zone, 0)],
-//               slope);
-//
-//      for (int var=0; var<DOF; var++)
-//      {
-//        /* Left Edge */
-//        primVarsLeft[INDEX_TILE(&zone, var)] =
-//          primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
-//
-//        /* Right Edge */
-//        primVarsRight[INDEX_TILE(&zone, var)] =
-//          primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
-//      }
+      REAL slope[DOF];
+  
+      slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
+               &primTile[INDEX_TILE(&zone, 0)],
+               &primTile[INDEX_TILE_PLUS_ONE_X2(&zone, 0)],
+               slope);
 
       for (int var=0; var<DOF; var++)
       {
-        primVarsRight[INDEX_TILE(&zone, var)] = 
-          MP5_Reconstruct(
-              primTile[INDEX_TILE_MINUS_TWO_X2(&zone, var)],
-              primTile[INDEX_TILE_MINUS_ONE_X2(&zone, var)],
-              primTile[INDEX_TILE(&zone, var)],
-              primTile[INDEX_TILE_PLUS_ONE_X2(&zone, var)],
-              primTile[INDEX_TILE_PLUS_TWO_X2(&zone, var)], zone.dX2);
+        /* Left Edge */
+        primVarsLeft[INDEX_TILE(&zone, var)] =
+          primTile[INDEX_TILE(&zone, var)] - 0.5*slope[var];
 
-        primVarsLeft[INDEX_TILE(&zone, var)] = 
-          MP5_Reconstruct(
-              primTile[INDEX_TILE_PLUS_TWO_X2(&zone, var)],
-              primTile[INDEX_TILE_PLUS_ONE_X2(&zone, var)],
-              primTile[INDEX_TILE(&zone, var)],
-              primTile[INDEX_TILE_MINUS_ONE_X2(&zone, var)],
-              primTile[INDEX_TILE_MINUS_TWO_X2(&zone, var)], zone.dX2);
-
+        /* Right Edge */
+        primVarsRight[INDEX_TILE(&zone, var)] =
+          primTile[INDEX_TILE(&zone, var)] + 0.5*slope[var];
       }
+
+//      for (int var=0; var<DOF; var++)
+//      {
+//        primVarsRight[INDEX_TILE(&zone, var)] = 
+//          MP5_Reconstruct(
+//              primTile[INDEX_TILE_MINUS_TWO_X2(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_ONE_X2(&zone, var)],
+//              primTile[INDEX_TILE(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_ONE_X2(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_TWO_X2(&zone, var)], zone.dX2);
+//
+//        primVarsLeft[INDEX_TILE(&zone, var)] = 
+//          MP5_Reconstruct(
+//              primTile[INDEX_TILE_PLUS_TWO_X2(&zone, var)],
+//              primTile[INDEX_TILE_PLUS_ONE_X2(&zone, var)],
+//              primTile[INDEX_TILE(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_ONE_X2(&zone, var)],
+//              primTile[INDEX_TILE_MINUS_TWO_X2(&zone, var)], zone.dX2);
+//
+//      }
 
     }
 

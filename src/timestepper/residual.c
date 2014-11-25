@@ -112,7 +112,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyTileBoundaryConditions(iTile, jTile,
                                   X1Start, X2Start,
                                   X1Size, X2Size,
-                                  primOldLocal, primTile);
+                                  primTile);
 
       applyFloor(iTile, jTile,
                  X1Start, X2Start,
@@ -271,7 +271,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyTileBoundaryConditions(iTile, jTile,
                                   X1Start, X2Start,
                                   X1Size, X2Size,
-                                  primLocal, primTile);
+                                  primTile);
 
       applyFloor(iTile, jTile,
                  X1Start, X2Start,

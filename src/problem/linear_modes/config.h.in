@@ -1,0 +1,61 @@
+#ifndef GRIM_INPUT_H_
+#define GRIM_INPUT_H_
+
+/* Immutable constants. Should not be changed */
+#define NDIM                  (4)
+/* Number of ghost zones */
+#define NG                    (4)
+
+#define M_PI                  (3.141592653589793238462643383279)
+/* Problem options */
+#define HYDRO_ENTROPY_MODE    (0)
+#define HYDRO_SOUND_MODE_1D   (1)
+
+/* End of immutable constants */
+  
+#cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
+#cmakedefine    DUMP_FILE_PREFIX ${DUMP_FILE_PREFIX}
+#cmakedefine    TIME_STEPPING    ${TIME_STEPPING}
+#cmakedefine    DT              (${DT})
+#cmakedefine    DT_DUMP         (${DT_DUMP})
+#cmakedefine    START_TIME      (${START_TIME})
+#cmakedefine    FINAL_TIME      (${FINAL_TIME})
+#cmakedefine    COURANT         (${COURANT})
+#cmakedefine    REAL             ${REAL}
+#cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+
+/* Domain inputs */
+#cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})
+#cmakedefine    N1               (${N1})
+#cmakedefine    N2               (${N2})
+#cmakedefine    TILE_SIZE_X1     (${TILE_SIZE_X1})
+#cmakedefine    TILE_SIZE_X2     (${TILE_SIZE_X2})
+
+#cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
+#cmakedefine01  CONDUCTION
+
+/* Initial condition parameters */
+#cmakedefine    AMPLITUDE           (${AMPLITUDE})
+#cmakedefine    MODE                (${MODE})
+
+/* Geometry */
+#cmakedefine    METRIC              (${METRIC})
+#cmakedefine    EPS                 (${EPS})
+
+/* Domain */
+#cmakedefine    X1_A  (${X1_A})
+#cmakedefine    X1_B  (${X1_B})
+#cmakedefine    X2_A  (${X2_A})
+#cmakedefine    X2_B  (${X2_B})
+
+/* Boundary conditions */
+#cmakedefine    PHYSICAL_BOUNDARY_LEFT_EDGE   (${PHYSICAL_BOUNDARY_LEFT_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_RIGHT_EDGE  (${PHYSICAL_BOUNDARY_RIGHT_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_TOP_EDGE    (${PHYSICAL_BOUNDARY_TOP_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_BOTTOM_EDGE (${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
+
+/* Floor values */
+#cmakedefine    RHO_FLOOR (${RHO_FLOOR})
+#cmakedefine    UU_FLOOR  (${UU_FLOOR})
+
+#endif /* GRIM_INPUT_H_ */

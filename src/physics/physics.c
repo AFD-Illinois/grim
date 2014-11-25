@@ -67,10 +67,12 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
                     struct fluidElement elem[ARRAY_ARGS 1])
 {
   REAL pressure = (ADIABATIC_INDEX - 1.)*elem->primVars[UU];
-  REAL bCov[NDIM], bSqr;
+  REAL bCov[NDIM], bSqr, uCov[NDIM];
   
   conToCov(elem->bCon, geom, bCov);
   bSqr = covDotCon(bCov, elem->bCon);
+
+  conToCov(elem->uCon, geom, uCov);
 
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -78,14 +80,14 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
     for (int nu=0; nu<NDIM; nu++)
     {
-      elem->moments[T_UP_UP(mu,nu)] =   
+      elem->moments[T_UP_DOWN(mu,nu)] =   
                           (  elem->primVars[RHO] + elem->primVars[UU]
                            + pressure + bSqr
-                          )*elem->uCon[mu]*elem->uCon[nu]
+                          )*elem->uCon[mu]*uCov[nu]
 
-                        + (pressure + 0.5*bSqr)*geom->gCon[mu][nu]
+                        + (pressure + 0.5*bSqr)*DELTA(mu, nu)
 
-                        - elem->bCon[mu]*elem->bCon[nu];
+                        - elem->bCon[mu]*bCov[nu];
 
     }
   }
@@ -101,10 +103,10 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
   fluxes[RHO] = g*elem->moments[N_UP(dir)];
 
-  fluxes[UU] = g*elem->moments[T_UP_UP(dir, 0)];
-  fluxes[U1] = g*elem->moments[T_UP_UP(dir, 1)];
-  fluxes[U2] = g*elem->moments[T_UP_UP(dir, 2)];
-  fluxes[U3] = g*elem->moments[T_UP_UP(dir, 3)];
+  fluxes[UU] = g*elem->moments[T_UP_DOWN(dir, 0)];
+  fluxes[U1] = g*elem->moments[T_UP_DOWN(dir, 1)];
+  fluxes[U2] = g*elem->moments[T_UP_DOWN(dir, 2)];
+  fluxes[U3] = g*elem->moments[T_UP_DOWN(dir, 3)];
 
   fluxes[B1] = g*(elem->bCon[1]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[1]);
   fluxes[B2] = g*(elem->bCon[2]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[2]);
@@ -134,9 +136,13 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
     {
       for (int lamda=0; lamda<NDIM; lamda++)
       {
-        sourceTerms[UU+nu] +=   
-              g * elem->moments[T_UP_UP(kappa, lamda)]
-                * gammaDownDownDown(lamda, nu, kappa, X);
+        for (int alpha=0; alpha<NDIM; alpha++)
+        {
+          sourceTerms[UU+nu] +=   
+                g * elem->moments[T_UP_DOWN(kappa, lamda)]
+                  * geom->gCon[lamda][alpha] 
+                  * gammaDownDownDown(alpha, nu, kappa, X);
+        }
       }
     }
   }

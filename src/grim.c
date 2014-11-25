@@ -7,7 +7,7 @@ int main(int argc, char **argv)
   struct timeStepper ts;
   timeStepperInit(&ts);
   
-  while (ts.t < FINAL_TIME)
+  while (ts.t <= FINAL_TIME)
   {
     timeStep(&ts);
   }

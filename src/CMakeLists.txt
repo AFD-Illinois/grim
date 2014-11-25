@@ -43,7 +43,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) equilibrium_torus_2d
 # 13) torus_2d
 # 14) mti_test_2d
-set(PROBLEM "orzag_tang_2d")
+set(PROBLEM "torus_2d")
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

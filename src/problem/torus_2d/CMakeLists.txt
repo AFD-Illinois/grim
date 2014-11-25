@@ -47,7 +47,7 @@ set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
 
 # Domain
 set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "40.")
+set(R_B     "100.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")

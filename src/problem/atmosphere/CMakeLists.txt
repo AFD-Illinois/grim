@@ -6,16 +6,16 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.002")
-set(DT_DUMP ".1")
+set(DT "0.01")
+set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "10.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "35")
-set(N2 "35")
+set(N1 "64")
+set(N2 "64")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -29,39 +29,52 @@ set(N2 "35")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "5")
-set(TILE_SIZE_X2 "5")
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
 
 # Geometry
-set(METRIC "MINKOWSKI")
-set(EPS    "1e-5")
+set(METRIC  "KERRSCHILD")
+set(EPS     "1e-5")
+set(M       "1.")
+set(BH_SPIN "0.9375")
+set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
+                   # disk. H_SLOPE = 1 is no refinement and H_SLOPE -> 0 pushes
+                   # all points towards the midplane.
 
 # Domain
-set(X1_A  "0.")
-set(X1_B  "1.")
-set(X2_A  "0.")
-set(X2_B  "1.")
+set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
+set(R_B     "40.")
+
+set(X1_A  "log(R_A)")
+set(X1_B  "log(R_B)")
+set(X2_A  "1e-20")
+set(X2_B  "1. - 1e-20")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "PERIODIC")
-set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
-set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
-set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
+set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
+set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Initial condition parameters 
-# V1, V2, V3 -- 3 velocities
-# Parameters taken from the HARM paper, section 4.3
-set(V1 "0.7")
-set(V2 "0.7")
-set(V3 "0.")
+# Everything in units of M
+set(R_PRESSURE_MAX  "12.")
+set(R_INNER_EDGE    "6.")
+set(ADIABAT         "1e-3")
+set(PLASMA_BETA     "1e2")
 
 # Floor values
-set(RHO_FLOOR "1e-5")
-SET(UU_FLOOR "1e-7")
+set(RHO_FLOOR         "1e-4")
+set(UU_FLOOR          "1e-6")
+set(RHO_FLOOR_FALLOFF "-1.5")
+set(UU_FLOOR_FALLOFF  "-2.5")
+set(RHO_FLOOR_MIN     "1e-15")
+set(UU_FLOOR_MIN      "1e-15")
+set(GAMMA_MAX         "50.")
 
 message("")
 message("#########################")
@@ -74,22 +87,28 @@ message("Time stepping    : " ${TIME_STEPPING})
 message("Dimensions       : " ${COMPUTE_DIM})
 message("Resolution       : " ${N1} " x " ${N2})
 message("Tile size        : " ${TILE_SIZE_X1} " x " ${TILE_SIZE_X2})
-message("Metric           : " ${METRIC})
+
+message("")
+message("#########################")
+message("# Geometry options #")
+message("#########################")
+message("")
+message("Metric                   : " ${METRIC})
+message("Black hole mass M        : " ${M})
+message("Black hole spin BH_SPIN  : " ${BH_SPIN})
 
 message("")
 message("##################################")
 message("# Domain and boundary conditions #")
 message("##################################")
 message("")
-message("              " ${PHYSICAL_BOUNDARY_TOP_EDGE})
-message("    (" ${X1_A},${X2_B} ")+-----------+" "(" ${X1_B},${X2_B} ")" )
-message(                "           |           |"       )
-message(                "           |           |"       )
-message("  " ${PHYSICAL_BOUNDARY_LEFT_EDGE} " |           | " ${PHYSICAL_BOUNDARY_RIGHT_EDGE})
-message(                "           |           |"       )
-message(                "           |           |"       )
-message("    (" ${X1_A},${X2_A} ")+-----------+" "(" ${X1_B},${X2_A} ")" )
-message("              " ${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
+message("Inner radius                   : " ${R_A})
+message("Outer radius                   : " ${R_B})
+message("Inner radial boundary          : " ${PHYSICAL_BOUNDARY_LEFT_EDGE})
+message("Outer radial boundary          : " ${PHYSICAL_BOUNDARY_RIGHT_EDGE})
+message("Bottom theta boundary          : " ${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
+message("Top theta boundary             : " ${PHYSICAL_BOUNDARY_TOP_EDGE})
+message("Grid refinement factor H_SLOPE : " ${H_SLOPE})
 
 message("")
 message("###################")
@@ -104,14 +123,16 @@ message("######################")
 message("# Initial conditions #")
 message("######################")
 message("")
-message("V1   : " ${V1})
-message("V2   : " ${V2})
-message("V3   : " ${V3})
+message("R_PRESSURE_MAX   : " ${R_PRESSURE_MAX})
+message("R_INNER_EDGE     : " ${R_INNER_EDGE})
+message("ADIABAT          : " ${ADIABAT})
+message("PLASMA_BETA      : " ${PLASMA_BETA})
 
 message("")
 message("##########")
 message("# Floors #")
 message("##########")
 message("")
-message("Density floor            : " ${RHO_FLOOR})
-message("Internal energy floor    : " ${UU_FLOOR})
+message("Density floor          : ${RHO_FLOOR} x r^${RHO_FLOOR_FALLOFF}")
+message("Internal energy floor  : ${UU_FLOOR} x r^${UU_FLOOR_FALLOFF}")
+message("Maximum Lorentz factor : "   ${GAMMA_MAX})
