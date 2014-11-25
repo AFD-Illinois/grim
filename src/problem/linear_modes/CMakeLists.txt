@@ -14,8 +14,8 @@ set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "560")
-set(N2 "560")
+set(N1 "35")
+set(N2 "35")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -48,8 +48,15 @@ set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
+# Reconstrution options
+# MP5 or MONOTONIZED_CENTRAL
+set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
+
 # Initial condition parameters 
-set(AMPLITUDE "1e-3")
+# Mode options: 
+# 1) ENTROPY_WAVE_1D
+# 2) HYDRO_SOUND_MODE_1D
+set(AMPLITUDE "1e-4")
 set(MODE      "HYDRO_SOUND_MODE_1D")
 
 # Physics options set automatically by the choice of the mode being tested
@@ -107,6 +114,12 @@ message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
 
+message("")
+message("##################")
+message("# Reconstruction #")
+message("##################")
+message("")
+message("Reconstruction  : " ${RECONSTRUCTION})
 
 message("")
 message("##########")

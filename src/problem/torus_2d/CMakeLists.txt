@@ -60,6 +60,10 @@ set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
+# Reconstrution options
+# MP5 or MONOTONIZED_CENTRAL
+set(RECONSTRUCTION "MP5")
+
 # Initial condition parameters 
 # Everything in units of M
 set(R_PRESSURE_MAX  "12.")
@@ -117,6 +121,13 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
+
+message("")
+message("##################")
+message("# Reconstruction #")
+message("##################")
+message("")
+message("Reconstruction  : " ${RECONSTRUCTION})
 
 message("")
 message("######################")

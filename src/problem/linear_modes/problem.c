@@ -54,6 +54,38 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
             primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
         }
 
+      #elif (MODE==ENTROPY_WAVE_1D) /* Eigenvalue = 0 */
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
+
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 2.;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.;
+        primVars0[B2]  = 0.;
+        primVars0[B3]  = 0.;
+
+        deltaPrimVars[RHO] = 1.;
+        deltaPrimVars[UU]  = 0.;
+        deltaPrimVars[U1]  = 0.;
+        deltaPrimVars[U2]  = 0.;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = 0.;
+        deltaPrimVars[B2]  = 0.;
+        deltaPrimVars[B3]  = 0.;
+
+        REAL k1 = 2*M_PI;
+        REAL k2 = 0.;
+
+        REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+          INDEX_PETSC(primOldGlobal, &zone, var) =  
+            primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
       #endif
 
     }

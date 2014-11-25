@@ -52,6 +52,10 @@ set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
+# Reconstrution options
+# MP5 or MONOTONIZED_CENTRAL
+set(RECONSTRUCTION "MP5")
+
 # Initial condition parameters 
 # V1, V2, V3 -- 3 velocities
 # A0, R -- magnitude and width of the field loop
@@ -101,6 +105,13 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
+
+message("")
+message("##################")
+message("# Reconstruction #")
+message("##################")
+message("")
+message("Reconstruction  : " ${RECONSTRUCTION})
 
 message("")
 message("######################")

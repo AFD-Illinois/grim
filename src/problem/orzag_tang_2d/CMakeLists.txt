@@ -52,6 +52,10 @@ set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
+# Reconstrution options
+# MP5 or MONOTONIZED_CENTRAL
+set(RECONSTRUCTION "MP5")
+
 # Floor values
 set(RHO_FLOOR "1e-5")
 SET(UU_FLOOR "1e-7")
@@ -91,6 +95,13 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
+
+message("")
+message("##################")
+message("# Reconstruction #")
+message("##################")
+message("")
+message("Reconstruction  : " ${RECONSTRUCTION})
 
 message("")
 message("##########")

@@ -3,8 +3,6 @@
 
 /* Immutable constants. Should not be changed */
 #define NDIM                  (4)
-/* Number of ghost zones */
-#define NG                    (4)
 #define M_PI                  (3.141592653589793238462643383279)
 /* End of immutable constants */
   
@@ -59,6 +57,9 @@
 #cmakedefine    PHYSICAL_BOUNDARY_TOP_EDGE    (${PHYSICAL_BOUNDARY_TOP_EDGE})
 #cmakedefine    PHYSICAL_BOUNDARY_BOTTOM_EDGE (${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
 
+/* Reconstruction */
+#cmakedefine    RECONSTRUCTION  (${RECONSTRUCTION})
+
 /* Floor values */
 #cmakedefine    RHO_FLOOR               (${RHO_FLOOR})
 #cmakedefine    UU_FLOOR                (${UU_FLOOR})
@@ -67,5 +68,12 @@
 #cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
 #cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
 #cmakedefine    GAMMA_MAX               (${GAMMA_MAX})
+
+/* Number of ghost zones */
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL)
+  #define NG  (3)
+#elif (RECONSTRUCTION==MP5)
+  #define NG  (4)
+#endif
 
 #endif /* GRIM_INPUT_H_ */
