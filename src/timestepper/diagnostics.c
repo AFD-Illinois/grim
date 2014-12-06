@@ -6,33 +6,27 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   {
     /* Dump geometry data */
 
-    DM metricDMDA, connectionDMDA;
-    Vec gCovPetscVec, gConPetscVec, connectionPetscVec;
+    PetscPrintf(PETSC_COMM_WORLD, "Dumping the metric and the Christoffel symbols...");
+
+    DM metricDMDA;
+    Vec gCovPetscVec, gConPetscVec;
 
 #if (COMPUTE_DIM==1)
     DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, 16, 0, NULL,
                  &metricDMDA);
-    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, 64, 0, NULL,
-                 &connectionDMDA);
 #elif (COMPUTE_DIM==2)
     DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
                  DMDA_STENCIL_BOX, N1, N2, PETSC_DECIDE, PETSC_DECIDE,
                  16, 0, PETSC_NULL, PETSC_NULL, &metricDMDA);
-    DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
-                 DMDA_STENCIL_BOX, N1, N2, PETSC_DECIDE, PETSC_DECIDE,
-                 64, 0, PETSC_NULL, PETSC_NULL, &connectionDMDA);
 #endif /* Choose dimension */
 
     DMCreateGlobalVector(metricDMDA, &gCovPetscVec);
     DMCreateGlobalVector(metricDMDA, &gConPetscVec);
-    DMCreateGlobalVector(connectionDMDA, &connectionPetscVec);
 
     ARRAY(gCovGlobal);
     ARRAY(gConGlobal);
-    ARRAY(connectionGlobal);
     DMDAVecGetArrayDOF(metricDMDA, gCovPetscVec, &gCovGlobal);
     DMDAVecGetArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
-    DMDAVecGetArrayDOF(connectionDMDA, connectionPetscVec, &connectionGlobal);
 
     LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
     {
@@ -66,37 +60,16 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
           }
         }
 
-        for (int eta=0; eta<NDIM; eta++)
-        {
-          for (int mu=0; mu<NDIM; mu++)
-          {
-            for (int nu=0; nu<NDIM; nu++)
-            {
-              #if (COMPUTE_DIM==1) 
-                connectionGlobal[zone.i][nu + NDIM*(mu + NDIM*eta)] =
-                  gammaDownDownDown(eta, mu, nu, XCoords);
-              #elif (COMPUTE_DIM==2) 
-                connectionGlobal[zone.j][zone.i][nu + NDIM*(mu + NDIM*eta)] =
-                  gammaDownDownDown(eta, mu, nu, XCoords);
-              #endif
-            }
-          }
-        }
-
       }
     }
 
-    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, gCovPetscVec,
-                           &gCovGlobal);
-    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, gConPetscVec,
-                           &gConGlobal);
-    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, connectionPetscVec,
-                           &connectionGlobal);
+    DMDAVecRestoreArrayDOF(metricDMDA, gCovPetscVec, &gCovGlobal);
+    DMDAVecRestoreArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
 
     char gCovFileName[50], gConFileName[50], connectionFileName[50];
     sprintf(gCovFileName, "gcov.h5");
     sprintf(gConFileName, "gcon.h5");
-    sprintf(connectionFileName, "gammadowndowndown.h5");
+    sprintf(connectionFileName, "gammaUpdowndown.h5");
 
     PetscViewer gCovViewer, gConViewer, connectionViewer;
     
@@ -111,12 +84,12 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
     PetscObjectSetName((PetscObject) gCovPetscVec, "gCov");
     PetscObjectSetName((PetscObject) gConPetscVec, "gCon");
-    PetscObjectSetName((PetscObject) connectionPetscVec,
-                       "gammadowndowndown");
+    PetscObjectSetName((PetscObject) ts->connectionPetscVec,
+                       "gammaUpdowndown");
 
     VecView(gCovPetscVec, gCovViewer);
     VecView(gConPetscVec, gConViewer);
-    VecView(connectionPetscVec, connectionViewer);
+    VecView(ts->connectionPetscVec, connectionViewer);
 
     PetscViewerDestroy(&gCovViewer);
     PetscViewerDestroy(&gConViewer);
@@ -124,28 +97,32 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
     VecDestroy(&gCovPetscVec);
     VecDestroy(&gConPetscVec);
-    VecDestroy(&connectionPetscVec);
 
     DMDestroy(&metricDMDA);
-    DMDestroy(&connectionDMDA);
+
+    PetscPrintf(PETSC_COMM_WORLD, "done\n");
   }
 
-  if (ts->t >= ts->tDump)
+  if (ts->t > ts->tDump || fabs(ts->t - ts->tDump) < 1e-10
+                        || fabs(ts->t - FINAL_TIME) < 1e-10 
+     )
   {
-    PetscPrintf(PETSC_COMM_WORLD, "\nDumping data\n\n");
-    
-    char dumpFileName[50];
-    sprintf(dumpFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->timeStepCounter);
+    char primVarsFileName[50];
+    sprintf(primVarsFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->dumpCounter);
 
     PetscViewer viewer;
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, dumpFileName,
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, primVarsFileName,
                         FILE_MODE_WRITE, &viewer);
     PetscObjectSetName((PetscObject) ts->primPetscVec, "primVars");
     VecView(ts->primPetscVec, viewer);
     PetscViewerDestroy(&viewer);
 
+    PetscPrintf(PETSC_COMM_WORLD,
+                "\nDumped primitive variables at t = %f in %s\n\n",
+                ts->t, primVarsFileName);
+    
     ts->tDump += DT_DUMP;
+    ts->dumpCounter++;
   }
   
 }
-

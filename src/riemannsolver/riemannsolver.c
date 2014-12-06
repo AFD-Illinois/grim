@@ -81,10 +81,12 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
   REAL cPlus = -(-B + discr)/(2.*A);
   REAL cMinus = -(-B - discr)/(2.*A);
 
-  if (cPlus>cMinus) {
+  if (cPlus > cMinus)
+  {
     cMax[0] = cPlus;
     cMin[0] = cMinus;
-  } else {
+  } else
+  {
     cMax[0] = cMinus;
     cMin[0] = cPlus;
   }

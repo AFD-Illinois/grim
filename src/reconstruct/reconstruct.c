@@ -33,6 +33,13 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
       }
 	  }
 
+//		REAL Dqm = (mid[var] - left[var]) ;
+//		REAL Dqp = (right[var] - mid[var]) ;
+//		REAL s = Dqm*Dqp ;
+//		if(s <= 0.) ans[var] = 0. ;
+//		else if(fabs(Dqm) < fabs(Dqp)) ans[var] = Dqm ;
+//		else return ans[var] = Dqp ;
+
   }
 
 }
@@ -93,7 +100,6 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                  REAL primVarsLeft[ARRAY_ARGS TILE_SIZE],
                  REAL primVarsRight[ARRAY_ARGS TILE_SIZE])
 {
-
   if (dir==X1)
   {
     LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)

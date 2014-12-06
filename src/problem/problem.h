@@ -16,6 +16,12 @@ void applyFloor(const int iTile, const int jTile,
                 const int X1Size, const int X2Size,
                 REAL primTile[ARRAY_ARGS TILE_SIZE]);
 
-void problemDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
+void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
+                                     const int X1Start, const int X2Start,
+                                     const int X1Size, const int X2Size,
+                                     REAL primTile[ARRAY_ARGS TILE_SIZE]);
+
+void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
+void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
 #endif /* GRIM_PROBLEM_H_ */

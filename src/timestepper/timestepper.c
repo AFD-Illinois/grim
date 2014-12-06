@@ -94,9 +94,10 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 
   ts->dt = DT;
   ts->t = START_TIME;
+  ts->tDump = START_TIME;
 
   ts->timeStepCounter = 0;
-  ts->tDump = 0.;
+  ts->dumpCounter = 0;
 
   ts->computeOldSourceTermsAndOldDivOfFluxes = 0;
   ts->computeDivOfFluxAtTimeN = 0;
@@ -104,11 +105,72 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   ts->computeSourceTermsAtTimeN = 0;
   ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
+  /* Now create dmda for the connection coefficients */
+  #if (COMPUTE_DIM==1)
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, 64, 0, NULL,
+                 &ts->connectionDMDA);
+  #elif (COMPUTE_DIM==2)
+    DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX, N1, N2, PETSC_DECIDE, PETSC_DECIDE,
+                 64, 0, PETSC_NULL, PETSC_NULL, &ts->connectionDMDA);
+  #endif /* Choose dimension */
+
+  DMCreateGlobalVector(ts->connectionDMDA, &ts->connectionPetscVec);
+
+  if (ts->X1Size % TILE_SIZE_X1 != 0)
+  {
+    SETERRQ2(PETSC_COMM_WORLD, 1,
+             "TILE_SIZE_X1 = %d does not divide X1Size = %d exactly\n",
+             TILE_SIZE_X1, ts->X1Size);
+  }
+  #if (COMPUTE_DIM==2)
+    if (ts->X2Size % TILE_SIZE_X2 != 0)
+    {
+      SETERRQ2(PETSC_COMM_WORLD, 1,
+               "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
+               TILE_SIZE_X2, ts->X2Size);
+    }
+  #endif
+
   PetscPrintf(PETSC_COMM_WORLD, "\n");
-  PetscPrintf(PETSC_COMM_WORLD, "##############################\n");
-  PetscPrintf(PETSC_COMM_WORLD, "# Memory allocation complete #\n");
-  PetscPrintf(PETSC_COMM_WORLD, "##############################\n");
+  PetscPrintf(PETSC_COMM_WORLD,
+              "#################################################\n");
+  PetscPrintf(PETSC_COMM_WORLD,
+              "           Memory allocation complete\n\n");
+
+  int numProcs;
+  MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
+  PetscPrintf(PETSC_COMM_WORLD,
+              " Number of processors being used      = %d\n",
+              numProcs);
+  #if (COMPUTE_DIM==1)
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Grid size                            = %d\n",
+                N1);
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Grid points in each MPI process      = %d\n",
+                ts->X1Size);
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Number of tiles in each MPI process  = %d\n",
+                ts->X1Size/TILE_SIZE_X1);
+  #elif (COMPUTE_DIM==2)
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Grid size                            = %d x %d\n",
+                N1, N2);
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Grid points in each MPI process      = %d x %d\n",
+                ts->X1Size, ts->X2Size);
+    PetscPrintf(PETSC_COMM_WORLD,
+                " Number of tiles in each MPI process  = %d x %d\n",
+                ts->X1Size/TILE_SIZE_X1, ts->X2Size/TILE_SIZE_X2);
+  #endif
+
+  PetscPrintf(PETSC_COMM_WORLD,
+              "#################################################\n");
   PetscPrintf(PETSC_COMM_WORLD, "\n");
+
+  /* Precompute the Chritoffel symbols gammaUpDownDown */
+  setChristoffelSymbols(ts);
 
   #if (RESTART)
     PetscMPIInt rank;
@@ -119,15 +181,14 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
       if (access(RESTART_FILE, F_OK) != -1)
       {
         /* File exists */
-        PetscPrintf(PETSC_COMM_WORLD, "\n");
-        PetscPrintf(PETSC_COMM_WORLD, "Found restart file %s\n", RESTART_FILE); 
+        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", RESTART_FILE); 
       }
       else
       {
         /* File does not exist */
         PetscPrintf(PETSC_COMM_WORLD, "\n");
-        SETERRQ(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
-                RESTART_FILE);
+        SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
+                 RESTART_FILE);
       }
     }
 
@@ -143,11 +204,68 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
     /* Set initialConditions from problem */
     initialConditions(ts);
 
-    /* Output the initial conditions */
-    VecCopy(ts->primPetscVecOld, ts->primPetscVec);
-    diagnostics(ts);
-
   #endif /* RESTART option */
+
+  /* Output the initial conditions */
+  VecCopy(ts->primPetscVecOld, ts->primPetscVec);
+  diagnostics(ts);
+
+}
+
+void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  VecSet(ts->connectionPetscVec, 0.);
+
+  ARRAY(connectionGlobal);
+  DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
+                     &connectionGlobal);
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+
+      /* Now compute connectionGlobal with 
+       * Index Up   - eta
+       * Index down - mu
+       * Index down - nu */
+      for (int eta=0; eta<NDIM; eta++)
+      {
+        for (int mu=0; mu<NDIM; mu++)
+        {
+          for (int nu=0; nu<NDIM; nu++)
+          {
+            for (int alpha=0; alpha<NDIM; alpha++)
+            {
+              #if (COMPUTE_DIM==1)
+                connectionGlobal[zone.i][GAMMA_UP_DOWN_DOWN(eta, mu, nu)]
+              #elif (COMPUTE_DIM==2)
+                connectionGlobal[zone.j][zone.i][GAMMA_UP_DOWN_DOWN(eta, mu, nu)]
+              #endif
+              +=
+                geom.gCon[eta][alpha]
+              * gammaDownDownDown(alpha, mu, nu, XCoords);
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+  DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
+                         &connectionGlobal);
 }
 
 /* Explicit time stepping:
@@ -201,6 +319,9 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
     SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
 
+    /* Problem dependent half step diagnostics */
+    halfStepDiagnostics(ts);
+
     /* Current state:
     * ts->primPetscVecHalfStep has the primitive variables at t = n+1/2 
     * ts->primPetscVecOld has the primitive variables at t = n
@@ -248,12 +369,14 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
   ts->t = ts->t + ts->dt;
   ts->timeStepCounter++;
 
-  PetscPrintf(PETSC_COMM_WORLD, "\nCompleted step %d, time = %.5f\n\n", 
-              ts->timeStepCounter, ts->t);
+  PetscPrintf(PETSC_COMM_WORLD,
+              "\nCompleted step %d, current time = %.5f\n\n",
+              ts->timeStepCounter, ts->t, ts->tDump);
+
+  /* Problem dependent full step diagnostics */
+  fullStepDiagnostics(ts);
 
   diagnostics(ts);
-  problemDiagnostics(ts);
-
 }
 
 void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
@@ -264,9 +387,11 @@ void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
   VecDestroy(&ts->sourceTermsPetscVecOld);
   VecDestroy(&ts->residualPetscVec);
   VecDestroy(&ts->primPetscVec);
+  VecDestroy(&ts->connectionPetscVec);
 
   DMDestroy(&ts->dmdaWithGhostZones);
   DMDestroy(&ts->dmdaWithoutGhostZones);
+  DMDestroy(&ts->connectionDMDA);
 
   SNESDestroy(&ts->snes);
 

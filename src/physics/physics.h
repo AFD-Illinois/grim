@@ -31,6 +31,9 @@
 #define N_UP(mu) (mu)
 #define T_UP_DOWN(mu, nu) (nu + NDIM*(mu) + NDIM)
 
+/* Indices for the Christoffel symbols */
+#define GAMMA_UP_DOWN_DOWN(eta,mu,nu) (eta+NDIM*(mu+NDIM*(nu) ) )
+
 struct fluidElement
 {
   REAL gamma;
@@ -58,7 +61,7 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
-                        const REAL X[ARRAY_ARGS NDIM],
+                        const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
 
 /* Internal functions */

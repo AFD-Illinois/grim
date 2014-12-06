@@ -6,10 +6,10 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.0001")
+set(DT "0.025")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
-set(FINAL_TIME "10.")
+set(FINAL_TIME "200.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -29,8 +29,8 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "8")
-set(TILE_SIZE_X2 "8")
+set(TILE_SIZE_X1 "16")
+set(TILE_SIZE_X2 "16")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
@@ -47,7 +47,7 @@ set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
 
 # Domain
 set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "100.")
+set(R_B     "40.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -62,7 +62,7 @@ set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
 # MP5 or MONOTONIZED_CENTRAL
-set(RECONSTRUCTION "MP5")
+set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M

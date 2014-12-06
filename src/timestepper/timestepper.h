@@ -3,12 +3,14 @@
 
 #include <petsc.h>
 #include <petscviewerhdf5.h>
+#include <unistd.h>
 #include "../inputs.h"
 #include "../geometry/geometry.h"
 #include "../gridzone/gridzone.h"
 #include "../boundary/boundary.h"
 #include "../reconstruct/reconstruct.h"
 #include "../riemannsolver/riemannsolver.h"
+#include "../physics/physics.h"
 
 #define EXPLICIT (0)
 #define IMPLICIT (1)
@@ -18,10 +20,12 @@ struct timeStepper
 {
   REAL t, dt, tDump;
   int timeStepCounter;
+  int dumpCounter;
 
   SNES snes;
   DM dmdaWithGhostZones;
   DM dmdaWithoutGhostZones;
+  DM connectionDMDA;
 
   Vec primPetscVec;
   Vec residualPetscVec;
@@ -30,6 +34,7 @@ struct timeStepper
   Vec sourceTermsPetscVecOld;
   Vec divFluxPetscVecOld;
   Vec conservedVarsPetscVecOld;
+  Vec connectionPetscVec;
 
   int computeOldSourceTermsAndOldDivOfFluxes;
   int computeDivOfFluxAtTimeN;
@@ -67,6 +72,8 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                            const int X1Size, const int X2Size,
                            REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
                            REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]);
+
+void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 
 void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 

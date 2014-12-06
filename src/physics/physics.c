@@ -103,7 +103,7 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
   fluxes[RHO] = g*elem->moments[N_UP(dir)];
 
-  fluxes[UU] = g*elem->moments[T_UP_DOWN(dir, 0)];
+  fluxes[UU] = g*elem->moments[T_UP_DOWN(dir, 0)] + fluxes[RHO];
   fluxes[U1] = g*elem->moments[T_UP_DOWN(dir, 1)];
   fluxes[U2] = g*elem->moments[T_UP_DOWN(dir, 2)];
   fluxes[U3] = g*elem->moments[T_UP_DOWN(dir, 3)];
@@ -120,31 +120,28 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
-                        const REAL X[ARRAY_ARGS NDIM],
+                        const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF])
 {
-  REAL g = sqrt(-geom->gDet);
-
   for (int var=0; var<DOF; var++)
   {
     sourceTerms[var] = 0.;
   }
 
-  for (int nu=0; nu<NDIM; nu++)
-  {
-    for (int kappa=0; kappa<NDIM; kappa++)
+  #if (METRIC==KERRSCHILD)
+    REAL g = sqrt(-geom->gDet);
+
+    for (int nu=0; nu<NDIM; nu++)
     {
-      for (int lamda=0; lamda<NDIM; lamda++)
+      for (int kappa=0; kappa<NDIM; kappa++)
       {
-        for (int alpha=0; alpha<NDIM; alpha++)
+        for (int lamda=0; lamda<NDIM; lamda++)
         {
           sourceTerms[UU+nu] +=   
                 g * elem->moments[T_UP_DOWN(kappa, lamda)]
-                  * geom->gCon[lamda][alpha] 
-                  * gammaDownDownDown(alpha, nu, kappa, X);
+                  * christoffel[GAMMA_UP_DOWN_DOWN(lamda, kappa, nu)];
         }
       }
     }
-  }
-
+  #endif
 }

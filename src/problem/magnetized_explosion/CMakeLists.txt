@@ -6,16 +6,16 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.002")
+set(DT "0.001")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
-set(FINAL_TIME "10./7.")
+set(FINAL_TIME "4.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "70")
-set(N2 "70")
+set(N1 "64")
+set(N2 "64")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -29,11 +29,11 @@ set(N2 "70")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "10")
-set(TILE_SIZE_X2 "10")
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
 
 # Physics variables
-set(ADIABATIC_INDEX "4./3")
+set(ADIABATIC_INDEX "5./3")
 set(CONDUCTION "OFF")
 
 # Geometry
@@ -41,31 +41,36 @@ set(METRIC "MINKOWSKI")
 set(EPS    "1e-5")
 
 # Domain
-set(X1_A  "0.")
-set(X1_B  "1.")
-set(X2_A  "0.")
-set(X2_B  "1.")
+set(X1_A  "-6.")
+set(X1_B  "6.")
+set(X2_A  "-6.")
+set(X2_B  "6.")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "PERIODIC")
-set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
-set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
-set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
+set(PHYSICAL_BOUNDARY_TOP_EDGE    "OUTFLOW")
+set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "OUTFLOW")
 
 # Reconstrution options
 # MP5 or MONOTONIZED_CENTRAL
 set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
-# V1, V2, V3 -- 3 velocities
-# Parameters taken from the HARM paper, section 4.3
-set(V1 "0.7")
-set(V2 "0.7")
-set(V3 "0.")
+# MEAN_MAGNETIC_FIELD -- Magnetic field in the x direction
+# SMOOTHNESS -- Parameter for the shell edge
+# Parameters taken from Komissarov, 1999
+set(INITIAL_RADIUS      "1.")
+set(MEAN_MAGNETIC_FIELD "0.")
+set(RHO_INSIDE          "1e-2")
+set(RHO_OUTSIDE         "1e-4")
+set(PRESSURE_INSIDE     "1.")
+set(PRESSURE_OUTSIDE    "3e-5")
+set(SMOOTHNESS          "20.")
 
 # Floor values
-set(RHO_FLOOR "1e-5")
-SET(UU_FLOOR "1e-7")
+set(RHO_FLOOR "1e-7")
+SET(UU_FLOOR "1e-9")
 
 message("")
 message("#########################")
@@ -115,9 +120,13 @@ message("######################")
 message("# Initial conditions #")
 message("######################")
 message("")
-message("V1   : " ${V1})
-message("V2   : " ${V2})
-message("V3   : " ${V3})
+message("Initial radius       : " ${INITIAL_RADIUS})
+message("Mean magnetic field  : " ${MEAN_MAGNETIC_FIELD})
+message("Density inside       : " ${RHO_INSIDE})
+message("Density outside      : " ${RHO_OUTSIDE})
+message("Pressure inside      : " ${PRESSURE_INSIDE})
+message("Pressure outside     : " ${PRESSURE_OUTSIDE})
+message("Smoothness factor    : " ${SMOOTHNESS})
 
 message("")
 message("##########")

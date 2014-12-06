@@ -143,7 +143,6 @@
 
 #endif /* LOOP_INSIDE_TILE for different COMPUTE_DIM */
 
-
 struct gridZone
 {
   int i, j;
@@ -152,11 +151,6 @@ struct gridZone
   int X1Size, X2Size;
 
   REAL dX1, dX2;
-
-  /* State of the edges: */
-  /* OUTFLOW, MIRROR, PERIODIC, CONSTANT */
-  int leftEdge, rightEdge;
-  int bottomEdge, topEdge;
 };
 
 void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],

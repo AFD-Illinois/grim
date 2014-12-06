@@ -344,11 +344,182 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
-  
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
                          ts->primPetscVecOld, &primOldGlobal);
+  /* Done with setting the initial conditions */
+
+  PetscPrintf(PETSC_COMM_WORLD, "Torus initialization complete\n");
+
+  PetscPrintf(PETSC_COMM_WORLD, "Dumping initial fluxes and source terms...");
+
+  /* Compute and output the fluxes for the initial data */
+  Vec fluxX1PetscVec, fluxX2PetscVec, sourcesPetscVec;
+  DMCreateGlobalVector(ts->dmdaWithGhostZones, &fluxX1PetscVec);
+  DMCreateGlobalVector(ts->dmdaWithGhostZones, &fluxX2PetscVec);
+  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &sourcesPetscVec);
+
+  ARRAY(fluxX1Global);
+  ARRAY(fluxX2Global);
+  ARRAY(sourcesGlobal);
+  ARRAY(connectionGlobal);
+
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     fluxX1PetscVec, &fluxX1Global);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     fluxX2PetscVec, &fluxX2Global);
+  DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones,
+                     sourcesPetscVec, &sourcesGlobal);
+  DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
+                     &connectionGlobal);
+
+  Vec primPetscVecLocal;
+  DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+
+  DMGlobalToLocalBegin(ts->dmdaWithGhostZones, 
+                       ts->primPetscVecOld,
+                       INSERT_VALUES,
+                       primPetscVecLocal);
+  DMGlobalToLocalEnd(ts->dmdaWithGhostZones,
+                     ts->primPetscVecOld,
+                     INSERT_VALUES,
+                     primPetscVecLocal);
+
+  ARRAY(primLocal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
+                     &primLocal);
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+    REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start, 
+                  ts->X1Size, ts->X2Size, 
+                  &zone);
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primLocal, &zone, var);
+      }
+    }
+
+    applyTileBoundaryConditions(iTile, jTile,
+                                ts->X1Start, ts->X2Start,
+                                ts->X1Size, ts->X2Size,
+                                primTile);
+
+    computeFluxesOverTile(primTile,
+                          iTile, jTile,
+                          ts->X1Start, ts->X2Start,
+                          ts->X1Size, ts->X2Size,
+                          fluxX1Tile, fluxX2Tile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start, 
+                  ts->X1Size, ts->X2Size, 
+                  &zone);
+
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+      struct fluidElement elem;
+      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+
+      REAL sourceTerms[DOF];
+      computeSourceTerms(&elem, &geom,
+                         &INDEX_PETSC(connectionGlobal, &zone, 0),
+                         sourceTerms);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(fluxX1Global, &zone, var) =
+          fluxX1Tile[INDEX_TILE(&zone, var)];
+
+        INDEX_PETSC(fluxX2Global, &zone, var) =
+          fluxX2Tile[INDEX_TILE(&zone, var)];
+
+        INDEX_PETSC(sourcesGlobal, &zone, var) =
+          sourceTerms[var];
+      }
+    }
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+                         primPetscVecLocal, &primLocal);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         fluxX1PetscVec, &fluxX1Global);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         fluxX2PetscVec, &fluxX2Global);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones,
+                         sourcesPetscVec, &sourcesGlobal);
+  DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
+                         &connectionGlobal);
+
+  char fluxesX1FileName[50], fluxesX2FileName[50], sourcesFileName[50];
+  sprintf(fluxesX1FileName, "%s.h5", "fluxX1Initial");
+  sprintf(fluxesX2FileName, "%s.h5", "fluxX2Initial");
+  sprintf(sourcesFileName, "%s.h5", "sourcesInitial");
+
+  PetscViewer viewer;
+  PetscViewerHDF5Open(PETSC_COMM_WORLD, fluxesX1FileName,
+                      FILE_MODE_WRITE, &viewer);
+  PetscObjectSetName((PetscObject) fluxX1PetscVec, "fluxX1");
+  VecView(fluxX1PetscVec, viewer);
+  PetscViewerDestroy(&viewer);
+
+  PetscViewerHDF5Open(PETSC_COMM_WORLD, fluxesX2FileName,
+                      FILE_MODE_WRITE, &viewer);
+  PetscObjectSetName((PetscObject) fluxX2PetscVec, "fluxX2");
+  VecView(fluxX2PetscVec, viewer);
+  PetscViewerDestroy(&viewer);
+
+  PetscViewerHDF5Open(PETSC_COMM_WORLD, sourcesFileName,
+                      FILE_MODE_WRITE, &viewer);
+  PetscObjectSetName((PetscObject) sourcesPetscVec, "sources");
+  VecView(sourcesPetscVec, viewer);
+  PetscViewerDestroy(&viewer);
+
+  VecDestroy(&fluxX1PetscVec);
+  VecDestroy(&fluxX2PetscVec); 
+  VecDestroy(&sourcesPetscVec); 
+
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 }
 
+void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
+                                     const int X1Start, const int X2Start,
+                                     const int X1Size, const int X2Size,
+                                     REAL primTile[ARRAY_ARGS TILE_SIZE])
+{
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    if (primTile[INDEX_TILE(&zone, RHO)] < RHO_FLOOR_MIN)
+    {
+      primTile[INDEX_TILE(&zone, RHO)] = RHO_FLOOR_MIN;
+    }
+
+    if (primTile[INDEX_TILE(&zone, UU)] < UU_FLOOR_MIN)
+    {
+      primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
+    }
+  }
+}
 
 void applyFloor(const int iTile, const int jTile,
                 const int X1Start, const int X2Start,
@@ -428,9 +599,110 @@ void applyFloor(const int iTile, const int jTile,
 
 }
 
-void problemDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
+void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 {
+  ARRAY(primHalfStepGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     ts->primPetscVecHalfStep, &primHalfStepGlobal);
 
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primHalfStepGlobal, &zone, var);
+      }
+    }
+
+    applyFloor(iTile, jTile,
+               ts->X1Start, ts->X2Start,
+               ts->X1Size, ts->X2Size,
+               primTile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primHalfStepGlobal, &zone, var) =
+        primTile[INDEX_TILE(&zone, var)];
+      }
+    }
+
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         ts->primPetscVecHalfStep, &primHalfStepGlobal);
+}
+
+void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  ARRAY(primOldGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     ts->primPetscVecOld, &primOldGlobal);
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primOldGlobal, &zone, var);
+      }
+    }
+
+    applyFloor(iTile, jTile,
+               ts->X1Start, ts->X2Start,
+               ts->X1Size, ts->X2Size,
+               primTile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primOldGlobal, &zone, var) =
+        primTile[INDEX_TILE(&zone, var)];
+      }
+    }
+
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         ts->primPetscVecOld, &primOldGlobal);
 }
 
 void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
