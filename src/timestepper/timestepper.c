@@ -151,6 +151,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
                 " Grid points in each MPI process      = %d\n",
                 ts->X1Size);
     PetscPrintf(PETSC_COMM_WORLD,
+                " Grid points in each tile             = %d\n",
+                TILE_SIZE_X1);
+    PetscPrintf(PETSC_COMM_WORLD,
                 " Number of tiles in each MPI process  = %d\n",
                 ts->X1Size/TILE_SIZE_X1);
   #elif (COMPUTE_DIM==2)
@@ -161,6 +164,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
                 " Grid points in each MPI process      = %d x %d\n",
                 ts->X1Size, ts->X2Size);
     PetscPrintf(PETSC_COMM_WORLD,
+                " Grid points in each tile             = %d x %d\n",
+                TILE_SIZE_X1, TILE_SIZE_X2);
+    PetscPrintf(PETSC_COMM_WORLD,
                 " Number of tiles in each MPI process  = %d x %d\n",
                 ts->X1Size/TILE_SIZE_X1, ts->X2Size/TILE_SIZE_X2);
   #endif
@@ -170,7 +176,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   PetscPrintf(PETSC_COMM_WORLD, "\n");
 
   /* Precompute the Chritoffel symbols gammaUpDownDown */
+  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
   setChristoffelSymbols(ts);
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
   #if (RESTART)
     PetscMPIInt rank;
@@ -220,6 +228,7 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                      &connectionGlobal);
 
+  #pragma omp parallel for
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
