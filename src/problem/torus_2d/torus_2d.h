@@ -25,6 +25,5 @@ REAL computeSigma(REAL a, REAL r, REAL theta);
 REAL computeA(REAL a, REAL r, REAL theta);
 
 void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
-                 const REAL XCoords[NDIM],
                  REAL primTile[ARRAY_ARGS TILE_SIZE]);
 #endif

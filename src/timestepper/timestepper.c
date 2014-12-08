@@ -141,7 +141,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   int numProcs;
   MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
   PetscPrintf(PETSC_COMM_WORLD,
-              " Number of processors being used      = %d\n",
+              " Number of MPI procs being used       = %d\n",
               numProcs);
   #if (COMPUTE_DIM==1)
     PetscPrintf(PETSC_COMM_WORLD,

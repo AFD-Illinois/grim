@@ -116,6 +116,12 @@ PetscErrorCode computeResidual(SNES snes,
                                   X1Start, X2Start,
                                   X1Size, X2Size,
                                   primTile);
+
+      applyAdditionalProblemSpecificBCs(iTile, jTile,
+                                        X1Start, X2Start,
+                                        X1Size, X2Size,
+                                        primTile);
+
       /* Sync point */
   
       /* Work on the tiles.*/
@@ -279,6 +285,11 @@ PetscErrorCode computeResidual(SNES snes,
                                   X1Start, X2Start,
                                   X1Size, X2Size,
                                   primTile);
+
+      applyAdditionalProblemSpecificBCs(iTile, jTile,
+                                        X1Start, X2Start,
+                                        X1Size, X2Size,
+                                        primTile);
 
       applyFloorInsideNonLinearSolver(iTile, jTile,
                                       X1Start, X2Start,

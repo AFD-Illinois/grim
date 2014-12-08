@@ -5,17 +5,17 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
-set(DT "0.025")
+set(TIME_STEPPING "IMEX")
+set(DT "0.05")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
-set(FINAL_TIME "200.")
+set(FINAL_TIME "2000.")
 set(COURANT "0.5")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "256")
-set(N2 "256")
+set(N1 "64")
+set(N2 "64")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique

@@ -567,34 +567,100 @@ void applyFloor(const int iTile, const int jTile,
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
     }
 
-//    /* Inflow check at the inner radial boundary */
-//    if (zone.i < 0)
-//    {
-//      inflowCheck(&zone, XCoords, primTile);
-//    }
-//
-//    /* Inflow check at the outer radial boundary */
-//    if (zone.i > N1-1)
-//    {
-//      inflowCheck(&zone, XCoords, primTile);
-//    }
+    struct geometry geom;
+    setGeometry(XCoords, &geom);
 
-//    struct geometry geom;
-//    setGeometry(XCoords, &geom);
-//
-//    struct fluidElement elem;
-//    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-//
-//    if (elem.gamma > GAMMA_MAX)
-//    {
-//      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
-//                         /(elem.gamma*elem.gamma-1.)
-//                        );
-//
-//      primTile[INDEX_TILE(&zone, U1)] *= factor;
-//      primTile[INDEX_TILE(&zone, U2)] *= factor;
-//      primTile[INDEX_TILE(&zone, U3)] *= factor;
-//    }
+    struct fluidElement elem;
+    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+
+    if (elem.gamma > GAMMA_MAX)
+    {
+      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
+                         /(elem.gamma*elem.gamma-1.)
+                        );
+
+      primTile[INDEX_TILE(&zone, U1)] *= factor;
+      primTile[INDEX_TILE(&zone, U2)] *= factor;
+      primTile[INDEX_TILE(&zone, U3)] *= factor;
+    }
+  }
+
+}
+
+void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
+                                       const int X1Start, const int X2Start,
+                                       const int X1Size, const int X2Size,
+                                       REAL primTile[ARRAY_ARGS TILE_SIZE])
+{
+
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    /* Inflow check at the inner radial boundary */
+    if (zone.i == 0)
+    {
+      for (int iGhost=-NG; iGhost<0; iGhost++)
+      {
+        struct gridZone ghostZone;
+
+        setGridZone(iTile, jTile,
+                    iGhost, jInTile,
+                    X1Start, X2Start,
+                    X1Size, X2Size,
+                    &ghostZone);
+
+        inflowCheck(&ghostZone, primTile);
+      }
+    }
+    /* END OF LEFT EDGE */
+
+
+    /* Inflow check at the outer radial boundary */
+    if (zone.i == N1-1)
+    {
+      for (int iGhost=0; iGhost<NG; iGhost++)
+      {
+        struct gridZone ghostZone;
+
+        setGridZone(iTile, jTile,
+                    TILE_SIZE_X1+iGhost, jInTile,
+                    X1Start, X2Start,
+                    X1Size, X2Size,
+                    &ghostZone);
+
+        inflowCheck(&ghostZone, primTile);
+      }
+    }
+    /* END OF RIGHT EDGE */
+
+    /* BOTTOM EDGE */
+    if (zone.j == 0)
+    {
+      for (int jGhost=-NG; jGhost<0; jGhost++)
+      {
+        primTile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, U2)] *= -1;
+        primTile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, B2)] *= -1;
+      }
+    }
+    /* END OF BOTTOM EDGE */
+
+    /* TOP EDGE */
+    if (zone.j == N2-1)
+    {
+      for (int jGhost=0; jGhost<NG; jGhost++)
+      {
+        primTile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, U2)] *= -1;
+        primTile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, B2)] *= -1;
+      }
+    }
+    /* END OF TOP EDGE */
+
   }
 
 }
@@ -605,6 +671,7 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecHalfStep, &primHalfStepGlobal);
 
+  #pragma omp parallel for
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
@@ -658,6 +725,7 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
+  #pragma omp parallel for
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
@@ -706,22 +774,51 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 }
 
 void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
-                 const REAL XCoords[NDIM],
                  REAL primTile[ARRAY_ARGS TILE_SIZE])
 {
+  REAL XCoords[NDIM];
+  getXCoords(zone, CENTER, XCoords);
   struct geometry geom;
   setGeometry(XCoords, &geom);
 
   struct fluidElement elem;
   setFluidElement(&primTile[INDEX_TILE(zone, 0)], &geom, &elem);
 
-  int inflowInnerBoundary = (zone->i < 0 && elem.uCon[1] > 0);
-  int inflowOuterBoundary = (zone->i >= N1 && elem.uCon[1] < 0);
+  int inflowInnerBoundary = (zone->i < 0    && elem.uCon[1] > 0.);
+  int inflowOuterBoundary = (zone->i > N1-1 && elem.uCon[1] < 0.);
 
   if (inflowInnerBoundary || inflowOuterBoundary)
   {
+    /* Remove gamma from the primitives. Reason? */
+    primTile[INDEX_TILE(zone, U1)] /= elem.gamma;
+    primTile[INDEX_TILE(zone, U2)] /= elem.gamma;
+    primTile[INDEX_TILE(zone, U3)] /= elem.gamma;
+
     /* Set new radial velocity to be zero */
     primTile[INDEX_TILE(zone, U1)] = geom.gCon[0][1]*geom.alpha;
+
+    /* Now calculate the new gamma corresponding to the new primitives */
+    REAL vSqr = 0.;
+    for (int a=1; a<NDIM; a++)
+    {
+      for (int b=1; b<NDIM; b++)
+      {
+        vSqr +=  primTile[INDEX_TILE(zone, UU+a)]
+               * primTile[INDEX_TILE(zone, UU+b)]
+               * geom.gCov[a][b];
+      }
+    }
+
+    if (fabs(vSqr) < 1e-13) vSqr = 1e-13;
+    if (vSqr >= 1.) vSqr = 1. - 1./(GAMMA_MAX*GAMMA_MAX);
+
+    REAL gamma = 1./sqrt(1. - vSqr);
+
+    /* Put this new gamma into the primitives */
+    primTile[INDEX_TILE(zone, U1)] *= gamma;
+    primTile[INDEX_TILE(zone, U2)] *= gamma;
+    primTile[INDEX_TILE(zone, U3)] *= gamma;
+
   }
 
 }
