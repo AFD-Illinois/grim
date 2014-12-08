@@ -88,6 +88,8 @@ REAL computeLnOfh(REAL a, REAL r, REAL theta)
 
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Initializing torus...");
+
   ARRAY(primOldGlobal);
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
@@ -292,9 +294,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
-  REAL rhoMax, uMax;
+  REAL rhoMax;
   VecStrideMax(ts->primPetscVecOld, RHO, NULL, &rhoMax);
-  VecStrideMax(ts->primPetscVecOld, UU, NULL, &uMax);
 
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
@@ -344,11 +345,139 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
+  Vec primPetscVecOldLocal, bSqrPetscVecGlobal;
+  DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecOldLocal);
+  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &bSqrPetscVecGlobal);
+
+  ARRAY(primOldLocal);
+  ARRAY(bSqrGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecOldLocal,
+                     &primOldLocal);
+  DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
+                     &bSqrGlobal);
+
+  DMGlobalToLocalBegin(ts->dmdaWithGhostZones, 
+                       ts->primPetscVecOld,
+                       INSERT_VALUES,
+                       primPetscVecOldLocal);
+  DMGlobalToLocalEnd(ts->dmdaWithGhostZones,
+                     ts->primPetscVecOld,
+                     INSERT_VALUES,
+                     primPetscVecOldLocal);
+
+  /* Now set the magnetic field using the magnetic vector potential */
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE], AVectorTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] = 
+          INDEX_PETSC(primOldLocal, &zone, var);
+      }
+    }
+
+    LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      REAL rhoAvg = 
+        0.25*(  primTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile,   RHO)]
+              + primTile[INDEX_TILE_MANUAL(zone.iInTile-1, zone.jInTile,   RHO)]
+              + primTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile-1, RHO)]
+              + primTile[INDEX_TILE_MANUAL(zone.iInTile-1, zone.jInTile-1, RHO)]
+             );
+
+      REAL AVec = rhoAvg - 0.2;
+
+      AVectorTile[INDEX_TILE(&zone, 0)] = 0.;
+
+      if (AVec > 0.)
+      {
+        AVectorTile[INDEX_TILE(&zone, 0)] = AVec;
+      }
+    }
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+      REAL g = sqrt(-geom.gDet);
+
+      INDEX_PETSC(primOldGlobal, &zone, B1) = 
+        -(  AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile+1, 0)]
+          + AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile+1, 0)]
+         )/(2.*zone.dX2*g);
+
+      INDEX_PETSC(primOldGlobal, &zone, B2) = 
+         (  AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile,   0)]
+          + AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile+1, 0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile+1, 0)]
+         )/(2.*zone.dX1*g);
+
+      INDEX_PETSC(primOldGlobal, &zone, B3) = 0.; 
+
+      struct fluidElement elem;
+      setFluidElement(&INDEX_PETSC(primOldGlobal, &zone, 0), &geom, &elem);
+
+      REAL bCov[NDIM];
+      conToCov(elem.bCon, &geom, bCov);
+      REAL bSqr = covDotCon(bCov, elem.bCon);
+
+      INDEX_PETSC(bSqrGlobal, &zone, 0) = bSqr;
+    } 
+
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
+                         &bSqrGlobal);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, primPetscVecOldLocal,
+                         &primOldLocal);
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
                          ts->primPetscVecOld, &primOldGlobal);
-  /* Done with setting the initial conditions */
 
-  PetscPrintf(PETSC_COMM_WORLD, "Torus initialization complete\n");
+  DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecOldLocal);
+
+  REAL bSqrMax, uMax;
+  VecStrideMax(bSqrPetscVecGlobal, 0, NULL, &bSqrMax);
+  VecStrideMax(ts->primPetscVecOld, UU, NULL, &uMax);
+
+  REAL betaActual = (ADIABATIC_INDEX-1.)*uMax/(0.5*bSqrMax);
+  REAL norm = sqrt(betaActual/PLASMA_BETA);
+
+  VecStrideScale(ts->primPetscVecOld, B1, norm);
+  VecStrideScale(ts->primPetscVecOld, B2, norm);
+  VecStrideScale(ts->primPetscVecOld, B3, norm);
+
+  VecDestroy(&bSqrPetscVecGlobal);
+
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
+  /* Done with setting the initial conditions */
 
   PetscPrintf(PETSC_COMM_WORLD, "Dumping initial fluxes and source terms...");
 
