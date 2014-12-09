@@ -857,7 +857,9 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecHalfStep, &primHalfStepGlobal);
 
-  #pragma omp parallel for
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
@@ -911,7 +913,9 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
-  #pragma omp parallel for
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];

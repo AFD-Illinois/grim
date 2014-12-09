@@ -69,7 +69,9 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecGetArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
 
     /* Loop through tiles. We use tiles to maximize cache usage.*/
-    #pragma omp parallel for
+    #if (USE_OPENMP)
+      #pragma omp parallel for
+    #endif
     LOOP_OVER_TILES(X1Size, X2Size)
     {
       REAL primTile[TILE_SIZE];
@@ -270,7 +272,9 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecGetArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
   #endif
 
-  #pragma omp parallel for
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
   LOOP_OVER_TILES(X1Size, X2Size)
   {
     REAL primTile[TILE_SIZE];

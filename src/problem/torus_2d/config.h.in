@@ -26,6 +26,7 @@
 #cmakedefine    N2               (${N2})
 #cmakedefine    TILE_SIZE_X1     (${TILE_SIZE_X1})
 #cmakedefine    TILE_SIZE_X2     (${TILE_SIZE_X2})
+#cmakedefine01  USE_OPENMP
 
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})

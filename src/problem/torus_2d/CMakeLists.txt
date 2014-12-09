@@ -5,12 +5,12 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMEX")
+set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "2000.")
-set(COURANT "0.5")
+set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -30,8 +30,9 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "16")
-set(TILE_SIZE_X2 "16")
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
+set(USE_OPENMP    "YES")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")

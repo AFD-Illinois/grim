@@ -244,7 +244,9 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                      &connectionGlobal);
 
-  #pragma omp parallel for
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -402,7 +404,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     newDt = MAX_DT_INCREMENT*ts->dt;
   }
 
-    ts->dt = newDt;
+  ts->dt = newDt;
   ts->t = ts->t + ts->dt;
   ts->timeStepCounter++;
 
