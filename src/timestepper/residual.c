@@ -52,6 +52,7 @@ PetscErrorCode computeResidual(SNES snes,
     ARRAY(sourceTermsOldGlobal);
     ARRAY(conservedVarsOldGlobal);
     ARRAY(connectionGlobal);
+    ARRAY(dtGlobal);
     
     DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecOldLocal,
                        &primOldLocal);
@@ -65,6 +66,7 @@ PetscErrorCode computeResidual(SNES snes,
                        &conservedVarsOldGlobal); 
     DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                        &connectionGlobal);
+    DMDAVecGetArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
 
     /* Loop through tiles. We use tiles to maximize cache usage.*/
     #pragma omp parallel for
@@ -129,7 +131,13 @@ PetscErrorCode computeResidual(SNES snes,
                             iTile, jTile,
                             X1Start, X2Start,
                             X1Size, X2Size,
-                            fluxX1Tile, fluxX2Tile);
+                            fluxX1Tile, fluxX2Tile,
+                            dtGlobal);
+
+      applyProblemSpecificFluxFilter(iTile, jTile,
+                                     X1Start, X2Start,
+                                     X1Size, X2Size,
+                                     fluxX1Tile, fluxX2Tile);
 
       LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
       {
@@ -209,6 +217,7 @@ PetscErrorCode computeResidual(SNES snes,
                            &conservedVarsOldGlobal); 
     DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                            &connectionGlobal);
+    DMDAVecRestoreArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
 
     DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecOldLocal);
     DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecHalfStepLocal);
@@ -255,7 +264,10 @@ PetscErrorCode computeResidual(SNES snes,
                        primPetscVecLocal);
 
     ARRAY(primLocal);
+    ARRAY(dtGlobal);
+
     DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal, &primLocal);
+    DMDAVecGetArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
   #endif
 
   #pragma omp parallel for
@@ -301,8 +313,13 @@ PetscErrorCode computeResidual(SNES snes,
                             iTile, jTile,
                             X1Start, X2Start,
                             X1Size, X2Size,
-                            fluxX1Tile, fluxX2Tile);
+                            fluxX1Tile, fluxX2Tile,
+                            dtGlobal);
 
+      applyProblemSpecificFluxFilter(iTile, jTile,
+                                     X1Start, X2Start,
+                                     X1Size, X2Size,
+                                     fluxX1Tile, fluxX2Tile);
     #else
       LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
       {
@@ -413,6 +430,7 @@ PetscErrorCode computeResidual(SNES snes,
 
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
                            &primLocal);
+    DMDAVecRestoreArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
   #endif
 
   DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, residualPetscVec,

@@ -1,6 +1,7 @@
 #include "riemannsolver.h"
 
-void riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
+/* Returns a wavespeed */
+REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
                    const REAL fluxRight[ARRAY_ARGS DOF],
                    const REAL conservedVarsLeft[ARRAY_ARGS DOF],
                    const REAL conservedVarsRight[ARRAY_ARGS DOF],
@@ -31,6 +32,8 @@ void riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
                       );
                          
   }
+
+  return cLaxFriedrichs;
 }
 
 void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],

@@ -5,11 +5,13 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                            const int X1Start, const int X2Start,
                            const int X1Size, const int X2Size,
                            REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
-                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE])
+                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE],
+                           ARRAY(dtGlobal))
 {
   REAL primVarsLeft[TILE_SIZE], primVarsRight[TILE_SIZE];
   REAL fluxTileLeft[TILE_SIZE], fluxTileRight[TILE_SIZE];
   REAL conservedVarsTileLeft[TILE_SIZE], conservedVarsTileRight[TILE_SIZE];
+  REAL dtX1=1e10, dtX2=1e10;
 
   reconstruct(primTile, X1,
               iTile, jTile, 
@@ -61,6 +63,7 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
     getXCoords(&zone, FACE_X1, XCoords);
     struct geometry geom; setGeometry(XCoords, &geom);
 
+    REAL waveSpeedX1 =
     riemannSolver(&fluxTileRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
                   &fluxTileLeft[INDEX_TILE(&zone, 0)],
                   &conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
@@ -68,6 +71,29 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &primVarsRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
                   &primVarsLeft[INDEX_TILE(&zone, 0)],
                   &geom, 1, &fluxX1Tile[INDEX_TILE(&zone, 0)]);
+
+    REAL dtX1InEachZone = COURANT*zone.dX1/waveSpeedX1;
+
+    if (dtX1InEachZone < dtX1)
+    {
+      dtX1 = dtX1InEachZone;
+    }
+  }
+
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start, 
+                X1Size, X2Size, 
+                &zone);
+
+    #if (COMPUTE_DIM==1)
+      dtGlobal[zone.i][0] = dtX1;
+    #elif (COMPUTE_DIM==2)
+      dtGlobal[zone.j][zone.i][0] = dtX1;
+    #endif
   }
 
 #if (COMPUTE_DIM==2)
@@ -120,6 +146,7 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
     getXCoords(&zone, FACE_X2, XCoords);
     struct geometry geom; setGeometry(XCoords, &geom);
 
+    REAL waveSpeedX2 =
     riemannSolver(&fluxTileRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
                   &fluxTileLeft[INDEX_TILE(&zone, 0)],
                   &conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
@@ -127,6 +154,25 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &primVarsRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
                   &primVarsLeft[INDEX_TILE(&zone, 0)],
                   &geom, 2, &fluxX2Tile[INDEX_TILE(&zone, 0)]);
+
+    REAL dtX2InEachZone = COURANT*zone.dX2/waveSpeedX2;
+
+    if (dtX2InEachZone < dtX2)
+    {
+      dtX2 = dtX2InEachZone;
+    }
+  }
+
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start, 
+                X1Size, X2Size, 
+                &zone);
+
+    dtGlobal[zone.j][zone.i][1] = dtX2; 
   }
 
   /* Flux CT */

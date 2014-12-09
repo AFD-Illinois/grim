@@ -117,6 +117,22 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 
   DMCreateGlobalVector(ts->connectionDMDA, &ts->connectionPetscVec);
 
+  /* Now create dmda for dt */
+  #if (COMPUTE_DIM==1)
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->dmdaDt);
+  #elif (COMPUTE_DIM==2)
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX,
+                 N1, N2,
+                 PETSC_DECIDE, PETSC_DECIDE,
+                 COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
+                 &ts->dmdaDt);
+  #endif /* Choose dimension */
+
+  DMCreateGlobalVector(ts->dmdaDt, &ts->dtPetscVec);
+
   if (ts->X1Size % TILE_SIZE_X1 != 0)
   {
     SETERRQ2(PETSC_COMM_WORLD, 1,
@@ -375,12 +391,24 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
   #endif
 
+  REAL dtX1, dtX2;
+  VecStrideMin(ts->dtPetscVec, 0, NULL, &dtX1);
+  VecStrideMin(ts->dtPetscVec, 1, NULL, &dtX2);
+
+  REAL newDt = 1./( (1./dtX1) + (1./dtX2) );
+
+  if (newDt > MAX_DT_INCREMENT*ts->dt)
+  {
+    newDt = MAX_DT_INCREMENT*ts->dt;
+  }
+
+    ts->dt = newDt;
   ts->t = ts->t + ts->dt;
   ts->timeStepCounter++;
 
   PetscPrintf(PETSC_COMM_WORLD,
-              "\nCompleted step %d, current time = %.5f\n\n",
-              ts->timeStepCounter, ts->t, ts->tDump);
+              "\nCompleted step %d, current time = %.5f, dt = %.5f\n\n",
+              ts->timeStepCounter, ts->t, ts->dt);
 
   /* Problem dependent full step diagnostics */
   fullStepDiagnostics(ts);

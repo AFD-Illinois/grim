@@ -5,7 +5,7 @@
 #include "../physics/physics.h"
 #include "../geometry/geometry.h"
 
-void riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
+REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
                    const REAL fluxRight[ARRAY_ARGS DOF],
                    const REAL conservedVarsLeft[ARRAY_ARGS DOF],
                    const REAL conservedVarsRight[ARRAY_ARGS DOF],

@@ -16,6 +16,7 @@
 #cmakedefine    START_TIME      (${START_TIME})
 #cmakedefine    FINAL_TIME      (${FINAL_TIME})
 #cmakedefine    COURANT         (${COURANT})
+#cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
 

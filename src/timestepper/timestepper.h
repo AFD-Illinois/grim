@@ -26,6 +26,7 @@ struct timeStepper
   DM dmdaWithGhostZones;
   DM dmdaWithoutGhostZones;
   DM connectionDMDA;
+  DM dmdaDt;
 
   Vec primPetscVec;
   Vec residualPetscVec;
@@ -35,6 +36,7 @@ struct timeStepper
   Vec divFluxPetscVecOld;
   Vec conservedVarsPetscVecOld;
   Vec connectionPetscVec;
+  Vec dtPetscVec;
 
   int computeOldSourceTermsAndOldDivOfFluxes;
   int computeDivOfFluxAtTimeN;
@@ -71,7 +73,8 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                            const int X1Start, const int X2Start,
                            const int X1Size, const int X2Size,
                            REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
-                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]);
+                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE],
+                           ARRAY(dtGlobal));
 
 void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 

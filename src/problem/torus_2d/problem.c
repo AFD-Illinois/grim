@@ -491,6 +491,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   ARRAY(fluxX2Global);
   ARRAY(sourcesGlobal);
   ARRAY(connectionGlobal);
+  ARRAY(dtGlobal);
 
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      fluxX1PetscVec, &fluxX1Global);
@@ -500,6 +501,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                      sourcesPetscVec, &sourcesGlobal);
   DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                      &connectionGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
 
   Vec primPetscVecLocal;
   DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
@@ -546,7 +548,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                           iTile, jTile,
                           ts->X1Start, ts->X2Start,
                           ts->X1Size, ts->X2Size,
-                          fluxX1Tile, fluxX2Tile);
+                          fluxX1Tile, fluxX2Tile,
+                          dtGlobal);
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
     {
@@ -592,6 +595,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                          sourcesPetscVec, &sourcesGlobal);
   DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                          &connectionGlobal);
+  DMDAVecRestoreArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
 
   char fluxesX1FileName[50], fluxesX2FileName[50], sourcesFileName[50];
   sprintf(fluxesX1FileName, "%s.h5", "fluxX1Initial");
@@ -789,6 +793,59 @@ void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
       }
     }
     /* END OF TOP EDGE */
+
+  }
+
+}
+
+void applyProblemSpecificFluxFilter(const int iTile, const int jTile,
+                                    const int X1Start, const int X2Start,
+                                    const int X1Size, const int X2Size,
+                                    REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
+                                    REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE])
+{
+
+  LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    /* Set flux on the polar boundaries to zero 
+     *
+     *  index = 0      N2-1  N2
+     *  |              |     |
+     *  v              v     v
+     *  |  o  |        |  o  | */
+
+    if (zone.j == 0 || zone.j == N2) 
+    {
+      for (int var=0; var<DOF; var++)
+      {
+        fluxX2Tile[INDEX_TILE(&zone, var)] = 0.;
+      }
+    }
+
+    /* Make sure there is no inflow from the radial boundaries */
+    if (zone.i==0) /* Inner radial boundary */
+    {
+      if (fluxX1Tile[INDEX_TILE(&zone, RHO)] > 0.)
+      {
+        fluxX1Tile[INDEX_TILE(&zone, RHO)] = 0.;
+      }
+    }
+
+    /* Outer radial boundary. Note that the index is N1 and not N1-1 */
+    if (zone.i==N1)     
+    {
+      if (fluxX1Tile[INDEX_TILE(&zone, RHO)] < 0.)
+      {
+        fluxX1Tile[INDEX_TILE(&zone, RHO)] = 0.;
+      }
+    }
 
   }
 
