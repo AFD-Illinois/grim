@@ -34,10 +34,11 @@
 
 
 /* Initial condition parameters */
-#cmakedefine    R_PRESSURE_MAX      (${R_PRESSURE_MAX})
-#cmakedefine    R_INNER_EDGE        (${R_INNER_EDGE})
-#cmakedefine    ADIABAT             (${ADIABAT})
-#cmakedefine    PLASMA_BETA         (${PLASMA_BETA})
+#cmakedefine    R_PRESSURE_MAX            (${R_PRESSURE_MAX})
+#cmakedefine    R_INNER_EDGE              (${R_INNER_EDGE})
+#cmakedefine    ADIABAT                   (${ADIABAT})
+#cmakedefine    PLASMA_BETA               (${PLASMA_BETA})
+#cmakedefine    PERTURBATIONS_AMPLITUDE   (${PERTURBATIONS_AMPLITUDE})
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})

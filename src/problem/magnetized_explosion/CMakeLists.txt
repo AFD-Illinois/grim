@@ -6,16 +6,17 @@ set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.001")
+set(DT "1e-5")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
 set(FINAL_TIME "4.")
-set(COURANT "0.5")
+set(COURANT "0.9")
+set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "64")
-set(N2 "64")
+set(N1 "128")
+set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -31,6 +32,7 @@ set(N2 "64")
 #             NEED TO PUT A CHECK FOR THIS.
 set(TILE_SIZE_X1 "8")
 set(TILE_SIZE_X2 "8")
+set(USE_OPENMP   "YES")
 
 # Physics variables
 set(ADIABATIC_INDEX "5./3")
@@ -47,10 +49,10 @@ set(X2_A  "-6.")
 set(X2_B  "6.")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
-set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
-set(PHYSICAL_BOUNDARY_TOP_EDGE    "OUTFLOW")
-set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "OUTFLOW")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "MIRROR")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "MIRROR")
+set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
+set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
 # MP5 or MONOTONIZED_CENTRAL
@@ -61,7 +63,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # SMOOTHNESS -- Parameter for the shell edge
 # Parameters taken from Komissarov, 1999
 set(INITIAL_RADIUS      "1.")
-set(MEAN_MAGNETIC_FIELD "0.")
+set(MEAN_MAGNETIC_FIELD ".1")
 set(RHO_INSIDE          "1e-2")
 set(RHO_OUTSIDE         "1e-4")
 set(PRESSURE_INSIDE     "1.")
@@ -69,8 +71,10 @@ set(PRESSURE_OUTSIDE    "3e-5")
 set(SMOOTHNESS          "20.")
 
 # Floor values
-set(RHO_FLOOR "1e-7")
-SET(UU_FLOOR "1e-9")
+set(RHO_FLOOR         "1e-15")
+SET(UU_FLOOR          "1e-15")
+set(RHO_FLOOR_MIN     "1e-15")
+set(UU_FLOOR_MIN      "1e-15")
 
 message("")
 message("#########################")

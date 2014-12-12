@@ -169,10 +169,13 @@ PetscErrorCode computeResidual(SNES snes,
             (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(&zone, var)]
              - fluxX1Tile[INDEX_TILE(&zone, var)]
             )/zone.dX1
+          #if (COMPUTE_DIM==2)
           + 
             (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(&zone, var)]
              - fluxX2Tile[INDEX_TILE(&zone, var)]
-            )/zone.dX2;
+            )/zone.dX2
+          #endif
+            ;
         }
 
         if (ts->computeSourceTermsAtTimeN)
@@ -411,10 +414,12 @@ PetscErrorCode computeResidual(SNES snes,
                     (  fluxX1Tile[INDEX_TILE_PLUS_ONE_X1(&zone, var)]
                      - fluxX1Tile[INDEX_TILE(&zone, var)]
                     )/zone.dX1
+                  #if (COMPUTE_DIM==2)
                    + 
                     (  fluxX2Tile[INDEX_TILE_PLUS_ONE_X2(&zone, var)]
                      - fluxX2Tile[INDEX_TILE(&zone, var)]
                     )/zone.dX2
+                  #endif
                   )
             - INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
           )/g;

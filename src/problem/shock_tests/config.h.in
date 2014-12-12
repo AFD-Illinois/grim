@@ -4,6 +4,15 @@
 /* Immutable constants. Should not be changed */
 #define NDIM                  (4)
 #define M_PI                  (3.141592653589793238462643383279)
+
+#define FAST_SHOCK            (0)
+#define SLOW_SHOCK            (1)
+#define SWITCH_ON_SLOW        (2)
+#define SWITCH_OFF_FAST       (3)
+#define ALFVEN_WAVE           (4)
+#define SHOCK_TUBE_1          (5)
+#define SHOCK_TUBE_2          (6)
+#define COLLISION             (7)
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
@@ -34,13 +43,7 @@
 
 
 /* Initial condition parameters */
-#cmakedefine    INITIAL_RADIUS      (${INITIAL_RADIUS})
-#cmakedefine    MEAN_MAGNETIC_FIELD (${MEAN_MAGNETIC_FIELD})
-#cmakedefine    RHO_INSIDE          (${RHO_INSIDE})
-#cmakedefine    RHO_OUTSIDE         (${RHO_OUTSIDE})
-#cmakedefine    PRESSURE_INSIDE     (${PRESSURE_INSIDE})
-#cmakedefine    PRESSURE_OUTSIDE    (${PRESSURE_OUTSIDE})
-#cmakedefine    SMOOTHNESS          (${SMOOTHNESS})
+#cmakedefine    SHOCK_TEST      (${SHOCK_TEST})
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})

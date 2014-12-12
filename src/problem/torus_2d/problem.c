@@ -90,6 +90,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
   PetscPrintf(PETSC_COMM_WORLD, "Initializing torus...");
 
+  REAL randNum;
+  PetscRandom randNumGen;
+  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
+  PetscRandomSetType(randNumGen, PETSCRAND48);
+
   ARRAY(primOldGlobal);
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
@@ -155,6 +160,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         REAL u =  ADIABAT * pow(rho, ADIABATIC_INDEX)
                 / (ADIABATIC_INDEX-1.);
 
+        PetscRandomGetValue(randNumGen, &randNum);
+        u = u*(1. + PERTURBATIONS_AMPLITUDE*(randNum-0.5));
 
         /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
          * Need to transform to (modified) Kerr-Schild */
@@ -475,6 +482,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   VecStrideScale(ts->primPetscVecOld, B3, norm);
 
   VecDestroy(&bSqrPetscVecGlobal);
+  PetscRandomDestroy(&randNumGen);
 
   PetscPrintf(PETSC_COMM_WORLD, "done\n");
   /* Done with setting the initial conditions */
@@ -726,7 +734,7 @@ void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
                                        REAL primTile[ARRAY_ARGS TILE_SIZE])
 {
 
-  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
   {
     struct gridZone zone;
     setGridZone(iTile, jTile,
@@ -735,65 +743,17 @@ void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
                 X1Size, X2Size,
                 &zone);
 
-    /* Inflow check at the inner radial boundary */
-    if (zone.i == 0)
+    /* Inflow check at the inner and outer radial boundary */
+    if (zone.i < 0 || zone.i > N1-1)
     {
-      for (int iGhost=-NG; iGhost<0; iGhost++)
-      {
-        struct gridZone ghostZone;
-
-        setGridZone(iTile, jTile,
-                    iGhost, jInTile,
-                    X1Start, X2Start,
-                    X1Size, X2Size,
-                    &ghostZone);
-
-        inflowCheck(&ghostZone, primTile);
-      }
+      inflowCheck(&zone, primTile);
     }
-    /* END OF LEFT EDGE */
 
-
-    /* Inflow check at the outer radial boundary */
-    if (zone.i == N1-1)
+    if (zone.j < 0 || zone.j > N2-1)
     {
-      for (int iGhost=0; iGhost<NG; iGhost++)
-      {
-        struct gridZone ghostZone;
-
-        setGridZone(iTile, jTile,
-                    TILE_SIZE_X1+iGhost, jInTile,
-                    X1Start, X2Start,
-                    X1Size, X2Size,
-                    &ghostZone);
-
-        inflowCheck(&ghostZone, primTile);
-      }
+      primTile[INDEX_TILE(&zone, U2)] *= -1;
+      primTile[INDEX_TILE(&zone, B2)] *= -1;
     }
-    /* END OF RIGHT EDGE */
-
-    /* BOTTOM EDGE */
-    if (zone.j == 0)
-    {
-      for (int jGhost=-NG; jGhost<0; jGhost++)
-      {
-        primTile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, U2)] *= -1;
-        primTile[INDEX_TILE_MANUAL(zone.iInTile, jGhost, B2)] *= -1;
-      }
-    }
-    /* END OF BOTTOM EDGE */
-
-    /* TOP EDGE */
-    if (zone.j == N2-1)
-    {
-      for (int jGhost=0; jGhost<NG; jGhost++)
-      {
-        primTile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, U2)] *= -1;
-        primTile[INDEX_TILE_MANUAL(zone.iInTile, TILE_SIZE_X2+jGhost, B2)] *= -1;
-      }
-    }
-    /* END OF TOP EDGE */
-
   }
 
 }
@@ -827,6 +787,18 @@ void applyProblemSpecificFluxFilter(const int iTile, const int jTile,
       {
         fluxX2Tile[INDEX_TILE(&zone, var)] = 0.;
       }
+    }
+
+    if (zone.j == 0)
+    {
+      fluxX1Tile[INDEX_TILE_MINUS_ONE_X2(&zone, B2)] = 
+        -fluxX1Tile[INDEX_TILE(&zone, B2)];
+    }
+
+    if (zone.j == N2)
+    {
+      fluxX1Tile[INDEX_TILE(&zone, B2)] = 
+        -fluxX1Tile[INDEX_TILE_MINUS_ONE_X2(&zone, B2)];
     }
 
     /* Make sure there is no inflow from the radial boundaries */

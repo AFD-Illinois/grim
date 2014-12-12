@@ -50,7 +50,7 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &conservedVarsTileRight[INDEX_TILE(&zone, 0)]);
   }
         
-  LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)
+  LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
   {
     struct gridZone zone;
     setGridZone(iTile, jTile,
@@ -133,7 +133,7 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &conservedVarsTileRight[INDEX_TILE(&zone, 0)]);
   }
         
-  LOOP_INSIDE_TILE(-2, TILE_SIZE_X1+2, -2, TILE_SIZE_X2+2)
+  LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
   {
     struct gridZone zone;
     setGridZone(iTile, jTile,
