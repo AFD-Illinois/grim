@@ -56,7 +56,18 @@ void applyTileBoundaryConditions(const int iTile, const int jTile,
 
   /* End of boundary conditions in the X1 direction */
 
+  }
+
 #if (COMPUTE_DIM==2)
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start, 
+                X1Size, X2Size, 
+                &zone);
+
     /* BOTTOM EDGE */
     if (zone.j < 0)
     {
@@ -91,59 +102,59 @@ void applyTileBoundaryConditions(const int iTile, const int jTile,
     /* END OF TOP EDGE */
 
     /* Boundary conditions in the X2 direction */
-#endif
-  }
-
-#if (COMPUTE_DIM==2)
-  /* Now loop over the corner zones of the global domain */
-  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
-  {
-    struct gridZone zone;
-    setGridZone(iTile, jTile,
-                iInTile, jInTile,
-                X1Start, X2Start, 
-                X1Size, X2Size, 
-                &zone);
-
-    /* LEFT EDGE */
-    if (zone.i < 0 && (zone.j < 0 || zone.j > N2-1) )
-    {
-      for (int var=0; var<DOF; var++)
-      {
-        #if (PHYSICAL_BOUNDARY_LEFT_EDGE == OUTFLOW)
-          tile[INDEX_TILE(&zone, var)] =
-          tile[INDEX_TILE_MANUAL(0, zone.jInTile, var)];
-        #elif (PHYSICAL_BOUNDARY_LEFT_EDGE == MIRROR)
-          /* Mirror the left edge of the tile 
-           * zone.iInTile goes from [-NG, 0) */
-          tile[INDEX_TILE(&zone, var)] =
-          tile[INDEX_TILE_MANUAL(-zone.iInTile-1, zone.jInTile, var)];
-        #endif
-      }
-    }
-    /* END OF LEFT EDGE */
-
-
-    /* RIGHT EDGE */
-    if (zone.i > N1-1 && (zone.j < 0 || zone.j > N2-1) )
-    {
-      for (int var=0; var<DOF; var++)
-      {
-        #if (PHYSICAL_BOUNDARY_RIGHT_EDGE == OUTFLOW)
-          tile[INDEX_TILE(&zone, var)] =
-          tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1, zone.jInTile, var)];
-        #elif (PHYSICAL_BOUNDARY_RIGHT_EDGE == MIRROR)
-          /* zone.iInTile goes from [TILE_SIZE_X1, TILE_SIZE_X1+NG) 
-           * iGhost goes from [0, NG) */
-          int iGhost = zone.iInTile - TILE_SIZE_X1;
-          tile[INDEX_TILE(&zone, var)] =
-          tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1-iGhost, zone.jInTile, var)];
-        #endif
-      }
-    }
-    /* END OF RIGHT EDGE */
-
-    /* End of boundary conditions of the corner zones */
   }
 #endif
+
+//#if (COMPUTE_DIM==2)
+//  /* Now loop over the corner zones of the global domain */
+//  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+//  {
+//    struct gridZone zone;
+//    setGridZone(iTile, jTile,
+//                iInTile, jInTile,
+//                X1Start, X2Start, 
+//                X1Size, X2Size, 
+//                &zone);
+//
+//    /* LEFT EDGE */
+//    if (zone.i < 0 && (zone.j < 0 || zone.j > N2-1) )
+//    {
+//      for (int var=0; var<DOF; var++)
+//      {
+//        #if (PHYSICAL_BOUNDARY_LEFT_EDGE == OUTFLOW)
+//          tile[INDEX_TILE(&zone, var)] =
+//          tile[INDEX_TILE_MANUAL(0, zone.jInTile, var)];
+//        #elif (PHYSICAL_BOUNDARY_LEFT_EDGE == MIRROR)
+//          /* Mirror the left edge of the tile 
+//           * zone.iInTile goes from [-NG, 0) */
+//          tile[INDEX_TILE(&zone, var)] =
+//          tile[INDEX_TILE_MANUAL(-zone.iInTile-1, zone.jInTile, var)];
+//        #endif
+//      }
+//    }
+//    /* END OF LEFT EDGE */
+//
+//
+//    /* RIGHT EDGE */
+//    if (zone.i > N1-1 && (zone.j < 0 || zone.j > N2-1) )
+//    {
+//      for (int var=0; var<DOF; var++)
+//      {
+//        #if (PHYSICAL_BOUNDARY_RIGHT_EDGE == OUTFLOW)
+//          tile[INDEX_TILE(&zone, var)] =
+//          tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1, zone.jInTile, var)];
+//        #elif (PHYSICAL_BOUNDARY_RIGHT_EDGE == MIRROR)
+//          /* zone.iInTile goes from [TILE_SIZE_X1, TILE_SIZE_X1+NG) 
+//           * iGhost goes from [0, NG) */
+//          int iGhost = zone.iInTile - TILE_SIZE_X1;
+//          tile[INDEX_TILE(&zone, var)] =
+//          tile[INDEX_TILE_MANUAL(TILE_SIZE_X1-1-iGhost, zone.jInTile, var)];
+//        #endif
+//      }
+//    }
+//    /* END OF RIGHT EDGE */
+//
+//    /* End of boundary conditions of the corner zones */
+//  }
+//#endif
 }
