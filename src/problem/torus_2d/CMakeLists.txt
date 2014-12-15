@@ -1,6 +1,6 @@
 # Dump folder
 set(OUTPUT_DIR "\"/home/manic/grim_refactored/grim/build/\"")
-set(RESTART "ON")
+set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
@@ -10,13 +10,13 @@ set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "1000.")
-set(COURANT "0.5")
+set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
-set(N2 "128")
+set(N1 "256")
+set(N2 "256")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
