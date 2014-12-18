@@ -44,6 +44,10 @@ struct fluidElement
   /* TODO: We have 4 independent components of N^\mu and 10
   independent components of T^\mu^\nu, so do something later to exploit the
   symmetry of T^\mu^\nu */
+
+  #if (CONDUCTION)
+    REAL kappa, tau;
+  #endif
 };
 
 /* Public functions: */
@@ -63,6 +67,20 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
                         const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
+
+#if (CONDUCTION)
+
+void computeConductionFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
+                             const struct geometry geom[ARRAY_ARGS 1],
+                             const int dir,
+                             REAL fluxes[ARRAY_ARGS DOF]);
+
+void computeConductionFluxesCoefficients(
+                             const struct fluidElement elem[ARRAY_ARGS 1],
+                             const struct geometry geom[ARRAY_ARGS 1],
+                             const int dir,
+                             REAL coefficients[ARRAY_ARGS DOF]);
+#endif
 
 /* Internal functions */
 void setGamma(const struct geometry geom[ARRAY_ARGS 1],

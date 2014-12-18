@@ -61,6 +61,8 @@ void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
   setUCon(geom, elem);
   setBCon(geom, elem);
   computeMoments(geom, elem);
+  elem->kappa = 0.1;
+  elem->tau = 10.;
 }
 
 void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
@@ -71,6 +73,10 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   
   conToCov(elem->bCon, geom, bCov);
   bSqr = covDotCon(bCov, elem->bCon);
+  if (bSqr < 1e-15)
+  {
+    bSqr = 1e-15;
+  }
 
   conToCov(elem->uCon, geom, uCov);
 
@@ -87,7 +93,12 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
                         + (pressure + 0.5*bSqr)*DELTA(mu, nu)
 
-                        - elem->bCon[mu]*bCov[nu];
+                        - elem->bCon[mu]*bCov[nu]
+      #if (CONDUCTION) 
+        + elem->uCon[mu] * elem->primVars[PHI] * bCov[nu]/sqrt(bSqr)
+        + uCov[nu] * elem->primVars[PHI] * elem->bCon[mu]/sqrt(bSqr)
+      #endif                  
+                        ;
 
     }
   }
@@ -112,6 +123,66 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
   fluxes[B2] = g*(elem->bCon[2]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[2]);
   fluxes[B3] = g*(elem->bCon[3]*elem->uCon[dir] - elem->bCon[dir]*elem->uCon[3]);
 }
+
+#if (CONDUCTION)
+void computeConductionFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
+                             const struct geometry geom[ARRAY_ARGS 1],
+                             const int dir,
+                             REAL fluxes[ARRAY_ARGS DOF])
+{
+  REAL temperature = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+
+  for (int var=0; var<DOF; var++)
+  {
+    fluxes[var] = 0.;
+  }
+
+  fluxes[0] = elem->primVars[PHI];
+  fluxes[1] = temperature;
+  fluxes[2] = elem->uCon[0];
+  fluxes[3] = elem->uCon[1];
+  fluxes[4] = elem->uCon[2];
+  fluxes[5] = elem->uCon[3];
+}
+
+void computeConductionFluxesCoefficients(
+                             const struct fluidElement elem[ARRAY_ARGS 1],
+                             const struct geometry geom[ARRAY_ARGS 1],
+                             const int dir,
+                             REAL coefficients[ARRAY_ARGS DOF])
+{
+  REAL bSqr, bCov[NDIM];
+  conToCov(elem->bCon, geom, bCov);
+  bSqr = covDotCon(bCov, elem->bCon);
+  if (bSqr < 1e-15)
+  {
+    bSqr = 1e-15;
+  }
+  REAL temperature =   (ADIABATIC_INDEX-1.)
+                     * elem->primVars[UU]/elem->primVars[RHO];
+
+  for (int var=0; var<DOF; var++)
+  {
+    coefficients[var] = 0.;
+  }
+
+  coefficients[0] = elem->uCon[dir];
+  coefficients[1] = elem->kappa/elem->tau * elem->bCon[dir]/sqrt(bSqr);
+
+  coefficients[2] =   elem->kappa/elem->tau * temperature 
+                    * bCov[0]/sqrt(bSqr) * elem->uCon[dir];
+  
+  coefficients[3] =   elem->kappa/elem->tau * temperature 
+                    * bCov[1]/sqrt(bSqr) * elem->uCon[dir];
+  
+  coefficients[4] =   elem->kappa/elem->tau * temperature 
+                    * bCov[2]/sqrt(bSqr) * elem->uCon[dir];
+
+  coefficients[5] =   elem->kappa/elem->tau * temperature 
+                    * bCov[3]/sqrt(bSqr) * elem->uCon[dir];
+
+}
+#endif
 
 /*  Returns sqrt(-gDet) * T^kappa^lamda * Gamma_lamda_nu_kappa for each nu.
  *  (Eqn (4) of HARM paper)
@@ -143,5 +214,36 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
         }
       }
     }
+  #endif
+
+  #if (CONDUCTION)
+    sourceTerms[PHI] = -elem->primVars[PHI]/elem->tau;
+    REAL bSqr, bCov[NDIM];
+    conToCov(elem->bCon, geom, bCov);
+    bSqr = covDotCon(bCov, elem->bCon);
+    if (bSqr < 1e-15)
+    {
+      bSqr = 1e-15;
+    }
+    REAL temperature =   (ADIABATIC_INDEX-1.)
+                       * elem->primVars[UU]/elem->primVars[RHO];
+
+    #if (METRIC==KERRSCHILD)
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      for (int kappa=0; kappa<NDIM; kappa++)
+      {
+        for (int lamda=0; lamda<NDIM; lamda++)
+        {
+          sourceTerms[PHI] +=   
+           -elem->kappa/elem->tau * temperature * bCov[lamda]/sqrt(bSqr)
+          * christoffel[GAMMA_UP_DOWN_DOWN(lamda, kappa, nu)]
+          * elem->uCon[kappa] * elem->uCon[nu];
+        }
+      }
+    }
+
+    #endif
+
   #endif
 }

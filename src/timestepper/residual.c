@@ -160,6 +160,28 @@ PetscErrorCode computeResidual(SNES snes,
         struct fluidElement elem;
         setFluidElement(&INDEX_PETSC(primOldLocal, &zone, 0), &geom, &elem);
         computeFluxes(&elem, &geom, 0, conservedVars);
+        #if (CONDUCTION)
+          REAL conductionConservedVars[DOF], coefficients[DOF];
+          computeConductionFluxes(&elem, &geom, 0, conductionConservedVars);
+
+          if (ts->conductionCoefficientsAtN)
+          {
+            computeConductionFluxesCoefficients(&elem, &geom, 0, coefficients);
+          }
+          else if (ts->conductionCoefficientsAtNPlusHalf)
+          {
+            setFluidElement(&INDEX_PETSC(primHalfStepLocal, &zone, 0),
+                            &geom, &elem);
+            computeConductionFluxesCoefficients(&elem, &geom, 0, coefficients);
+          }
+          conservedVars[PHI] = 0.;
+          for (int var=0; var<DOF; var++)
+          { 
+            conservedVars[PHI] += 
+              coefficients[var]*conductionConservedVars[var];
+          }
+        #endif
+
         for (int var=0; var<DOF; var++)
         {
           INDEX_PETSC(conservedVarsOldGlobal, &zone, var) = 
@@ -237,6 +259,8 @@ PetscErrorCode computeResidual(SNES snes,
   ARRAY(sourceTermsOldGlobal);
   ARRAY(conservedVarsOldGlobal);
   ARRAY(connectionGlobal);
+  ARRAY(primOldGlobal);
+  ARRAY(primHalfStepGlobal);
 
   DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, residualPetscVec,
                      &residualGlobal);
@@ -248,6 +272,10 @@ PetscErrorCode computeResidual(SNES snes,
                      &conservedVarsOldGlobal); 
   DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                      &connectionGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
+                     &primOldGlobal); 
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
+                     &primHalfStepGlobal); 
 
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
@@ -369,6 +397,29 @@ PetscErrorCode computeResidual(SNES snes,
 
       REAL conservedVars[DOF];
       computeFluxes(&elem, &geom, 0, conservedVars);
+      #if (CONDUCTION)
+        REAL conductionConservedVars[DOF], coefficients[DOF];
+        computeConductionFluxes(&elem, &geom, 0, conductionConservedVars);
+
+        if (ts->conductionCoefficientsAtN)
+        {
+          setFluidElement(&INDEX_PETSC(primOldGlobal, &zone, 0), &geom, &elem);
+          computeConductionFluxesCoefficients(&elem, &geom, 0, coefficients);
+        }
+        else if (ts->conductionCoefficientsAtNPlusHalf)
+        {
+          setFluidElement(&INDEX_PETSC(primHalfStepGlobal, &zone, 0),
+                          &geom, &elem);
+          computeConductionFluxesCoefficients(&elem, &geom, 0, coefficients);
+        }
+
+        conservedVars[PHI] = 0.;
+        for (int var=0; var<DOF; var++)
+        { 
+          conservedVars[PHI] += 
+            coefficients[var]*conductionConservedVars[var];
+        }
+      #endif
 
       #if (TIME_STEPPING==IMEX)
         REAL sourceTerms[DOF];
@@ -377,7 +428,20 @@ PetscErrorCode computeResidual(SNES snes,
                            sourceTerms);
       #endif
 
+      
+      /* Normalize the residual using the total energy at the current zone in
+       * the previous time step */
+//      setFluidElement(&INDEX_PETSC(primOldGlobal, &zone, 0), &geom, &elem);
+//
+//      REAL rho = elem.primVars[RHO];
+//      REAL u = elem.primVars[UU];
+//      REAL P = (ADIABATIC_INDEX-1.)*u;
+//      REAL bCov[NDIM], bSqr;
+//      conToCov(elem.bCon, &geom, bCov);
+//      bSqr = covDotCon(bCov, elem.bCon);
+
       REAL g = sqrt(-geom.gDet);
+      REAL norm = g;
 
       for (int var=0; var<DOF; var++)
       {
@@ -389,7 +453,7 @@ PetscErrorCode computeResidual(SNES snes,
             )/ts->dt
             + INDEX_PETSC(divFluxOldGlobal, &zone, var)
             - INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
-          )/g;
+          )/norm;
 
         #elif (TIME_STEPPING==IMEX)
 
@@ -401,7 +465,7 @@ PetscErrorCode computeResidual(SNES snes,
             - 0.5*(  INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
                    + sourceTerms[var]
                   )
-          )/g;
+          )/norm;
 
         #elif (TIME_STEPPING==IMPLICIT)
 
@@ -422,7 +486,7 @@ PetscErrorCode computeResidual(SNES snes,
                   #endif
                   )
             - INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
-          )/g;
+          )/norm;
 
         #endif
       }
@@ -452,5 +516,9 @@ PetscErrorCode computeResidual(SNES snes,
                          &conservedVarsOldGlobal); 
   DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
                          &connectionGlobal);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
+                         &primOldGlobal); 
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
+                         &primHalfStepGlobal); 
   return(0);
 }

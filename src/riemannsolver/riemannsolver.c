@@ -36,6 +36,26 @@ REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
   return cLaxFriedrichs;
 }
 
+#if (CONDUCTION)
+REAL conductionRiemannSolver(
+                   const REAL fluxLeft[ARRAY_ARGS DOF],
+                   const REAL fluxRight[ARRAY_ARGS DOF],
+                   const REAL conservedVarsLeft[ARRAY_ARGS DOF],
+                   const REAL conservedVarsRight[ARRAY_ARGS DOF],
+                   const REAL waveSpeed, REAL fluxes[ARRAY_ARGS DOF])
+{
+  for (int var=0; var<DOF; var++) 
+  {
+    fluxes[var] = 0.5*(fluxLeft[var] + fluxRight[var]
+                       - waveSpeed*(  conservedVarsRight[var]
+                                    - conservedVarsLeft[var]
+                                   )
+                      );
+                         
+  }
+}
+#endif
+
 void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
                 const struct geometry geom[ARRAY_ARGS 1],
                 const int dir,

@@ -43,6 +43,8 @@ struct timeStepper
   int computeDivOfFluxAtTimeNPlusHalf;
   int computeSourceTermsAtTimeN;
   int computeSourceTermsAtTimeNPlusHalf;
+  int conductionCoefficientsAtN;
+  int conductionCoefficientsAtNPlusHalf;
 
   int X1Start, X1Size;
   int X2Start, X2Size;
