@@ -1,5 +1,5 @@
 # Dump folder
-set(OUTPUT_DIR "\"/home/manic/grim_refactored/grim/build/\"")
+set(OUTPUT_DIR "\"/Users/francoisfoucart/Work/grim/build\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")

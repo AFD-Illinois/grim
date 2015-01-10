@@ -142,17 +142,21 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 
   if (ts->X1Size % TILE_SIZE_X1 != 0)
   {
-    SETERRQ2(PETSC_COMM_WORLD, 1,
-             "TILE_SIZE_X1 = %d does not divide X1Size = %d exactly\n",
-             TILE_SIZE_X1, ts->X1Size);
+    PetscPrintf(PETSC_COMM_WORLD,
+                "TILE_SIZE_X1 = %d does not divide X1Size = %d exactly\n",
+                TILE_SIZE_X1, ts->X1Size
+               );
+    MPI_Abort(PETSC_COMM_WORLD, 1);
   }
   #if (COMPUTE_DIM==2)
     if (ts->X2Size % TILE_SIZE_X2 != 0)
     {
-      SETERRQ2(PETSC_COMM_WORLD, 1,
-               "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
-               TILE_SIZE_X2, ts->X2Size);
+      PetscPrintf(PETSC_COMM_WORLD,
+                  "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
+                  TILE_SIZE_X2, ts->X2Size
+                 );
     }
+    MPI_Abort(PETSC_COMM_WORLD, 1);
   #endif
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
@@ -450,6 +454,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     
     VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #elif (TIME_STEPPING==IMPLICIT)
 
