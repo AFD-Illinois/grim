@@ -69,17 +69,31 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
 
 #if (CONDUCTION)
+void computeConductionSourceTerms
+(
+  const REAL primTile[ARRAY_ARGS TILE_SIZE],
+  ARRAY(prim), ARRAY(primHalfStep), ARRAY(primOld),
+  const REAL christoffel[ARRAY_ARGS 64],
+  REAL dt,
+  int computeOldSourceTermsAndOldDivOfFluxes,
+  int computeDivOfFluxAtTimeN,
+  int computeDivOfFluxAtTimeNPlusHalf,
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  ARRAY(sourceTerms)
+);
 
-void computeConductionFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
-                             const struct geometry geom[ARRAY_ARGS 1],
-                             const int dir,
-                             REAL fluxes[ARRAY_ARGS DOF]);
-
-void computeConductionFluxesCoefficients(
-                             const struct fluidElement elem[ARRAY_ARGS 1],
-                             const struct geometry geom[ARRAY_ARGS 1],
-                             const int dir,
-                             REAL coefficients[ARRAY_ARGS DOF]);
+void computeConductionSpatialGradientTerms
+(
+  const REAL primTile[ARRAY_ARGS TILE_SIZE],
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  REAL gradT[COMPUTE_DIM],
+  REAL graduCon[COMPUTE_DIM*NDIM],
+  REAL graduConHigherOrderTerm1[COMPUTE_DIM]
+);
 #endif
 
 /* Internal functions */

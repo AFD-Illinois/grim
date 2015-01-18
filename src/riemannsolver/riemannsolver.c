@@ -47,7 +47,7 @@ REAL conductionRiemannSolver(
   for (int var=0; var<DOF; var++) 
   {
     fluxes[var] = 0.5*(fluxLeft[var] + fluxRight[var]
-                       - waveSpeed*(  conservedVarsRight[var]
+                       - 0.*waveSpeed*(  conservedVarsRight[var]
                                     - conservedVarsLeft[var]
                                    )
                       );

@@ -5,17 +5,18 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMPLICIT")
 set(DT "0.001")
 set(DT_DUMP ".001")
 set(START_TIME "0.")
-set(FINAL_TIME ".2")
-set(COURANT "0.5")
+set(FINAL_TIME "2.")
+set(COURANT "0.9")
+set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "35")
-set(N2 "35")
+set(N1 "70")
+set(N2 "70")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -29,8 +30,10 @@ set(N2 "35")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "5")
-set(TILE_SIZE_X2 "5")
+set(TILE_SIZE_X1 "10")
+set(TILE_SIZE_X2 "10")
+
+set(USE_OPENMP   "YES")
 
 # Geometry
 set(METRIC "MINKOWSKI")
@@ -56,14 +59,20 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # Mode options: 
 # 1) ENTROPY_WAVE_1D
 # 2) HYDRO_SOUND_MODE_1D
+# 3) CONDUCTION_STABLE_1D
 set(AMPLITUDE "1e-4")
-set(MODE      "HYDRO_SOUND_MODE_1D")
+set(MODE      "CONDUCTION_STABLE_1D")
 
 # Physics options set automatically by the choice of the mode being tested
 if (${MODE} STREQUAL "HYDRO_SOUND_MODE_1D")
   set(ADIABATIC_INDEX "4./3")
   set(CONDUCTION "OFF")
 endif(${MODE} STREQUAL "HYDRO_SOUND_MODE_1D")
+
+if (${MODE} STREQUAL "CONDUCTION_STABLE_1D")
+  set(ADIABATIC_INDEX "4./3")
+  set(CONDUCTION "ON")
+endif(${MODE} STREQUAL "CONDUCTION_STABLE_1D")
 
 
 # Floor values

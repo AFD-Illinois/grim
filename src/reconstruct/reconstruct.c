@@ -9,6 +9,7 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
   for (int var=0; var<DOF; var++)
   {
     /* Monotonized Central slope limiter */
+#if (RECONSTRUCTION == MONOTONIZED_CENTRAL)
     REAL Dqm = 2. * (mid[var] - left[var]);
 	  REAL Dqp = 2. * (right[var] - mid[var]);
 	  REAL Dqc = 0.5 * (right[var] - left[var]);
@@ -32,16 +33,43 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
 			  ans[var] = Dqc;
       }
 	  }
-
-//		REAL Dqm = (mid[var] - left[var]) ;
-//		REAL Dqp = (right[var] - mid[var]) ;
-//		REAL s = Dqm*Dqp ;
-//		if(s <= 0.) ans[var] = 0. ;
-//		else if(fabs(Dqm) < fabs(Dqp)) ans[var] = Dqm ;
-//		else ans[var] = Dqp ;
-
+#elif (RECONSTRUCTION == MIN_MOD)
+		REAL Dqm = (mid[var] - left[var]);
+		REAL Dqp = (right[var] - mid[var]);
+		REAL s = Dqm*Dqp;
+		if(s <= 0.) ans[var] = 0.;
+		else if(fabs(Dqm) < fabs(Dqp)) ans[var] = Dqm;
+		else ans[var] = Dqp;
+#endif
   }
 
+}
+
+REAL slopeLimitedDerivative(const REAL left, const REAL mid, const REAL right)
+{
+  REAL Dqm = 2. * (mid - left);
+  REAL Dqp = 2. * (right - mid);
+  REAL Dqc = .5 * (right - left);
+  REAL s = Dqm * Dqp;
+  if (s <= 0.) 
+  {
+	  return 0.;
+  }
+  else
+  {
+	  if (fabs(Dqm) < fabs(Dqp) && fabs(Dqm) < fabs(Dqc))
+    {
+		  return Dqm;
+    }
+	  else if (fabs(Dqp) < fabs(Dqc))
+    {
+		  return Dqp;
+    }
+	  else
+    {
+		  return Dqc;
+    }
+  }
 }
 
 REAL MP5_Reconstruct(const REAL Fjm2,
@@ -111,7 +139,8 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   X1Size, X2Size, 
                   &zone);
 
-      #if (RECONSTRUCTION == MONOTONIZED_CENTRAL)
+      #if (RECONSTRUCTION == MONOTONIZED_CENTRAL || \
+           RECONSTRUCTION == MIN_MOD)
         REAL slope[DOF];
   
         slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
@@ -165,7 +194,8 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   X1Size, X2Size, 
                   &zone);
     
-      #if (RECONSTRUCTION == MONOTONIZED_CENTRAL)
+      #if (RECONSTRUCTION == MONOTONIZED_CENTRAL || \
+           RECONSTRUCTION == MIN_MOD)
         REAL slope[DOF];
   
         slopeLim(&primTile[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],

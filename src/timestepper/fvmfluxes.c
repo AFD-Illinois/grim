@@ -12,10 +12,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
   REAL fluxTileLeft[TILE_SIZE], fluxTileRight[TILE_SIZE];
   REAL conservedVarsTileLeft[TILE_SIZE], conservedVarsTileRight[TILE_SIZE];
   REAL dtX1=1e10, dtX2=1e10;
-  #if (CONDUCTION)
-    REAL conductionFluxesTileLeft[TILE_SIZE];
-    REAL conductionFluxesTileRight[TILE_SIZE];
-  #endif
 
   reconstruct(primTile, X1,
               iTile, jTile, 
@@ -43,10 +39,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &fluxTileLeft[INDEX_TILE(&zone, 0)]);
     computeFluxes(&elem, &geom, 0,
                   &conservedVarsTileLeft[INDEX_TILE(&zone, 0)]);
-    #if (CONDUCTION)
-      computeConductionFluxes(&elem, &geom, 1,
-                            &conductionFluxesTileLeft[INDEX_TILE(&zone, 0)]);
-    #endif
 
     getXCoords(&zone, FACE_X1_PLUS_ONE, XCoords);
     setGeometry(XCoords, &geom);
@@ -56,10 +48,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &fluxTileRight[INDEX_TILE(&zone, 0)]);
     computeFluxes(&elem, &geom, 0,
                   &conservedVarsTileRight[INDEX_TILE(&zone, 0)]);
-    #if (CONDUCTION)
-      computeConductionFluxes(&elem, &geom, 1,
-                            &conductionFluxesTileRight[INDEX_TILE(&zone, 0)]);
-    #endif
   }
         
   LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
@@ -83,31 +71,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &primVarsRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
                   &primVarsLeft[INDEX_TILE(&zone, 0)],
                   &geom, 1, &fluxX1Tile[INDEX_TILE(&zone, 0)]);
-
-    #if (CONDUCTION) 
-      REAL conductionFluxes[DOF];
-      conductionRiemannSolver(
-                  &conductionFluxesTileRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
-                  &conductionFluxesTileLeft[INDEX_TILE(&zone, 0)],
-                  &conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X1(&zone, 0)],
-                  &conservedVarsTileLeft[INDEX_TILE(&zone, 0)],
-                  waveSpeedX1, conductionFluxes);
-      
-      getXCoords(&zone, CENTER, XCoords);
-      setGeometry(XCoords, &geom);
-      struct fluidElement elem;
-      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  
-      REAL coefficients[DOF];
-      computeConductionFluxesCoefficients(&elem, &geom, 1, coefficients);
-
-      fluxX1Tile[INDEX_TILE(&zone, PHI)] = 0.;
-      for (int var=0; var<DOF; var++)
-      {
-        fluxX1Tile[INDEX_TILE(&zone, PHI)] += 
-          coefficients[var]*conductionFluxes[var];
-      }
-    #endif 
 
     REAL dtX1InEachZone = COURANT*zone.dX1/waveSpeedX1;
 
@@ -159,10 +122,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &fluxTileLeft[INDEX_TILE(&zone, 0)]);
     computeFluxes(&elem, &geom, 0,
                   &conservedVarsTileLeft[INDEX_TILE(&zone, 0)]);
-    #if (CONDUCTION)
-      computeConductionFluxes(&elem, &geom, 2,
-                            &conductionFluxesTileLeft[INDEX_TILE(&zone, 0)]);
-    #endif
 
     getXCoords(&zone, FACE_X2_PLUS_ONE, XCoords);
     setGeometry(XCoords, &geom);
@@ -172,10 +131,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &fluxTileRight[INDEX_TILE(&zone, 0)]);
     computeFluxes(&elem, &geom, 0,
                   &conservedVarsTileRight[INDEX_TILE(&zone, 0)]);
-    #if (CONDUCTION)
-      computeConductionFluxes(&elem, &geom, 2,
-                            &conductionFluxesTileRight[INDEX_TILE(&zone, 0)]);
-    #endif
   }
         
   LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
@@ -199,31 +154,6 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                   &primVarsRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
                   &primVarsLeft[INDEX_TILE(&zone, 0)],
                   &geom, 2, &fluxX2Tile[INDEX_TILE(&zone, 0)]);
-
-    #if (CONDUCTION) 
-      REAL conductionFluxes[DOF];
-      conductionRiemannSolver(
-                  &conductionFluxesTileRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
-                  &conductionFluxesTileLeft[INDEX_TILE(&zone, 0)],
-                  &conservedVarsTileRight[INDEX_TILE_MINUS_ONE_X2(&zone, 0)],
-                  &conservedVarsTileLeft[INDEX_TILE(&zone, 0)],
-                  waveSpeedX2, conductionFluxes);
-      
-      getXCoords(&zone, CENTER, XCoords);
-      setGeometry(XCoords, &geom);
-      struct fluidElement elem;
-      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  
-      REAL coefficients[DOF];
-      computeConductionFluxesCoefficients(&elem, &geom, 1, coefficients);
-
-      fluxX2Tile[INDEX_TILE(&zone, PHI)] = 0.;
-      for (int var=0; var<DOF; var++)
-      {
-        fluxX2Tile[INDEX_TILE(&zone, PHI)] += 
-          coefficients[var]*conductionFluxes[var];
-      }
-    #endif 
 
     REAL dtX2InEachZone = COURANT*zone.dX2/waveSpeedX2;
 

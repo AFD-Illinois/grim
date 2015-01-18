@@ -133,6 +133,10 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 
   DMCreateGlobalVector(ts->dmdaDt, &ts->dtPetscVec);
 
+  #if (CONDUCTION)
+  initConductionDataStructures(ts);
+  #endif
+
   if (ts->X1Size % TILE_SIZE_X1 != 0)
   {
     SETERRQ2(PETSC_COMM_WORLD, 1,
@@ -235,6 +239,58 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   diagnostics(ts);
 
 }
+
+#if (CONDUCTION)
+void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
+{
+
+  #if (COMPUTE_DIM==1)
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->gradTDM);
+
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->graduConDM);
+
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->graduConHigherOrderTerm1DM);
+
+  #elif (COMPUTE_DIM==2)
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX,
+                 N1, N2,
+                 PETSC_DECIDE, PETSC_DECIDE,
+                 COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
+                 &ts->gradTDM);
+
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX,
+                 N1, N2,
+                 PETSC_DECIDE, PETSC_DECIDE,
+                 COMPUTE_DIM*NDIM, 0, PETSC_NULL, PETSC_NULL,
+                 &ts->graduConDM);
+
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX,
+                 N1, N2,
+                 PETSC_DECIDE, PETSC_DECIDE,
+                 COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
+                 &ts->graduConHigherOrderTerm1DM);
+
+  #endif
+
+  DMCreateGlobalVector(ts->gradTDM, &ts->gradTPetscVec);
+  DMCreateGlobalVector(ts->graduConDM, &ts->graduConPetscVec);
+  DMCreateGlobalVector(ts->graduConHigherOrderTerm1DM, 
+                       &ts->graduConHigherOrderTerm1PetscVec);
+
+  VecSet(ts->gradTPetscVec, 0.);
+  VecSet(ts->graduConPetscVec, 0.);
+  VecSet(ts->graduConHigherOrderTerm1PetscVec, 0.);
+}
+#endif
 
 void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
 {

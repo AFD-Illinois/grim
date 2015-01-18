@@ -9,7 +9,8 @@
 
 /* RECONSTRUCTION options */
 #define MONOTONIZED_CENTRAL (0)
-#define MP5                 (1)
+#define MIN_MOD             (1)
+#define MP5                 (2)
 
 /* The following macros taken from PLUTO. Needed for MP5 */
 #define MINMOD(a,b)  ((a)*(b) > 0.0 ? (fabs(a) < fabs(b) ? (a):(b)):0.0)
@@ -23,6 +24,8 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
               const REAL mid[ARRAY_ARGS DOF],
               const REAL right[ARRAY_ARGS DOF],
               REAL ans[ARRAY_ARGS DOF]);
+
+REAL slopeLimitedDerivative(const REAL left, const REAL mid, const REAL right);
 
 void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE],
                  const int dir,

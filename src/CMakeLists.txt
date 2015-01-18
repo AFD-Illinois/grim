@@ -18,7 +18,7 @@ project(grim)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/manic/petsc_optimized")
+set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
 
 # Double or float precision?
 set(REAL "double")
@@ -43,7 +43,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) equilibrium_torus_2d
 # 13) torus_2d
 # 14) mti_test_2d
-set(PROBLEM "anisotropic_conduction")
+set(PROBLEM "linear_modes")
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

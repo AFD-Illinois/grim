@@ -38,6 +38,15 @@ struct timeStepper
   Vec connectionPetscVec;
   Vec dtPetscVec;
 
+  #if (CONDUCTION)
+    DM  gradTDM;
+    DM  graduConDM;
+    DM  graduConHigherOrderTerm1DM;
+    Vec gradTPetscVec
+    Vec graduConPetscVec;
+    Vec graduConHigherOrderTerm1PetscVec;
+  #endif
+
   int computeOldSourceTermsAndOldDivOfFluxes;
   int computeDivOfFluxAtTimeN;
   int computeDivOfFluxAtTimeNPlusHalf;
@@ -81,5 +90,9 @@ void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
 void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 
 void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
+
+#if (CONDUCTION)
+void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+#endif
 
 #endif /* GRIM_TIMESTEPPER_H_ */
