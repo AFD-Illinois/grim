@@ -4,7 +4,9 @@ void addConductionSourceTermsToResidual
 (
   const REAL primTile[ARRAY_ARGS TILE_SIZE],
   ARRAY(primGlobal), ARRAY(primHalfStepGlobal), ARRAY(primOldGlobal),
-  const REAL christoffel[ARRAY_ARGS 64],
+  ARRAY(connectionGlobal),
+  ARRAY(gradTGlobal), ARRAY(graduConGlobal), 
+  ARRAY(graduConHigherOrderTerm1Global),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -13,10 +15,9 @@ void addConductionSourceTermsToResidual
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
   ARRAY(residualGlobal)
-);
+)
 {
-  REAL primTile[TILE_SIZE];
-
+#if (CONDUCTION)
   LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
   {
     struct gridZone zoneCenter;
@@ -124,22 +125,23 @@ void addConductionSourceTermsToResidual
       struct fluidElement elem, elemCenter, elemOld;
       struct geometry geomCenter;
 
+      REAL XCoords[NDIM];
       getXCoords(&zoneCenter, CENTER, XCoords);
       setGeometry(XCoords, &geomCenter);
-      setFluidElement(INDEX_PETSC(primGlobal, &zoneCenter, 0), &geomCenter,
+      setFluidElement(&INDEX_PETSC(primGlobal, &zoneCenter, 0), &geomCenter,
                       &elem);
 
-      setFluidElement(INDEX_PETSC(primOldGlobal, &zoneCenter, 0), &geomCenter,
+      setFluidElement(&INDEX_PETSC(primOldGlobal, &zoneCenter, 0), &geomCenter,
                       &elemOld);
 
       if (computeDivOfFluxAtTimeN)
       {
-        setFluidElement(INDEX_PETSC(primOldGlobal, &zoneCenter, 0), 
+        setFluidElement(&INDEX_PETSC(primOldGlobal, &zoneCenter, 0), 
                         &geomCenter, &elemCenter);
       } 
       else if (computeDivOfFluxAtTimeNPlusHalf)
       {
-        setFluidElement(INDEX_PETSC(primHalfStepGlobal, &zoneCenter, 0),
+        setFluidElement(&INDEX_PETSC(primHalfStepGlobal, &zoneCenter, 0),
                         &geomCenter, &elemCenter);
       }
 
@@ -154,7 +156,7 @@ void addConductionSourceTermsToResidual
       
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
         dHigherOrderTerm1[1] = 
-          INDEX_PETSC(graduConHigherOrderTerm1, &zoneCenter, 0);
+          INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0);
 
         dHigherOrderTerm1[2] = 0.; dHigherOrderTerm1[3] = 0.;
 
@@ -194,22 +196,22 @@ void addConductionSourceTermsToResidual
       
         #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
           aCon[mu] +=   elemCenter.uCon[1]
-                      * INDEX_PETSC(graduConGlobal, &zone, mu);
+                      * INDEX_PETSC(graduConGlobal, &zoneCenter, mu);
 
           #if (COMPUTE_DIM==2)
             aCon[mu] +=   elemCenter.uCon[2]
-                        * INDEX_PETSC(graduConGlobal, &zone, mu+NDIM);
+                        * INDEX_PETSC(graduConGlobal, &zoneCenter, mu+NDIM);
           #endif
 
         #elif (TIME_STEPPING == IMPLICIT)
           aCon[mu] += 
-            0.5*(  (elemOld.uCon[1]*INDEX_PETSC(graduConGlobal, &zone, mu) )
+            0.5*(  (elemOld.uCon[1]*INDEX_PETSC(graduConGlobal, &zoneCenter, mu) )
                  + (elem.uCon[1]*graduCon[mu])
                 );
 
           #if (COMPUTE_DIM==2)
             aCon[mu] += 
-              0.5*(  (elemOld.uCon[2]*INDEX_PETSC(graduConGlobal, &zone, mu+NDIM) )
+              0.5*(  (elemOld.uCon[2]*INDEX_PETSC(graduConGlobal, &zoneCenter, mu+NDIM) )
                    + (elem.uCon[2]*graduCon[mu])
                   );
           #endif
@@ -222,10 +224,11 @@ void addConductionSourceTermsToResidual
           {
             for (int beta=0; beta<NDIM; beta++)
             {
-              aCon[mu] +=  connectionGlobal[GAMMA_UP_DOWN_DOWN(mu, alpha, beta)]
-                         * (   (elem.uCon[alpha]    * elem.uCon[beta])
-                             + (elemOld.uCon[alpha] * elemOld.uCon[beta])
-                           )/2.;
+              aCon[mu] += 
+              INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, beta))
+              * (   (elem.uCon[alpha]    * elem.uCon[beta])
+                  + (elemOld.uCon[alpha] * elemOld.uCon[beta])
+                )/2.;
             }
           }
         #elif (TIME_STEPPING == EXPLICIT)
@@ -233,8 +236,9 @@ void addConductionSourceTermsToResidual
           {
             for (int beta=0; beta<NDIM; beta++)
             {
-              aCon[mu] +=  connectionGlobal[GAMMA_UP_DOWN_DOWN(mu, alpha, beta)]
-                         * elemCenter.uCon[alpha] * elemCenter.uCon[beta];
+              aCon[mu] +=  
+              INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, beta))
+              * elemCenter.uCon[alpha] * elemCenter.uCon[beta];
             }
           }
         #endif
@@ -282,23 +286,24 @@ void addConductionSourceTermsToResidual
       }
 
       REAL bDotq = 0., bSqr, bCov[NDIM];
-      conToCov(elemCenter.bCon, geomCenter, bCov);
-      bSqr = getbSqr(elemCenter, geomCenter);
+      conToCov(elemCenter.bCon, &geomCenter, bCov);
+      bSqr = getbSqr(&elemCenter, &geomCenter);
 
       for (int mu=0; mu<NDIM; mu++)
       {
         bDotq += bCov[mu]*qConEckart[mu]/sqrt(bSqr);
       }
 
+      REAL g = sqrt(-geomCenter.gDet);
       #if (TIME_STEPPING == EXPLICIT)
 
-        INDEX_PETSC(residualGlobal, &zone, PHI) += 
+        INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
           - higherOrderTerm1
           - g*(elemCenter.primVars[PHI] - bDotq)/elemCenter.tau;
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
-        INDEX_PETSC(residualGlobal, &zone, PHI) += 
+        INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
           - higherOrderTerm1
           - g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI]) 
                - bDotq
@@ -308,12 +313,14 @@ void addConductionSourceTermsToResidual
 
     }
   }
+#endif /* CONDUCTION */
 }
 
 void computeConductionSpatialGradientTerms
 (
   const REAL primTile[ARRAY_ARGS TILE_SIZE],
   const int iTile, const int jTile,
+  const int iInTile, const int jInTile,
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
   REAL gradT[COMPUTE_DIM],
@@ -321,6 +328,7 @@ void computeConductionSpatialGradientTerms
   REAL graduConHigherOrderTerm1[COMPUTE_DIM]
 )
 {
+#if (CONDUCTION)
   REAL XCoords[NDIM];
   struct gridZone zone, zoneCenter;
   struct geometry geom;
@@ -347,7 +355,7 @@ void computeConductionSpatialGradientTerms
                   / primTile[INDEX_TILE_PLUS_ONE_X1(&zoneCenter, RHO)];
 
   gradT[0] = 
-      slopeLimitedDerivative(TMinusOneX1, TCenter, TPlusOneX1)/zoneCenter.dX1;
+      slopeLimitedDerivative(TLeftX1, TCenter, TRightX1)/zoneCenter.dX1;
 
   #if (COMPUTE_DIM==2)
     REAL TLeftX2  =   (ADIABATIC_INDEX-1.)
@@ -365,7 +373,7 @@ void computeConductionSpatialGradientTerms
   /* uConCenter */
   getXCoords(&zoneCenter, CENTER, XCoords);
   setGeometry(XCoords, &geom); gCenter = sqrt(-geom.gDet);
-  setFluidElement(primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
+  setFluidElement(&primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
   elemCenter = elem;
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -380,7 +388,7 @@ void computeConductionSpatialGradientTerms
               &zone);
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
-  setFluidElement(primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+  setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConLeft[mu] = elem.uCon[mu];
@@ -394,7 +402,7 @@ void computeConductionSpatialGradientTerms
               &zone);
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
-  setFluidElement(primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+  setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConRight[mu] = elem.uCon[mu];
@@ -402,7 +410,7 @@ void computeConductionSpatialGradientTerms
 
   for (int mu=0; mu<NDIM; mu++)
   {
-    graduConForaCon[mu] = 
+    graduCon[mu] = 
       slopeLimitedDerivative(uConLeft[mu],
                              uConCenter[mu],
                              uConRight[mu])/zoneCenter.dX1;
@@ -423,7 +431,7 @@ void computeConductionSpatialGradientTerms
                 &zone);
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
-    setFluidElement(primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConLeft[mu] = elem.uCon[mu];
@@ -437,7 +445,7 @@ void computeConductionSpatialGradientTerms
                 &zone);
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
-    setFluidElement(primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
+    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConRight[mu] = elem.uCon[mu];
@@ -458,4 +466,5 @@ void computeConductionSpatialGradientTerms
                              gRight*uConRight[2])/zoneCenter.dX2;
   #endif
 
+#endif /* CONDUCTION */
 }

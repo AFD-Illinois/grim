@@ -44,6 +44,19 @@ PetscErrorCode computeResidual(SNES snes,
   DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, residualPetscVec,
                      &residualGlobal);
 
+  #if (CONDUCTION)
+    ARRAY(gradTGlobal);
+    ARRAY(graduConGlobal);
+    ARRAY(graduConHigherOrderTerm1Global);
+
+    DMDAVecGetArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
+    DMDAVecGetArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
+                       &graduConGlobal);
+    DMDAVecGetArrayDOF(ts->graduConHigherOrderTerm1DM, 
+                       ts->graduConHigherOrderTerm1PetscVec,
+                       &graduConHigherOrderTerm1Global);
+  #endif
+
   if (ts->computeOldSourceTermsAndOldDivOfFluxes)
   {
     Vec primPetscVecOldLocal, primPetscVecHalfStepLocal;
@@ -230,7 +243,9 @@ PetscErrorCode computeResidual(SNES snes,
         addConductionSourceTermsToResidual
           (primTile,
            primGlobal, primHalfStepGlobal, primOldGlobal,
-           &INDEX_PETSC(connectionGlobal, &zone, 0), ts->dt,
+           connectionGlobal, 
+           gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+           ts->dt,
            ts->computeOldSourceTermsAndOldDivOfFluxes,
            ts->computeDivOfFluxAtTimeN,
            ts->computeDivOfFluxAtTimeNPlusHalf,
@@ -408,7 +423,9 @@ PetscErrorCode computeResidual(SNES snes,
       addConductionSourceTermsToResidual
         (primTile,
          primGlobal, primHalfStepGlobal, primOldGlobal,
-         &INDEX_PETSC(connectionGlobal, &zone, 0), ts->dt,
+         connectionGlobal,
+         gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+         ts->dt,
          ts->computeOldSourceTermsAndOldDivOfFluxes,
          ts->computeDivOfFluxAtTimeN,
          ts->computeDivOfFluxAtTimeNPlusHalf,
@@ -447,5 +464,13 @@ PetscErrorCode computeResidual(SNES snes,
   DMDAVecRestoreArrayDOF(ts->dmdaDt, ts->dtPetscVec, &dtGlobal);
   DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, residualPetscVec,
                          &residualGlobal);
+  #if (CONDUCTION)
+    DMDAVecRestoreArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
+    DMDAVecRestoreArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
+                           &graduConGlobal);
+    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTerm1DM, 
+                           ts->graduConHigherOrderTerm1PetscVec,
+                           &graduConHigherOrderTerm1Global);
+  #endif
   return(0);
 }

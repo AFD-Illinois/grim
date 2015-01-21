@@ -19,14 +19,5 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
                 const int dir,
                 REAL cMin[ARRAY_ARGS 1], REAL cMax[ARRAY_ARGS 1]);
 
-#if (CONDUCTION)
-REAL conductionRiemannSolver(
-                   const REAL fluxLeft[ARRAY_ARGS DOF],
-                   const REAL fluxRight[ARRAY_ARGS DOF],
-                   const REAL conservedVarsLeft[ARRAY_ARGS DOF],
-                   const REAL conservedVarsRight[ARRAY_ARGS DOF],
-                   const REAL waveSpeed, REAL fluxes[ARRAY_ARGS DOF]);
-#endif /* conduction */
-
 #endif /* GRIM_TIMESTEPPER_H_ */
 

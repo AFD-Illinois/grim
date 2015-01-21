@@ -396,8 +396,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->computeDivOfFluxAtTimeNPlusHalf = 0;
     ts->computeSourceTermsAtTimeN = 1;
     ts->computeSourceTermsAtTimeNPlusHalf = 0;
-    ts->conductionCoefficientsAtN = 1;
-    ts->conductionCoefficientsAtNPlusHalf = 0;
 
     REAL dt = ts->dt;
     ts->dt = dt/2.;
@@ -424,8 +422,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->computeOldSourceTermsAndOldDivOfFluxes = 1;
     ts->computeDivOfFluxAtTimeN = 0;
     ts->computeDivOfFluxAtTimeNPlusHalf = 1;
-    ts->conductionCoefficientsAtN = 0;
-    ts->conductionCoefficientsAtNPlusHalf = 1;
 
     #if (TIME_STEPPING==EXPLICIT)
       ts->computeSourceTermsAtTimeN = 0;

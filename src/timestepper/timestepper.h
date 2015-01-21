@@ -42,7 +42,7 @@ struct timeStepper
     DM  gradTDM;
     DM  graduConDM;
     DM  graduConHigherOrderTerm1DM;
-    Vec gradTPetscVec
+    Vec gradTPetscVec;
     Vec graduConPetscVec;
     Vec graduConHigherOrderTerm1PetscVec;
   #endif
@@ -52,8 +52,6 @@ struct timeStepper
   int computeDivOfFluxAtTimeNPlusHalf;
   int computeSourceTermsAtTimeN;
   int computeSourceTermsAtTimeNPlusHalf;
-  int conductionCoefficientsAtN;
-  int conductionCoefficientsAtNPlusHalf;
 
   int X1Start, X1Size;
   int X2Start, X2Size;
@@ -92,7 +90,7 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
 #if (CONDUCTION)
-void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+  void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
 #endif
 
 #endif /* GRIM_TIMESTEPPER_H_ */

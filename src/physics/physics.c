@@ -75,6 +75,7 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   bSqr = getbSqr(elem, geom);
 
   conToCov(elem->uCon, geom, uCov);
+  conToCov(elem->bCon, geom, bCov);
 
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -161,8 +162,8 @@ REAL getbSqr(const struct fluidElement elem[ARRAY_ARGS 1],
              const struct geometry geom[ARRAY_ARGS 1])
 {
   REAL bCov[NDIM], bSqr;
-  conToCov(elemCenter.bCon, geomCenter, bCov);
-  bSqr = covDotCon(bCov, elemCenter.bCon);
+  conToCov(elem->bCon, geom, bCov);
+  bSqr = covDotCon(bCov, elem->bCon);
   if (bSqr < 1e-25)
   {
     bSqr = 1e-25;

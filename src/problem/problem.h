@@ -35,8 +35,4 @@ void applyProblemSpecificFluxFilter(const int iTile, const int jTile,
 void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
-#if (CONDUCTION)
-void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1]);
-#endif
-
 #endif /* GRIM_PROBLEM_H_ */

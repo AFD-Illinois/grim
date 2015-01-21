@@ -2,7 +2,6 @@
 #define GRIM_PHYSICS_H_
 
 #include "../inputs.h"
-#include "../geometry/geometry.h"
 
 /* Primitive variable mnemonics */
 #define RHO             (0)
@@ -19,6 +18,9 @@
 #else
   #define DOF           (8)
 #endif
+
+#include "../geometry/geometry.h"
+#include "../reconstruct/reconstruct.h"
 
 
 /* Contains all the variables needed for physics. Independent variables are only
@@ -69,11 +71,15 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
 
 #if (CONDUCTION)
-void computeConductionSourceTerms
+void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1]);
+
+void addConductionSourceTermsToResidual
 (
   const REAL primTile[ARRAY_ARGS TILE_SIZE],
-  ARRAY(prim), ARRAY(primHalfStep), ARRAY(primOld),
-  const REAL christoffel[ARRAY_ARGS 64],
+  ARRAY(primGlobal), ARRAY(primHalfStepGlobal), ARRAY(primOldGlobal),
+  ARRAY(connectionGlobal),
+  ARRAY(gradTGlobal), ARRAY(graduConGlobal), 
+  ARRAY(graduConHigherOrderTerm1Global),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -81,13 +87,14 @@ void computeConductionSourceTerms
   const int iTile, const int jTile,
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
-  ARRAY(sourceTerms)
+  ARRAY(residualGlobal)
 );
 
 void computeConductionSpatialGradientTerms
 (
   const REAL primTile[ARRAY_ARGS TILE_SIZE],
   const int iTile, const int jTile,
+  const int iInTile, const int jInTile,
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
   REAL gradT[COMPUTE_DIM],
@@ -106,4 +113,6 @@ void setUCon(const struct geometry geom[ARRAY_ARGS 1],
 void setBCon(const struct geometry geom[ARRAY_ARGS 1],
              struct fluidElement elem[ARRAY_ARGS 1]);
 
+REAL getbSqr(const struct fluidElement elem[ARRAY_ARGS 1],
+             const struct geometry geom[ARRAY_ARGS 1]);
 #endif /* GRIM_PHYSICS_H_ */
