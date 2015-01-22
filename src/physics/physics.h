@@ -19,10 +19,6 @@
   #define DOF           (8)
 #endif
 
-#include "../geometry/geometry.h"
-#include "../reconstruct/reconstruct.h"
-
-
 /* Contains all the variables needed for physics. Independent variables are only
  * primVars. The rest are auxiliary variables stored for convenience.
  */
@@ -51,6 +47,10 @@ struct fluidElement
     REAL kappa, tau;
   #endif
 };
+
+#include "../geometry/geometry.h"
+#include "../reconstruct/reconstruct.h"
+#include "../timestepper/timestepper.h"
 
 /* Public functions: */
 void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],

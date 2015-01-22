@@ -92,8 +92,8 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
                         - elem->bCon[mu]*bCov[nu]
       #if (CONDUCTION) 
-        + elem->uCon[mu] * elem->primVars[PHI] * bCov[nu]/sqrt(bSqr)
-        + uCov[nu] * elem->primVars[PHI] * elem->bCon[mu]/sqrt(bSqr)
+        + elem->primVars[PHI]/sqrt(bSqr)
+        * (elem->uCon[mu]*bCov[nu] + elem->bCon[mu]*uCov[nu])
       #endif                  
                         ;
 
@@ -128,7 +128,7 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 /*  Returns sqrt(-gDet) * T^kappa^lamda * Gamma_lamda_nu_kappa for each nu.
  *  (Eqn (4) of HARM paper)
  * 
-*/
+ */
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],

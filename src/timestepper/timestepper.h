@@ -5,12 +5,6 @@
 #include <petscviewerhdf5.h>
 #include <unistd.h>
 #include "../inputs.h"
-#include "../geometry/geometry.h"
-#include "../gridzone/gridzone.h"
-#include "../boundary/boundary.h"
-#include "../reconstruct/reconstruct.h"
-#include "../riemannsolver/riemannsolver.h"
-#include "../physics/physics.h"
 
 #define EXPLICIT (0)
 #define IMPLICIT (1)
@@ -60,6 +54,12 @@ struct timeStepper
 
 /* The problem library requires timeStepper struct, so put this include after
  * the definition of the struct */
+#include "../geometry/geometry.h"
+#include "../gridzone/gridzone.h"
+#include "../boundary/boundary.h"
+#include "../reconstruct/reconstruct.h"
+#include "../riemannsolver/riemannsolver.h"
+#include "../physics/physics.h"
 #include "../problem/problem.h"
 
 /* User functions */

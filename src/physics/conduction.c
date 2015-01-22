@@ -256,19 +256,15 @@ void addConductionSourceTermsToResidual
 
       REAL qConEckart[NDIM];
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
+
         REAL TCenter =   (ADIABATIC_INDEX-1.)
                        * elemCenter.primVars[UU]
                        / elemCenter.primVars[RHO];
-      #elif (TIME_STEPPING == IMPLICIT)
-        REAL T =   (ADIABATIC_INDEX-1.)
-                 * elem.primVars[UU]
-                 / elem.primVars[RHO];
 
-        REAL TOld =   (ADIABATIC_INDEX-1.)
-                    * elemOld.primVars[UU]
-                    / elemOld.primVars[RHO];
+      #elif (TIME_STEPPING == IMPLICIT)
 
         REAL TCenter = (T + TOld)/2.;
+
       #endif
 
       for (int mu=0; mu<NDIM; mu++)
@@ -284,7 +280,7 @@ void addConductionSourceTermsToResidual
             * (dT[nu] + TCenter*aCov[nu]);
         }
       }
-
+      
       REAL bDotq = 0., bSqr, bCov[NDIM];
       conToCov(elemCenter.bCon, &geomCenter, bCov);
       bSqr = getbSqr(&elemCenter, &geomCenter);
@@ -293,19 +289,19 @@ void addConductionSourceTermsToResidual
       {
         bDotq += bCov[mu]*qConEckart[mu]/sqrt(bSqr);
       }
-
+    
       REAL g = sqrt(-geomCenter.gDet);
       #if (TIME_STEPPING == EXPLICIT)
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
           - higherOrderTerm1
-          - g*(elemCenter.primVars[PHI] - bDotq)/elemCenter.tau;
+          + g*(elemCenter.primVars[PHI] - bDotq)/elemCenter.tau;
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
           - higherOrderTerm1
-          - g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI]) 
+          + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI]) 
                - bDotq
               )/elemCenter.tau;
 
@@ -355,7 +351,7 @@ void computeConductionSpatialGradientTerms
                   / primTile[INDEX_TILE_PLUS_ONE_X1(&zoneCenter, RHO)];
 
   gradT[0] = 
-      slopeLimitedDerivative(TLeftX1, TCenter, TRightX1)/zoneCenter.dX1;
+    slopeLimitedDerivative(TLeftX1, TCenter, TRightX1)/zoneCenter.dX1;
 
   #if (COMPUTE_DIM==2)
     REAL TLeftX2  =   (ADIABATIC_INDEX-1.)

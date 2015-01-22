@@ -294,10 +294,10 @@ PetscErrorCode computeResidual(SNES snes,
   #endif
   LOOP_OVER_TILES(X1Size, X2Size)
   {
-    #if (TIME_STEPPING==IMPLICIT)
-      REAL primTile[TILE_SIZE];
-      REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
+    REAL primTile[TILE_SIZE];
+    REAL fluxX1Tile[TILE_SIZE], fluxX2Tile[TILE_SIZE];
 
+    #if (TIME_STEPPING==IMPLICIT)
       LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
       {
         struct gridZone zone;

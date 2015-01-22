@@ -5,18 +5,18 @@ set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMPLICIT")
+set(TIME_STEPPING "IMEX")
 set(DT "0.001")
-set(DT_DUMP ".001")
+set(DT_DUMP ".01")
 set(START_TIME "0.")
-set(FINAL_TIME "2.")
-set(COURANT "0.9")
+set(FINAL_TIME "5.")
+set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(COMPUTE_DIM "2")
-set(N1 "70")
-set(N2 "70")
+set(COMPUTE_DIM "1")
+set(N1 "1120")
+set(N2 "1120")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -33,7 +33,7 @@ set(N2 "70")
 set(TILE_SIZE_X1 "10")
 set(TILE_SIZE_X2 "10")
 
-set(USE_OPENMP   "YES")
+set(USE_OPENMP   "NO")
 
 # Geometry
 set(METRIC "MINKOWSKI")
@@ -53,7 +53,7 @@ set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
 # Reconstrution options
 # MP5 or MONOTONIZED_CENTRAL
-set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
+set(RECONSTRUCTION "MP5")
 
 # Initial condition parameters 
 # Mode options: 

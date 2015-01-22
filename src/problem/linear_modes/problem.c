@@ -99,11 +99,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         }
 
       #elif (MODE==CONDUCTION_STABLE_1D) 
-        /* Eigenvalue = -4.99386690579 - 13.32147544*I
-         * kappa = 2.
-         * tau = 0.463636363636364 */
-        kappaProblem = 2.;
-        tauProblem   = 0.463636363636364;
+        /* Eigenvalue = -0.498597173331 - 0.857832357798*I
+         * kappa = 0.1
+         * tau = 1.01818181818182 */
+        kappaProblem = .1;
+        tauProblem   = 1.01818181818182;
 
         REAL primVars0[DOF];
         REAL complex deltaPrimVars[DOF];
@@ -113,20 +113,20 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[U1]  = 0.;
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
-        primVars0[B1]  = 0.;
+        primVars0[B1]  = 0.000001;
         primVars0[B2]  = 0.;
         primVars0[B3]  = 0.;
         primVars0[PHI] = 0.;
 
-        deltaPrimVars[RHO] = -0.106491811933 - 0.0383867866432*I;
-        deltaPrimVars[UU]  = 0.109942056865 + 0.0453054519637*I;
-        deltaPrimVars[U1]  = -0.256291432121 + 0.0032526972965*I;
+        deltaPrimVars[RHO] = 0.911376933183;
+        deltaPrimVars[UU]  = 0.030751595371 - 0.0635975709194*I;
+        deltaPrimVars[U1]  = 0.124428706971 - 0.0723215917578*I;
         deltaPrimVars[U2]  = 0.;
         deltaPrimVars[U3]  = 0.;
-        deltaPrimVars[B1]  = 0.00001;
+        deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B2]  = 0.;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PHI] = 0.952549332339;
+        deltaPrimVars[PHI] = -0.332658158111 + 0.181734443922*I;
 
         REAL k1 = 2*M_PI;
         REAL k2 = 0.;
