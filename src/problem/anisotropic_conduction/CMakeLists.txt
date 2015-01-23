@@ -9,14 +9,14 @@ set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-3")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
-set(FINAL_TIME "1.")
+set(FINAL_TIME "5.")
 set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
-set(N2 "128")
+set(N1 "256")
+set(N2 "256")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -65,7 +65,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # WAVE_NUMBER -- Choose how wavy you want the field lines to be
 set(AMPLITUDE           ".2")
 set(RADIUS              "sqrt(0.005)")
-set(MEAN_MAGNETIC_FIELD ".1")
+set(MEAN_MAGNETIC_FIELD "0.0001")
 set(WAVE_NUMBER         "4.")
 
 # Floor values
@@ -122,13 +122,10 @@ message("######################")
 message("# Initial conditions #")
 message("######################")
 message("")
-message("Initial radius       : " ${INITIAL_RADIUS})
-message("Mean magnetic field  : " ${MEAN_MAGNETIC_FIELD})
-message("Density inside       : " ${RHO_INSIDE})
-message("Density outside      : " ${RHO_OUTSIDE})
-message("Pressure inside      : " ${PRESSURE_INSIDE})
-message("Pressure outside     : " ${PRESSURE_OUTSIDE})
-message("Smoothness factor    : " ${SMOOTHNESS})
+message("Temperature perturbation amplitude : " ${AMPLITUDE})
+message("Wave number of perturbation        : " ${WAVE_NUMBER})
+message("Radius                             : " ${RADIUS})
+message("Mean magnetic field                : " ${MEAN_MAGNETIC_FIELD})
 
 message("")
 message("##########")

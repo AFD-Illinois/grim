@@ -1,5 +1,16 @@
 #include "../problem.h"
 
+#if (CONDUCTION)
+  REAL kappaProblem;
+  REAL tauProblem; 
+
+  void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->kappa = kappaProblem;
+    elem->tau   = tauProblem;
+  }
+#endif
+
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
   ARRAY(primOldGlobal);
@@ -40,6 +51,9 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
       #if (CONDUCTION)
         INDEX_PETSC(primOldGlobal, &zone, PHI) = 0.;
+
+        kappaProblem = 0.1;
+        tauProblem   = 1.;
       #endif
 
     }

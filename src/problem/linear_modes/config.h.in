@@ -5,9 +5,10 @@
 #define NDIM                  (4)
 #define M_PI                  (3.141592653589793238462643383279)
 /* Problem options */
-#define HYDRO_ENTROPY_MODE    (0)
+#define ENTROPY_WAVE_1D       (0)
 #define HYDRO_SOUND_MODE_1D   (1)
 #define CONDUCTION_STABLE_1D  (2)
+#define CONDUCTION_STABLE_2D  (3)
 
 /* End of immutable constants */
   

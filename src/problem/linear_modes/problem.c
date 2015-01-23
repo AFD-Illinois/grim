@@ -138,6 +138,46 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
           INDEX_PETSC(primOldGlobal, &zone, var) =  
             primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
         }
+      #elif (MODE==CONDUCTION_STABLE_2D) 
+        /* Eigenvalue = -0.498689052044 - 1.23434614343*I
+         * kappa = 0.1
+         * tau = 1.01818181818182 */
+        kappaProblem = .1;
+        tauProblem   = 1.01818181818182;
+
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
+
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 2.;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.01;
+        primVars0[B2]  = 0.02;
+        primVars0[B3]  = 0.;
+        primVars0[PHI] = 0.;
+
+        deltaPrimVars[RHO] = 0.912960868047;
+        deltaPrimVars[UU]  = 0.0441633411305 - 0.0470501442451*I;
+        deltaPrimVars[U1]  = 0.068161459988 - 0.0280266780212*I;
+        deltaPrimVars[U2]  = 0.111191793414 - 0.0444339558103*I;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = -0.00130516937615 + 6.41592876069e-05*I;
+        deltaPrimVars[B2]  = 0.00130516937615 - 6.41592876069e-05*I;
+        deltaPrimVars[B3]  = 0.;
+        deltaPrimVars[PHI] = -0.352802085664 + 0.134521891027*I;
+
+        REAL k1 = 2*M_PI;
+        REAL k2 = 2*M_PI;
+
+        REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+          INDEX_PETSC(primOldGlobal, &zone, var) =  
+            primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
       #endif
 
     }
