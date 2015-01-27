@@ -25,6 +25,7 @@
 #cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+#cmakedefine    PROBLEM_DATA  ${PROBLEM_DATA}
 
 /* Domain inputs */
 #cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})

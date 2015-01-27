@@ -154,6 +154,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyAdditionalProblemSpecificBCs(iTile, jTile,
                                         X1Start, X2Start,
                                         X1Size, X2Size,
+                                        ts->problemSpecificData,
                                         primTile);
 
       /* Sync point */
@@ -169,6 +170,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyProblemSpecificFluxFilter(iTile, jTile,
                                      X1Start, X2Start,
                                      X1Size, X2Size,
+                                     ts->problemSpecificData,
                                      fluxX1Tile, fluxX2Tile);
 
       LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -323,6 +325,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyAdditionalProblemSpecificBCs(iTile, jTile,
                                         X1Start, X2Start,
                                         X1Size, X2Size,
+                                        ts->problemSpecificData,
                                         primTile);
 
       computeFluxesOverTile(primTile, 
@@ -335,6 +338,7 @@ PetscErrorCode computeResidual(SNES snes,
       applyProblemSpecificFluxFilter(iTile, jTile,
                                      X1Start, X2Start,
                                      X1Size, X2Size,
+                                     ts->problemSpecificData,
                                      fluxX1Tile, fluxX2Tile);
     #endif
 

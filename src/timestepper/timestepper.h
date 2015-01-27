@@ -10,6 +10,8 @@
 #define IMPLICIT (1)
 #define IMEX     (2)
 
+struct problemData;
+
 struct timeStepper
 {
   REAL t, dt, tDump;
@@ -40,6 +42,8 @@ struct timeStepper
     Vec graduConPetscVec;
     Vec graduConHigherOrderTerm1PetscVec;
   #endif
+
+  struct problemData *problemSpecificData;
 
   int computeOldSourceTermsAndOldDivOfFluxes;
   int computeDivOfFluxAtTimeN;

@@ -3,12 +3,17 @@
 
 /* Immutable constants. Should not be changed */
 #define NDIM                  (4)
-/* Number of ghost zones */
-#define NG                    (4)
 #define M_PI                  (3.141592653589793238462643383279)
+
+/* Magnetic field configurations */
+#define VERTICAL  (0)
+#define THETA     (1)
+#define RADIAL    (2)
 /* End of immutable constants */
   
 #cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
+#cmakedefine01  RESTART
+#cmakedefine    RESTART_FILE     ${RESTART_FILE}
 #cmakedefine    DUMP_FILE_PREFIX ${DUMP_FILE_PREFIX}
 #cmakedefine    TIME_STEPPING    ${TIME_STEPPING}
 #cmakedefine    DT              (${DT})
@@ -16,8 +21,10 @@
 #cmakedefine    START_TIME      (${START_TIME})
 #cmakedefine    FINAL_TIME      (${FINAL_TIME})
 #cmakedefine    COURANT         (${COURANT})
+#cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+#cmakedefine    PROBLEM_DATA  ${PROBLEM_DATA}
 
 /* Domain inputs */
 #cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})
@@ -25,6 +32,7 @@
 #cmakedefine    N2               (${N2})
 #cmakedefine    TILE_SIZE_X1     (${TILE_SIZE_X1})
 #cmakedefine    TILE_SIZE_X2     (${TILE_SIZE_X2})
+#cmakedefine01  USE_OPENMP
 
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
@@ -32,10 +40,14 @@
 
 
 /* Initial condition parameters */
-#cmakedefine    R_PRESSURE_MAX      (${R_PRESSURE_MAX})
-#cmakedefine    R_INNER_EDGE        (${R_INNER_EDGE})
-#cmakedefine    ADIABAT             (${ADIABAT})
-#cmakedefine    PLASMA_BETA         (${PLASMA_BETA})
+#cmakedefine    PLASMA_BETA               (${PLASMA_BETA})
+#cmakedefine    PERTURBATIONS_AMPLITUDE   (${PERTURBATIONS_AMPLITUDE})
+#cmakedefine    MAGNETIC_FIELD_CONFIGURATION (${MAGNETIC_FIELD_CONFIGURATION})
+#cmakedefine    RHO_INPUT_FILE      ${RHO_INPUT_FILE}
+#cmakedefine    UU_INPUT_FILE       ${UU_INPUT_FILE}
+#cmakedefine    UR_INPUT_FILE       ${UR_INPUT_FILE}
+#cmakedefine    PHI_INPUT_FILE      ${PHI_INPUT_FILE}
+#cmakedefine    RCOORDS_INPUT_FILE  ${RCOORDS_INPUT_FILE}
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})
@@ -59,6 +71,9 @@
 #cmakedefine    PHYSICAL_BOUNDARY_TOP_EDGE    (${PHYSICAL_BOUNDARY_TOP_EDGE})
 #cmakedefine    PHYSICAL_BOUNDARY_BOTTOM_EDGE (${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
 
+/* Reconstruction */
+#cmakedefine    RECONSTRUCTION  (${RECONSTRUCTION})
+
 /* Floor values */
 #cmakedefine    RHO_FLOOR               (${RHO_FLOOR})
 #cmakedefine    UU_FLOOR                (${UU_FLOOR})
@@ -67,5 +82,12 @@
 #cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
 #cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
 #cmakedefine    GAMMA_MAX               (${GAMMA_MAX})
+
+/* Number of ghost zones */
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
+  #define NG  (3)
+#elif (RECONSTRUCTION==MP5)
+  #define NG  (4)
+#endif
 
 #endif /* GRIM_INPUT_H_ */

@@ -51,6 +51,7 @@ struct fluidElement
 #include "../geometry/geometry.h"
 #include "../reconstruct/reconstruct.h"
 #include "../timestepper/timestepper.h"
+#include "../problem/problem.h"
 
 /* Public functions: */
 void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
@@ -71,8 +72,6 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
 
 #if (CONDUCTION)
-void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1]);
-
 void addConductionSourceTermsToResidual
 (
   const REAL primTile[ARRAY_ARGS TILE_SIZE],

@@ -27,23 +27,23 @@ set(REAL "double")
 # Must use -std=c99 if using the "restrict" keyword while compiling 
 set(ARRAY_ARGS "const restrict static")
 
-# Choose the problem to be solved here:
+# Choose the problem to be solved:
 #
-# 1) linear_modes_1d
-# 2) komissarov_fast_shock_1d
-# 3) komissarov_slow_shock_1d
-# 4) komissarov_switch_off_1d
-# 5) komissarov_switch_on_1d
-# 6) komissarov_shock_tube_1_1d
-# 7) komissarov_shock_tube_2_1d
-# 8) komissarov_collision_1d
-# 9) magnetized_field_loop_advection_2d
-# 10) orzag_tang_2d
-# 11) komissarov_magnetized_cylindrical_explosion_2d
-# 12) equilibrium_torus_2d
-# 13) torus_2d
-# 14) mti_test_2d
-set(PROBLEM "anisotropic_conduction")
+# 1) linear_modes
+# 2) shock_tests
+# 3) advection_test
+# 4) magnetized_field_loop_advection
+# 5) orzag_tang
+# 6) magnetized_explosion
+# 7) atmosphere
+# 8) bondi_inflow
+# 10) anisotropic_conduction
+# 10) buoyancy_instabilites
+# 11) torus
+
+set(PROBLEM "atmosphere")
+# Now choose problem specific options in the respective problem folder in
+# src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

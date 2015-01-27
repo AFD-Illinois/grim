@@ -137,6 +137,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   initConductionDataStructures(ts);
   #endif
 
+  /* Initialize problem dependent data */
+  PetscMalloc1(1, &ts->problemSpecificData);
+
   if (ts->X1Size % TILE_SIZE_X1 != 0)
   {
     SETERRQ2(PETSC_COMM_WORLD, 1,
@@ -221,7 +224,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
     }
 
     PetscViewer viewer;
-    PetscViewerHDF5Open(PETSC_COMM_WORLD,"restartfile.h5",
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, "restartfile.h5",
                         FILE_MODE_READ, &viewer);
     PetscObjectSetName((PetscObject) ts->primPetscVecOld, "primVars");
     VecLoad(ts->primPetscVecOld, viewer);
@@ -500,6 +503,8 @@ void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
   DMDestroy(&ts->connectionDMDA);
 
   SNESDestroy(&ts->snes);
+
+  PetscFree(ts->problemSpecificData);
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
   PetscPrintf(PETSC_COMM_WORLD, "################################\n");
