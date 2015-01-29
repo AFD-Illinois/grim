@@ -41,7 +41,7 @@ set(ARRAY_ARGS "const restrict static")
 # 10) buoyancy_instabilites
 # 11) torus
 
-set(PROBLEM "atmosphere")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

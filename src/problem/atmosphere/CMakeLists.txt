@@ -7,11 +7,11 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "1e-5")
-set(DT_DUMP "1.")
+set(DT "0.0001")
+set(DT_DUMP ".01")
 set(START_TIME "0.")
-set(FINAL_TIME "2000.")
-set(COURANT "0.9")
+set(FINAL_TIME "100.")
+set(COURANT "0.1")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -34,7 +34,7 @@ set(N2 "128")
 set(TILE_SIZE_X1 "16")
 set(TILE_SIZE_X2 "16")
 
-set(USE_OPENMP   "YES")
+set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
@@ -46,11 +46,11 @@ set(EPS     "1e-5")
 set(M       "1.")
 set(BH_SPIN "0.")
 set(H_SLOPE "1.") # Refinement in the theta direction to better resolve the
-                   # disk. H_SLOPE = 1 is no refinement and H_SLOPE -> 0 pushes
-                   # all points towards the midplane.
+                  # disk. H_SLOPE = 1 is no refinement and H_SLOPE -> 0 pushes
+                  # all points towards the midplane.
 
 # Domain
-set(R_A     "100.*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
+set(R_A     "10.*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
 set(R_B     "300.")
 
 set(X1_A  "log(R_A)")
@@ -70,14 +70,13 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
-set(PLASMA_BETA                   "1e2")
-set(PERTURBATIONS_AMPLITUDE       "4e-2")
-set(MAGNETIC_FIELD_CONFIGURATION "THETA")
-set(RHO_INPUT_FILE      "\"/home/mc/Data/mc/PhD/grim/build/rho.txt\"")
-set(UU_INPUT_FILE       "\"/home/mc/Data/mc/PhD/grim/build/u.txt\"")
-set(UR_INPUT_FILE       "\"/home/mc/Data/mc/PhD/grim/build/uUpr.txt\"")
-set(PHI_INPUT_FILE      "\"/home/mc/Data/mc/PhD/grim/build/phi.txt\"")
-set(RCOORDS_INPUT_FILE  "\"/home/mc/Data/mc/PhD/grim/build/rCoords.txt\"")
+set(PLASMA_BETA                   "1e5")
+set(PERTURBATIONS_AMPLITUDE       "0e-2")
+set(MAGNETIC_FIELD_CONFIGURATION  "RADIAL")
+set(RHO_INPUT_FILE      "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_rho.txt\"")
+set(UU_INPUT_FILE       "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_u.txt\"")
+set(PHI_INPUT_FILE      "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_phi.txt\"")
+set(RCOORDS_INPUT_FILE  "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_rCoords.txt\"")
 
 # Floor values
 set(RHO_FLOOR         "1e-4")

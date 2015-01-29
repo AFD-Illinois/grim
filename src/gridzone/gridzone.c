@@ -76,14 +76,14 @@ void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
   {
     X[0] = 0.;
     X[1] = X1_A + (zone->i + 0.5)*zone->dX1;
-    X[2] = 0.;
+    X[2] = X2_A;
     X[3] = 0.;
   }
   else if (location==FACE_X1)
   {
     X[0] = 0.;
     X[1] = X1_A + zone->i*zone->dX1;
-    X[2] = 0.;
+    X[2] = X2_A;
     X[3] = 0.;
   }
 #endif

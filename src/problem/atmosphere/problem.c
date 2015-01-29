@@ -13,18 +13,10 @@ void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1])
 
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
-  ARRAY(primOldGlobal);
-  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
-                     ts->primPetscVecOld, &primOldGlobal);
-
-  REAL randNum;
-  PetscRandom randNumGen;
-  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
-  PetscRandomSetType(randNumGen, PETSCRAND48);
+  PetscPrintf(PETSC_COMM_WORLD, "Setting up atmosphere...");
 
   REAL rho1D[N1+2*NG];
   REAL u1D[N1+2*NG];
-  REAL uUpr1D[N1+2*NG];
   REAL phi1D[N1+2*NG];
   REAL rCoords1D[N1+2*NG];
 
@@ -35,31 +27,26 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   {
     FILE *rhoFile;
     FILE *uFile;
-    FILE *uUprFile;
     FILE *phiFile;
     FILE *rCoordsFile;
   
     char *rhoLine     = NULL;
     char *uLine       = NULL;
-    char *uUprLine    = NULL;
     char *phiLine     = NULL; 
     char *rCoordsLine = NULL;
 
     size_t rhoLen     = 0; ssize_t rhoRead;
     size_t uLen       = 0; ssize_t uRead;
-    size_t uUprLen    = 0; ssize_t uUprRead;
     size_t phiLen     = 0; ssize_t phiRead;
     size_t rCoordsLen = 0; ssize_t rCoordsRead;
 
     rhoFile     = fopen(RHO_INPUT_FILE    , "r");
     uFile       = fopen(UU_INPUT_FILE     , "r");
-    uUprFile    = fopen(UR_INPUT_FILE     , "r");
     phiFile     = fopen(PHI_INPUT_FILE    , "r");
     rCoordsFile = fopen(RCOORDS_INPUT_FILE, "r");
 
     if (   rhoFile      == NULL 
         || uFile        == NULL
-        || uUprFile     == NULL
         || phiFile      == NULL
         || rCoordsFile  == NULL
        )
@@ -71,37 +58,32 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
     {
       rhoRead     = getline(&rhoLine    , &rhoLen     , rhoFile);
       uRead       = getline(&uLine      , &uLen       , uFile);
-      uUprRead    = getline(&uUprLine   , &uUprLen    , uUprFile);
       phiRead     = getline(&phiLine    , &phiLen     , phiFile);
       rCoordsRead = getline(&rCoordsLine, &rCoordsLen , rCoordsFile);
 
-      if (   rhoRead   == -1
-          || uRead     == -1
-          || uUprRead  == -1
-          || phiRead   == -1
-          || rCoordsRead == -1
+      if (   rhoRead      == -1
+          || uRead        == -1
+          || phiRead      == -1
+          || rCoordsRead  == -1
          )
       {
         SETERRQ(PETSC_COMM_WORLD, 1, 
-                "Found the input data files but failed to read them!\n");
+        "Found the input data files but error in reading them! Check number of grid zones in python script\n");
       }
 
       rho1D[i+NG]     = atof(rhoLine);
       u1D[i+NG]       = atof(uLine);
-      uUpr1D[i+NG]    = atof(uUprLine);
       phi1D[i+NG]     = atof(phiLine);
       rCoords1D[i+NG] = atof(rCoordsLine);
     }
 
     free(rhoLine);
     free(uLine);
-    free(uUprLine);
     free(phiLine);
     free(rCoordsLine);
 
     fclose(rhoFile);
     fclose(uFile);
-    fclose(uUprFile);
     fclose(phiFile);
     fclose(rCoordsFile);
   }
@@ -109,10 +91,18 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   /* Broadcast the data from rank 0 proc to all other procs */
   MPI_Bcast(&rho1D[0]     , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&u1D[0]       , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
-  MPI_Bcast(&uUpr1D[0]    , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&phi1D[0]     , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&rCoords1D[0] , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   /* Broadcast complete */
+
+  ARRAY(primOldGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     ts->primPetscVecOld, &primOldGlobal);
+
+  REAL randNum;
+  PetscRandom randNumGen;
+  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
+  PetscRandomSetType(randNumGen, PETSCRAND48);
 
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
@@ -132,11 +122,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       XTox(XCoords, xCoords);
 
       REAL r = xCoords[1];
-      if (fabs(r - rCoords1D[zone.i+NG]) > 1e-15)
+      if (fabs(r - rCoords1D[zone.i+NG]) > 1e-25)
       {
-        SETERRQ2(PETSC_COMM_WORLD, 1, 
-                 "Mismatch in rCoords! Check r coords in python script. r = %f, rCoords = %f\n",
-                 r, rCoords1D[zone.i+NG]
+        SETERRQ3(PETSC_COMM_WORLD, 1, 
+                 "Mismatch in rCoords! Check r coords in python script. r = %.18f, rCoords = %.18f, i = %d\n",
+                 r, rCoords1D[zone.i+NG], zone.i
                 );
       }
 
@@ -152,14 +142,17 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         tauProblem   = 10.;
       #endif
 
+      struct geometry geom;
+      setGeometry(XCoords, &geom);
+
       REAL uConBL[NDIM];
-      uConBL[1] = uUpr1D[zone.i+NG];
+      uConBL[0] = 1./sqrt(-geom.gCov[0][0]);
+      uConBL[1] = 0.;
       uConBL[2] = 0.;
       uConBL[3] = 0.;
 
+
       /* Formula to output vUpr in MKS from uUpr in BL from Ben Ryan */
-      struct geometry geom;
-      setGeometry(XCoords, &geom);
       REAL a = geom.gCov[1][1];
       REAL b = geom.gCon[0][1];
       REAL c = geom.gCon[0][0];
@@ -322,12 +315,14 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   VecStrideScale(ts->primPetscVecOld, B2, norm);
   VecStrideScale(ts->primPetscVecOld, B3, norm);
 
-  VecDestroy(&bSqrPetscVecGlobal);
 
   DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
                          &bSqrGlobal);
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
                          ts->primPetscVecOld, &primOldGlobal);
+
+  VecDestroy(&bSqrPetscVecGlobal);
+  PetscRandomDestroy(&randNumGen);
 
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
@@ -496,9 +491,10 @@ void applyAdditionalProblemSpecificBCs
       {
         for (int var=0; var<DOF; var++)
         {
-          primTile[INDEX_TILE(&zone, var)] = 
+          primTile[INDEX_TILE(&zone, var)] =
             problemSpecificData->primVarsLeftEdge[zone.i+NG][var];
         }
+
       }
     #endif
 

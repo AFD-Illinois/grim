@@ -10,13 +10,13 @@ set(TIME_STEPPING "EXPLICIT")
 set(DT "0.001")
 set(DT_DUMP ".01")
 set(START_TIME "0.")
-set(FINAL_TIME "5.")
+set(FINAL_TIME "1./1.23434614343")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "280")
-set(N2 "280")
+set(N1 "512")
+set(N2 "512")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -30,8 +30,8 @@ set(N2 "280")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "10")
-set(TILE_SIZE_X2 "10")
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
 
 set(USE_OPENMP   "YES")
 
