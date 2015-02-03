@@ -156,27 +156,39 @@ void addConductionSourceTermsToResidual
       
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
         dHigherOrderTerm1[1] = 
-          INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0);
+          elemCenter.primVars[PHI]
+        * INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0);
 
         dHigherOrderTerm1[2] = 0.; dHigherOrderTerm1[3] = 0.;
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-            INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 1);
+            elemCenter.primVars[PHI]
+          * INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 1);
         #endif
       #elif (TIME_STEPPING == IMPLICIT)
         dHigherOrderTerm1[1] = 
-          0.5*(  INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0)
-               + graduConHigherOrderTerm1[0]
+          0.5*(  (  elemOld.primVars[PHI]
+                  * INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0)
+                 )
+               + 
+                 (  elem.primVars[PHI]
+                  * graduConHigherOrderTerm1[0]
+                 )
               );
 
         dHigherOrderTerm1[2] = 0.; dHigherOrderTerm1[3] = 0.;
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-            0.5*(  INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 1)
-                 + graduConHigherOrderTerm1[1]
-                );
+          0.5*(  (  elemOld.primVars[PHI]
+                  * INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 1)
+                 )
+               + 
+                 (  elem.primVars[PHI]
+                  * graduConHigherOrderTerm1[1]
+                 )
+              );
         #endif
 
       #endif
@@ -189,10 +201,8 @@ void addConductionSourceTermsToResidual
 
       for (int mu=0; mu<NDIM; mu++)
       {
-        aCon[mu]  = 0.;
-
-        aCon[mu] +=   elemCenter.uCon[0]
-                    * (elem.uCon[mu] - elemOld.uCon[mu])/dt;
+        aCon[mu] =    elemCenter.uCon[0]
+                   * (elem.uCon[mu] - elemOld.uCon[mu])/dt;
       
         #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
           aCon[mu] +=   elemCenter.uCon[1]
@@ -291,19 +301,24 @@ void addConductionSourceTermsToResidual
       }
     
       REAL g = sqrt(-geomCenter.gDet);
+      REAL norm = g;
       #if (TIME_STEPPING == EXPLICIT)
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
-          - higherOrderTerm1
-          + g*(elemCenter.primVars[PHI] - bDotq)/elemCenter.tau;
+          (- higherOrderTerm1
+           + g*( elemCenter.primVars[PHI]
+                 - bDotq
+               )/elemCenter.tau
+          )/norm;
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
-          - higherOrderTerm1
-          + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI]) 
-               - bDotq
-              )/elemCenter.tau;
+          (- higherOrderTerm1
+           + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI])
+                - bDotq
+               )/elemCenter.tau
+          )/norm;
 
       #endif
 
@@ -328,7 +343,7 @@ void computeConductionSpatialGradientTerms
   REAL XCoords[NDIM];
   struct gridZone zone, zoneCenter;
   struct geometry geom;
-  struct fluidElement elem, elemCenter;
+  struct fluidElement elem;
   REAL uConLeft[NDIM], uConCenter[NDIM], uConRight[NDIM];
   REAL gLeft, gCenter, gRight;
 
@@ -370,15 +385,14 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zoneCenter, CENTER, XCoords);
   setGeometry(XCoords, &geom); gCenter = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
-  elemCenter = elem;
   for (int mu=0; mu<NDIM; mu++)
   {
     uConCenter[mu] = elem.uCon[mu];
   }
 
   /* uConLeft */
-  setGridZone(iTile-1, jTile,
-              iInTile, jInTile,
+  setGridZone(iTile, jTile,
+              iInTile-1, jInTile,
               X1Start, X2Start, 
               X1Size, X2Size, 
               &zone);
@@ -391,8 +405,8 @@ void computeConductionSpatialGradientTerms
   }
 
   /* uConRight */
-  setGridZone(iTile+1, jTile,
-              iInTile, jInTile,
+  setGridZone(iTile, jTile,
+              iInTile+1, jInTile,
               X1Start, X2Start, 
               X1Size, X2Size, 
               &zone);
@@ -413,15 +427,14 @@ void computeConductionSpatialGradientTerms
   }
 
   graduConHigherOrderTerm1[0] = 
-    elemCenter.primVars[PHI]
-  * slopeLimitedDerivative(gLeft*uConLeft[1],
+    slopeLimitedDerivative(gLeft*uConLeft[1],
                            gCenter*uConCenter[1],
                            gRight*uConRight[1])/zoneCenter.dX1;
 
   #if (COMPUTE_DIM==2)
     /* uConLeft */
-    setGridZone(iTile, jTile-1,
-                iInTile, jInTile,
+    setGridZone(iTile, jTile,
+                iInTile, jInTile-1,
                 X1Start, X2Start, 
                 X1Size, X2Size, 
                 &zone);
@@ -434,8 +447,8 @@ void computeConductionSpatialGradientTerms
     }
 
     /* uConRight */
-    setGridZone(iTile, jTile+1,
-                iInTile, jInTile,
+    setGridZone(iTile, jTile,
+                iInTile, jInTile+1,
                 X1Start, X2Start, 
                 X1Size, X2Size, 
                 &zone);
@@ -456,10 +469,10 @@ void computeConductionSpatialGradientTerms
     }
 
     graduConHigherOrderTerm1[1] = 
-      elemCenter.primVars[PHI]
-    * slopeLimitedDerivative(gLeft*uConLeft[2],
+      slopeLimitedDerivative(gLeft*uConLeft[2],
                              gCenter*uConCenter[2],
                              gRight*uConRight[2])/zoneCenter.dX2;
+
   #endif
 
 #endif /* CONDUCTION */

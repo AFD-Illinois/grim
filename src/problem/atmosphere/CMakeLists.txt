@@ -8,16 +8,16 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
 set(DT "0.0001")
-set(DT_DUMP ".01")
+set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "100.")
-set(COURANT "0.1")
+set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
-set(N2 "128")
+set(N1 "512")
+set(N2 "512")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique

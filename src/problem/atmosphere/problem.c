@@ -145,11 +145,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       struct geometry geom;
       setGeometry(XCoords, &geom);
 
-      REAL uConBL[NDIM];
-      uConBL[0] = 1./sqrt(-geom.gCov[0][0]);
-      uConBL[1] = 0.;
-      uConBL[2] = 0.;
-      uConBL[3] = 0.;
+      REAL uCon[NDIM];
+      uCon[0] = 1./sqrt(-geom.gCov[0][0]);
+      uCon[1] = 0.;
+      uCon[2] = 0.;
+      uCon[3] = 0.;
 
 
       /* Formula to output vUpr in MKS from uUpr in BL from Ben Ryan */
@@ -157,9 +157,9 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       REAL b = geom.gCon[0][1];
       REAL c = geom.gCon[0][0];
       REAL vUprMKS = 
-        (  c*uConBL[1]/r 
+        (  c*uCon[1]/r 
          - sqrt(-a*b*b*b*b
-                -a*b*b*c*uConBL[1]*uConBL[1]/(r*r) - b*b*c
+                -a*b*b*c*uCon[1]*uCon[1]/(r*r) - b*b*c
                )
         )/(a*b*b + c);
 
@@ -170,6 +170,10 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, B1)] = 0.;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
+
+      struct fluidElement elem;
+      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom,
+                      &elem);
 
       /* Set up Dirichlet boundary data */
 
@@ -382,6 +386,160 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   PetscPrintf(PETSC_COMM_WORLD, "done\n");
   /* Done with setting the initial conditions */
+
+#if (CONDUCTION)
+  VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
+  VecCopy(ts->primPetscVecOld, ts->primPetscVec);
+
+  Vec heatFluxVec;
+  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &heatFluxVec);
+  VecSet(heatFluxVec, 0.);
+
+  ARRAY(heatFlux);
+  DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, heatFluxVec, &heatFlux);
+
+  ARRAY(connectionGlobal);
+  DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
+                     &connectionGlobal);
+
+  Vec primPetscVecLocal;
+  DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+
+  DMGlobalToLocalBegin(ts->dmdaWithGhostZones, 
+                       ts->primPetscVecOld,
+                       INSERT_VALUES,
+                       primPetscVecLocal);
+  DMGlobalToLocalEnd(ts->dmdaWithGhostZones,
+                     ts->primPetscVecOld,
+                     INSERT_VALUES,
+                     primPetscVecLocal);
+
+  ARRAY(primLocal);
+  ARRAY(primGlobal);
+  ARRAY(primHalfStepGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
+                     &primLocal);
+  DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->primPetscVec, 
+                     &primGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
+                     &primOldGlobal); 
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
+                     &primHalfStepGlobal); 
+
+  ARRAY(gradTGlobal);
+  ARRAY(graduConGlobal);
+  ARRAY(graduConHigherOrderTerm1Global);
+
+  DMDAVecGetArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
+  DMDAVecGetArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
+                     &graduConGlobal);
+  DMDAVecGetArrayDOF(ts->graduConHigherOrderTerm1DM, 
+                     ts->graduConHigherOrderTerm1PetscVec,
+                     &graduConHigherOrderTerm1Global);
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  { 
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start, 
+                  ts->X1Size, ts->X2Size, 
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primLocal, &zone, var);
+      }
+    }
+
+    applyTileBoundaryConditions(iTile, jTile,
+                                ts->X1Start, ts->X2Start,
+                                ts->X1Size, ts->X2Size,
+                                primTile);
+
+    applyAdditionalProblemSpecificBCs(iTile, jTile,
+                                      ts->X1Start, ts->X2Start,
+                                      ts->X1Size, ts->X2Size,
+                                      ts->problemSpecificData,
+                                      primTile);
+
+    int computeOldSourceTermsAndOldDivOfFluxes = 1;
+    int computeDivOfFluxAtTimeN = 1;
+    int computeDivOfFluxAtTimeNPlusHalf = 0;
+
+    addConductionSourceTermsToResidual
+    (
+      primTile, primGlobal, primHalfStepGlobal, primOldGlobal,
+      connectionGlobal,
+      gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+      ts->dt,
+      computeOldSourceTermsAndOldDivOfFluxes,
+      computeDivOfFluxAtTimeN,
+      computeDivOfFluxAtTimeNPlusHalf,
+      iTile, jTile,
+      ts->X1Start, ts->X2Start,
+      ts->X1Size, ts->X2Size,
+      heatFlux
+    );
+
+    computeOldSourceTermsAndOldDivOfFluxes = 0;
+    computeDivOfFluxAtTimeN = 1;
+    computeDivOfFluxAtTimeNPlusHalf = 0;
+
+    addConductionSourceTermsToResidual
+    (
+      primTile, primGlobal, primHalfStepGlobal, primOldGlobal,
+      connectionGlobal,
+      gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+      ts->dt,
+      computeOldSourceTermsAndOldDivOfFluxes,
+      computeDivOfFluxAtTimeN,
+      computeDivOfFluxAtTimeNPlusHalf,
+      iTile, jTile,
+      ts->X1Start, ts->X2Start,
+      ts->X1Size, ts->X2Size,
+      heatFlux
+    );
+  }
+
+  DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+
+  DMDAVecRestoreArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
+  DMDAVecRestoreArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
+                         &graduConGlobal);
+  DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTerm1DM, 
+                         ts->graduConHigherOrderTerm1PetscVec,
+                         &graduConHigherOrderTerm1Global);
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
+                         &primLocal);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->primPetscVec,
+                         &primGlobal);
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
+                         &primOldGlobal); 
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
+                         &primHalfStepGlobal);
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, heatFluxVec, &heatFlux);
+
+  char heatFluxFileName[50];
+  sprintf(heatFluxFileName, "%s.h5", "heatFlux");
+
+  PetscViewer viewer;
+  PetscViewerHDF5Open(PETSC_COMM_WORLD, heatFluxFileName,
+                      FILE_MODE_WRITE, &viewer);
+  PetscObjectSetName((PetscObject) heatFluxVec, "heatFlux");
+  VecView(heatFluxVec, viewer);
+  PetscViewerDestroy(&viewer);
+
+  VecDestroy(&heatFluxVec);
+#endif
+
 }
 
 void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
