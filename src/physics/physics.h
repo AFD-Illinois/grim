@@ -79,6 +79,7 @@ void addConductionSourceTermsToResidual
   ARRAY(connectionGlobal),
   ARRAY(gradTGlobal), ARRAY(graduConGlobal), 
   ARRAY(graduConHigherOrderTerm1Global),
+  ARRAY(graduConHigherOrderTerm2Global),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -98,7 +99,8 @@ void computeConductionSpatialGradientTerms
   const int X1Size, const int X2Size,
   REAL gradT[COMPUTE_DIM],
   REAL graduCon[COMPUTE_DIM*NDIM],
-  REAL graduConHigherOrderTerm1[COMPUTE_DIM]
+  REAL graduConHigherOrderTerm1[COMPUTE_DIM],
+  REAL graduConHigherOrderTerm2[COMPUTE_DIM]
 );
 #endif
 

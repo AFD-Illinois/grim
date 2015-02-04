@@ -15,8 +15,8 @@ set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "512")
-set(N2 "512")
+set(N1 "128")
+set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique

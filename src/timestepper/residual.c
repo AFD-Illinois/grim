@@ -48,13 +48,17 @@ PetscErrorCode computeResidual(SNES snes,
     ARRAY(gradTGlobal);
     ARRAY(graduConGlobal);
     ARRAY(graduConHigherOrderTerm1Global);
+    ARRAY(graduConHigherOrderTerm2Global);
 
     DMDAVecGetArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
     DMDAVecGetArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
                        &graduConGlobal);
-    DMDAVecGetArrayDOF(ts->graduConHigherOrderTerm1DM, 
+    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsDM, 
                        ts->graduConHigherOrderTerm1PetscVec,
                        &graduConHigherOrderTerm1Global);
+    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsDM, 
+                       ts->graduConHigherOrderTerm2PetscVec,
+                       &graduConHigherOrderTerm2Global);
   #endif
 
   if (ts->computeOldSourceTermsAndOldDivOfFluxes)
@@ -246,7 +250,9 @@ PetscErrorCode computeResidual(SNES snes,
           (primTile,
            primGlobal, primHalfStepGlobal, primOldGlobal,
            connectionGlobal, 
-           gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+           gradTGlobal, graduConGlobal, 
+           graduConHigherOrderTerm1Global,
+           graduConHigherOrderTerm2Global,
            ts->dt,
            ts->computeOldSourceTermsAndOldDivOfFluxes,
            ts->computeDivOfFluxAtTimeN,
@@ -428,7 +434,9 @@ PetscErrorCode computeResidual(SNES snes,
         (primTile,
          primGlobal, primHalfStepGlobal, primOldGlobal,
          connectionGlobal,
-         gradTGlobal, graduConGlobal, graduConHigherOrderTerm1Global,
+         gradTGlobal, graduConGlobal, 
+         graduConHigherOrderTerm1Global,
+         graduConHigherOrderTerm2Global,
          ts->dt,
          ts->computeOldSourceTermsAndOldDivOfFluxes,
          ts->computeDivOfFluxAtTimeN,
@@ -472,9 +480,12 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecRestoreArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
     DMDAVecRestoreArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
                            &graduConGlobal);
-    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTerm1DM, 
+    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsDM, 
                            ts->graduConHigherOrderTerm1PetscVec,
                            &graduConHigherOrderTerm1Global);
+    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsDM, 
+                           ts->graduConHigherOrderTerm2PetscVec,
+                           &graduConHigherOrderTerm2Global);
   #endif
   return(0);
 }

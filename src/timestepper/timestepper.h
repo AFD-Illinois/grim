@@ -37,10 +37,11 @@ struct timeStepper
   #if (CONDUCTION)
     DM  gradTDM;
     DM  graduConDM;
-    DM  graduConHigherOrderTerm1DM;
+    DM  graduConHigherOrderTermsDM;
     Vec gradTPetscVec;
     Vec graduConPetscVec;
     Vec graduConHigherOrderTerm1PetscVec;
+    Vec graduConHigherOrderTerm2PetscVec;
   #endif
 
   struct problemData *problemSpecificData;
@@ -95,6 +96,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
 #if (CONDUCTION)
   void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+  void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
 #endif
 
 #endif /* GRIM_TIMESTEPPER_H_ */

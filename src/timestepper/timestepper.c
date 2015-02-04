@@ -255,7 +255,7 @@ void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
                  &ts->graduConDM);
 
     DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
-                 &ts->graduConHigherOrderTerm1DM);
+                 &ts->graduConHigherOrderTermsDM);
 
   #elif (COMPUTE_DIM==2)
     DMDACreate2d(PETSC_COMM_WORLD, 
@@ -280,18 +280,33 @@ void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
                  N1, N2,
                  PETSC_DECIDE, PETSC_DECIDE,
                  COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
-                 &ts->graduConHigherOrderTerm1DM);
+                 &ts->graduConHigherOrderTermsDM);
 
   #endif
 
   DMCreateGlobalVector(ts->gradTDM, &ts->gradTPetscVec);
   DMCreateGlobalVector(ts->graduConDM, &ts->graduConPetscVec);
-  DMCreateGlobalVector(ts->graduConHigherOrderTerm1DM, 
+  DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
                        &ts->graduConHigherOrderTerm1PetscVec);
+  DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
+                       &ts->graduConHigherOrderTerm2PetscVec);
 
   VecSet(ts->gradTPetscVec, 0.);
   VecSet(ts->graduConPetscVec, 0.);
   VecSet(ts->graduConHigherOrderTerm1PetscVec, 0.);
+  VecSet(ts->graduConHigherOrderTerm2PetscVec, 0.);
+}
+
+void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  VecDestroy(&ts->gradTPetscVec);
+  VecDestroy(&ts->graduConPetscVec);
+  VecDestroy(&ts->graduConHigherOrderTerm1PetscVec);
+  VecDestroy(&ts->graduConHigherOrderTerm2PetscVec);
+
+  DMDestroy(&ts->gradTDM);
+  DMDestroy(&ts->graduConDM);
+  DMDestroy(&ts->graduConHigherOrderTermsDM);
 }
 #endif
 
@@ -505,6 +520,10 @@ void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
   SNESDestroy(&ts->snes);
 
   PetscFree(ts->problemSpecificData);
+
+  #if (CONDUCTION)
+    destroyConductionDataStructures(ts);
+  #endif
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
   PetscPrintf(PETSC_COMM_WORLD, "################################\n");
