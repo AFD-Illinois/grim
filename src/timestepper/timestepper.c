@@ -222,8 +222,8 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
       {
         /* File does not exist */
         PetscPrintf(PETSC_COMM_WORLD, "\n");
-        SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
-                 RESTART_FILE);
+        //SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
+        //         RESTART_FILE);
       }
     }
 
