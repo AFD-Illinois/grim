@@ -61,6 +61,22 @@ PetscErrorCode computeResidual(SNES snes,
                        &graduConHigherOrderTerm2Global);
   #endif
 
+  #if (VISCOSITY)
+    ARRAY(graduConVisGlobal);
+    ARRAY(graduConHigherOrderTerm1VisGlobal);
+    ARRAY(graduConHigherOrderTerm2VisGlobal);
+
+    DMDAVecGetArrayDOF(ts->graduConVisDM, ts->graduConVisPetscVec, 
+                       &graduConVisGlobal);
+    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsVisDM, 
+                       ts->graduConHigherOrderTerm1VisPetscVec,
+                       &graduConHigherOrderTerm1VisGlobal);
+    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsVisDM, 
+                       ts->graduConHigherOrderTerm2VisPetscVec,
+                       &graduConHigherOrderTerm2VisGlobal);
+
+  #endif
+
   if (ts->computeOldSourceTermsAndOldDivOfFluxes)
   {
     Vec primPetscVecOldLocal, primPetscVecHalfStepLocal;
@@ -254,6 +270,22 @@ PetscErrorCode computeResidual(SNES snes,
            gradTGlobal, graduConGlobal, 
            graduConHigherOrderTerm1Global,
            graduConHigherOrderTerm2Global,
+           ts->dt,
+           ts->computeOldSourceTermsAndOldDivOfFluxes,
+           ts->computeDivOfFluxAtTimeN,
+           ts->computeDivOfFluxAtTimeNPlusHalf,
+           iTile, jTile, X1Start, X2Start, X1Size, X2Size,
+           residualGlobal
+          );
+      #endif
+      #if (VISCOSITY)
+        addViscositySourceTermsToResidual
+          (primTile,
+           primGlobal, primHalfStepGlobal, primOldGlobal,
+           connectionGlobal, 
+           graduConVisGlobal, 
+           graduConHigherOrderTerm1VisGlobal,
+           graduConHigherOrderTerm2VisGlobal,
            ts->dt,
            ts->computeOldSourceTermsAndOldDivOfFluxes,
            ts->computeDivOfFluxAtTimeN,
@@ -467,6 +499,22 @@ PetscErrorCode computeResidual(SNES snes,
 //
 //      }
     #endif
+    #if (VISCOSITY)
+      addViscositySourceTermsToResidual
+        (primTile,
+         primGlobal, primHalfStepGlobal, primOldGlobal,
+         connectionGlobal,
+         graduConVisGlobal, 
+         graduConHigherOrderTerm1VisGlobal,
+         graduConHigherOrderTerm2VisGlobal,
+         ts->dt,
+         ts->computeOldSourceTermsAndOldDivOfFluxes,
+         ts->computeDivOfFluxAtTimeN,
+         ts->computeDivOfFluxAtTimeNPlusHalf,
+         iTile, jTile, X1Start, X2Start, X1Size, X2Size,
+         residualGlobal
+        );
+    #endif
 
 
   } /* End of LOOP_OVER_TILES */
@@ -508,6 +556,16 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsDM, 
                            ts->graduConHigherOrderTerm2PetscVec,
                            &graduConHigherOrderTerm2Global);
+  #endif
+  #if (VISCOSITY)
+    DMDAVecRestoreArrayDOF(ts->graduConVisDM, ts->graduConVisPetscVec, 
+                           &graduConVisGlobal);
+    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsVisDM, 
+                           ts->graduConHigherOrderTerm1VisPetscVec,
+                           &graduConHigherOrderTerm1VisGlobal);
+    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsVisDM, 
+                           ts->graduConHigherOrderTerm2VisPetscVec,
+                           &graduConHigherOrderTerm2VisGlobal);
   #endif
   return(0);
 }

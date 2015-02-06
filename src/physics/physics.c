@@ -63,6 +63,9 @@ void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
   #if (CONDUCTION)
     setConductionParameters(geom, elem);
   #endif
+  #if (VISCOSITY)
+    setViscosityParameters(geom, elem);
+  #endif
   computeMoments(geom, elem);
 }
 
@@ -94,7 +97,12 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
       #if (CONDUCTION) 
         + elem->primVars[PHI]/sqrt(bSqr)
         * (elem->uCon[mu]*bCov[nu] + elem->bCon[mu]*uCov[nu])
-      #endif                  
+      #endif 
+      #if  (VISCOSITY)
+	+elem->primVars[PSI]/bSqr*elem->bCon[mu]*bCov[nu]
+	-elem->primVars[PSI]/3.
+	*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
+      #endif
                         ;
 
     }
@@ -122,6 +130,9 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
   #if (CONDUCTION)
     fluxes[PHI] = g*(elem->uCon[dir]*elem->primVars[PHI]);
+  #endif
+  #if (VISCOSITY)
+    fluxes[PSI] = g*(elem->uCon[dir]*elem->primVars[PSI]);
   #endif
 }
 

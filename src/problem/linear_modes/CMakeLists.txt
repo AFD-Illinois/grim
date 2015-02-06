@@ -1,5 +1,5 @@
 # Dump folder
-set(OUTPUT_DIR "\"/home/mc/data/mc/PhD/grim/build/\"")
+set(OUTPUT_DIR "\"/Users/ffoucart/Work/grim/build/linear_modes/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
@@ -89,6 +89,8 @@ if (${MODE} STREQUAL "CONDUCTION_STABLE_2D")
   set(CONDUCTION "ON")
 endif(${MODE} STREQUAL "CONDUCTION_STABLE_2D")
 
+set(VISCOSITY "ON")
+
 # Floor values
 set(RHO_FLOOR "1e-5")
 SET(UU_FLOOR "1e-7")
@@ -136,6 +138,7 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
+message("Viscosity        : " ${VISCOSITY})
 
 message("")
 message("##################")

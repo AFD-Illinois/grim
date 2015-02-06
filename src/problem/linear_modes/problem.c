@@ -12,6 +12,18 @@
   }
 #endif
 
+#if (VISCOSITY)
+  REAL etaProblem;
+  REAL tauVisProblem; 
+
+  void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->eta = etaProblem;
+    elem->tauVis   = tauVisProblem;
+  }
+#endif
+
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
   ARRAY(primOldGlobal);
@@ -106,6 +118,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         kappaProblem = .1;
         tauProblem   = 1.01818181818182;
 
+        #if(VISCOSITY)
+	  tauVisProblem = tauProblem;
+	  etaProblem = 0.1;
+	#endif
+
         REAL primVars0[DOF];
         REAL complex deltaPrimVars[DOF];
 
@@ -145,6 +162,11 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
          * tau = 1.01818181818182 */
         kappaProblem = .1;
         tauProblem   = 1.01818181818182;
+
+        #if(VISCOSITY)
+	  tauVisProblem = tauProblem;
+	  etaProblem = 1./30.;
+	#endif
 
         REAL primVars0[DOF];
         REAL complex deltaPrimVars[DOF];

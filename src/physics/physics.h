@@ -12,8 +12,15 @@
 #define B1              (5)
 #define B2              (6)
 #define B3              (7)
-#if (CONDUCTION)
+#if (CONDUCTION && VISCOSITY)
   #define PHI           (8)
+  #define PSI           (9)
+  #define DOF           (10)
+#elif (CONDUCTION)
+  #define PHI           (8)
+  #define DOF           (9)
+#elif (VISCOSITY)
+  #define PSI           (8)
   #define DOF           (9)
 #else
   #define DOF           (8)
@@ -45,6 +52,9 @@ struct fluidElement
 
   #if (CONDUCTION)
     REAL kappa, tau;
+  #endif
+  #if (VISCOSITY)
+    REAL eta, tauVis;
   #endif
 };
 
@@ -101,6 +111,37 @@ void computeConductionSpatialGradientTerms
   REAL graduCon[COMPUTE_DIM*NDIM],
   REAL graduConHigherOrderTerm1[COMPUTE_DIM],
   REAL graduConHigherOrderTerm2[COMPUTE_DIM]
+);
+#endif
+#if (VISCOSITY)
+void addViscositySourceTermsToResidual
+(
+  const REAL primTile[ARRAY_ARGS TILE_SIZE],
+  ARRAY(primGlobal), ARRAY(primHalfStepGlobal), ARRAY(primOldGlobal),
+  ARRAY(connectionGlobal),
+  ARRAY(graduConVisGlobal), 
+  ARRAY(graduConHigherOrderTerm1VisGlobal),
+  ARRAY(graduConHigherOrderTerm2VisGlobal),
+  REAL dt,
+  int computeOldSourceTermsAndOldDivOfFluxes,
+  int computeDivOfFluxAtTimeN,
+  int computeDivOfFluxAtTimeNPlusHalf,
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  ARRAY(residualGlobal)
+);
+
+void computeViscositySpatialGradientTerms
+(
+  const REAL primTile[ARRAY_ARGS TILE_SIZE],
+  const int iTile, const int jTile,
+  const int iInTile, const int jInTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  REAL graduConVis[COMPUTE_DIM*NDIM],
+  REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM],
+  REAL graduConHigherOrderTerm2Vis[COMPUTE_DIM]
 );
 #endif
 

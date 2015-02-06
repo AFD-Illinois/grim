@@ -137,6 +137,11 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   initConductionDataStructures(ts);
   #endif
 
+  #if (VISCOSITY)
+  initViscosityDataStructures(ts);
+  #endif
+
+
   /* Initialize problem dependent data */
   PetscMalloc1(1, &ts->problemSpecificData);
 
@@ -311,6 +316,57 @@ void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
   DMDestroy(&ts->gradTDM);
   DMDestroy(&ts->graduConDM);
   DMDestroy(&ts->graduConHigherOrderTermsDM);
+}
+#endif
+
+
+#if (VISCOSITY)
+void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
+{
+
+  #if (COMPUTE_DIM==1)
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->graduConVisDM);
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+                 &ts->graduConHigherOrderTermsVisDM);
+
+  #elif (COMPUTE_DIM==2)
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                   DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                   DMDA_STENCIL_BOX,
+                   N1, N2,
+                   PETSC_DECIDE, PETSC_DECIDE,
+                   COMPUTE_DIM*NDIM, 0, PETSC_NULL, PETSC_NULL,
+                   &ts->graduConVisDM);
+    DMDACreate2d(PETSC_COMM_WORLD, 
+                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
+                 DMDA_STENCIL_BOX,
+                 N1, N2,
+                 PETSC_DECIDE, PETSC_DECIDE,
+                 COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
+                 &ts->graduConHigherOrderTermsVisDM);
+
+  #endif
+
+  DMCreateGlobalVector(ts->graduConVisDM, &ts->graduConVisPetscVec);
+  DMCreateGlobalVector(ts->graduConHigherOrderTermsVisDM, 
+                       &ts->graduConHigherOrderTerm1VisPetscVec);
+  DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
+                       &ts->graduConHigherOrderTerm2VisPetscVec);
+
+  VecSet(ts->graduConVisPetscVec, 0.);
+  VecSet(ts->graduConHigherOrderTerm1VisPetscVec, 0.);
+  VecSet(ts->graduConHigherOrderTerm2VisPetscVec, 0.);
+}
+
+void destroyViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  VecDestroy(&ts->graduConVisPetscVec);
+  VecDestroy(&ts->graduConHigherOrderTerm1VisPetscVec);
+  VecDestroy(&ts->graduConHigherOrderTerm2VisPetscVec);
+
+  DMDestroy(&ts->graduConVisDM);
+  DMDestroy(&ts->graduConHigherOrderTermsVisDM);
 }
 #endif
 
@@ -525,6 +581,10 @@ void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
 
   #if (CONDUCTION)
     destroyConductionDataStructures(ts);
+  #endif
+
+  #if (VISCOSITY)
+    destroyViscosityDataStructures(ts);
   #endif
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
