@@ -65,13 +65,13 @@ set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
-# MP5 or MONOTONIZED_CENTRAL
+# MP5, MONOTONIZED_CENTRAL or MIN_MOD
 set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
 set(PLASMA_BETA                   "1e5")
-set(PERTURBATIONS_AMPLITUDE       "0e-2")
+set(PERTURBATIONS_AMPLITUDE       "4e-2")
 set(MAGNETIC_FIELD_CONFIGURATION  "RADIAL")
 set(RHO_INPUT_FILE      "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_rho.txt\"")
 set(UU_INPUT_FILE       "\"/home/mc/data/mc/PhD/grim/build/atmosphere_soln_u.txt\"")
@@ -97,6 +97,7 @@ message("Time stepping    : " ${TIME_STEPPING})
 message("Dimensions       : " ${COMPUTE_DIM})
 message("Resolution       : " ${N1} " x " ${N2})
 message("Tile size        : " ${TILE_SIZE_X1} " x " ${TILE_SIZE_X2})
+message("Metric           : " ${METRIC})
 
 message("")
 message("#########################")

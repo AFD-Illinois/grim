@@ -14,8 +14,10 @@
 #cmakedefine    START_TIME      (${START_TIME})
 #cmakedefine    FINAL_TIME      (${FINAL_TIME})
 #cmakedefine    COURANT         (${COURANT})
+#cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+#cmakedefine    PROBLEM_DATA  ${PROBLEM_DATA}
 
 /* Domain inputs */
 #cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})
@@ -23,6 +25,7 @@
 #cmakedefine    N2               (${N2})
 #cmakedefine    TILE_SIZE_X1     (${TILE_SIZE_X1})
 #cmakedefine    TILE_SIZE_X2     (${TILE_SIZE_X2})
+#cmakedefine01  USE_OPENMP
 
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
@@ -52,7 +55,7 @@
 #cmakedefine    UU_FLOOR  (${UU_FLOOR})
 
 /* Number of ghost zones */
-#if (RECONSTRUCTION==MONOTONIZED_CENTRAL)
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
   #define NG  (3)
 #elif (RECONSTRUCTION==MP5)
   #define NG  (4)

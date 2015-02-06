@@ -61,7 +61,7 @@ void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
   setUCon(geom, elem);
   setBCon(geom, elem);
   #if (CONDUCTION)
-    setConductionParameters(elem);
+    setConductionParameters(geom, elem);
   #endif
   computeMoments(geom, elem);
 }

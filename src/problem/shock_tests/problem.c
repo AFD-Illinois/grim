@@ -316,19 +316,36 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
                          ts->primPetscVecOld, &primOldGlobal);
 }
 
-void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
-                                       const int X1Start, const int X2Start,
-                                       const int X1Size, const int X2Size,
-                                       REAL primTile[ARRAY_ARGS TILE_SIZE])
+void applyAdditionalProblemSpecificBCs
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL primTile[ARRAY_ARGS TILE_SIZE]
+)
 {
 
 }
 
-void applyProblemSpecificFluxFilter(const int iTile, const int jTile,
-                                    const int X1Start, const int X2Start,
-                                    const int X1Size, const int X2Size,
-                                    REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
-                                    REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE])
+void applyProblemSpecificFluxFilter
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
+  REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]
+)
 {
 
 }
+
+#if (CONDUCTION)
+void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                             struct fluidElement elem[ARRAY_ARGS 1])
+{
+  SETERRQ(PETSC_COMM_WORLD, 1,
+          "Conduction parameters not set in shock_tests/problem.c\n");
+}
+#endif

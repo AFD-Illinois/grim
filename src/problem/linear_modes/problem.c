@@ -4,7 +4,8 @@
   REAL kappaProblem;
   REAL tauProblem; 
 
-  void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1])
+  void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
   {
     elem->kappa = kappaProblem;
     elem->tau   = tauProblem;
@@ -118,9 +119,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[B3]  = 0.;
         primVars0[PHI] = 0.;
         
-        REAL T = (ADIABATIC_INDEX-1.)*primVars0[UU]/primVars0[RHO];
-        tauProblem = tauProblem/T;
-
         deltaPrimVars[RHO] = 0.911376933183;
         deltaPrimVars[UU]  = 0.030751595371 - 0.0635975709194*I;
         deltaPrimVars[U1]  = 0.124428706971 - 0.0723215917578*I;
@@ -144,7 +142,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       #elif (MODE==CONDUCTION_STABLE_2D) 
         /* Eigenvalue = -0.498689052044 - 1.23434614343*I
          * kappa = 0.1
-         * tau = 1.01818181818182/T */
+         * tau = 1.01818181818182 */
         kappaProblem = .1;
         tauProblem   = 1.01818181818182;
 
@@ -160,9 +158,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[B2]  = 0.02;
         primVars0[B3]  = 0.;
         primVars0[PHI] = 0.;
-
-        REAL T = (ADIABATIC_INDEX-1.)*primVars0[UU]/primVars0[RHO];
-        tauProblem = tauProblem/T;
 
         deltaPrimVars[RHO] = 0.912960868047;
         deltaPrimVars[UU]  = 0.0441633411305 - 0.0470501442451*I;

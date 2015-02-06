@@ -1,18 +1,115 @@
 #include "../problem.h"
 
+#if (CONDUCTION)
+REAL kappaProblem;
+REAL tauProblem;
+
+void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                             struct fluidElement elem[ARRAY_ARGS 1])
+{
+  elem->kappa = kappaProblem;
+  elem->tau   = tauProblem;
+}
+#endif
+
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Setting up atmosphere...");
+
+  REAL rho1D[N1+2*NG];
+  REAL u1D[N1+2*NG];
+  REAL phi1D[N1+2*NG];
+  REAL rCoords1D[N1+2*NG];
+
+  int rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &rank); /* get current proc id */
+
+  if (rank==0)
+  {
+    FILE *rhoFile;
+    FILE *uFile;
+    FILE *phiFile;
+    FILE *rCoordsFile;
+  
+    char *rhoLine     = NULL;
+    char *uLine       = NULL;
+    char *phiLine     = NULL; 
+    char *rCoordsLine = NULL;
+
+    size_t rhoLen     = 0; ssize_t rhoRead;
+    size_t uLen       = 0; ssize_t uRead;
+    size_t phiLen     = 0; ssize_t phiRead;
+    size_t rCoordsLen = 0; ssize_t rCoordsRead;
+
+    rhoFile     = fopen(RHO_INPUT_FILE    , "r");
+    uFile       = fopen(UU_INPUT_FILE     , "r");
+    phiFile     = fopen(PHI_INPUT_FILE    , "r");
+    rCoordsFile = fopen(RCOORDS_INPUT_FILE, "r");
+
+    if (   rhoFile      == NULL 
+        || uFile        == NULL
+        || phiFile      == NULL
+        || rCoordsFile  == NULL
+       )
+    {
+      SETERRQ(PETSC_COMM_WORLD, 1, "Input data files not found!\n");
+    }
+
+    for (int i=-NG; i<N1+NG; i++)
+    {
+      rhoRead     = getline(&rhoLine    , &rhoLen     , rhoFile);
+      uRead       = getline(&uLine      , &uLen       , uFile);
+      phiRead     = getline(&phiLine    , &phiLen     , phiFile);
+      rCoordsRead = getline(&rCoordsLine, &rCoordsLen , rCoordsFile);
+
+      if (   rhoRead      == -1
+          || uRead        == -1
+          || phiRead      == -1
+          || rCoordsRead  == -1
+         )
+      {
+        SETERRQ(PETSC_COMM_WORLD, 1, 
+        "Found the input data files but error in reading them! Check number of grid zones in python script\n");
+      }
+
+      rho1D[i+NG]     = atof(rhoLine);
+      u1D[i+NG]       = atof(uLine);
+      phi1D[i+NG]     = atof(phiLine);
+      rCoords1D[i+NG] = atof(rCoordsLine);
+    }
+
+    free(rhoLine);
+    free(uLine);
+    free(phiLine);
+    free(rCoordsLine);
+
+    fclose(rhoFile);
+    fclose(uFile);
+    fclose(phiFile);
+    fclose(rCoordsFile);
+  }
+
+  /* Broadcast the data from rank 0 proc to all other procs */
+  MPI_Bcast(&rho1D[0]     , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&u1D[0]       , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&phi1D[0]     , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&rCoords1D[0] , N1+2*NG, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  /* Broadcast complete */
+
   ARRAY(primOldGlobal);
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
-  REAL rhoMax=RHO_FLOOR_MIN, uMax=UU_FLOOR_MIN;
+  REAL randNum;
+  PetscRandom randNumGen;
+  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
+  PetscRandomSetType(randNumGen, PETSCRAND48);
 
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
 
-    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
     {
       struct gridZone zone;
       setGridZone(iTile, jTile,
@@ -25,160 +122,79 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       getXCoords(&zone, CENTER, XCoords);
       XTox(XCoords, xCoords);
 
-      REAL r = xCoords[1], theta = xCoords[2];
-
-      REAL lnOfh;
-      if (r >= R_INNER_EDGE)
+      REAL r = xCoords[1];
+      if (fabs(r - rCoords1D[zone.i+NG]) > 1e-25)
       {
-        lnOfh = computeLnOfh(BH_SPIN, r, theta);
-      } else
-      {
-        lnOfh = 1.;
+        SETERRQ3(PETSC_COMM_WORLD, 1, 
+                 "Mismatch in rCoords! Check r coords in python script. r = %.18f, rCoords = %.18f, i = %d\n",
+                 r, rCoords1D[zone.i+NG], zone.i
+                );
       }
 
-      /* Region outside the torus */
-      if (lnOfh < 0. || r < R_INNER_EDGE)
-      {
-        primTile[INDEX_TILE(&zone, RHO)] = RHO_FLOOR_MIN;
-        primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
-        primTile[INDEX_TILE(&zone, U1)] = 0.;
-        primTile[INDEX_TILE(&zone, U2)] = 0.;
-        primTile[INDEX_TILE(&zone, U3)] = 0.;
-      } else
-      {
-        REAL h = exp(lnOfh);
+      primTile[INDEX_TILE(&zone, RHO)] = rho1D[zone.i+NG];
+      PetscRandomGetValue(randNumGen, &randNum);
+      primTile[INDEX_TILE(&zone, UU)]  = 
+        u1D[zone.i+NG]*(1. + PERTURBATIONS_AMPLITUDE*(randNum-0.5));
 
-        /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
-         * here is the rest mass energy density and P = C * rho^Gamma */
+      #if (CONDUCTION)
+        primTile[INDEX_TILE(&zone, PHI)] = phi1D[zone.i+NG];
+        
+        kappaProblem = 0.1;
+        tauProblem   = 10.;
+      #endif
 
-        REAL rho = pow((h-1)*(ADIABATIC_INDEX-1.)/(ADIABAT*ADIABATIC_INDEX), 
-                       1./(ADIABATIC_INDEX-1.)
-                      );
-        REAL u =  ADIABAT * pow(rho, ADIABATIC_INDEX)
-                / (ADIABATIC_INDEX-1.);
+      struct geometry geom;
+      setGeometry(XCoords, &geom);
 
-
-        /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
-         * Need to transform to (modified) Kerr-Schild */
-        REAL A = computeA(BH_SPIN, r, theta);
-        REAL Sigma = computeSigma(BH_SPIN, r, theta);
-        REAL Delta = computeDelta(BH_SPIN, r, theta);
-        REAL l = lFishboneMoncrief(BH_SPIN, R_PRESSURE_MAX, M_PI/2.);
-
-			  REAL expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
-        REAL uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi)
-                               )/2.
-                             );
-        REAL uConPhiBL =   2.*BH_SPIN*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
-                          /sqrt(A*Sigma*Delta)
-                        + sqrt(Sigma/A)*uCovPhiBL/sin(theta);
-
-        REAL uConBL[NDIM];
-        uConBL[0] = 0.;
-        uConBL[1] = 0.;
-        uConBL[2] = 0.;
-        uConBL[3] = uConPhiBL;
-
-        REAL gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
-        REAL transformBLToMKS[NDIM][NDIM];
-      
-        for (int alpha=0; alpha<NDIM; alpha++)
-        {
-          for (int beta=0; beta<NDIM; beta++)
-          {
-            gCovBL[alpha][beta] = 0.;
-            gConBL[alpha][beta] = 0.;
-            transformBLToMKS[alpha][beta] = 0.;
-          }
-        }
-
-        REAL mu = 1 + BH_SPIN*BH_SPIN*cos(theta)*cos(theta)/(r*r);
-
-        gCovBL[0][0] = -(1. - 2./(r*mu));
-        gCovBL[0][3] = -2.*BH_SPIN*sin(theta)*sin(theta)/(r*mu);
-        gCovBL[3][0] = gCovBL[0][3];
-        gCovBL[1][1] = mu*r*r/Delta;
-        gCovBL[2][2] = r*r*mu;
-        gCovBL[3][3] = r*r*sin(theta)*sin(theta)*\
-                       (1. + BH_SPIN*BH_SPIN/(r*r) +
-                        2.*BH_SPIN*BH_SPIN*sin(theta)*sin(theta)/\
-                        (r*r*r*mu)
-                       );
-
-        gConBL[0][0] = -1. -2.*(1 + BH_SPIN*BH_SPIN/(r*r))/(Delta*mu/r);
-        gConBL[0][3] = -2.*BH_SPIN/(r*Delta*mu);
-        gConBL[3][0] = gConBL[0][3];
-        gConBL[1][1] = Delta/(r*r*mu);
-        gConBL[2][2] = 1./(r*r*mu);
-        gConBL[3][3] = (1. - 2./(r*mu))/(sin(theta)*sin(theta)*Delta);
-
-        transformBLToMKS[0][0] = 1.;
-        transformBLToMKS[1][1] = 1.;
-        transformBLToMKS[2][2] = 1.;
-        transformBLToMKS[3][3] = 1.;
-        transformBLToMKS[0][1] = 2.*r/Delta;
-        transformBLToMKS[3][1] = BH_SPIN/Delta; 
-
-        /* Need to get uConBL[0] using u^mu u_mu = -1 */
-        REAL AA = gCovBL[0][0];
-        REAL BB = 2.*(gCovBL[0][1]*uConBL[1] +
-                      gCovBL[0][2]*uConBL[2] +
-                      gCovBL[0][3]*uConBL[3]
-                     );
-        REAL CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1] +
-                       gCovBL[2][2]*uConBL[2]*uConBL[2] +
-                       gCovBL[3][3]*uConBL[3]*uConBL[3] +
-                   2.*(gCovBL[1][2]*uConBL[1]*uConBL[2] +
-                       gCovBL[1][3]*uConBL[1]*uConBL[3] +
-                       gCovBL[2][3]*uConBL[2]*uConBL[3]);
-  
-        REAL discriminent = BB*BB - 4.*AA*CC;
-        uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
-
-        REAL uConKS[NDIM];
-
-        for (int alpha=0; alpha<NDIM; alpha++)
-        {
-          uConKS[alpha] = 0.;
-
-          for (int beta=0; beta<NDIM; beta++)
-          {
-            uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
-          }
-        }
-
-        /* Finally get the four-velocity in the X coordinates, which is modified
-         * Kerr-Schild */
-        REAL uConMKS[NDIM];
-        REAL rFactor = r;
-        REAL hFactor = M_PI + (1. - H_SLOPE)*M_PI*cos(2.*M_PI*XCoords[2]);
-        uConMKS[0] = uConKS[0];
-        uConMKS[1] = uConKS[1]/rFactor;
-        uConMKS[2] = uConKS[2]/hFactor;
-        uConMKS[3] = uConKS[3];
+      REAL uCon[NDIM];
+      uCon[0] = 1./sqrt(-geom.gCov[0][0]);
+      uCon[1] = 0.;
+      uCon[2] = 0.;
+      uCon[3] = 0.;
 
 
-        if (rho > rhoMax) rhoMax = rho;
-        if (u > uMax) uMax = u;
+      /* Formula to output vUpr in MKS from uUpr in BL from Ben Ryan */
+      REAL a = geom.gCov[1][1];
+      REAL b = geom.gCon[0][1];
+      REAL c = geom.gCon[0][0];
+      REAL vUprMKS = 
+        (  c*uCon[1]/r 
+         - sqrt(-a*b*b*b*b
+                -a*b*b*c*uCon[1]*uCon[1]/(r*r) - b*b*c
+               )
+        )/(a*b*b + c);
 
-        primTile[INDEX_TILE(&zone, RHO)] = rho;
-        primTile[INDEX_TILE(&zone, UU)] = u;
-
-        struct geometry geom; 
-        setGeometry(XCoords, &geom);
-        primTile[INDEX_TILE(&zone, U1)] =   
-          uConMKS[1] + pow(geom.alpha, 2.)*geom.gCon[0][1]*uConMKS[0];
-        primTile[INDEX_TILE(&zone, U2)] =   
-          uConMKS[2] + pow(geom.alpha, 2.)*geom.gCon[0][2]*uConMKS[0];
-        primTile[INDEX_TILE(&zone, U3)] =   
-          uConMKS[3] + pow(geom.alpha, 2.)*geom.gCon[0][3]*uConMKS[0];
-
-
-      }
+      primTile[INDEX_TILE(&zone, U1)] = vUprMKS;
+      primTile[INDEX_TILE(&zone, U2)] = 0.; 
+      primTile[INDEX_TILE(&zone, U3)] = 0.; 
 
       primTile[INDEX_TILE(&zone, B1)] = 0.;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
+
+      struct fluidElement elem;
+      setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom,
+                      &elem);
+
+      /* Set up Dirichlet boundary data */
+
+      if (zone.i < 0)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][var]
+            = primTile[INDEX_TILE(&zone, var)];
+        }
+      }
+
+      if (zone.i > N1-1)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][var]
+            = primTile[INDEX_TILE(&zone, var)];
+        }
+      }
   
     }
 
@@ -200,9 +216,46 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
+
+  Vec bSqrPetscVecGlobal;
+  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &bSqrPetscVecGlobal);
+
+  ARRAY(bSqrGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
+                     &bSqrGlobal);
+
+
+  /* Now set the magnetic field using the magnetic vector potential */
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
-    REAL primTile[TILE_SIZE];
+    REAL AVectorTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      REAL XCoords[NDIM], xCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      XTox(XCoords, xCoords);
+
+      REAL r     = xCoords[1];
+      REAL theta = xCoords[2];
+
+      REAL AVec = 0.;
+      #if (MAGNETIC_FIELD_CONFIGURATION == VERTICAL)
+
+        AVec = r*sin(theta);
+
+      #endif
+
+      AVectorTile[INDEX_TILE(&zone, 0)] = AVec;
+
+    }
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
     {
@@ -213,46 +266,154 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
                   ts->X1Size, ts->X2Size,
                   &zone);
 
-      for (int var=0; var<DOF; var++)
-      {
-        primTile[INDEX_TILE(&zone, var)] = 
-          INDEX_PETSC(primOldGlobal, &zone, var);
-      }
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+      REAL g = sqrt(-geom.gDet);
 
-      primTile[INDEX_TILE(&zone, RHO)] = 
-        primTile[INDEX_TILE(&zone, RHO)]/rhoMax;
-      primTile[INDEX_TILE(&zone, UU)] =
-        primTile[INDEX_TILE(&zone, UU)]/rhoMax;
-    }
+      INDEX_PETSC(primOldGlobal, &zone, B1) = 
+        -(  AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile+1, 0)]
+          + AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile+1, 0)]
+         )/(2.*zone.dX2*g);
 
-    applyFloor(iTile, jTile, 
-               ts->X1Start, ts->X2Start,
-               ts->X1Size, ts->X2Size,
-               primTile);
+      INDEX_PETSC(primOldGlobal, &zone, B2) = 
+         (  AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile,   0)]
+          + AVectorTile[INDEX_TILE_MANUAL(zone.iInTile,   zone.jInTile+1, 0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile,   0)]
+          - AVectorTile[INDEX_TILE_MANUAL(zone.iInTile+1, zone.jInTile+1, 0)]
+         )/(2.*zone.dX1*g);
 
-    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-    {
-      struct gridZone zone;
-      setGridZone(iTile, jTile,
-                  iInTile, jInTile,
-                  ts->X1Start, ts->X2Start,
-                  ts->X1Size, ts->X2Size,
-                  &zone);
+      INDEX_PETSC(primOldGlobal, &zone, B3) = 0.; 
 
-      for (int var=0; var<DOF; var++)
-      {
-        INDEX_PETSC(primOldGlobal, &zone, var) = 
-          primTile[INDEX_TILE(&zone, var)];
-      }
-    }
+      #if (MAGNETIC_FIELD_CONFIGURATION == THETA)
+        INDEX_PETSC(primOldGlobal, &zone, B1) = 0.;
+        INDEX_PETSC(primOldGlobal, &zone, B2) = 1./g;
+        INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
+      #elif (MAGNETIC_FIELD_CONFIGURATION == RADIAL)
+        INDEX_PETSC(primOldGlobal, &zone, B1) = 1./g;
+        INDEX_PETSC(primOldGlobal, &zone, B2) = 0.;
+        INDEX_PETSC(primOldGlobal, &zone, B3) = 0.;
+      #endif
+
+      struct fluidElement elem;
+      setFluidElement(&INDEX_PETSC(primOldGlobal, &zone, 0), &geom, &elem);
+
+      REAL bCov[NDIM];
+      conToCov(elem.bCon, &geom, bCov);
+      REAL bSqr = covDotCon(bCov, elem.bCon);
+
+      INDEX_PETSC(bSqrGlobal, &zone, 0) = bSqr;
+    } 
 
   }
 
-  
+  REAL bSqrMax, uMax;
+  VecStrideMax(bSqrPetscVecGlobal, 0, NULL, &bSqrMax);
+  VecStrideMax(ts->primPetscVecOld, UU, NULL, &uMax);
+
+  REAL betaActual = (ADIABATIC_INDEX-1.)*uMax/(0.5*bSqrMax);
+  REAL norm = sqrt(betaActual/PLASMA_BETA);
+
+  VecStrideScale(ts->primPetscVecOld, B1, norm);
+  VecStrideScale(ts->primPetscVecOld, B2, norm);
+  VecStrideScale(ts->primPetscVecOld, B3, norm);
+
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
+                         &bSqrGlobal);
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
                          ts->primPetscVecOld, &primOldGlobal);
+
+  VecDestroy(&bSqrPetscVecGlobal);
+  PetscRandomDestroy(&randNumGen);
+
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+      REAL g = sqrt(-geom.gDet);
+
+      if (zone.i < 0)
+      {
+        #if (MAGNETIC_FIELD_CONFIGURATION == RADIAL)
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B1]
+            = norm/g;
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B2]
+            = 0.;
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B3]
+            = 0.;
+        #elif (MAGNETIC_FIELD_CONFIGURATION == THETA)
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B1]
+            = 0.;
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B2]
+            = norm/g;
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][B3]
+            = 0.;
+        #endif
+      }
+
+      if (zone.i > N1-1)
+      {
+        #if (MAGNETIC_FIELD_CONFIGURATION == RADIAL)
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B1]
+            = norm/g;
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B2]
+            = 0.;
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B3]
+            = 0.;
+        #elif (MAGNETIC_FIELD_CONFIGURATION == THETA)
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B1]
+            = 0.;
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B2]
+            = norm/g;
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][B3]
+            = 0.;
+        #endif
+      }
+    } 
+  }
+
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
+  /* Done with setting the initial conditions */
 }
 
+void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
+                                     const int X1Start, const int X2Start,
+                                     const int X1Size, const int X2Size,
+                                     REAL primTile[ARRAY_ARGS TILE_SIZE])
+{
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    if (primTile[INDEX_TILE(&zone, RHO)] < RHO_FLOOR_MIN)
+    {
+      primTile[INDEX_TILE(&zone, RHO)] = RHO_FLOOR_MIN;
+    }
+
+    if (primTile[INDEX_TILE(&zone, UU)] < UU_FLOOR_MIN)
+    {
+      primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
+    }
+  }
+}
 
 void applyFloor(const int iTile, const int jTile,
                 const int X1Start, const int X2Start,
@@ -300,39 +461,191 @@ void applyFloor(const int iTile, const int jTile,
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
     }
 
-//    /* Inflow check at the inner radial boundary */
-//    if (zone.i < 0)
-//    {
-//      inflowCheck(&zone, XCoords, primTile);
-//    }
-//
-//    /* Inflow check at the outer radial boundary */
-//    if (zone.i > N1-1)
-//    {
-//      inflowCheck(&zone, XCoords, primTile);
-//    }
-
-//    struct geometry geom;
-//    setGeometry(XCoords, &geom);
-//
-//    struct fluidElement elem;
-//    setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-//
-//    if (elem.gamma > GAMMA_MAX)
-//    {
-//      REAL factor = sqrt( (GAMMA_MAX*GAMMA_MAX-1.)
-//                         /(elem.gamma*elem.gamma-1.)
-//                        );
-//
-//      primTile[INDEX_TILE(&zone, U1)] *= factor;
-//      primTile[INDEX_TILE(&zone, U2)] *= factor;
-//      primTile[INDEX_TILE(&zone, U3)] *= factor;
-//    }
   }
 
 }
 
-void problemDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
+void applyAdditionalProblemSpecificBCs
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL primTile[ARRAY_ARGS TILE_SIZE]
+)
 {
 
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    #if (PHYSICAL_BOUNDARY_LEFT_EDGE==DIRICHLET)
+
+      #if (MAGNETIC_FIELD_CONFIGURATION == VERTICAL)
+        SETERRQ(PETSC_COMM_WORLD, 1,
+                "Dirichet boundary conditions not implemented for \
+                 vertical magnetic field configuration\n");
+      #endif
+
+      if (zone.i < 0)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          primTile[INDEX_TILE(&zone, var)] =
+            problemSpecificData->primVarsLeftEdge[zone.i+NG][var];
+        }
+
+      }
+    #endif
+
+    #if (PHYSICAL_BOUNDARY_RIGHT_EDGE==DIRICHLET)
+      
+      #if (MAGNETIC_FIELD_CONFIGURATION == VERTICAL)
+        SETERRQ(PETSC_COMM_WORLD, 1,
+                "Dirichet boundary conditions not implemented for \
+                 vertical magnetic field configuration\n");
+      #endif
+
+      if (zone.i > N1-1)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          primTile[INDEX_TILE(&zone, var)] = 
+            problemSpecificData->primVarsRightEdge[zone.i-N1][var];
+        }
+      }
+    #endif
+
+  }
+
+}
+
+void applyProblemSpecificFluxFilter
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
+  REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]
+)
+{
+
+}
+
+void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  ARRAY(primHalfStepGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     ts->primPetscVecHalfStep, &primHalfStepGlobal);
+
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primHalfStepGlobal, &zone, var);
+      }
+    }
+
+    applyFloor(iTile, jTile,
+               ts->X1Start, ts->X2Start,
+               ts->X1Size, ts->X2Size,
+               primTile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primHalfStepGlobal, &zone, var) =
+        primTile[INDEX_TILE(&zone, var)];
+      }
+    }
+
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         ts->primPetscVecHalfStep, &primHalfStepGlobal);
+}
+
+void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  ARRAY(primOldGlobal);
+  DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
+                     ts->primPetscVecOld, &primOldGlobal);
+
+  #if (USE_OPENMP)
+    #pragma omp parallel for
+  #endif
+  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+  {
+    REAL primTile[TILE_SIZE];
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] =
+        INDEX_PETSC(primOldGlobal, &zone, var);
+      }
+    }
+
+    applyFloor(iTile, jTile,
+               ts->X1Start, ts->X2Start,
+               ts->X1Size, ts->X2Size,
+               primTile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+
+      for (int var=0; var<DOF; var++)
+      {
+        INDEX_PETSC(primOldGlobal, &zone, var) =
+        primTile[INDEX_TILE(&zone, var)];
+      }
+    }
+
+  }
+
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+                         ts->primPetscVecOld, &primOldGlobal);
 }

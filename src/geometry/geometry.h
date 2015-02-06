@@ -29,9 +29,10 @@
 */
 struct geometry
 {
-    REAL alpha, gDet;
-    REAL gCov[NDIM][NDIM];
-    REAL gCon[NDIM][NDIM];
+  REAL XCoords[NDIM];
+  REAL alpha, gDet;
+  REAL gCov[NDIM][NDIM];
+  REAL gCon[NDIM][NDIM];
 };
 
 

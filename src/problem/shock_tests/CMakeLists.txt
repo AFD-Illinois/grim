@@ -3,6 +3,7 @@ set(OUTPUT_DIR "\"/home/mc/data/mc/PhD/grim/build/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
+set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
@@ -32,6 +33,7 @@ set(N2 "128")
 #             NEED TO PUT A CHECK FOR THIS.
 set(TILE_SIZE_X1 "8")
 set(TILE_SIZE_X2 "1")
+set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
@@ -54,7 +56,7 @@ set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
 # Reconstrution options
-# MP5 or MONOTONIZED_CENTRAL
+# MP5, MONOTONIZED_CENTRAL or MIN_MOD
 set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 

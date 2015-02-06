@@ -1,14 +1,15 @@
 #include "../problem.h"
 
 #if (CONDUCTION)
-  REAL kappaProblem;
-  REAL tauProblem; 
+REAL kappaProblem;
+REAL tauProblem; 
 
-  void setConductionParameters(struct fluidElement elem[ARRAY_ARGS 1])
-  {
-    elem->kappa = kappaProblem;
-    elem->tau   = tauProblem;
-  }
+void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                             struct fluidElement elem[ARRAY_ARGS 1])
+{
+  elem->kappa = kappaProblem;
+  elem->tau   = tauProblem;
+}
 #endif
 
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
@@ -228,19 +229,27 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
                          ts->primPetscVecOld, &primOldGlobal);
 }
 
-void applyAdditionalProblemSpecificBCs(const int iTile, const int jTile,
-                                       const int X1Start, const int X2Start,
-                                       const int X1Size, const int X2Size,
-                                       REAL primTile[ARRAY_ARGS TILE_SIZE])
+void applyAdditionalProblemSpecificBCs
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL primTile[ARRAY_ARGS TILE_SIZE]
+)
 {
 
 }
 
-void applyProblemSpecificFluxFilter(const int iTile, const int jTile,
-                                    const int X1Start, const int X2Start,
-                                    const int X1Size, const int X2Size,
-                                    REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
-                                    REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE])
+void applyProblemSpecificFluxFilter
+(
+  const int iTile, const int jTile,
+  const int X1Start, const int X2Start,
+  const int X1Size, const int X2Size,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1],
+  REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
+  REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE]
+)
 {
 
 }

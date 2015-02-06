@@ -66,7 +66,7 @@
 #cmakedefine    UU_FLOOR  (${UU_FLOOR})
 
 /* Number of ghost zones */
-#if (RECONSTRUCTION==MONOTONIZED_CENTRAL)
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
   #define NG  (3)
 #elif (RECONSTRUCTION==MP5)
   #define NG  (4)

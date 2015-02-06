@@ -3,6 +3,7 @@ set(OUTPUT_DIR "\"/home/mc/data/mc/PhD/grim/build/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
+set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
@@ -11,6 +12,7 @@ set(DT_DUMP ".1")
 set(START_TIME "0.")
 set(FINAL_TIME "10.")
 set(COURANT "0.5")
+set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
@@ -31,6 +33,7 @@ set(N2 "280")
 #             NEED TO PUT A CHECK FOR THIS.
 set(TILE_SIZE_X1 "10")
 set(TILE_SIZE_X2 "10")
+set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
@@ -53,7 +56,7 @@ set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
 
 # Reconstrution options
-# MP5 or MONOTONIZED_CENTRAL
+# MP5, MONOTONIZED_CENTRAL or MIN_MOD
 set(RECONSTRUCTION "MP5")
 
 # Initial condition parameters 

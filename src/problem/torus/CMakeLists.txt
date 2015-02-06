@@ -3,6 +3,7 @@ set(OUTPUT_DIR "\"/home/manic/grim_refactored/grim/build/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
+set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
@@ -64,7 +65,7 @@ set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
-# MP5 or MONOTONIZED_CENTRAL
+# MP5, MONOTONIZED_CENTRAL or MIN_MOD
 set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
@@ -95,6 +96,7 @@ message("Time stepping    : " ${TIME_STEPPING})
 message("Dimensions       : " ${COMPUTE_DIM})
 message("Resolution       : " ${N1} " x " ${N2})
 message("Tile size        : " ${TILE_SIZE_X1} " x " ${TILE_SIZE_X2})
+message("Metric           : " ${METRIC})
 
 message("")
 message("#########################")

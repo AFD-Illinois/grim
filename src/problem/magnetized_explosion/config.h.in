@@ -19,6 +19,7 @@
 #cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
 #cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+#cmakedefine    PROBLEM_DATA  ${PROBLEM_DATA}
 
 /* Domain inputs */
 #cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})
@@ -68,7 +69,7 @@
 #cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
 
 /* Number of ghost zones */
-#if (RECONSTRUCTION==MONOTONIZED_CENTRAL)
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
   #define NG  (3)
 #elif (RECONSTRUCTION==MP5)
   #define NG  (4)

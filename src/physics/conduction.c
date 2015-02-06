@@ -249,16 +249,16 @@ void addConductionSourceTermsToResidual
 
       REAL dHigherOrderTerm2[NDIM];
       
-      REAL beta       = elem.tau/elem.kappa;
-      REAL betaOld    = elemOld.tau/elem.kappa;
+      REAL beta       = elem.tau/(elem.kappa*T);
+      REAL betaOld    = elemOld.tau/(elem.kappa*TOld);
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
-        REAL betaCenter = elemCenter.tau/elemCenter.kappa;
+        REAL betaCenter = elemCenter.tau/(elemCenter.kappa*TCenter);
 
       #elif (TIME_STEPPING == IMPLICIT)
 
-        REAL betaCenter = 0.5*(  (elem.tau/elem.kappa);
-                               + (elemOld.tau/elemOld.kappa)
+        REAL betaCenter = 0.5*(  (elem.tau/(elem.kappa*T) )
+                               + (elemOld.tau/(elemOld.kappa*TOld) )
                               );  
       #endif
 
@@ -432,7 +432,7 @@ void addConductionSourceTermsToResidual
           (- higherOrderTerm1 + higherOrderTerm2
            + g*( elemCenter.primVars[PHI]
                  - bDotq
-               )/(elemCenter.tau*TCenter)
+               )/elemCenter.tau
           )/norm;
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
@@ -441,7 +441,7 @@ void addConductionSourceTermsToResidual
           (- higherOrderTerm1 + higherOrderTerm2
            + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI])
                 - bDotq
-               )/(elemCenter.tau*TCenter)
+               )/elemCenter.tau
           )/norm;
 
       #endif
@@ -513,7 +513,7 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zoneCenter, CENTER, XCoords);
   setGeometry(XCoords, &geom); gCenter = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
-  betaCenter = elem.tau/elem.kappa;
+  betaCenter = elem.tau/(elem.kappa*TCenter);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConCenter[mu] = elem.uCon[mu];
@@ -528,7 +528,7 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaLeft = elem.tau/elem.kappa;
+  betaLeft = elem.tau/(elem.kappa*TLeftX1);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConLeft[mu] = elem.uCon[mu];
@@ -543,7 +543,7 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaRight = elem.tau/elem.kappa;
+  betaRight = elem.tau/(elem.kappa*TRightX1);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConRight[mu] = elem.uCon[mu];
@@ -564,10 +564,10 @@ void computeConductionSpatialGradientTerms
 
   graduConHigherOrderTerm2[0] = 
     slopeLimitedDerivative
-    (betaLeft*gLeft*uConLeft[1]/TLeftX1,
-     betaCenter*gCenter*uConCenter[1]/TCenter,
-     betaRight*gRight*uConRight[1]/TRightX1
-    )/zoneCenter.dX1;
+      (betaLeft*gLeft*uConLeft[1]/TLeftX1,
+       betaCenter*gCenter*uConCenter[1]/TCenter,
+       betaRight*gRight*uConRight[1]/TRightX1
+      )/zoneCenter.dX1;
 
   #if (COMPUTE_DIM==2)
     /* uConLeft */
@@ -579,7 +579,7 @@ void computeConductionSpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaLeft = elem.tau/elem.kappa;
+    betaLeft = elem.tau/(elem.kappa*TLeftX2);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConLeft[mu] = elem.uCon[mu];
@@ -594,7 +594,7 @@ void computeConductionSpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaRight = elem.tau/elem.kappa;
+    betaRight = elem.tau/(elem.kappa*TRightX2);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConRight[mu] = elem.uCon[mu];

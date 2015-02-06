@@ -60,6 +60,11 @@ void setGeometry(const REAL X[ARRAY_ARGS NDIM],
   gConFunc(geom->gCov, geom->gDet, geom->gCon);
 
   geom->alpha = 1./sqrt(-geom->gCon[0][0]);
+
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    geom->XCoords[mu] = X[mu];
+  }
 }
 
 /* The covariant metric in X^mu = {t, X1, X2, phi} coordinates. Inside the
