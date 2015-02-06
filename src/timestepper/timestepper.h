@@ -43,6 +43,14 @@ struct timeStepper
     Vec graduConHigherOrderTerm1PetscVec;
     Vec graduConHigherOrderTerm2PetscVec;
   #endif
+ 
+  #if (VISCOSITY)
+    DM  graduConVisDM;
+    DM  graduConHigherOrderTermsVisDM;
+    Vec graduConVisPetscVec;
+    Vec graduConHigherOrderTerm1VisPetscVec;
+    Vec graduConHigherOrderTerm2VisPetscVec;
+  #endif
 
   struct problemData *problemSpecificData;
 
@@ -98,5 +106,11 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
   void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
   void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
 #endif
+
+#if (VISCOSITY)
+  void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+  void destroyViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+#endif
+
 
 #endif /* GRIM_TIMESTEPPER_H_ */
