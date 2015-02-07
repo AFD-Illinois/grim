@@ -7,11 +7,11 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "0.001")
-set(DT_DUMP ".01")
+set(DT "0.01")
+set(DT_DUMP ".1")
 set(START_TIME "0.")
-set(FINAL_TIME "1./1.23434614343")
-set(COURANT "0.5")
+set(FINAL_TIME "2.")
+set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
