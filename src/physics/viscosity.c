@@ -151,7 +151,7 @@ void addViscositySourceTermsToResidual
        * (Psi+1/2/beta)*(sqrt(g)*u^\mu)_{,\mu} *
        * where beta = tauVis/2/eta */
       REAL beta       = elem.tauVis/(elem.eta*2.);
-      REAL betaOld    = elemOld.tauVis/(elem.eta*2.);
+      REAL betaOld    = elemOld.tauVis/(elemOld.eta*2.);
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
         REAL betaCenter = elemCenter.tauVis/(elemCenter.eta*2.);
