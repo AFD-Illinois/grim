@@ -471,6 +471,17 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
   #endif
 
+  ts->t = ts->t + ts->dt;
+  ts->timeStepCounter++;
+  PetscPrintf(PETSC_COMM_WORLD,
+              "\nCompleted step %d, current time = %.5f, dt = %.5f\n\n",
+              ts->timeStepCounter, ts->t, ts->dt);
+
+  /* Problem dependent full step diagnostics */
+  fullStepDiagnostics(ts);
+
+  diagnostics(ts);
+
   REAL newDt;
   #if (COMPUTE_DIM==1)
 
@@ -490,17 +501,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
   }
 
   ts->dt = newDt;
-  ts->t = ts->t + ts->dt;
-  ts->timeStepCounter++;
-
-  PetscPrintf(PETSC_COMM_WORLD,
-              "\nCompleted step %d, current time = %.5f, dt = %.5f\n\n",
-              ts->timeStepCounter, ts->t, ts->dt);
-
-  /* Problem dependent full step diagnostics */
-  fullStepDiagnostics(ts);
-
-  diagnostics(ts);
 }
 
 void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])

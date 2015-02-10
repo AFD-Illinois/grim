@@ -18,7 +18,7 @@ project(grim)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+set(PETSC_DIR "/home/manic/petsc_optimized")
 
 # Double or float precision?
 set(REAL "double")
@@ -40,7 +40,7 @@ set(ARRAY_ARGS "const restrict static")
 # 10) anisotropic_conduction
 # 11) torus
 
-set(PROBLEM "torus")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
