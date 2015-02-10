@@ -56,6 +56,9 @@ REAL gammaDownDownDown(const int eta,
                        const int nu,
                        const REAL X[ARRAY_ARGS NDIM]);
 
+void XTox(const REAL X[ARRAY_ARGS NDIM], 
+          REAL x[ARRAY_ARGS NDIM]);
+
 /* Functions called by internally inside the geometry module */
 void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
               REAL gCov[ARRAY_ARGS NDIM][NDIM]);
@@ -65,8 +68,5 @@ REAL gDetFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM]);
 void gConFunc(REAL gCov[ARRAY_ARGS NDIM][NDIM],
               const REAL gDet,
               REAL gCon[ARRAY_ARGS NDIM][NDIM]);
-
-void XTox(const REAL X[ARRAY_ARGS NDIM], 
-          REAL x[ARRAY_ARGS NDIM]);
 
 #endif /* GRIM_GEOMETRY_H_ */

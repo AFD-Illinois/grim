@@ -123,7 +123,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       XTox(XCoords, xCoords);
 
       REAL r = xCoords[1];
-      if (fabs(r - rCoords1D[zone.i+NG]) > 1e-25)
+      if (fabs(r - rCoords1D[zone.i+NG]) > 1e-10)
       {
         SETERRQ3(PETSC_COMM_WORLD, 1, 
                  "Mismatch in rCoords! Check r coords in python script. r = %.18f, rCoords = %.18f, i = %d\n",

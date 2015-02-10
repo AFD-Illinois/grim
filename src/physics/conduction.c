@@ -471,7 +471,7 @@ void computeConductionSpatialGradientTerms
   struct fluidElement elem;
   REAL uConLeft[NDIM], uConCenter[NDIM], uConRight[NDIM];
   REAL gLeft, gCenter, gRight;
-  REAL betaLeft, betaCenter, betaRight; /* Israel-Stewart's Beta */
+  REAL betaLeft, betaCenter, betaRight; /* Israel-Stewart's Beta = tau/(kappa*T) */
 
   setGridZone(iTile, jTile,
               iInTile, jInTile,
