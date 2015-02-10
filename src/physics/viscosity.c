@@ -298,17 +298,17 @@ void addViscositySourceTermsToResidual
       //Coordinate derivatives
       {
       #if (TIME_STEPPING == IMEX || TIME_STEPPING == EXPLICIT)
-	REAL bSqr, bCov[NDIM];
-        conToCov(elemCenter.bCon, &geomCenter, bCov);
+	REAL bSqr, bCovCenter[NDIM];
+        conToCov(elemCenter.bCon, &geomCenter, bCovCenter);
         bSqr = getbSqr(&elemCenter, &geomCenter);
         for (int alpha=0; alpha<NDIM; alpha++)
 	  {
-	    TargetPsi+=bCov[alpha]*elemCenter.bCon[0]/bSqr*3.*elem.eta
+	    TargetPsi+=bCovCenter[alpha]*elemCenter.bCon[0]/bSqr*3.*elem.eta
 	      * (elem.uCon[alpha] - elemOld.uCon[alpha])/dt;
-	    TargetPsi+=bCov[alpha]*elemCenter.bCon[1]/bSqr*3.*elem.eta
+	    TargetPsi+=bCovCenter[alpha]*elemCenter.bCon[1]/bSqr*3.*elem.eta
 	      * INDEX_PETSC(graduConVisGlobal, &zoneCenter, alpha);
             #if (COMPUTE_DIM==2)
-	      TargetPsi+=bCov[alpha]*elemCenter.bCon[2]/bSqr*3.*elem.eta
+	      TargetPsi+=bCovCenter[alpha]*elemCenter.bCon[2]/bSqr*3.*elem.eta
 		* INDEX_PETSC(graduConVisGlobal, &zoneCenter, alpha+NDIM);
             #endif
 	  }
