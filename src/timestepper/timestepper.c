@@ -347,7 +347,7 @@ void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
   DMCreateGlobalVector(ts->graduConVisDM, &ts->graduConVisPetscVec);
   DMCreateGlobalVector(ts->graduConHigherOrderTermsVisDM, 
                        &ts->graduConHigherOrderTerm1VisPetscVec);
-  DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
+  DMCreateGlobalVector(ts->graduConHigherOrderTermsVisDM, 
                        &ts->graduConHigherOrderTerm2VisPetscVec);
 
   VecSet(ts->graduConVisPetscVec, 0.);

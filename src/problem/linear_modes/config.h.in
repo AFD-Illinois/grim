@@ -9,6 +9,7 @@
 #define HYDRO_SOUND_MODE_1D   (1)
 #define CONDUCTION_STABLE_1D  (2)
 #define CONDUCTION_STABLE_2D  (3)
+#define VISCOSITY_2D          (4)
 
 /* End of immutable constants */
   
