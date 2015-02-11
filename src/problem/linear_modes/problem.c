@@ -207,24 +207,60 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
         primVars0[B1]  = 0.01;
-        primVars0[B2]  = 0.02;
+        primVars0[B2]  = 0.;
         primVars0[B3]  = 0.;
         primVars0[PSI] = 0.;
 
-        deltaPrimVars[RHO] = 0.103193487677 + 0.00500886171371*I;
-        deltaPrimVars[UU]  = 0.275158625188 + 0.0145308031519*I;
-        deltaPrimVars[U1]  = -0.00808780007936 - 0.00842931384021*I;
-        deltaPrimVars[U2]  = -0.482057062593 + 0.455947505445*I;
+        deltaPrimVars[RHO] = 0.34457248379 - 8.32667268469e-17*I;
+        deltaPrimVars[UU]  = 0.918859956773;
+        deltaPrimVars[U1]  = -0.180848290246 - 0.00323785674963*I;
+        deltaPrimVars[U2]  = 0.;
         deltaPrimVars[U3]  = 0.;
         deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B2]  = 0.;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PSI] = 0.687749225365;
+        deltaPrimVars[PSI] = 0.0624512526648 + 0.0186932205343*I;
 
         REAL k1 = 2*M_PI;
         REAL k2 = 0.;
 
         REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+          INDEX_PETSC(primOldGlobal, &zone, var) =  
+            primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
+      #elif (MODE==VISCOSITY_1D)
+        etaProblem    = .1;
+        tauVisProblem = 1.01818181818182;
+
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
+
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 2.;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.01;
+        primVars0[B2]  = 0.;
+        primVars0[B3]  = 0.;
+        primVars0[PSI] = 0.;
+
+        deltaPrimVars[RHO] = 0.34457248379 - 8.32667268469e-17*I;
+        deltaPrimVars[UU]  = 0.918859956773;
+        deltaPrimVars[U1]  = -0.180848290246 - 0.00323785674963*I;
+        deltaPrimVars[U2]  = 0.;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = 0.;
+        deltaPrimVars[B2]  = 0.;
+        deltaPrimVars[B3]  = 0.;
+        deltaPrimVars[PSI] = 0.0624512526648 + 0.0186932205343*I;
+
+        REAL k1 = 2*M_PI;
+
+        REAL complex mode = cexp(I*k1*XCoords[1]);
 
         for (int var=0; var<DOF; var++)
         {

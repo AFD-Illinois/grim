@@ -10,6 +10,7 @@
 #define CONDUCTION_STABLE_1D  (2)
 #define CONDUCTION_STABLE_2D  (3)
 #define VISCOSITY_2D          (4)
+#define VISCOSITY_1D          (5)
 
 /* End of immutable constants */
   

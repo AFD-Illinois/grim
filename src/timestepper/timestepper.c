@@ -170,8 +170,8 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   PetscPrintf(PETSC_COMM_WORLD,
               "           Memory allocation complete\n\n");
 
-  int numProcs;
-  MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
+  int numProcs=1;
+  //MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
   PetscPrintf(PETSC_COMM_WORLD,
               " Number of MPI procs being used       = %d\n",
               numProcs);
@@ -522,6 +522,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #endif
 
