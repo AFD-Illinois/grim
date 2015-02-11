@@ -323,7 +323,7 @@ void addViscositySourceTermsToResidual
 	  {
 	    TargetPsi+=1.5*(bCov[alpha]*elem.bCon[0]*elem.eta/bSqr
 			    +bCovOld[alpha]*elemOld.bCon[0]*elemOld.eta/bSqrOld)
-	      * (elem.uCon[mu] - elemOld.uCon[mu])/dt;
+	      * (elem.uCon[alpha] - elemOld.uCon[alpha])/dt;
 	    TargetPsi+=1.5*(bCov[alpha]*elem.bCon[1]*elem.eta*graduConVis[alpha]/bSqr
 			    +bCovOld[alpha]*elemOld.bCon[1]*elemOld.eta/bSqrOld
 			    *INDEX_PETSC(graduConVisGlobal, &zoneCenter, alpha));

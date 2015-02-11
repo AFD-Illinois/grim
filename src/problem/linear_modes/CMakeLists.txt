@@ -1,5 +1,5 @@
 # Dump folder
-set(OUTPUT_DIR "\"/Users/ffoucart/Work/grim/build/linear_modes/\"")
+set(OUTPUT_DIR "\"/Users/francoisfoucart/Work/grim/Runs/linear_modes/viscosit/\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
@@ -15,8 +15,8 @@ set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "128")
-set(N2 "128")
+set(N1 "140")
+set(N2 "140")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -30,8 +30,8 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "8")
-set(TILE_SIZE_X2 "8")
+set(TILE_SIZE_X1 "10")
+set(TILE_SIZE_X2 "10")
 
 set(USE_OPENMP   "NO")
 
@@ -62,8 +62,9 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # 3) CONDUCTION_STABLE_1D
 # 4) CONDUCTION_STABLE_2D
 # 5) VISCOSITY_2D
+# 6) VISCOSITY_1D
 set(AMPLITUDE "1e-4")
-set(MODE      "VISCOSITY_2D")
+set(MODE      "VISCOSITY_1D")
 
 # Physics options set automatically by the choice of the mode being tested
 if (${MODE} STREQUAL "ENTROPY_WAVE_1D")
@@ -95,11 +96,18 @@ if (${MODE} STREQUAL "CONDUCTION_STABLE_2D")
 endif(${MODE} STREQUAL "CONDUCTION_STABLE_2D")
 
 if (${MODE} STREQUAL "VISCOSITY_2D")
-  set(COMPUTE_DIM "1")
+  set(COMPUTE_DIM "2")
   set(ADIABATIC_INDEX "4./3")
   set(CONDUCTION "OFF")
   set(VISCOSITY "ON")
 endif(${MODE} STREQUAL "VISCOSITY_2D")
+
+if (${MODE} STREQUAL "VISCOSITY_1D")
+  set(COMPUTE_DIM "1")
+  set(ADIABATIC_INDEX "4./3")
+  set(CONDUCTION "OFF")
+  set(VISCOSITY "ON")
+endif(${MODE} STREQUAL "VISCOSITY_1D")
 
 # Floor values
 set(RHO_FLOOR "1e-5")

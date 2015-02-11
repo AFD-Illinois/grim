@@ -18,8 +18,8 @@ project(grim)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/Users/ffoucart/Work/petsc_install/")
-set(PETSC_ARCH "")
+set(PETSC_DIR "/Users/francoisfoucart/Work/petsc")
+set(PETSC_ARCH "arch-darwin-c-opt")
 
 # Double or float precision?
 set(REAL "double")

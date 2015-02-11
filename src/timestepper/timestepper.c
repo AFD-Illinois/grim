@@ -167,10 +167,10 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
               "           Memory allocation complete\n\n");
 
   int numProcs;
-//  MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
-//  PetscPrintf(PETSC_COMM_WORLD,
-//              " Number of MPI procs being used       = %d\n",
-//              numProcs);
+  MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
+  PetscPrintf(PETSC_COMM_WORLD,
+              " Number of MPI procs being used       = %d\n",
+              numProcs);
   #if (COMPUTE_DIM==1)
     PetscPrintf(PETSC_COMM_WORLD,
                 " Grid size                            = %d\n",
@@ -518,6 +518,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
+    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #endif
 
