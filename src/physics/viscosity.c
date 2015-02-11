@@ -346,14 +346,14 @@ void addViscositySourceTermsToResidual
 	bSqrOld = getbSqr(&elemOld, &geomCenter);
 	for (int alpha=0; alpha<NDIM; alpha++)
           {
-            for (int beta=0; beta<NDIM; beta++)
+            for (int gamma=0; gamma<NDIM; gamma++)
 	      {
 		for(int mu=0; mu<NDIM; mu++)
 		  {
 		    TargetPsi+=
-		      1.5*INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, beta))
-		      *(elem.bCon[alpha]*bCov[mu]*elem.uCon[beta]/bSqr*elem.eta
-			+elemOld.bCon[alpha]*bCovOld[mu]*elemOld.uCon[beta]/bSqrOld*elemOld.eta);
+		      1.5*INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, gamma))
+		      *(elem.bCon[alpha]*bCov[mu]*elem.uCon[gamma]/bSqr*elem.eta
+			+elemOld.bCon[alpha]*bCovOld[mu]*elemOld.uCon[gamma]/bSqrOld*elemOld.eta);
 		  }
 	      }
 	  }
@@ -363,13 +363,13 @@ void addViscositySourceTermsToResidual
         bSqr = getbSqr(&elemCenter, &geomCenter);
         for (int alpha=0; alpha<NDIM; alpha++)
           {
-            for (int beta=0; beta<NDIM; beta++)
+            for (int gamma=0; gamma<NDIM; gamma++)
 	      {
 		for(int mu=0; mu<NDIM; mu++)
                   {
                     TargetPsi+=
-                      3.*INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, beta))
-                      *(elemCenter.bCon[alpha]*bCov[mu]*elemCenter.uCon[beta]/bSqr*elemCenter.eta);
+                      3.*INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, gamma))
+                      *(elemCenter.bCon[alpha]*bCov[mu]*elemCenter.uCon[gamma]/bSqr*elemCenter.eta);
                   }
 	      }
 	  }
