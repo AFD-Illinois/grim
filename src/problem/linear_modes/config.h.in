@@ -11,6 +11,8 @@
 #define CONDUCTION_STABLE_2D  (3)
 #define VISCOSITY_2D          (4)
 #define VISCOSITY_1D          (5)
+#define ALFVEN_2D             (6)
+#define FIREHOSE              (7) 
 
 /* End of immutable constants */
   
