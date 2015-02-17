@@ -321,7 +321,7 @@ void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
 {
 
   #if (COMPUTE_DIM==1)
-    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
+    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM*NDIM, 0, NULL,
                  &ts->graduConVisDM);
     DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
                  &ts->graduConHigherOrderTermsVisDM);
