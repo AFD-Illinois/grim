@@ -6,17 +6,17 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMPLICIT")
 set(DT "0.01")
-set(DT_DUMP ".1")
+set(DT_DUMP ".5")
 set(START_TIME "0.")
-set(FINAL_TIME "2.")
+set(FINAL_TIME "20.")
 set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "140")
-set(N2 "140")
+set(N1 "1400")
+set(N2 "1400")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -63,8 +63,10 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # 4) CONDUCTION_STABLE_2D
 # 5) VISCOSITY_2D
 # 6) VISCOSITY_1D
-set(AMPLITUDE "1e-4")
-set(MODE      "VISCOSITY_1D")
+# 7) ALFVEN_2D
+# 8) FIREHOSE
+set(AMPLITUDE "1e-2")
+set(MODE      "FIREHOSE")
 
 # Physics options set automatically by the choice of the mode being tested
 if (${MODE} STREQUAL "ENTROPY_WAVE_1D")
@@ -108,6 +110,20 @@ if (${MODE} STREQUAL "VISCOSITY_1D")
   set(CONDUCTION "OFF")
   set(VISCOSITY "ON")
 endif(${MODE} STREQUAL "VISCOSITY_1D")
+
+if (${MODE} STREQUAL "ALFVEN_2D")
+  set(COMPUTE_DIM "2")
+  set(ADIABATIC_INDEX "4./3")
+  set(CONDUCTION "OFF")
+  set(VISCOSITY "ON")
+endif(${MODE} STREQUAL "ALFVEN_2D")
+
+if (${MODE} STREQUAL "FIREHOSE")
+  set(COMPUTE_DIM "1")
+  set(ADIABATIC_INDEX "4./3")
+  set(CONDUCTION "OFF")
+  set(VISCOSITY "ON")
+endif(${MODE} STREQUAL "FIREHOSE")
 
 # Floor values
 set(RHO_FLOOR "1e-5")

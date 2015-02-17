@@ -30,6 +30,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
                      ts->primPetscVecOld, &primOldGlobal);
 
+  REAL randNum;
+  PetscRandom randNumGen;
+  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
+  PetscRandomSetType(randNumGen, PETSCRAND48);
+
+
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -167,7 +173,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
         primVars0[B1]  = 0.01;
-        primVars0[B2]  = 0.02;
+        primVars0[B2]  = 0.;
         primVars0[B3]  = 0.;
         primVars0[PHI] = 0.;
 
@@ -244,7 +250,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
         primVars0[B1]  = 0.01;
-        primVars0[B2]  = 0.;
+        primVars0[B2]  = 0.02;
         primVars0[B3]  = 0.;
         primVars0[PSI] = 0.;
 
@@ -267,6 +273,89 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
           INDEX_PETSC(primOldGlobal, &zone, var) =  
             primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
         }
+      #elif (MODE==ALFVEN_2D) 
+        /* Eigenvalue = -0.488186438695 + 0.516141145988*I
+         * eta = 0.1
+         * tau = 1.01818181818182 */
+        
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
+
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 2.;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.01;
+        primVars0[B2]  = 0.;
+        primVars0[B3]  = 0.;
+	
+        deltaPrimVars[RHO] = 0.;
+        deltaPrimVars[UU]  = 0.;
+        deltaPrimVars[U1]  = 0.;
+        deltaPrimVars[U2]  = 1.;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = 0.;
+        deltaPrimVars[B2]  = 1.00005;
+        deltaPrimVars[B3]  = 0.;
+
+	etaProblem    = .1;
+        tauVisProblem = 1.01818181818182;
+	primVars0[PSI]  = 0.;
+	deltaPrimVars[PSI]  = 0.;
+
+        REAL k1 = 2*M_PI;
+        REAL k2 = 0.;
+
+        REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+          INDEX_PETSC(primOldGlobal, &zone, var) =  
+            primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
+      #elif (MODE==FIREHOSE) 
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
+
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 0.01;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.01;
+        primVars0[B2]  = 0.;
+        primVars0[B3]  = 0.;
+	primVars0[PSI]  = 0.;
+	
+        deltaPrimVars[RHO] = 0.991060736449;
+        deltaPrimVars[UU]  = 0.0132141431527 - 4.60785923306e-19*I;
+        deltaPrimVars[U1]  = -0.131266091803 - 0.000591490468813*I;
+        deltaPrimVars[U2]  = 1.e-4;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = 0.;
+        deltaPrimVars[B2]  = -1.e-4;
+        deltaPrimVars[B3]  = 0.;
+	deltaPrimVars[PSI]  = 0.0198194260853 + 0.000238162630751*I;
+
+	etaProblem    = 1.;
+        tauVisProblem = 100.;
+
+        REAL k1 = 2*M_PI;
+        REAL k2 = 0.;
+
+        REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+	  if(var!=U2 && var!=B2)
+	    INDEX_PETSC(primOldGlobal, &zone, var) =  
+	      primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
+	PetscRandomGetValue(randNumGen, &randNum);
+	INDEX_PETSC(primOldGlobal, &zone, U2) = 1.e-8*randNum;
+	PetscRandomGetValue(randNumGen, &randNum);
+        INDEX_PETSC(primOldGlobal, &zone, B2) =1.e-8*randNum;
       #endif
 
     }
