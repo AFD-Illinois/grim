@@ -429,7 +429,7 @@ void addConductionSourceTermsToResidual
       #if (TIME_STEPPING == EXPLICIT)
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
-          (- higherOrderTerm1 + higherOrderTerm2
+          (- higherOrderTerm1 + 0.*higherOrderTerm2
            + g*( elemCenter.primVars[PHI]
                  - bDotq
                )/elemCenter.tau

@@ -39,8 +39,9 @@ set(ARRAY_ARGS "const restrict static")
 # 8) bondi_inflow
 # 10) anisotropic_conduction
 # 11) torus
+# 12) buoyancy_instabilities
 
-set(PROBLEM "linear_modes")
+set(PROBLEM "torus")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

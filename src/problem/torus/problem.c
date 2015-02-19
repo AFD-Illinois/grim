@@ -1,5 +1,5 @@
 #include "../problem.h"
-#include "torus_2d.h"
+#include "torus.h"
 
 /* Calculate the constant angular momentum per unit inertial mass (l = u_phi *
  * u^t) for a given black hole spin and a radius of the accretion disk.  Eqn 3.8
@@ -280,7 +280,10 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, B1)] = 0.;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
-  
+     
+      #if (CONDUCTION)
+        primTile[INDEX_TILE(&zone, PHI)] = 0.;
+      #endif
     }
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -696,7 +699,7 @@ void applyFloor(const int iTile, const int jTile,
     }
 
     REAL rho = primTile[INDEX_TILE(&zone, RHO)];
-    REAL u = primTile[INDEX_TILE(&zone, UU)];
+    REAL u   = primTile[INDEX_TILE(&zone, UU)];
 
     if (rho < rhoFloor)
     {
@@ -707,6 +710,19 @@ void applyFloor(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
     }
+
+    #if (CONDUCTION)
+      REAL P   = (ADIABATIC_INDEX-1.)*u;
+      REAL cs  = sqrt((ADIABATIC_INDEX-1.)*P/(rho + u));
+      REAL phi = primTile[INDEX_TILE(&zone, PHI)];
+
+      REAL phiCeil = 0.9 * rho * pow(cs, 3.);
+
+      if (abs(phi) > phiCeil)
+      {
+        primTile[INDEX_TILE(&zone, PHI)] = copysign(phiCeil, phi);
+      }
+    #endif
 
     struct geometry geom;
     setGeometry(XCoords, &geom);
@@ -997,7 +1013,13 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
 void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                              struct fluidElement elem[ARRAY_ARGS 1])
 {
-  SETERRQ(PETSC_COMM_WORLD, 1,
-          "Conduction parameters not set in shock_tests/problem.c\n");
+  REAL xCoords[NDIM];
+  XTox(geom->XCoords, xCoords);
+
+  REAL r = xCoords[1];
+  REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+    
+  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
+  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;
 }
 #endif

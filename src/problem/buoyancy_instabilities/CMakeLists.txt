@@ -7,10 +7,10 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "1e-5")
-set(DT_DUMP "1.")
+set(DT "0.0001")
+set(DT_DUMP "100.")
 set(START_TIME "0.")
-set(FINAL_TIME "2000.")
+set(FINAL_TIME "100000.")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
@@ -37,21 +37,21 @@ set(TILE_SIZE_X2 "16")
 set(USE_OPENMP   "YES")
 
 # Physics variables
-set(ADIABATIC_INDEX "4./3")
+set(ADIABATIC_INDEX "5./3")
 set(CONDUCTION "ON")
 
 # Geometry
 set(METRIC  "KERRSCHILD")
 set(EPS     "1e-5")
 set(M       "1.")
-set(BH_SPIN "0.9375")
-set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
-                   # disk. H_SLOPE = 1 is no refinement and H_SLOPE -> 0 pushes
-                   # all points towards the midplane.
+set(BH_SPIN "0.")
+set(H_SLOPE "1.") # Refinement in the theta direction to better resolve the
+                  # disk. H_SLOPE = 1 is no refinement and H_SLOPE -> 0 pushes
+                  # all points towards the midplane.
 
 # Domain
-set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "40.")
+set(R_A     "100.*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
+set(R_B     "300.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -59,8 +59,8 @@ set(X2_A  "1e-20")
 set(X2_B  "1. - 1e-20")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
-set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "OUTFLOW")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "DIRICHLET")
+set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "DIRICHLET")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "MIRROR")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
@@ -70,20 +70,21 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
-set(R_PRESSURE_MAX          "12.")
-set(R_INNER_EDGE            "6.")
-set(ADIABAT                 "1e-3")
-set(PLASMA_BETA             "1e2")
-set(PERTURBATIONS_AMPLITUDE "4e-2")
+set(PLASMA_BETA                   "1e4")
+set(PERTURBATIONS_AMPLITUDE       "4e-2")
+set(MAGNETIC_FIELD_CONFIGURATION  "THETA")
+set(RHO_INPUT_FILE "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_rho.txt\"")
+set(UU_INPUT_FILE  "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_u.txt\"")
+set(PHI_INPUT_FILE "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_phi.txt\"")
+set(RCOORDS_INPUT_FILE  "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_rCoords.txt\"")
 
 # Floor values
 set(RHO_FLOOR         "1e-4")
-set(UU_FLOOR          "1e-5")
+set(UU_FLOOR          "1e-6")
 set(RHO_FLOOR_FALLOFF "-1.5")
 set(UU_FLOOR_FALLOFF  "-2.5")
 set(RHO_FLOOR_MIN     "1e-15")
 set(UU_FLOOR_MIN      "1e-15")
-set(GAMMA_MAX         "10.")
 
 message("")
 message("#########################")
@@ -96,7 +97,6 @@ message("Time stepping    : " ${TIME_STEPPING})
 message("Dimensions       : " ${COMPUTE_DIM})
 message("Resolution       : " ${N1} " x " ${N2})
 message("Tile size        : " ${TILE_SIZE_X1} " x " ${TILE_SIZE_X2})
-message("Metric           : " ${METRIC})
 
 message("")
 message("#########################")
@@ -140,10 +140,14 @@ message("######################")
 message("# Initial conditions #")
 message("######################")
 message("")
-message("R_PRESSURE_MAX   : " ${R_PRESSURE_MAX})
-message("R_INNER_EDGE     : " ${R_INNER_EDGE})
-message("ADIABAT          : " ${ADIABAT})
-message("PLASMA_BETA      : " ${PLASMA_BETA})
+message("Magnetic field configuration     : " ${MAGNETIC_FIELD_CONFIGURATION})
+message("Plasma beta                      : " ${PLASMA_BETA})
+message("Pressure perturbation amplitude  : " ${PERTURBATIONS_AMPLITUDE})
+message("Density input file               : " ${RHO_INPUT_FILE})
+message("Internal energy input file       : " ${UU_INPUT_FILE})
+message("Radial velocity input file       : " ${UR_INPUT_FILE})
+message("Heat flux input file             : " ${PHI_INPUT_FILE})
+message("Radial coordinates input file    : " ${RCOORDS_INPUT_FILE})
 
 message("")
 message("##########")
@@ -152,4 +156,3 @@ message("##########")
 message("")
 message("Density floor          : ${RHO_FLOOR} x r^${RHO_FLOOR_FALLOFF}")
 message("Internal energy floor  : ${UU_FLOOR} x r^${UU_FLOOR_FALLOFF}")
-message("Maximum Lorentz factor : "   ${GAMMA_MAX})
