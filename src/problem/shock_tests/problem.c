@@ -120,6 +120,18 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         B2Left        = 10.;        B2Right       = -10.;
         B3Left        = 0.;         B3Right       = 0.;
 
+      #elif (SHOCK_TEST == STATIONARY_SHOCK)
+      
+        rhoLeft       = 1.;                      rhoRight      = 3.08312999;
+        pressureLeft  = 1./(ADIABATIC_INDEX-1.); pressureRight = 4.94577705/(ADIABATIC_INDEX-1.);
+        u1Left        = 1.;         u1Right       = 0.32434571;
+        u2Left        = 0.;         u2Right       = 0.;
+        u3Left        = 0.;         u3Right       = 0.;
+        B1Left        = 0.00001;    B1Right       = 0.00001;
+        B2Left        = 0.;         B2Right       = 0.;
+        B3Left        = 0.;         B3Right       = 0.;
+
+
       #endif
 
       if (XCoords[1] < X1Center)
