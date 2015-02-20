@@ -319,27 +319,29 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         REAL complex deltaPrimVars[DOF];
 
         primVars0[RHO] = 1.;
-        primVars0[UU]  = 0.01;
+        primVars0[UU]  = 2.;
         primVars0[U1]  = 0.;
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
-        primVars0[B1]  = 0.01;
+        primVars0[B1]  = .001;
         primVars0[B2]  = 0.;
         primVars0[B3]  = 0.;
 	primVars0[PSI]  = 0.;
 	
-        deltaPrimVars[RHO] = 0.991060736449;
-        deltaPrimVars[UU]  = 0.0132141431527 - 4.60785923306e-19*I;
-        deltaPrimVars[U1]  = -0.131266091803 - 0.000591490468813*I;
-        deltaPrimVars[U2]  = 1.e-4;
+        deltaPrimVars[RHO] = 0.345907557128 + 2.08166817117e-17*I;
+        deltaPrimVars[UU]  = 0.922420152341;
+        deltaPrimVars[U1]  = -0.171584412179 - 4.06388721081e-05*I;
+        deltaPrimVars[U2]  = 0.;
         deltaPrimVars[U3]  = 0.;
         deltaPrimVars[B1]  = 0.;
-        deltaPrimVars[B2]  = -1.e-4;
+        deltaPrimVars[B2]  = 0.;
         deltaPrimVars[B3]  = 0.;
-	deltaPrimVars[PSI]  = 0.0198194260853 + 0.000238162630751*I;
+	deltaPrimVars[PSI]  = 0.00691108899638 + 0.000221744119852*I;
 
-	etaProblem    = 1.;
-        tauVisProblem = 100.;
+	etaProblem    = .1;
+        tauVisProblem = 10.;
+
+	REAL FireSeed = 1.e-8;
 
         REAL k1 = 2*M_PI;
         REAL k2 = 0.;
@@ -352,10 +354,13 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 	    INDEX_PETSC(primOldGlobal, &zone, var) =  
 	      primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
         }
-	PetscRandomGetValue(randNumGen, &randNum);
-	INDEX_PETSC(primOldGlobal, &zone, U2) = 1.e-8*randNum;
-	PetscRandomGetValue(randNumGen, &randNum);
-        INDEX_PETSC(primOldGlobal, &zone, B2) =1.e-8*randNum;
+	mode = cexp(I*(k1*XCoords[1]*20 + k2*XCoords[2]) );
+	INDEX_PETSC(primOldGlobal, &zone, U2) = creal(FireSeed*mode);
+	INDEX_PETSC(primOldGlobal, &zone, B2) = -creal(FireSeed*mode*sqrt(11./3));
+	//PetscRandomGetValue(randNumGen, &randNum);
+	//INDEX_PETSC(primOldGlobal, &zone, U2) = FireSeed*randNum;
+	//PetscRandomGetValue(randNumGen, &randNum);
+        //INDEX_PETSC(primOldGlobal, &zone, B2) = FireSeed*randNum;
       #endif
 
     }

@@ -1,5 +1,30 @@
 #include "../problem.h"
 
+#if (CONDUCTION)
+  REAL kappaProblem=0.1;
+  REAL tauProblem=.1; 
+
+  void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->kappa = kappaProblem;
+    elem->tau   = tauProblem;
+  }
+#endif
+
+#if (VISCOSITY)
+  REAL etaProblem=0.1;
+  REAL tauVisProblem=.1; 
+
+  void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->eta     = etaProblem;
+    elem->tauVis  = tauVisProblem;
+  }
+#endif
+
+
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
   ARRAY(primOldGlobal);
@@ -353,11 +378,3 @@ void applyProblemSpecificFluxFilter
 
 }
 
-#if (CONDUCTION)
-void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
-                             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  SETERRQ(PETSC_COMM_WORLD, 1,
-          "Conduction parameters not set in shock_tests/problem.c\n");
-}
-#endif
