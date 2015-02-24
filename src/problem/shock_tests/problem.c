@@ -7,8 +7,28 @@
   void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
-    elem->kappa = kappaProblem;
-    elem->tau   = tauProblem;
+//    elem->kappa = kappaProblem;
+//    elem->tau   = tauProblem;
+  
+    REAL xCoords[NDIM];
+    XTox(geom->XCoords, xCoords);
+
+    REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
+    REAL T   = P/elem->primVars[RHO];
+    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                    / (elem->primVars[RHO] + elem->primVars[UU])
+                   );
+
+    REAL phiCeil = elem->primVars[RHO] * pow(cs, 3.);
+
+    REAL tauDynamical = 1.;
+    REAL lambda       = 0.01;
+    REAL y            = elem->primVars[PHI]/phiCeil;
+    REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
+    
+    REAL tau    = tauDynamical*fermiDirac;
+    elem->kappa = cs*cs*tau*elem->primVars[RHO];
+    elem->tau   = tau; 
   }
 #endif
 
@@ -19,8 +39,27 @@
   void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
-    elem->eta     = etaProblem;
-    elem->tauVis  = tauVisProblem;
+//    elem->eta     = etaProblem;
+//    elem->tauVis  = tauVisProblem;
+
+    REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
+    REAL T   = P/elem->primVars[RHO];
+    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                    / (elem->primVars[RHO] + elem->primVars[UU])
+                   );
+
+    REAL bSqr    = getbSqr(elem, geom);
+    REAL beta    = P/bSqr/2.;
+    REAL psiCeil = 2.*P/beta;
+
+    REAL tauDynamical = 1.;
+    REAL lambda       = 0.01;
+    REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
+    REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
+    
+    REAL tau     = tauDynamical*fermiDirac;
+    elem->eta    = 1e-2*cs*cs*tau*elem->primVars[RHO];
+    elem->tauVis = tau;
   }
 #endif
 
@@ -56,6 +95,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       REAL B1Left,        B1Right;
       REAL B2Left,        B2Right;
       REAL B3Left,        B3Right;
+    #if (CONDUCTION)
+      REAL phiLeft=0.,       phiRight=0.;
+    #endif
+    #if (VISCOSITY)
+      REAL psiLeft=0.,       psiRight=0.;
+    #endif
 
       #if (SHOCK_TEST == FAST_SHOCK)
 
@@ -147,15 +192,15 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       #elif (SHOCK_TEST == STATIONARY_SHOCK)
       
-        rhoLeft       = 1.;                      rhoRight      = 3.08312999;
-        pressureLeft  = 1./(ADIABATIC_INDEX-1.); pressureRight = 4.94577705/(ADIABATIC_INDEX-1.);
+        rhoLeft       = 1.;         rhoRight      = 3.08312999;
+        pressureLeft  = 1*(ADIABATIC_INDEX-1.); 
+        pressureRight = 4.94577705*(ADIABATIC_INDEX-1.);
         u1Left        = 1.;         u1Right       = 0.32434571;
         u2Left        = 0.;         u2Right       = 0.;
         u3Left        = 0.;         u3Right       = 0.;
         B1Left        = 0.00001;    B1Right       = 0.00001;
         B2Left        = 0.;         B2Right       = 0.;
         B3Left        = 0.;         B3Right       = 0.;
-
 
       #endif
 
@@ -169,6 +214,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         INDEX_PETSC(primOldGlobal, &zone, B1)   = B1Left;
         INDEX_PETSC(primOldGlobal, &zone, B2)   = B2Left;
         INDEX_PETSC(primOldGlobal, &zone, B3)   = B3Left;
+        #if (CONDUCTION)
+          INDEX_PETSC(primOldGlobal, &zone, PHI)  = phiLeft;
+        #endif
+        #if (VISCOSITY)
+          INDEX_PETSC(primOldGlobal, &zone, PSI)  = psiLeft;
+        #endif
       } else
       {
         INDEX_PETSC(primOldGlobal, &zone, RHO)  = rhoRight;
@@ -179,6 +230,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         INDEX_PETSC(primOldGlobal, &zone, B1)   = B1Right;
         INDEX_PETSC(primOldGlobal, &zone, B2)   = B2Right;
         INDEX_PETSC(primOldGlobal, &zone, B3)   = B3Right;
+        #if (CONDUCTION)
+          INDEX_PETSC(primOldGlobal, &zone, PHI)  = phiRight;
+        #endif
+        #if (VISCOSITY)
+          INDEX_PETSC(primOldGlobal, &zone, PSI)  = psiRight;
+        #endif
       }
 
     }
