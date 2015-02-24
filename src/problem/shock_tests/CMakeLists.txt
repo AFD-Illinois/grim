@@ -7,16 +7,16 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
-set(DT "1e-10")
-set(DT_DUMP ".5")
+set(DT "1e-5")
+set(DT_DUMP "1.")
 set(START_TIME "0.")
-set(FINAL_TIME "20.")
+set(FINAL_TIME "100.")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "1")
-set(N1 "2520")
+set(N1 "512")
 set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -31,22 +31,22 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "7")
+set(TILE_SIZE_X1 "32")
 set(TILE_SIZE_X2 "1")
 set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
-set(VISCOSITY "OFF")
+set(VISCOSITY  "ON")
 
 # Geometry
 set(METRIC "MINKOWSKI")
 set(EPS    "1e-5")
 
 # Domain
-set(X1_A  "-0.5")
-set(X1_B  "9.5")
+set(X1_A  "-4.")
+set(X1_B  "4.")
 set(X2_A  "0.")
 set(X2_B  "1.")
 
@@ -72,7 +72,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # SHOCK_TUBE_2
 # COLLISION
 # STATIONARY_SHOCK
-set(SHOCK_TEST  "SLOW_SHOCK")
+set(SHOCK_TEST  "STATIONARY_SHOCK")
 
 # Floor values
 set(RHO_FLOOR         "1e-7")
