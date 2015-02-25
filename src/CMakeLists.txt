@@ -42,7 +42,7 @@ set(ARRAY_ARGS "const restrict static")
 # 11) torus
 # 12) buoyancy_instabilities
 
-set(PROBLEM "shock_tests")
+set(PROBLEM "orzag_tang")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

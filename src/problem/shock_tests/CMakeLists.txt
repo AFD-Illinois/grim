@@ -6,7 +6,7 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMEX")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")

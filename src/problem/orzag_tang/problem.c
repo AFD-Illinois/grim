@@ -215,10 +215,65 @@ void applyProblemSpecificFluxFilter
 }
 
 #if (CONDUCTION)
-void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
-                             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  SETERRQ(PETSC_COMM_WORLD, 1,
-          "Conduction parameters not set in shock_tests/problem.c\n");
-}
+  REAL kappaProblem=0.1;
+  REAL tauProblem=.1; 
+
+  void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+//    elem->kappa = kappaProblem;
+//    elem->tau   = tauProblem;
+  
+    REAL xCoords[NDIM];
+    XTox(geom->XCoords, xCoords);
+
+    REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
+    REAL T   = P/elem->primVars[RHO];
+    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                    / (elem->primVars[RHO] + elem->primVars[UU])
+                   );
+
+    REAL phiCeil = elem->primVars[RHO] * pow(cs, 3.);
+
+    REAL tauDynamical = 1.;
+    REAL lambda       = 0.01;
+    REAL y            = elem->primVars[PHI]/phiCeil;
+    REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-3;
+    
+    REAL tau    = tauDynamical*fermiDirac;
+    elem->kappa = cs*cs*tau*elem->primVars[RHO];
+    elem->tau   = tau; 
+  }
 #endif
+
+#if (VISCOSITY)
+  REAL etaProblem=0.1;
+  REAL tauVisProblem=.1; 
+
+  void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+//    elem->eta     = etaProblem;
+//    elem->tauVis  = tauVisProblem;
+
+    REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
+    REAL T   = P/elem->primVars[RHO];
+    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                    / (elem->primVars[RHO] + elem->primVars[UU])
+                   );
+
+    REAL bSqr    = getbSqr(elem, geom);
+    REAL beta    = P/(bSqr/2.);
+    REAL psiCeil = 2.*P/beta;
+
+    REAL tauDynamical = 1.;
+    REAL lambda       = 0.01;
+    REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
+    REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-3;
+    
+    REAL tau     = tauDynamical*fermiDirac;
+    elem->eta    = cs*cs*tau*elem->primVars[RHO];
+    elem->tauVis = tau;
+  }
+#endif
+
