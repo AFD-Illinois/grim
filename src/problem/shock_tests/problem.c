@@ -49,7 +49,7 @@
                    );
 
     REAL bSqr    = getbSqr(elem, geom);
-    REAL beta    = P/bSqr/2.;
+    REAL beta    = P/(bSqr/2.);
     REAL psiCeil = 2.*P/beta;
 
     REAL tauDynamical = 1.;
@@ -58,7 +58,7 @@
     REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
     
     REAL tau     = tauDynamical*fermiDirac;
-    elem->eta    = 1e-2*cs*cs*tau*elem->primVars[RHO];
+    elem->eta    = cs*cs*tau*elem->primVars[RHO];
     elem->tauVis = tau;
   }
 #endif

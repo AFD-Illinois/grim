@@ -30,6 +30,7 @@
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
 #cmakedefine01  CONDUCTION
+#cmakedefine01  VISCOSITY
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})
