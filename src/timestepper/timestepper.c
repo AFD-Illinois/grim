@@ -7,35 +7,51 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   /* Periodic boundary conditions handled by Petsc since it is a global boundary
    * condition. Here we check for the boundary at the left edge. Obviously the
    * boundary at the right edge also must be PERIODIC if left edge is PERIODIC */
-  #if (PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
-    
-    #if (COMPUTE_DIM==1)
+  #if (COMPUTE_DIM==1)
+
+    #if (PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
       DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, N1, DOF, NG, NULL,
                    &ts->dmdaWithGhostZones);
-    #elif (COMPUTE_DIM==2)
-      DMDACreate2d(PETSC_COMM_WORLD, 
-                   DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-                   DMDA_STENCIL_BOX,
-                   N1, N2,
-                   PETSC_DECIDE, PETSC_DECIDE,
-                   DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-    #endif /* Choose dimension */
-
-  #else /* Not a periodic boundary */
-    
-    #if (COMPUTE_DIM==1)
+    #else
       DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, N1, DOF, NG, NULL,
                    &ts->dmdaWithGhostZones);
-    #elif (COMPUTE_DIM==2)
-      DMDACreate2d(PETSC_COMM_WORLD, 
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                   DMDA_STENCIL_BOX,
-                   N1, N2,
-                   PETSC_DECIDE, PETSC_DECIDE,
-                   DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-    #endif /* Choose dimension */
+    #endif
+  
+  #elif (COMPUTE_DIM==2)
 
-  #endif /* Create dmdaWithGhostZones */
+      #if (PHYSICAL_BOUNDARY_TOP_EDGE==PERIODIC && PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
+        DMDACreate2d(PETSC_COMM_WORLD, 
+                     DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
+                     DMDA_STENCIL_BOX,
+                     N1, N2,
+                     PETSC_DECIDE, PETSC_DECIDE,
+                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
+
+      #elif (PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
+        DMDACreate2d(PETSC_COMM_WORLD, 
+                     DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
+                     DMDA_STENCIL_BOX,
+                     N1, N2,
+                     PETSC_DECIDE, PETSC_DECIDE,
+                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
+
+      #elif (PHYSICAL_BOUNDARY_TOP_EDGE==PERIODIC)
+        DMDACreate2d(PETSC_COMM_WORLD, 
+                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
+                     DMDA_STENCIL_BOX,
+                     N1, N2,
+                     PETSC_DECIDE, PETSC_DECIDE,
+                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
+      #else
+        DMDACreate2d(PETSC_COMM_WORLD, 
+                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                     DMDA_STENCIL_BOX,
+                     N1, N2,
+                     PETSC_DECIDE, PETSC_DECIDE,
+                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
+      #endif
+
+  #endif /* Choose dim and create dmdaWithGhostZones */
 
   /* Now create dmdaWithoutGhostZones for the vectors that don't need
    * communication */
