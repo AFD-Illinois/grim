@@ -1,0 +1,8 @@
+-snes_monitor
+-snes_converged_reason
+-snes_max_it 3
+-snes_lag_jacobian 10
+-pc_type lu
+-ksp_type preonly
+-pc_factor_shift_type NONZERO
+-pc_factor_shift_amount 1.
