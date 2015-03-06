@@ -92,17 +92,21 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       REAL r = xCoords[1];
       REAL T = 1.;
       REAL Rho0 = RHO_FLOOR_MIN;
+      REAL ur = 0.;
+      REAL ut = 1.;
       if(r>2.+1.e-8)
 	{
 	  T = SolveT(r,C1,C2);
 	  Rho0 = pow(T/Kp,nPoly);
+	  ur = -C1/r/r/pow(T,nPoly);
+	  ut = (2./r*ur+sqrt(1.-2./r+ur*ur))/(1.-2./r);
 	}
 
       PetscRandomGetValue(randNumGen, &randNum);
 
       primTile[INDEX_TILE(&zone, RHO)] = Rho0;
       primTile[INDEX_TILE(&zone, UU)] = nPoly*Rho0*T;
-      primTile[INDEX_TILE(&zone, U1)] = -C1/r/r/pow(T,nPoly)+.001*(randNum-0.5);
+      primTile[INDEX_TILE(&zone, U1)] = ur + ut*2./r+.001*(randNum-0.5);
       primTile[INDEX_TILE(&zone, U2)] = 0.;
       primTile[INDEX_TILE(&zone, U3)] = 0.;
 
