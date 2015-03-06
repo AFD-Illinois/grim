@@ -10,13 +10,13 @@ set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
-set(FINAL_TIME "1.e-5")
+set(FINAL_TIME "10.")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
+set(N1 "256")
 set(N2 "8")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -51,7 +51,7 @@ set(H_SLOPE "1.") # Refinement in the theta direction to better resolve the
                    # all points towards the midplane.
 
 # Domain
-set(R_A     "2.5")
+set(R_A     "3.")
 set(R_B     "40.")
 
 set(X1_A  "log(R_A)")
@@ -60,7 +60,7 @@ set(X2_A  "1e-20")
 set(X2_B  "1. - 1e-20")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "DIRICHLET")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
 set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "DIRICHLET")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")

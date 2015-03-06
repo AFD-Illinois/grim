@@ -130,16 +130,17 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       primTile[INDEX_TILE(&zone, RHO)] = Rho0;
       primTile[INDEX_TILE(&zone, UU)] = nPoly*Rho0*T;
-      primTile[INDEX_TILE(&zone, U1)] = ur + ut*2./r+.001*(randNum-0.5);
+      primTile[INDEX_TILE(&zone, U1)] = (ur + ut*2./r/(1.+2./r)+.001*(randNum-0.5))/r;
       primTile[INDEX_TILE(&zone, U2)] = 0.;
       primTile[INDEX_TILE(&zone, U3)] = 0.;
 
-      primTile[INDEX_TILE(&zone, B1)] = BMAG/r/r/sqrt(1.+2./r);;
+      //magnetic field is F*ti
+      primTile[INDEX_TILE(&zone, B1)] = BMAG/r/r/r;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
 
       #if (VISCOSITY)
-        primTile[INDEX_TILE(&zone, PSI)] = 1.e-5;
+        primTile[INDEX_TILE(&zone, PSI)] = 0.;
 	etaProblem    = .1;
 	tauVisProblem = 1.;
       #endif
