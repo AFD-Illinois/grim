@@ -1,0 +1,83 @@
+#ifndef GRIM_INPUT_H_
+#define GRIM_INPUT_H_
+
+/* Immutable constants. Should not be changed */
+#define NDIM                  (4)
+#define M_PI                  (3.141592653589793238462643383279)
+/* End of immutable constants */
+  
+#cmakedefine    OUTPUT_DIR       ${OUTPUT_DIR}
+#cmakedefine01  RESTART
+#cmakedefine    RESTART_FILE     ${RESTART_FILE}
+#cmakedefine    DUMP_FILE_PREFIX ${DUMP_FILE_PREFIX}
+#cmakedefine    TIME_STEPPING    ${TIME_STEPPING}
+#cmakedefine    DT              (${DT})
+#cmakedefine    DT_DUMP         (${DT_DUMP})
+#cmakedefine    START_TIME      (${START_TIME})
+#cmakedefine    FINAL_TIME      (${FINAL_TIME})
+#cmakedefine    COURANT         (${COURANT})
+#cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
+#cmakedefine    REAL             ${REAL}
+#cmakedefine    ARRAY_ARGS       ${ARRAY_ARGS}
+#cmakedefine    PROBLEM_DATA  ${PROBLEM_DATA}
+
+/* Domain inputs */
+#cmakedefine    COMPUTE_DIM      (${COMPUTE_DIM})
+#cmakedefine    N1               (${N1})
+#cmakedefine    N2               (${N2})
+#cmakedefine    TILE_SIZE_X1     (${TILE_SIZE_X1})
+#cmakedefine    TILE_SIZE_X2     (${TILE_SIZE_X2})
+#cmakedefine01  USE_OPENMP
+
+
+#cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
+#cmakedefine01  CONDUCTION
+#cmakedefine01  VISCOSITY
+
+/* Initial condition parameters */
+#cmakedefine    SONICRADIUS               (${SONICRADIUS})
+#cmakedefine    MDOT                      (${MDOT})
+#cmakedefine    BMAG                      (${BMAG})        
+
+/* Geometry */
+#cmakedefine    METRIC              (${METRIC})
+#cmakedefine    EPS                 (${EPS})
+#cmakedefine    M                   (${M})
+#cmakedefine    BH_SPIN             (${BH_SPIN})
+#cmakedefine    H_SLOPE             (${H_SLOPE})
+
+/* Domain */
+#cmakedefine    R_A   (${R_A})
+#cmakedefine    R_B   (${R_B})
+
+#cmakedefine    X1_A  (${X1_A})
+#cmakedefine    X1_B  (${X1_B})
+#cmakedefine    X2_A  (${X2_A})
+#cmakedefine    X2_B  (${X2_B})
+
+/* Boundary conditions */
+#cmakedefine    PHYSICAL_BOUNDARY_LEFT_EDGE   (${PHYSICAL_BOUNDARY_LEFT_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_RIGHT_EDGE  (${PHYSICAL_BOUNDARY_RIGHT_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_TOP_EDGE    (${PHYSICAL_BOUNDARY_TOP_EDGE})
+#cmakedefine    PHYSICAL_BOUNDARY_BOTTOM_EDGE (${PHYSICAL_BOUNDARY_BOTTOM_EDGE})
+
+/* Reconstruction */
+#cmakedefine    RECONSTRUCTION  (${RECONSTRUCTION})
+
+/* Floor values */
+#cmakedefine    RHO_FLOOR               (${RHO_FLOOR})
+#cmakedefine    UU_FLOOR                (${UU_FLOOR})
+#cmakedefine    RHO_FLOOR_FALLOFF       (${RHO_FLOOR_FALLOFF})
+#cmakedefine    UU_FLOOR_FALLOFF        (${UU_FLOOR_FALLOFF})
+#cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
+#cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
+#cmakedefine    GAMMA_MAX               (${GAMMA_MAX})
+
+/* Number of ghost zones */
+#if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
+  #define NG  (3)
+#elif (RECONSTRUCTION==MP5)
+  #define NG  (4)
+#endif
+
+#endif /* GRIM_INPUT_H_ */

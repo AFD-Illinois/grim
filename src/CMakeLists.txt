@@ -18,8 +18,9 @@ project(grim)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
-#set(PETSC_ARCH "arch-darwin-c-opt")
+set(PETSC_DIR "/Users/francoisfoucart/Work/petsc")
+#set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+set(PETSC_ARCH "arch-darwin-c-opt")
 
 # Double or float precision?
 set(REAL "double")
@@ -41,8 +42,9 @@ set(ARRAY_ARGS "const restrict static")
 # 10) anisotropic_conduction
 # 11) torus
 # 12) buoyancy_instabilities
+# 13) bondi_viscous
 
-set(PROBLEM "orzag_tang")
+set(PROBLEM "bondi_viscous")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
