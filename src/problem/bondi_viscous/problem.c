@@ -76,7 +76,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   {
     REAL primTile[TILE_SIZE];
 
-    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
     {
       struct gridZone zone;
       setGridZone(iTile, jTile,
@@ -110,12 +110,40 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
 
+      //Dirichlet Boundary data
+      if (zone.i < 0)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          ts->problemSpecificData->primVarsLeftEdge[zone.i+NG][var]
+            = primTile[INDEX_TILE(&zone, var)];
+        }
+      }
+      if (zone.i > N1-1)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          ts->problemSpecificData->primVarsRightEdge[zone.i-N1][var]
+            = primTile[INDEX_TILE(&zone, var)];
+        }
+      }
+    }
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+                  iInTile, jInTile,
+                  ts->X1Start, ts->X2Start,
+                  ts->X1Size, ts->X2Size,
+                  &zone);
+      
       for (int var=0; var<DOF; var++)
       {
         INDEX_PETSC(primOldGlobal, &zone, var) =
           primTile[INDEX_TILE(&zone, var)];
       }
     }
+
   }
   PetscRandomDestroy(&randNumGen);
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
@@ -227,6 +255,40 @@ void applyAdditionalProblemSpecificBCs
   REAL primTile[ARRAY_ARGS TILE_SIZE]
 )
 {
+  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  {
+    struct gridZone zone;
+    setGridZone(iTile, jTile,
+                iInTile, jInTile,
+                X1Start, X2Start,
+                X1Size, X2Size,
+                &zone);
+
+    #if (PHYSICAL_BOUNDARY_LEFT_EDGE==DIRICHLET)
+      if (zone.i < 0)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          primTile[INDEX_TILE(&zone, var)] =
+            problemSpecificData->primVarsLeftEdge[zone.i+NG][var];
+        }
+
+      }
+    #endif
+
+    #if (PHYSICAL_BOUNDARY_RIGHT_EDGE==DIRICHLET)
+      if (zone.i > N1-1)
+      {
+        for (int var=0; var<DOF; var++)
+        {
+          primTile[INDEX_TILE(&zone, var)] = 
+            problemSpecificData->primVarsRightEdge[zone.i-N1][var];
+        }
+      }
+    #endif
+
+  }
+
 }
 
 void applyProblemSpecificFluxFilter
