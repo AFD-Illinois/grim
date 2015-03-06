@@ -10,7 +10,7 @@ set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
-set(FINAL_TIME "10.")
+set(FINAL_TIME "1.e-5")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
@@ -72,7 +72,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # Initial condition parameters 
 # Everything in units of M
 set(SONICRADIUS        "10.")
-set(MDOT               "1.")
+set(MDOT               "0.001")
 set(BMAG               "0.001")
 
 # Floor values

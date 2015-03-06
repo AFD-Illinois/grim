@@ -1,6 +1,30 @@
 #include "../problem.h"
 #include "bondi_viscous.h"
 
+#if (CONDUCTION)
+  REAL kappaProblem;
+  REAL tauProblem; 
+
+  void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->kappa = kappaProblem;
+    elem->tau   = tauProblem;
+  }
+#endif
+
+#if (VISCOSITY)
+  REAL etaProblem;
+  REAL tauVisProblem; 
+
+  void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+    elem->eta     = etaProblem;
+    elem->tauVis  = tauVisProblem;
+  }
+#endif
+
 REAL FuncT(const REAL T, const REAL R, const REAL C1, const REAL C2)
 {
     REAL nPoly = 1./(ADIABATIC_INDEX-1.);
@@ -113,6 +137,17 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, B1)] = BMAG/r/r/sqrt(1.+2./r);;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
+
+      #if (VISCOSITY)
+        primTile[INDEX_TILE(&zone, PSI)] = 1.e-5;
+	etaProblem    = .1;
+	tauVisProblem = 1.;
+      #endif
+      #if (CONDUCTION)
+        primTile[INDEX_TILE(&zone, PHI)] = 0.;
+	kappaProblem = .1;
+	tauProblem   = 1.;
+      #endif
 
       //Dirichlet Boundary data
       if (zone.i < 0)
@@ -320,11 +355,3 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
 {
 }
 
-#if (CONDUCTION)
-void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
-                             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  SETERRQ(PETSC_COMM_WORLD, 1,
-          "Conduction parameters not set in shock_tests/problem.c\n");
-}
-#endif
