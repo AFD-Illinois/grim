@@ -421,7 +421,7 @@ PetscErrorCode computeResidual(SNES snes,
             + INDEX_PETSC(divFluxOldGlobal, &zone, var)
             - INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
           )/norm;
-
+	
         #elif (TIME_STEPPING==IMEX)
 
           INDEX_PETSC(residualGlobal, &zone, var) = 
