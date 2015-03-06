@@ -3,5 +3,7 @@
 
 struct problemData
 {
+  REAL primVarsLeftEdge[NG][DOF];
+  REAL primVarsRightEdge[NG][DOF];
 };
 
