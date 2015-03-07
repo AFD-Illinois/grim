@@ -21,7 +21,7 @@
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
     elem->eta     = etaProblem;
-    elem->tauVis  = tauVisProblem;
+    elem->tauVis  = 10.*etaProblem/elem->primVars[RHO];//tauVisProblem;
   }
 #endif
 
@@ -312,7 +312,6 @@ void applyAdditionalProblemSpecificBCs
           primTile[INDEX_TILE(&zone, var)] =
             problemSpecificData->primVarsLeftEdge[zone.i+NG][var];
         }
-
       }
     #endif
 
