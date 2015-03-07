@@ -8,16 +8,16 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-5")
-set(DT_DUMP "1.")
+set(DT_DUMP "10.")
 set(START_TIME "0.")
-set(FINAL_TIME "10.")
+set(FINAL_TIME "1000.")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "256")
-set(N2 "8")
+set(N1 "128")
+set(N2 "4")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -32,14 +32,14 @@ set(N2 "8")
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
 set(TILE_SIZE_X1 "8")
-set(TILE_SIZE_X2 "8")
+set(TILE_SIZE_X2 "4")
 
 set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
-set(VISCOSITY "OFF")
+set(VISCOSITY "ON")
 
 # Geometry
 set(METRIC  "KERRSCHILD")
@@ -72,8 +72,8 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # Initial condition parameters 
 # Everything in units of M
 set(SONICRADIUS        "10.")
-set(MDOT               "0.001")
-set(BMAG               "0.001")
+set(MDOT               "100.")
+set(BMAG               "1.")
 
 # Floor values
 set(RHO_FLOOR         "1e-4")
