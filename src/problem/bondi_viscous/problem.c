@@ -21,7 +21,7 @@
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
     elem->eta     = etaProblem;
-    elem->tauVis  = 10.*etaProblem/elem->primVars[RHO];//tauVisProblem;
+    elem->tauVis  = tauVisProblem;
   }
 #endif
 
@@ -130,7 +130,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       primTile[INDEX_TILE(&zone, RHO)] = Rho0;
       primTile[INDEX_TILE(&zone, UU)] = nPoly*Rho0*T;
-      primTile[INDEX_TILE(&zone, U1)] = (ur + ut*2./r/(1.+2./r)+.001*(randNum-0.5))/r;
+      primTile[INDEX_TILE(&zone, U1)] = (ur + ut*2./r/(1.+2./r)+.0*(randNum-0.5))/r;
       primTile[INDEX_TILE(&zone, U2)] = 0.;
       primTile[INDEX_TILE(&zone, U3)] = 0.;
 
@@ -141,8 +141,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       #if (VISCOSITY)
         primTile[INDEX_TILE(&zone, PSI)] = 0.;
-	etaProblem    = .1;
-	tauVisProblem = 1.;
+	etaProblem    = .01;
+	tauVisProblem = 30.;
       #endif
       #if (CONDUCTION)
         primTile[INDEX_TILE(&zone, PHI)] = 0.;
@@ -312,6 +312,12 @@ void applyAdditionalProblemSpecificBCs
           primTile[INDEX_TILE(&zone, var)] =
             problemSpecificData->primVarsLeftEdge[zone.i+NG][var];
         }
+      #if (VISCOSITY)
+	primTile[INDEX_TILE(&zone, PSI)] =
+	  primTile[INDEX_TILE_MANUAL(0, zone.jInTile, PSI)]-
+	  zone.iInTile*(primTile[INDEX_TILE_MANUAL(1, zone.jInTile, PSI)]-
+			primTile[INDEX_TILE_MANUAL(0, zone.jInTile, PSI)]);
+      #endif
       }
     #endif
 

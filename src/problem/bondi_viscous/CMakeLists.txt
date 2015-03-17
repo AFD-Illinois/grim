@@ -8,7 +8,7 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "EXPLICIT")
 set(DT "1e-5")
-set(DT_DUMP "10.")
+set(DT_DUMP "100.")
 set(START_TIME "0.")
 set(FINAL_TIME "1000.")
 set(COURANT "0.5")
@@ -51,8 +51,8 @@ set(H_SLOPE "1.") # Refinement in the theta direction to better resolve the
                    # all points towards the midplane.
 
 # Domain
-set(R_A     "3.")
-set(R_B     "40.")
+set(R_A     "3.1")
+set(R_B     "35.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -60,7 +60,7 @@ set(X2_A  "1e-20")
 set(X2_B  "1. - 1e-20")
 
 # Boundary conditions
-set(PHYSICAL_BOUNDARY_LEFT_EDGE   "OUTFLOW")
+set(PHYSICAL_BOUNDARY_LEFT_EDGE   "DIRICHLET")
 set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "DIRICHLET")
 set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
 set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
@@ -71,8 +71,8 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
-set(SONICRADIUS        "10.")
-set(MDOT               "100.")
+set(SONICRADIUS        "8.")
+set(MDOT               "2.")
 set(BMAG               "1.")
 
 # Floor values
