@@ -905,9 +905,13 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
 void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 {
-  ARRAY(primOldGlobal);
+  /* Stricty speaking, need to use ts->dmdaWithoutGhostZones for EXPLICIT, IMEX
+   * and ts->dmdaWithGhostZones for IMPLICIT. I'm not going to bother coding
+   * that right now but this is a note to make sure you don't access the ghost
+   * zones when using EXPLICT and IMEX */
+  ARRAY(primGlobal);
   DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, 
-                     ts->primPetscVecOld, &primOldGlobal);
+                     ts->primPetscVec, &primGlobal);
 
   #if (USE_OPENMP)
     #pragma omp parallel for
@@ -928,7 +932,7 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
       for (int var=0; var<DOF; var++)
       {
         primTile[INDEX_TILE(&zone, var)] =
-        INDEX_PETSC(primOldGlobal, &zone, var);
+        INDEX_PETSC(primGlobal, &zone, var);
       }
     }
 
@@ -948,7 +952,7 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
       for (int var=0; var<DOF; var++)
       {
-        INDEX_PETSC(primOldGlobal, &zone, var) =
+        INDEX_PETSC(primGlobal, &zone, var) =
         primTile[INDEX_TILE(&zone, var)];
       }
     }
@@ -956,7 +960,7 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   }
 
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
-                         ts->primPetscVecOld, &primOldGlobal);
+                         ts->primPetscVec, &primGlobal);
 }
 
 void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
@@ -1017,9 +1021,25 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
   XTox(geom->XCoords, xCoords);
 
   REAL r = xCoords[1];
-  REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+
+  REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
+  REAL T   = P/elem->primVars[RHO];
+  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                  / (elem->primVars[RHO] + elem->primVars[UU])
+                 );
+
+  REAL phiCeil = elem->primVars[RHO] * pow(cs, 3.);
+
+  REAL tauDynamical = pow(r, 3./2.);
+  REAL lambda       = 0.1;
+  REAL y            = elem->primVars[PHI]/phiCeil;
+  REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
     
-  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
-  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;
+  REAL tau    = tauDynamical*fermiDirac;
+  elem->kappa = 1e-5*cs*cs*tau*elem->primVars[RHO];
+  elem->tau   = tau + 0.01; 
+
+//  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
+//  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
 }
 #endif

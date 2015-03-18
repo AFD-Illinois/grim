@@ -424,6 +424,18 @@ void addConductionSourceTermsToResidual
         bDotq += bCov[mu]*qConEckart[mu]/sqrt(bSqr);
       }
     
+      
+//      REAL P   = (ADIABATIC_INDEX-1.)*elemCenter.primVars[UU];
+//      REAL cs  =  sqrt((ADIABATIC_INDEX-1.)*P
+//                 /(elemCenter.primVars[RHO] + elemCenter.primVars[UU]));
+//      REAL phiCeil = 0.1 * elemCenter.primVars[RHO] * pow(cs, 3.);
+//
+//      if (abs(bDotq) > phiCeil)
+//      {
+//        bDotq = copysign(phiCeil, bDotq);
+//      }
+//
+
       REAL g = sqrt(-geomCenter.gDet);
       REAL norm = g;
       #if (TIME_STEPPING == EXPLICIT)
@@ -504,7 +516,7 @@ void computeConductionSpatialGradientTerms
                     * primTile[INDEX_TILE_PLUS_ONE_X2(&zoneCenter, UU)]
                     / primTile[INDEX_TILE_PLUS_ONE_X2(&zoneCenter, RHO)];
 
-    /* gradT[1] = dT_dX1 */
+    /* gradT[1] = dT_dX2 */
     gradT[1] = 
       slopeLimitedDerivative(TLeftX2, TCenter, TRightX2)/zoneCenter.dX2;
   #endif

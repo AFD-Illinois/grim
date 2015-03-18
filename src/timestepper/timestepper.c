@@ -404,8 +404,6 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
  */
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
-  PetscErrorCode errCode;
-
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
     /* First go from t=n to t=n+1/2 */
@@ -419,8 +417,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->dt = dt/2.;
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
-    errCode = SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
-    CHKERRQ(errCode);
+    SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
 
     /* Problem dependent half step diagnostics */
     halfStepDiagnostics(ts);
@@ -452,9 +449,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->dt = dt;
     
     VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
-    errCode = SNESSolve(ts->snes, NULL, ts->primPetscVec);
-    CHKERRQ(errCode);
-    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
+    SNESSolve(ts->snes, NULL, ts->primPetscVec);
 
   #elif (TIME_STEPPING==IMPLICIT)
 
@@ -465,9 +460,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     ts->computeSourceTermsAtTimeNPlusHalf = 0;
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
-    errCode = SNESSolve(ts->snes, NULL, ts->primPetscVec);
-    CHKERRQ(errCode);
-    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
+    SNESSolve(ts->snes, NULL, ts->primPetscVec);
 
   #endif
 
@@ -480,6 +473,10 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
   /* Problem dependent full step diagnostics */
   fullStepDiagnostics(ts);
 
+  /* Copy solved variables to old variables */
+  VecCopy(ts->primPetscVec, ts->primPetscVecOld);
+
+  /* Finally, take a dump when needed */
   diagnostics(ts);
 
   REAL newDt;

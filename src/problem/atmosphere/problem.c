@@ -486,6 +486,7 @@ void applyAdditionalProblemSpecificBCs
 
     #if (PHYSICAL_BOUNDARY_LEFT_EDGE==DIRICHLET)
 
+      /* TODO: Need to see if the boundary conditions make sense for the MTI run (conduction ON) */
       #if (MAGNETIC_FIELD_CONFIGURATION == VERTICAL)
         SETERRQ(PETSC_COMM_WORLD, 1,
                 "Dirichet boundary conditions not implemented for \

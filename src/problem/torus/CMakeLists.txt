@@ -31,8 +31,8 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "16")
-set(TILE_SIZE_X2 "16")
+set(TILE_SIZE_X1 "8")
+set(TILE_SIZE_X2 "8")
 
 set(USE_OPENMP   "YES")
 
