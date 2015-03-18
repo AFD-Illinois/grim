@@ -47,6 +47,7 @@ void slopeLim(const REAL left[ARRAY_ARGS DOF],
 
 REAL slopeLimitedDerivative(const REAL left, const REAL mid, const REAL right)
 {
+#if (RECONSTRUCTION == MONOTONIZED_CENTRAL)
   REAL Dqm = 2. * (mid - left);
   REAL Dqp = 2. * (right - mid);
   REAL Dqc = .5 * (right - left);
@@ -70,6 +71,14 @@ REAL slopeLimitedDerivative(const REAL left, const REAL mid, const REAL right)
 		  return Dqc;
     }
   }
+#elif (RECONSTRUCTION == MIN_MOD)
+		REAL Dqm = (mid - left);
+		REAL Dqp = (right - mid);
+		REAL s = Dqm*Dqp;
+		if(s <= 0.) return 0.;
+		else if(fabs(Dqm) < fabs(Dqp)) return Dqm;
+		else return Dqp;
+#endif
 }
 
 REAL MP5_Reconstruct(const REAL Fjm2,
