@@ -62,7 +62,7 @@
     REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
     REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.)+1.e-10;
 
-    REAL ViscousCoeff = 1.e-0;
+    REAL ViscousCoeff = 1.e-05;
     REAL tau     = tauDynamical*fermiDirac;
     elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
     elem->tauVis = tau;
@@ -786,11 +786,6 @@ void applyFloor(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
     }
-    if (rho < 10.*rhoFloor)
-      {
-	primTile[INDEX_TILE(&zone, UU)] =1.e-2*rhoFloor;
-      }
-
     if (u < uFloor)
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;

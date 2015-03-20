@@ -67,7 +67,7 @@ set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
 # MP5, MONOTONIZED_CENTRAL or MIN_MOD
-set(RECONSTRUCTION "MP5")
+set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
