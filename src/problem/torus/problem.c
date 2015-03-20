@@ -18,8 +18,8 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
      U = UU_FLOOR_MIN;
 
   REAL P   = (ADIABATIC_INDEX-1.)*U;
-  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                  / (Rho + U)
+  REAL cs  = sqrt(  ADIABATIC_INDEX*P
+                  / (Rho + (ADIABATIC_INDEX*U))
                  );
 
   REAL phiCeil = Rho * pow(cs, 3.);
@@ -56,8 +56,8 @@ void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
   REAL P   = (ADIABATIC_INDEX-1.)*U;
 
   REAL T   = P/Rho;
-  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                  / (Rho+U)
+  REAL cs  = sqrt(  ADIABATIC_INDEX*P
+                  / (Rho+(ADIABATIC_INDEX*U))
                  );
 
   REAL bSqr    = getbSqr(elem, geom);
@@ -792,11 +792,6 @@ void applyFloor(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
     }
-    if (rho < 10.*rhoFloor)
-      {
-	primTile[INDEX_TILE(&zone, UU)] =1.e-2*rhoFloor;
-      }
-
     if (u < uFloor)
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
