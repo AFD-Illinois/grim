@@ -1,6 +1,82 @@
 #include "../problem.h"
 #include "torus.h"
 
+#if (CONDUCTION)
+void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
+                             struct fluidElement elem[ARRAY_ARGS 1])
+{
+  REAL xCoords[NDIM];
+  XTox(geom->XCoords, xCoords);
+
+  REAL r = xCoords[1];
+
+  REAL Rho = elem->primVars[RHO];
+  if(Rho<RHO_FLOOR_MIN)
+     Rho=RHO_FLOOR_MIN;
+  REAL U = elem->primVars[UU];
+  if(U<UU_FLOOR_MIN)
+     U = UU_FLOOR_MIN;
+
+  REAL P   = (ADIABATIC_INDEX-1.)*U;
+  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                  / (Rho + U)
+                 );
+
+  REAL phiCeil = Rho * pow(cs, 3.);
+
+  REAL tauDynamical = pow(r, 3./2.);
+  REAL lambda       = 0.1;
+  //REAL y            = elem->primVars[PHI]/phiCeil;
+  //REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
+
+  REAL y = fabs(elem->primVars[PHI])/fabs(phiCeil);
+  y = (y-1)/lambda;
+  REAL fermiDirac = exp(-y)/(exp(-y) + 1.)+1.e-10;
+    
+  REAL tau    = tauDynamical*fermiDirac;
+  elem->kappa = 10.*cs*cs*tau*elem->primVars[RHO];
+  elem->tau   = tau + 0.01; 
+
+//  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
+//  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
+}
+#endif
+
+
+#if (VISCOSITY)
+void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                             struct fluidElement elem[ARRAY_ARGS 1])
+{
+  REAL xCoords[NDIM];
+  XTox(geom->XCoords, xCoords);
+  REAL Rad = xCoords[1];
+
+  REAL Rho = elem->primVars[RHO]+RHO_FLOOR_MIN;
+  REAL U   = elem->primVars[UU];
+  REAL P   = (ADIABATIC_INDEX-1.)*U;
+
+  REAL T   = P/Rho;
+  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                  / (Rho+U)
+                 );
+
+  REAL bSqr    = getbSqr(elem, geom);
+  REAL beta    = P/(bSqr/2.);
+  REAL psiCeil = 2.*P/beta;
+
+  REAL tauDynamical = pow(Rad,1.5);
+  REAL lambda       = 0.01;
+  REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
+  REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.)+1.e-10;
+
+  REAL ViscousCoeff = 1.e-0;
+  REAL tau     = tauDynamical*fermiDirac;
+  elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
+  elem->tauVis = tau;
+}
+#endif
+
+
 /* Calculate the constant angular momentum per unit inertial mass (l = u_phi *
  * u^t) for a given black hole spin and a radius of the accretion disk.  Eqn 3.8
  * of Fishbone and Moncrief, 1976 */
@@ -280,10 +356,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, B1)] = 0.;
       primTile[INDEX_TILE(&zone, B2)] = 0.;
       primTile[INDEX_TILE(&zone, B3)] = 0.;
-     
-      #if (CONDUCTION)
-        primTile[INDEX_TILE(&zone, PHI)] = 0.;
-      #endif
+#if VISCOSITY
+      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+#endif
+#if CONDUCTION
+      primTile[INDEX_TILE(&zone, PHI)] = 0.;
+#endif
     }
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -412,7 +490,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
               + primTile[INDEX_TILE_MANUAL(zone.iInTile-1, zone.jInTile-1, RHO)]
              );
 
-      REAL AVec = rhoAvg - 0.2;
+      REAL AVec = rhoAvg - 1.e-5;
 
       AVectorTile[INDEX_TILE(&zone, 0)] = 0.;
 
@@ -714,6 +792,10 @@ void applyFloor(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
     }
+    if (rho < 10.*rhoFloor)
+      {
+	primTile[INDEX_TILE(&zone, UU)] =1.e-2*rhoFloor;
+      }
 
     if (u < uFloor)
     {
@@ -732,6 +814,10 @@ void applyFloor(const int iTile, const int jTile,
         primTile[INDEX_TILE(&zone, PHI)] = copysign(phiCeil, phi);
       }
     #endif
+#if VISCOSITY
+    if ( rho < 10.*rhoFloor)
+      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+#endif
 
     struct geometry geom;
     setGeometry(XCoords, &geom);
@@ -749,6 +835,11 @@ void applyFloor(const int iTile, const int jTile,
       primTile[INDEX_TILE(&zone, U2)] *= factor;
       primTile[INDEX_TILE(&zone, U3)] *= factor;
     }
+    
+#if VISCOSITY
+    if(getbSqr(&elem, &geom)<1.e-20)
+      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+#endif
   }
 
 }
@@ -1021,44 +1112,3 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
   }
 
 }
-
-#if (CONDUCTION)
-void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
-                             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  REAL xCoords[NDIM];
-  XTox(geom->XCoords, xCoords);
-
-  REAL r = xCoords[1];
-
-  REAL Rho = elem->primVars[RHO];
-  if(Rho<RHO_FLOOR_MIN)
-     Rho=RHO_FLOOR_MIN;
-  REAL U = elem->primVars[UU];
-  if(U<UU_FLOOR_MIN)
-     U = UU_FLOOR_MIN;
-
-  REAL P   = (ADIABATIC_INDEX-1.)*U;
-  REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                  / (Rho + U)
-                 );
-
-  REAL phiCeil = Rho * pow(cs, 3.);
-
-  REAL tauDynamical = pow(r, 3./2.);
-  REAL lambda       = 0.1;
-  //REAL y            = elem->primVars[PHI]/phiCeil;
-  //REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
-
-  REAL y = fabs(elem->primVars[PHI])/fabs(phiCeil);
-  y = (y-1)/lambda;
-  REAL fermiDirac = exp(-y)/(exp(-y) + 1.)+1.e-10;
-    
-  REAL tau    = tauDynamical*fermiDirac;
-  elem->kappa = 10.*cs*cs*tau*elem->primVars[RHO];
-  elem->tau   = tau + 0.01; 
-
-//  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
-//  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
-}
-#endif

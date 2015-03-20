@@ -6,7 +6,7 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMEX")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
@@ -38,7 +38,8 @@ set(USE_OPENMP   "YES")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
-set(CONDUCTION "ON")
+set(CONDUCTION "OFF")
+set(VISCOSITY  "ON")
 
 # Geometry
 set(METRIC  "KERRSCHILD")
@@ -51,7 +52,7 @@ set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
 
 # Domain
 set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "40.")
+set(R_B     "45.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -66,7 +67,7 @@ set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "MIRROR")
 
 # Reconstrution options
 # MP5, MONOTONIZED_CENTRAL or MIN_MOD
-set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
+set(RECONSTRUCTION "MP5")
 
 # Initial condition parameters 
 # Everything in units of M
@@ -77,7 +78,7 @@ set(PLASMA_BETA             "1e2")
 set(PERTURBATIONS_AMPLITUDE "4e-2")
 
 # Floor values
-set(RHO_FLOOR         "1e-4")
+set(RHO_FLOOR         "1e-3")
 set(UU_FLOOR          "1e-5")
 set(RHO_FLOOR_FALLOFF "-1.5")
 set(UU_FLOOR_FALLOFF  "-2.5")
@@ -127,6 +128,7 @@ message("###################")
 message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
+message("Viscosity        : " ${VISCOSITY})
 
 message("")
 message("##################")
