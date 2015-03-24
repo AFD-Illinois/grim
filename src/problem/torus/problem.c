@@ -844,7 +844,7 @@ void applyFloor(const int iTile, const int jTile,
     }
     
 #if VISCOSITY
-    if(getbSqr(&elem, &geom)<1.e-20) || r < 3.)
+    if(getbSqr(&elem, &geom)<1.e-20 || r < 3.)
       primTile[INDEX_TILE(&zone, PSI)] = 0.;
 #endif
   }
