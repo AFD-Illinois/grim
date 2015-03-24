@@ -42,38 +42,42 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
 }
 #endif
 
-
 #if (VISCOSITY)
-void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
-                             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  REAL xCoords[NDIM];
-  XTox(geom->XCoords, xCoords);
-  REAL Rad = xCoords[1];
+  void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
+                               struct fluidElement elem[ARRAY_ARGS 1])
+  {
+//    elem->eta     = etaProblem;
+//    elem->tauVis  = tauVisProblem;
 
-  REAL Rho = elem->primVars[RHO]+RHO_FLOOR_MIN;
-  REAL U   = elem->primVars[UU];
-  REAL P   = (ADIABATIC_INDEX-1.)*U;
+    REAL xCoords[NDIM];
+    XTox(geom->XCoords, xCoords);
+    REAL Rad = xCoords[1];
 
-  REAL T   = P/Rho;
-  REAL cs  = sqrt(  ADIABATIC_INDEX*P
-                  / (Rho+(ADIABATIC_INDEX*U))
-                 );
+    REAL Rho = elem->primVars[RHO];
+    if(Rho<RHO_FLOOR_MIN)
+      Rho=RHO_FLOOR_MIN;
+    REAL U   = elem->primVars[UU];
+    if(U<UU_FLOOR_MIN)
+      U = UU_FLOOR_MIN;
+    REAL P   = (ADIABATIC_INDEX-1.)*U;
+    REAL T   = P/Rho;
+    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
+                    / (Rho+U)
+                   );
+    
+    REAL psiCeil = getbSqr(elem, geom);
 
-  REAL bSqr    = getbSqr(elem, geom);
-  REAL beta    = P/(bSqr/2.);
-  REAL psiCeil = 2.*P/beta;
+    REAL tauDynamical = pow(Rad,1.5);
+    REAL lambda       = 0.01;
+    REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
+    y = (y-1)/lambda;
+    REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-10;
 
-  REAL tauDynamical = pow(Rad,1.5);
-  REAL lambda       = 0.01;
-  REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
-  REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.)+1.e-10;
-
-  REAL ViscousCoeff = 1.e-0;
-  REAL tau     = tauDynamical*fermiDirac;
-  elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
-  elem->tauVis = tau;
-}
+    REAL ViscousCoeff = 1.e-0;
+    REAL tau     = tauDynamical*fermiDirac;
+    elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
+    elem->tauVis = tau;
+  }
 #endif
 
 
@@ -381,7 +385,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
     }
 
   }
-
   REAL rhoMax;
   VecStrideMax(ts->primPetscVecOld, RHO, NULL, &rhoMax);
 
@@ -409,7 +412,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       primTile[INDEX_TILE(&zone, UU)] =
         primTile[INDEX_TILE(&zone, UU)]/rhoMax;
     }
-
+    
     applyFloor(iTile, jTile, 
                ts->X1Start, ts->X2Start,
                ts->X1Size, ts->X2Size,
@@ -432,7 +435,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
     }
 
   }
-
   Vec primPetscVecOldLocal, bSqrPetscVecGlobal;
   DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecOldLocal);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &bSqrPetscVecGlobal);
@@ -474,6 +476,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       }
     }
 
+    
     LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1, -1, TILE_SIZE_X2+1)
     {
       struct gridZone zone;
@@ -548,9 +551,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
       INDEX_PETSC(bSqrGlobal, &zone, 0) = bSqr;
     } 
-
+   
   }
-
   DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, bSqrPetscVecGlobal,
                          &bSqrGlobal);
   DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, primPetscVecOldLocal,
@@ -749,6 +751,15 @@ void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
     }
+
+    REAL XCoords[NDIM], xCoords[NDIM];
+    getXCoords(&zone, CENTER, XCoords);
+    XTox(XCoords, xCoords);
+    REAL r = xCoords[1];
+    #if VISCOSITY
+    if (r<3.)
+      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+    #endif
   }
 }
 
@@ -757,7 +768,7 @@ void applyFloor(const int iTile, const int jTile,
                 const int X1Size, const int X2Size,
                 REAL primTile[ARRAY_ARGS TILE_SIZE])
 {
-  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
   {
     struct gridZone zone;
     setGridZone(iTile, jTile,
@@ -785,6 +796,7 @@ void applyFloor(const int iTile, const int jTile,
       uFloor = UU_FLOOR_MIN;
     }
 
+
     REAL rho = primTile[INDEX_TILE(&zone, RHO)];
     REAL u   = primTile[INDEX_TILE(&zone, UU)];
 
@@ -810,7 +822,7 @@ void applyFloor(const int iTile, const int jTile,
       }
     #endif
 #if VISCOSITY
-    if ( rho < 10.*rhoFloor)
+    if(rho < 10.*rhoFloor)
       primTile[INDEX_TILE(&zone, PSI)] = 0.;
 #endif
 
@@ -832,7 +844,7 @@ void applyFloor(const int iTile, const int jTile,
     }
     
 #if VISCOSITY
-    if(getbSqr(&elem, &geom)<1.e-20)
+    if(getbSqr(&elem, &geom)<1.e-20) || r < 3.)
       primTile[INDEX_TILE(&zone, PSI)] = 0.;
 #endif
   }
