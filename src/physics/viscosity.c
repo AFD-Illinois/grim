@@ -114,6 +114,7 @@ void addViscositySourceTermsToResidual
       REAL XCoords[NDIM];
       getXCoords(&zoneCenter, CENTER, XCoords);
       setGeometry(XCoords, &geomCenter);
+
       setFluidElement(&INDEX_PETSC(primGlobal, &zoneCenter, 0), &geomCenter,
                       &elem);
 
@@ -132,12 +133,10 @@ void addViscositySourceTermsToResidual
       }
 
       //Temperature information
-      REAL T    =   (ADIABATIC_INDEX-1.)
-                  * INDEX_PETSC(primGlobal, &zoneCenter, UU)
-                  / INDEX_PETSC(primGlobal, &zoneCenter, RHO);
       REAL TOld =   (ADIABATIC_INDEX-1.)
                   * INDEX_PETSC(primOldGlobal, &zoneCenter, UU)
                   / INDEX_PETSC(primOldGlobal, &zoneCenter, RHO);
+
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
         REAL TCenter =   (ADIABATIC_INDEX-1.)
                        * elemCenter.primVars[UU]
@@ -146,11 +145,19 @@ void addViscositySourceTermsToResidual
         REAL TCenter = (T + TOld)/2.;
       #endif
 
+      REAL T    =   TCenter;
+      //Limiting
+      if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>UU_FLOOR &&
+      	 INDEX_PETSC(primGlobal, &zoneCenter, RHO)>RHO_FLOOR)
+	T = (ADIABATIC_INDEX-1.)
+	  * INDEX_PETSC(primGlobal, &zoneCenter, UU)
+	  / INDEX_PETSC(primGlobal, &zoneCenter, RHO);
+
+
 
       /* Higher order term 1 
        * (Psi+1/2/beta)*(sqrt(g)*u^\mu)_{,\mu} *
        * where beta = tauVis/2/eta */
-      REAL beta       = elem.tauVis/(elem.eta*2.);
       REAL betaOld    = elemOld.tauVis/(elemOld.eta*2.);
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
@@ -162,42 +169,47 @@ void addViscositySourceTermsToResidual
                                + (elemOld.tauVis/(elemOld.eta*2.) )
                               );  
       #endif
+	//limiting
+	REAL beta       = betaCenter;
+	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>UU_FLOOR &&
+	  INDEX_PETSC(primGlobal, &zoneCenter, RHO)>RHO_FLOOR)
+	  beta = elem.tauVis/(elem.eta*2.);
 
       REAL dHigherOrderTerm1[NDIM];
       
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
         dHigherOrderTerm1[0] = 
-          (elemCenter.primVars[PSI]+0.5/betaCenter) 
+          elemCenter.primVars[PSI] 
         * sqrt(-geomCenter.gDet) 
         * (elem.uCon[0] - elemOld.uCon[0])/dt;
       
+
         dHigherOrderTerm1[1] = 
-          (elemCenter.primVars[PSI]+0.5/betaCenter)
+          elemCenter.primVars[PSI]
         * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0);
 
         dHigherOrderTerm1[2] = 0.; dHigherOrderTerm1[3] = 0.;
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-            (elemCenter.primVars[PSI]+0.5/betaCenter)
+            elemCenter.primVars[PSI]
           * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1);
         #endif
 
       #elif (TIME_STEPPING == IMPLICIT)
 
         dHigherOrderTerm1[0] = 
-          0.5 * (elem.primVars[PSI] + elemOld.primVars[PSI]
-		 +0.5/beta + 0.5/betaOld)
+          0.5 * (elem.primVars[PSI] + elemOld.primVars[PSI])
               * sqrt(-geomCenter.gDet) 
               * (elem.uCon[0] - elemOld.uCon[0])/dt;
       
         dHigherOrderTerm1[1] = 
-          0.5*(  (  (elemOld.primVars[PSI] + 0.5/betaOld)
+          0.5*(  (  elemOld.primVars[PSI]
                   * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0)
                  )
                + 
-                 (  (elem.primVars[PSI] + 0.5/beta)
+                 (  elem.primVars[PSI]
                   * graduConHigherOrderTerm1Vis[0]
                  )
               );
@@ -206,11 +218,11 @@ void addViscositySourceTermsToResidual
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-	    0.5*(  (  (elemOld.primVars[PSI] + 0.5/betaOld)
+	    0.5*(  (  elemOld.primVars[PSI]
                   * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1)
                  )
                + 
-                (  (elem.primVars[PSI] + 0.5/beta)
+                (  elem.primVars[PSI]
                   * graduConHigherOrderTerm1Vis[1]
                  )
 	      );
@@ -230,7 +242,7 @@ void addViscositySourceTermsToResidual
         / (2.*betaCenter) 
         * sqrt(-geomCenter.gDet) 
         * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-      
+
         dHigherOrderTerm2[1] = 
           (elemCenter.primVars[PSI] * TCenter)
         / (2.*betaCenter) 
@@ -289,7 +301,6 @@ void addViscositySourceTermsToResidual
         higherOrderTerm2 += dHigherOrderTerm2[mu];
       }
 
-
       // Term g*(3*eta*b^mu b_\nu/b^2 u^\nu_{;\nu}+Psi)/tau
       REAL TargetPsi = 0.;
       REAL g = sqrt(-geomCenter.gDet);
@@ -312,6 +323,14 @@ void addViscositySourceTermsToResidual
 		* INDEX_PETSC(graduConVisGlobal, &zoneCenter, alpha+NDIM);
             #endif
 	  }
+	TargetPsi -= elem.eta
+	  * (elem.uCon[0] - elemOld.uCon[0])/dt;
+	TargetPsi -= elem.eta/sqrt(-geomCenter.gDet)
+	  *INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0);
+        #if (COMPUTE_DIM==2)
+          TargetPsi -= elem.eta/sqrt(-geomCenter.gDet)
+	    *INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1);
+        #endif
       #elif (TIME_STEPPING == IMPLICIT)
 	REAL bSqr, bCov[NDIM];
 	REAL bSqrOld, bCovOld[NDIM];
@@ -333,6 +352,16 @@ void addViscositySourceTermsToResidual
 			      *INDEX_PETSC(graduConVisGlobal, &zoneCenter, alpha));
             #endif
 	  }
+	TargetPsi -= elem.eta
+          * (elem.uCon[0] - elemOld.uCon[0])/dt;
+	TargetPsi -= elem.eta/sqrt(-geomCenter.gDet)
+          *0.5*(INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0)+
+		graduConHigherOrderTerm1Vis[0]);
+        #if (COMPUTE_DIM==2)
+	  TargetPsi -= elem.eta/sqrt(-geomCenter.gDet)
+	    *0.5*(INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1)+
+		  graduConHigherOrderTerm1Vis[1]);
+        #endif
       #endif
       }
       //Add connections
@@ -378,20 +407,23 @@ void addViscositySourceTermsToResidual
 
       #if (TIME_STEPPING == EXPLICIT)
 
+      INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
+
         INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-          (- higherOrderTerm1 + higherOrderTerm2
+          ((- higherOrderTerm1 + higherOrderTerm2)*elem.tauVis
            + g*( elemCenter.primVars[PSI]
                  + TargetPsi
-               )/elemCenter.tauVis
+               )
           )/norm;
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
+	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
         INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-          (- higherOrderTerm1 + higherOrderTerm2
+          ((- higherOrderTerm1 + higherOrderTerm2)*elem.tauVis
            + g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
                 + TargetPsi
-               )/elemCenter.tauVis
+               )
           )/norm;
 
       #endif
