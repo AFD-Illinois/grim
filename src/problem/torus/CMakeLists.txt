@@ -1,15 +1,15 @@
 # Dump folder
 set(OUTPUT_DIR "\"/Users/francoisfoucart/Work/grim/build\"")
-set(RESTART "ON")
+set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "IMEX")
-set(DT "0.01553")
+set(DT "1.e-5")
 set(DT_DUMP "1.")
-set(START_TIME "550.")
+set(START_TIME "0.")
 set(FINAL_TIME "2000.")
 set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
