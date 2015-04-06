@@ -132,6 +132,12 @@ void addViscositySourceTermsToResidual
                         &geomCenter, &elemCenter);
       }
 
+      //For limiting
+      REAL xCoords[NDIM];
+      XTox(geomCenter.XCoords, xCoords);
+      REAL rhofloor = RHO_FLOOR *pow(xCoords[1],RHO_FLOOR_FALLOFF);
+      REAL ufloor   = UU_FLOOR *pow(xCoords[1],UU_FLOOR_FALLOFF);
+      
       //Temperature information
       REAL TOld =   (ADIABATIC_INDEX-1.)
                   * INDEX_PETSC(primOldGlobal, &zoneCenter, UU)
@@ -141,21 +147,21 @@ void addViscositySourceTermsToResidual
         REAL TCenter =   (ADIABATIC_INDEX-1.)
                        * elemCenter.primVars[UU]
                        / elemCenter.primVars[RHO];
+	REAL T    =   TCenter;
+	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
+	   INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
+	  T = (ADIABATIC_INDEX-1.)
+	    * elem.primVars[UU]
+	    / elem.primVars[RHO];
       #elif (TIME_STEPPING == IMPLICIT)
-        REAL TCenter = (T + TOld)/2.;
+	REAL T    =   TOld;
+	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
+	   INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
+	  T = (ADIABATIC_INDEX-1.)
+	    * elem.primVars[UU]
+	    / elem.primVars[RHO];
       #endif
 
-      REAL T    =   TCenter;
-      //Limiting
-      REAL xCoords[NDIM];
-      XTox(geomCenter.XCoords, xCoords);
-      REAL rhofloor = RHO_FLOOR *pow(xCoords[1],RHO_FLOOR_FALLOFF);
-      REAL ufloor   = UU_FLOOR *pow(xCoords[1],UU_FLOOR_FALLOFF);
-      if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
-      	 INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
-	T = (ADIABATIC_INDEX-1.)
-	  * elem.primVars[UU]
-	  / elem.primVars[RHO];
 
       /* Higher order term 1 
        * (Psi+1/2/beta)*(sqrt(g)*u^\mu)_{,\mu} *
