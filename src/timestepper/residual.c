@@ -394,6 +394,7 @@ PetscErrorCode computeResidual(SNES snes,
 
       getXCoords(&zone, CENTER, XCoords);
       struct geometry geom; setGeometry(XCoords, &geom);
+
       struct fluidElement elem;
       setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elem);
 
@@ -432,8 +433,34 @@ PetscErrorCode computeResidual(SNES snes,
             - 0.5*(  INDEX_PETSC(sourceTermsOldGlobal, &zone, var)
                    + sourceTerms[var]
                   )
-          )/norm;
+	    )/norm;
 
+	  //if(elem.primVars[RHO]<1.e-15 || elem.primVars[UU]<1.e-15 || elem.gamma>10.)
+	  //INDEX_PETSC(residualGlobal, &zone, var) /= (elem.gamma*elem.gamma);
+	  /*if(iTile == 1 && jTile == 6 && iInTile == 6 && jInTile == 12 && var == 3)
+	    {
+	      REAL xCoords[NDIM];
+	      XTox(geom.XCoords, xCoords);
+	      REAL bCov[NDIM], bSqr, uCov[NDIM];
+	      bSqr = getbSqr(&elem, &geom);
+	      conToCov(elem.uCon, &geom, uCov);
+	      conToCov(elem.bCon, &geom, bCov);
+
+	      printf("Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
+		     elem.primVars[RHO],
+		     elem.primVars[UU],
+		     elem.primVars[U1],
+		     elem.primVars[U2],
+		     elem.primVars[U3],
+		     elem.primVars[B1],
+		     elem.primVars[B2],
+		     elem.primVars[B3],
+		     elem.primVars[PSI]);
+	      printf("Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e\n",
+		     elem.gamma,elem.uCon[0],uCov[1],bSqr);
+	      printf("Residual = %e\n",
+	      INDEX_PETSC(residualGlobal, &zone, var));
+	      }*/
         #elif (TIME_STEPPING==IMPLICIT)
 
           INDEX_PETSC(residualGlobal, &zone, var) = 
@@ -518,6 +545,52 @@ PetscErrorCode computeResidual(SNES snes,
 
 
   } /* End of LOOP_OVER_TILES */
+
+  //Diagnostics
+  /*REAL resmax=0.,bmax;
+  int iTmax,jTmax,imax,jmax,vmax;
+  struct fluidElement elemmax;
+  LOOP_OVER_TILES(X1Size, X2Size)
+    {
+      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+	{
+	  struct gridZone zone;
+	  setGridZone(iTile, jTile,
+		      iInTile, jInTile,
+		      X1Start, X2Start,
+		      X1Size, X2Size,
+		      &zone);
+	  REAL XCoords[NDIM];
+	  getXCoords(&zone, CENTER, XCoords);
+	  struct geometry geom; setGeometry(XCoords, &geom);
+	  struct fluidElement elem;
+	  setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elem);
+	  for (int var=0; var<DOF; var++)
+	    {
+	      REAL res = INDEX_PETSC(residualGlobal, &zone, var);
+	      if(fabs(res)>fabs(resmax))
+		{
+		  resmax = res;
+		  iTmax = iTile;
+		  jTmax = jTile;
+		  imax  = iInTile;
+		  jmax  = jInTile;
+		  vmax  = var;
+		  setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elemmax);
+		  bmax  = getbSqr(&elemmax,&geom);
+		}
+	    }
+	}
+    }
+  printf("Max residual = %e (%i %i : %i %i); var = %i\n",
+	 resmax,iTmax,jTmax,imax,jmax,vmax);
+  printf("Rho = %e; U = %e; gamma = %e; bSqr = %e; psi = %e\n",
+	 elemmax.primVars[RHO],
+	 elemmax.primVars[UU],
+	 elemmax.gamma,
+	 bmax,
+	 elemmax.primVars[PSI]
+	 );*/
 
 
   #if (TIME_STEPPING==IMPLICIT)
