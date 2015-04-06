@@ -15,7 +15,7 @@ set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "280")
+set(N1 "140")
 set(N2 "140")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -66,7 +66,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # 7) ALFVEN_2D
 # 8) FIREHOSE
 set(AMPLITUDE "1e-5")
-set(MODE      "ALFVEN_2D")
+set(MODE      "VISCOSITY_1D")
 
 # Physics options set automatically by the choice of the mode being tested
 if (${MODE} STREQUAL "ENTROPY_WAVE_1D")
@@ -127,7 +127,7 @@ endif(${MODE} STREQUAL "FIREHOSE")
 
 # Floor values
 set(RHO_FLOOR "1e-5")
-SET(UU_FLOOR "1e-7")
+set(UU_FLOOR "1e-7")
 
 message("")
 message("#########################")
