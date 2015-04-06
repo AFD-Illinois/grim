@@ -254,15 +254,15 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[B3]  = 0.;
         primVars0[PSI] = 0.;
 
-        deltaPrimVars[RHO] = 0.34457248379 - 8.32667268469e-17*I;
-        deltaPrimVars[UU]  = 0.918859956773;
-        deltaPrimVars[U1]  = -0.180848290246 - 0.00323785674963*I;
-        deltaPrimVars[U2]  = 0.;
+        deltaPrimVars[RHO] = 0.34591909261 + 8.32667268469e-17*I;
+        deltaPrimVars[UU]  = 0.922450913626;
+        deltaPrimVars[U1]  = -0.170824276817 - 0.00015896242418*I;
+        deltaPrimVars[U2]  = 0.00288321673818 + 0.000950778108505*I;
         deltaPrimVars[U3]  = 0.;
         deltaPrimVars[B1]  = 0.;
-        deltaPrimVars[B2]  = 0.;
+        deltaPrimVars[B2]  = 0.00697678484543 + 1.91989053629e-05*I;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PSI] = 0.0624512526648 + 0.0186932205343*I;
+        deltaPrimVars[PSI] = -0.0129157109207 - 0.00431579622043*I;
 
         REAL k1 = 2*M_PI;
 
