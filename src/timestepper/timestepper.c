@@ -526,7 +526,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     
     VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
-    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #elif (TIME_STEPPING==IMPLICIT)
 
@@ -538,7 +537,6 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
     VecCopy(ts->primPetscVecOld, ts->primPetscVec);
     SNESSolve(ts->snes, NULL, ts->primPetscVec);
-    VecCopy(ts->primPetscVec, ts->primPetscVecOld);
 
   #endif
 

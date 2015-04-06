@@ -46,9 +46,6 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
   void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
-//    elem->eta     = etaProblem;
-//    elem->tauVis  = tauVisProblem;
-
     REAL xCoords[NDIM];
     XTox(geom->XCoords, xCoords);
     REAL Rad = xCoords[1];
@@ -73,7 +70,7 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     y = (y-1)/lambda;
     REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-10;
 
-    REAL ViscousCoeff = 1.e-0;
+    REAL ViscousCoeff = 1.e-2;
     REAL tau     = tauDynamical*fermiDirac;
     elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
     elem->tauVis = tau;
@@ -733,7 +730,7 @@ void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
                                      const int X1Size, const int X2Size,
                                      REAL primTile[ARRAY_ARGS TILE_SIZE])
 {
-  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1,0 , TILE_SIZE_X2)
   {
     struct gridZone zone;
     setGridZone(iTile, jTile,
@@ -751,15 +748,6 @@ void applyFloorInsideNonLinearSolver(const int iTile, const int jTile,
     {
       primTile[INDEX_TILE(&zone, UU)] = UU_FLOOR_MIN;
     }
-
-    REAL XCoords[NDIM], xCoords[NDIM];
-    getXCoords(&zone, CENTER, XCoords);
-    XTox(XCoords, xCoords);
-    REAL r = xCoords[1];
-    #if VISCOSITY
-    if (r<3.)
-      primTile[INDEX_TILE(&zone, PSI)] = 0.;
-    #endif
   }
 }
 
@@ -822,8 +810,8 @@ void applyFloor(const int iTile, const int jTile,
       }
     #endif
 #if VISCOSITY
-    if(rho < 10.*rhoFloor)
-      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+    //if(rho < 10.*rhoFloor)
+    //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
 #endif
 
     struct geometry geom;
@@ -844,8 +832,18 @@ void applyFloor(const int iTile, const int jTile,
     }
     
 #if VISCOSITY
-    if(getbSqr(&elem, &geom)<1.e-20 || r < 3.)
-      primTile[INDEX_TILE(&zone, PSI)] = 0.;
+    REAL psi = primTile[INDEX_TILE(&zone, PSI)];
+    REAL bSqr = getbSqr(&elem, &geom);
+    //if(iTile == 1 && jTile == 6 && iInTile == 6 && jInTile == 12)
+    //  printf("Applying floors with psi = %e; b^2 = %e; r = %e\n\n",
+    //	     primTile[INDEX_TILE(&zone, PSI)],bSqr,r);
+    //if(bSqr<1.e-20 || r < 3.)
+    // primTile[INDEX_TILE(&zone, PSI)] = 0.;
+    if(fabs(psi)>10.*bSqr)
+      if(psi>0.)
+       primTile[INDEX_TILE(&zone, PSI)] = 10.*bSqr;
+     else
+       primTile[INDEX_TILE(&zone, PSI)] = -10.*bSqr;
 #endif
   }
 
