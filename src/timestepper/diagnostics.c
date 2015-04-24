@@ -105,7 +105,8 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     /* Here are the known values.  Note that these get written to
      * /gammaUpdowndown because I can't figure out how to make Petsc create a
      * new dataset, or a group, or anything I can set attributes on. */
-    
+
+    PetscViewerHDF5PushGroup(parametersViewer, "/gammaUpdowndown");
     WRITE_PARAM_INT(COMPUTE_DIM);
     WRITE_PARAM_INT(N1);
     WRITE_PARAM_INT(N2);
@@ -120,8 +121,8 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     WRITE_PARAM_INT(B1);
     WRITE_PARAM_INT(B2);
     WRITE_PARAM_INT(B3);
-
     writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(parametersViewer);
 
     PetscViewerDestroy(&parametersViewer);
 
@@ -143,12 +144,30 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
             ts->dumpCounter
            );
 
-    PetscViewer viewer;
+    PetscViewer parametersViewer;
     PetscViewerHDF5Open(PETSC_COMM_WORLD, primVarsFileName,
-                        FILE_MODE_WRITE, &viewer);
+                        FILE_MODE_WRITE, &parametersViewer);
     PetscObjectSetName((PetscObject) ts->primPetscVec, "primVars");
-    VecView(ts->primPetscVec, viewer);
-    PetscViewerDestroy(&viewer);
+    VecView(ts->primPetscVec, parametersViewer);
+
+    PetscViewerHDF5PushGroup(parametersViewer, "/primVars");
+    WRITE_PARAM_INT(COMPUTE_DIM);
+    WRITE_PARAM_INT(N1);
+    WRITE_PARAM_INT(N2);
+    WRITE_PARAM_DOUBLE(DT);
+    WRITE_PARAM_DOUBLE(START_TIME);
+    WRITE_PARAM_DOUBLE(FINAL_TIME);
+    WRITE_PARAM_INT(RHO);
+    WRITE_PARAM_INT(UU);
+    WRITE_PARAM_INT(U1);
+    WRITE_PARAM_INT(U2);
+    WRITE_PARAM_INT(U3);
+    WRITE_PARAM_INT(B1);
+    WRITE_PARAM_INT(B2);
+    WRITE_PARAM_INT(B3);
+    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(parametersViewer);
+    PetscViewerDestroy(&parametersViewer);
 
     /* Get the residual at the last iteration of the SNES solver */
     Vec residualPetscVec;
