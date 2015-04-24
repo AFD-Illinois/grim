@@ -117,4 +117,67 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 #endif
 
 
+#define WRITE_PARAM_INT(NAME) \
+        do { \
+        int __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##INT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_DOUBLE(NAME) \
+        do { \
+        double __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##DOUBLE, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_COMPLEX(NAME) \
+        do { \
+        complex __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##COMPLEX, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_LONG(NAME) \
+        do { \
+        long __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##LONG, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_SHORT(NAME) \
+        do { \
+        short __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##SHORT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_FLOAT(NAME) \
+        do { \
+        float __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##FLOAT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_CHAR(NAME) \
+        do { \
+        char __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##CHAR, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_STRING(NAME) \
+        do { \
+        string __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_##STRING, &__NAME); \
+        } while(0)
+
 #endif /* GRIM_TIMESTEPPER_H_ */
