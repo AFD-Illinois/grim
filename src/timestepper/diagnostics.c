@@ -121,6 +121,8 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     WRITE_PARAM_INT(B2);
     WRITE_PARAM_INT(B3);
 
+    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
+
     PetscViewerDestroy(&parametersViewer);
 
     VecDestroy(&gCovPetscVec);

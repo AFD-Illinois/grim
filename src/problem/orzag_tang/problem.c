@@ -222,3 +222,8 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
           "Conduction parameters not set in shock_tests/problem.c\n");
 }
 #endif
+
+void writeProblemSpecificData(PetscViewer parametersViewer,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1]) {
+
+}

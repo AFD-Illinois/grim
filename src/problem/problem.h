@@ -46,9 +46,76 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
 void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
+void writeProblemSpecificData(PetscViewer parametersViewer,
+    const struct problemData problemSpecificData[ARRAY_ARGS 1]);
+
 #if (CONDUCTION)
   void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1]);
 #endif
+
+#define WRITE_PARAM_INT(NAME) \
+        do { \
+        int __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_INT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_DOUBLE(NAME) \
+        do { \
+        double __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_DOUBLE, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_COMPLEX(NAME) \
+        do { \
+        complex __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_COMPLEX, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_LONG(NAME) \
+        do { \
+        long __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_LONG, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_SHORT(NAME) \
+        do { \
+        short __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_SHORT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_FLOAT(NAME) \
+        do { \
+        float __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_FLOAT, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_CHAR(NAME) \
+        do { \
+        char __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_CHAR, &__NAME); \
+        } while(0)
+
+
+#define WRITE_PARAM_STRING(NAME) \
+        do { \
+        char* __NAME = NAME; \
+        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        "/gammaUpdowndown", #NAME, PETSC_STRING, &__NAME); \
+        } while(0)
+
 
 #endif /* GRIM_PROBLEM_H_ */
