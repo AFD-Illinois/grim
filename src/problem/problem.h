@@ -57,65 +57,80 @@ void writeProblemSpecificData(PetscViewer parametersViewer,
 #define WRITE_PARAM_INT(NAME) \
         do { \
         int __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_INT, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_INT, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_DOUBLE(NAME) \
         do { \
         double __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_DOUBLE, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_DOUBLE, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_COMPLEX(NAME) \
         do { \
         complex __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_COMPLEX, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_COMPLEX, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_LONG(NAME) \
         do { \
         long __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_LONG, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_LONG, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_SHORT(NAME) \
         do { \
         short __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_SHORT, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_SHORT, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_FLOAT(NAME) \
         do { \
         float __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_FLOAT, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_FLOAT, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_CHAR(NAME) \
         do { \
         char __NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_CHAR, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_CHAR, &__NAME); \
         } while(0)
 
 
 #define WRITE_PARAM_STRING(NAME) \
         do { \
-        char* __NAME = NAME; \
+        char *__NAME = NAME; \
+        const char* __NAME_GROUP; \
+        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_STRING, &__NAME); \
+        __NAME_GROUP, #NAME, PETSC_STRING, &__NAME); \
         } while(0)
-
 
 #endif /* GRIM_PROBLEM_H_ */
