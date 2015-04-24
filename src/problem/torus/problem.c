@@ -1062,3 +1062,10 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
 //  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
 }
 #endif
+
+void writeProblemSpecificData(PetscViewer parametersViewer,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1]) {
+
+  WRITE_PARAM_DOUBLE(R_A);
+  WRITE_PARAM_DOUBLE(R_B);
+}
