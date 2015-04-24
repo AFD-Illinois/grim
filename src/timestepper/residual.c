@@ -444,6 +444,27 @@ PetscErrorCode computeResidual(SNES snes,
          iTile, jTile, X1Start, X2Start, X1Size, X2Size,
          residualGlobal
         );
+
+//      LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+//      {
+//        struct gridZone zone;
+//        setGridZone(iTile, jTile,
+//                    iInTile, jInTile,
+//                    X1Start, X2Start, 
+//                    X1Size, X2Size, 
+//                    &zone);
+//
+//        REAL XCoords[NDIM];
+//
+//        getXCoords(&zone, CENTER, XCoords);
+//        struct geometry geom; setGeometry(XCoords, &geom);
+//        struct fluidElement elem;
+//        setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elem);
+//
+//        INDEX_PETSC(residualGlobal, &zone, PHI) =
+//          elem.tau * INDEX_PETSC(residualGlobal, &zone, PHI);
+//
+//      }
     #endif
 
 
