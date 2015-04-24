@@ -105,7 +105,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         int __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##INT, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_INT, &__NAME); \
         } while(0)
 
 
@@ -113,7 +113,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         double __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##DOUBLE, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_DOUBLE, &__NAME); \
         } while(0)
 
 
@@ -121,7 +121,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         complex __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##COMPLEX, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_COMPLEX, &__NAME); \
         } while(0)
 
 
@@ -129,7 +129,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         long __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##LONG, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_LONG, &__NAME); \
         } while(0)
 
 
@@ -137,7 +137,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         short __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##SHORT, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_SHORT, &__NAME); \
         } while(0)
 
 
@@ -145,7 +145,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         float __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##FLOAT, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_FLOAT, &__NAME); \
         } while(0)
 
 
@@ -153,7 +153,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         char __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##CHAR, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_CHAR, &__NAME); \
         } while(0)
 
 
@@ -161,7 +161,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
         do { \
         string __NAME = NAME; \
         PetscViewerHDF5WriteAttribute(parametersViewer, \
-        "/gammaUpdowndown", #NAME, PETSC_##STRING, &__NAME); \
+        "/gammaUpdowndown", #NAME, PETSC_STRING, &__NAME); \
         } while(0)
 
 
