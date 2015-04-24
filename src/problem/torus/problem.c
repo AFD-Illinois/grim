@@ -1423,3 +1423,10 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
   }
 
 }
+
+void writeProblemSpecificData(PetscViewer parametersViewer,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1]) {
+
+  WRITE_PARAM_DOUBLE(R_A);
+  WRITE_PARAM_DOUBLE(R_B);
+}

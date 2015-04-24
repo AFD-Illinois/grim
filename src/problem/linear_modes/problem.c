@@ -440,3 +440,8 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
 }
 
+
+void writeProblemSpecificData(PetscViewer parametersViewer,
+  const struct problemData problemSpecificData[ARRAY_ARGS 1]) {
+
+}
