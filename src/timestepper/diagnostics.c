@@ -66,34 +66,66 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     DMDAVecRestoreArrayDOF(metricDMDA, gCovPetscVec, &gCovGlobal);
     DMDAVecRestoreArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
 
-    char gCovFileName[50], gConFileName[50], connectionFileName[50];
-    sprintf(gCovFileName, "gcov.h5");
-    sprintf(gConFileName, "gcon.h5");
-    sprintf(connectionFileName, "gammaUpdowndown.h5");
+    char parametersFilename[50];
+    sprintf(parametersFilename, "parameters.h5");
 
-    PetscViewer gCovViewer, gConViewer, connectionViewer;
+    PetscViewer parametersViewer;
     
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, gCovFileName,
-                        FILE_MODE_WRITE, &gCovViewer);
-
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, gConFileName,
-                        FILE_MODE_WRITE, &gConViewer);
-
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, connectionFileName,
-                        FILE_MODE_WRITE, &connectionViewer);
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, parametersFilename,
+                        FILE_MODE_WRITE, &parametersViewer);
 
     PetscObjectSetName((PetscObject) gCovPetscVec, "gCov");
     PetscObjectSetName((PetscObject) gConPetscVec, "gCon");
     PetscObjectSetName((PetscObject) ts->connectionPetscVec,
                        "gammaUpdowndown");
 
-    VecView(gCovPetscVec, gCovViewer);
-    VecView(gConPetscVec, gConViewer);
-    VecView(ts->connectionPetscVec, connectionViewer);
+    VecView(gCovPetscVec, parametersViewer);
+    VecView(gConPetscVec, parametersViewer);
+    VecView(ts->connectionPetscVec, parametersViewer);
 
-    PetscViewerDestroy(&gCovViewer);
-    PetscViewerDestroy(&gConViewer);
-    PetscViewerDestroy(&connectionViewer);
+    /* Output parameters */
+    /* Available data types:
+       http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Sys/PetscDataType.html
+         PETSC_INT
+         PETSC_DOUBLE
+         PETSC_COMPLEX
+         PETSC_LONG
+         PETSC_SHORT
+         PETSC_FLOAT
+         PETSC_CHAR
+         PETSC_BIT_LOGICAL
+         PETSC_ENUM
+         PETSC_BOOL
+         PETSC___FLOAT128
+         PETSC_OBJECT
+         PETSC_FUNCTION
+         PETSC_STRING
+     */
+
+    /* Here are the known values.  Note that these get written to
+     * /gammaUpdowndown because I can't figure out how to make Petsc create a
+     * new dataset, or a group, or anything I can set attributes on. */
+
+    PetscViewerHDF5PushGroup(parametersViewer, "/gammaUpdowndown");
+    WRITE_PARAM_INT(COMPUTE_DIM);
+    WRITE_PARAM_INT(N1);
+    WRITE_PARAM_INT(N2);
+    WRITE_PARAM_INT(NG);
+    WRITE_PARAM_DOUBLE(DT);
+    WRITE_PARAM_DOUBLE(START_TIME);
+    WRITE_PARAM_DOUBLE(FINAL_TIME);
+    WRITE_PARAM_INT(RHO);
+    WRITE_PARAM_INT(UU);
+    WRITE_PARAM_INT(U1);
+    WRITE_PARAM_INT(U2);
+    WRITE_PARAM_INT(U3);
+    WRITE_PARAM_INT(B1);
+    WRITE_PARAM_INT(B2);
+    WRITE_PARAM_INT(B3);
+    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(parametersViewer);
+
+    PetscViewerDestroy(&parametersViewer);
 
     VecDestroy(&gCovPetscVec);
     VecDestroy(&gConPetscVec);
@@ -110,12 +142,31 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     char primVarsFileName[50];
     sprintf(primVarsFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->dumpCounter);
 
-    PetscViewer viewer;
+    PetscViewer parametersViewer;
     PetscViewerHDF5Open(PETSC_COMM_WORLD, primVarsFileName,
-                        FILE_MODE_WRITE, &viewer);
+                        FILE_MODE_WRITE, &parametersViewer);
     PetscObjectSetName((PetscObject) ts->primPetscVec, "primVars");
-    VecView(ts->primPetscVec, viewer);
-    PetscViewerDestroy(&viewer);
+    VecView(ts->primPetscVec, parametersViewer);
+
+    PetscViewerHDF5PushGroup(parametersViewer, "/primVars");
+    WRITE_PARAM_INT(COMPUTE_DIM);
+    WRITE_PARAM_INT(N1);
+    WRITE_PARAM_INT(N2);
+    WRITE_PARAM_INT(NG);
+    WRITE_PARAM_DOUBLE(DT);
+    WRITE_PARAM_DOUBLE(START_TIME);
+    WRITE_PARAM_DOUBLE(FINAL_TIME);
+    WRITE_PARAM_INT(RHO);
+    WRITE_PARAM_INT(UU);
+    WRITE_PARAM_INT(U1);
+    WRITE_PARAM_INT(U2);
+    WRITE_PARAM_INT(U3);
+    WRITE_PARAM_INT(B1);
+    WRITE_PARAM_INT(B2);
+    WRITE_PARAM_INT(B3);
+    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(parametersViewer);
+    PetscViewerDestroy(&parametersViewer);
 
     PetscPrintf(PETSC_COMM_WORLD,
                 "\nDumped primitive variables at t = %f in %s\n\n",
