@@ -35,12 +35,17 @@
 #cmakedefine01  VISCOSITY
 
 
+/* Viscosity Model */
+#cmakedefine    VISCOSITY_CLOSURE_COEFF   (${VISCOSITY_CLOSURE_COEFF})
+#cmakedefine    VISCOSITY_ALPHA           (${VISCOSITY_ALPHA})
+
 /* Initial condition parameters */
 #cmakedefine    R_PRESSURE_MAX            (${R_PRESSURE_MAX})
 #cmakedefine    R_INNER_EDGE              (${R_INNER_EDGE})
 #cmakedefine    ADIABAT                   (${ADIABAT})
 #cmakedefine    PLASMA_BETA               (${PLASMA_BETA})
 #cmakedefine    PERTURBATIONS_AMPLITUDE   (${PERTURBATIONS_AMPLITUDE})
+#cmakedefine    NB_MAGNETIC_LOOPS         (${NB_MAGNETIC_LOOPS})  
 
 /* Geometry */
 #cmakedefine    METRIC              (${METRIC})
