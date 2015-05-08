@@ -381,16 +381,23 @@ void addViscositySourceTermsToResidual
 	conToCov(elemOld.bCon, &geomCenter, bCovOld);
 	bSqr = getbSqr(&elem, &geomCenter);
 	bSqrOld = getbSqr(&elemOld, &geomCenter);
-	for (int alpha=0; alpha<NDIM; alpha++)
-          {
-            for (int gamma=0; gamma<NDIM; gamma++)
+	REAL eOverB2 = elem.eta/bSqr;
+	REAL OldeOverB2 = elemOld.eta/bSqrOld;
+	for(int mu=0; mu<NDIM; mu++)
+	  {
+	    REAL bn = bCov[mu]*eOverB2;
+	    REAL Oldbn = bCovOld[mu]*OldeOverB2;
+	    for (int alpha=0; alpha<NDIM; alpha++)
 	      {
-		for(int mu=0; mu<NDIM; mu++)
+		for (int gamma=0; gamma<NDIM; gamma++)
 		  {
 		    TargetPsi+=
 		      1.5*INDEX_PETSC(connectionGlobal, &zoneCenter, GAMMA_UP_DOWN_DOWN(mu, alpha, gamma))
-		      *(elem.bCon[alpha]*bCov[mu]*elem.uCon[gamma]/bSqr*elem.eta
-			+elemOld.bCon[alpha]*bCovOld[mu]*elemOld.uCon[gamma]/bSqrOld*elemOld.eta);
+		      *(
+			elem.bCon[alpha]*elem.uCon[gamma]*bn
+			+
+			elemOld.bCon[alpha]*elemOld.uCon[gamma]*Oldbn
+			);
 		  }
 	      }
 	  }
@@ -429,7 +436,7 @@ void addViscositySourceTermsToResidual
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
 
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-	  ((- higherOrderTerm1 + higherOrderTerm2)*elem.tauVis
+	  ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
 	   + g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
 		 + TargetPsi
 		 )

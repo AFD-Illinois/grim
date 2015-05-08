@@ -7,7 +7,7 @@ set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
 set(TIME_STEPPING "IMEX")
-set(DT "1.e-5")
+set(DT "0.001")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "2000.")
@@ -41,6 +41,9 @@ set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
 set(VISCOSITY  "ON")
 
+set(VISCOSITY_CLOSURE_COEFF "100.")
+set(VISCOSITY_ALPHA "1.")
+
 # Geometry
 set(METRIC  "KERRSCHILD")
 set(EPS     "1e-5")
@@ -52,7 +55,7 @@ set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
 
 # Domain
 set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "45.")
+set(R_B     "40.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -76,6 +79,7 @@ set(R_INNER_EDGE            "6.")
 set(ADIABAT                 "1e-3")
 set(PLASMA_BETA             "1e2")
 set(PERTURBATIONS_AMPLITUDE "4e-2")
+set(NB_MAGNETIC_LOOPS       "2")
 
 # Floor values
 set(RHO_FLOOR         "1e-3")
@@ -129,6 +133,8 @@ message("")
 message("Adiabatic index  : " ${ADIABATIC_INDEX})
 message("Conduction       : " ${CONDUCTION})
 message("Viscosity        : " ${VISCOSITY})
+message("Viscosity alpha  : " ${VISCOSITY_ALPHA})
+message("Viscosity closure: " ${VISCOSITY_CLOSURE_COEFF})
 
 message("")
 message("##################")

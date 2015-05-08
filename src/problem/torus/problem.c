@@ -43,6 +43,10 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
 #endif
 
 #if (VISCOSITY)
+  REAL etaProblem=0.1;
+  REAL tauVisProblem=.1; 
+  REAL ClosureFactor= VISCOSITY_CLOSURE_COEFF;
+
   void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
@@ -62,7 +66,9 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                     / (Rho+U)
                    );
     
-    REAL psiCeil = getbSqr(elem, geom);
+    REAL psiCeil = ClosureFactor*getbSqr(elem, geom);
+    //if(psiCeil > 0.1*Rho)
+    //  psiCeil = 0.1*Rho;
 
     REAL tauDynamical = pow(Rad,1.5);
     REAL lambda       = 0.01;
@@ -70,7 +76,7 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     y = (y-1)/lambda;
     REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-10;
 
-    REAL ViscousCoeff = 1.e-2;
+    REAL ViscousCoeff = VISCOSITY_ALPHA;
     REAL tau     = tauDynamical*fermiDirac;
     elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
     elem->tauVis = tau;
@@ -490,7 +496,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
               + primTile[INDEX_TILE_MANUAL(zone.iInTile-1, zone.jInTile-1, RHO)]
              );
 
-      REAL AVec = rhoAvg - 1.e-5;
+      REAL AVec = rhoAvg - 0.2;
 
       AVectorTile[INDEX_TILE(&zone, 0)] = 0.;
 
@@ -499,14 +505,12 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         AVectorTile[INDEX_TILE(&zone, 0)] = AVec;
       }
       
-      /* Two loop initial magnetic field */
       REAL XCoords[NDIM], xCoords[NDIM];
       getXCoords(&zone, CENTER, XCoords);
       XTox(XCoords, xCoords);
-
       REAL theta = xCoords[2];
       AVectorTile[INDEX_TILE(&zone, 0)] = 
-        cos(theta) * AVectorTile[INDEX_TILE(&zone, 0)];
+	cos((NB_MAGNETIC_LOOPS-1)*theta) * AVectorTile[INDEX_TILE(&zone, 0)];
     }
 
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -565,6 +569,8 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   REAL betaActual = (ADIABATIC_INDEX-1.)*uMax/(0.5*bSqrMax);
   REAL norm = sqrt(betaActual/PLASMA_BETA);
+
+  printf("Renormalizing magnetic field by %e \n",norm);
 
   VecStrideScale(ts->primPetscVecOld, B1, norm);
   VecStrideScale(ts->primPetscVecOld, B2, norm);
@@ -837,13 +843,16 @@ void applyFloor(const int iTile, const int jTile,
     //if(iTile == 1 && jTile == 6 && iInTile == 6 && jInTile == 12)
     //  printf("Applying floors with psi = %e; b^2 = %e; r = %e\n\n",
     //	     primTile[INDEX_TILE(&zone, PSI)],bSqr,r);
-    //if(bSqr<1.e-20 || r < 3.)
-    // primTile[INDEX_TILE(&zone, PSI)] = 0.;
-    if(fabs(psi)>10.*bSqr)
+    //if(r < 1.5)
+    //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
+    REAL psimax = 10.*bSqr*ClosureFactor;
+    if(r<3.)
+      psimax *= exp(-pow((3.-r)/0.5,2.));
+    if(fabs(psi)>psimax)
       if(psi>0.)
-       primTile[INDEX_TILE(&zone, PSI)] = 10.*bSqr;
-     else
-       primTile[INDEX_TILE(&zone, PSI)] = -10.*bSqr;
+	primTile[INDEX_TILE(&zone, PSI)] = psimax;
+      else
+	primTile[INDEX_TILE(&zone, PSI)] = -psimax;
 #endif
   }
 
