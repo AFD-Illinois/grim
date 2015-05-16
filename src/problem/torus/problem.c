@@ -66,9 +66,11 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                     / (Rho+U)
                    );
     
+    //Closure for firehose instability
     REAL psiCeil = ClosureFactor*getbSqr(elem, geom);
-    //if(psiCeil > 0.1*Rho)
-    //  psiCeil = 0.1*Rho;
+    //Closure for mirror instability
+    if(elem->primVars[PSI]<0.)
+      psiCeil *= 0.5;
 
     REAL tauDynamical = pow(Rad,1.5);
     REAL lambda       = 0.01;

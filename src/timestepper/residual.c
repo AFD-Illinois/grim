@@ -437,7 +437,7 @@ PetscErrorCode computeResidual(SNES snes,
 
 	  //if(elem.primVars[RHO]<1.e-15 || elem.primVars[UU]<1.e-15 || elem.gamma>10.)
 	  //INDEX_PETSC(residualGlobal, &zone, var) /= (elem.gamma*elem.gamma);
-	  /*if(iTile == 1 && jTile == 6 && iInTile == 6 && jInTile == 12 && var == 3)
+	  /*if(iTile == 6 && jTile == 7 && iInTile == 8 && jInTile == 9 && var == 3)
 	    {
 	      REAL xCoords[NDIM];
 	      XTox(geom.XCoords, xCoords);
