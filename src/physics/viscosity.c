@@ -425,7 +425,7 @@ void addViscositySourceTermsToResidual
       INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-          ((- higherOrderTerm1 + higherOrderTerm2)*elem.tauVis
+          ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
            + g*( elemCenter.primVars[PSI]
                  + TargetPsi
                )
