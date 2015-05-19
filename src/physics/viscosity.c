@@ -309,7 +309,8 @@ void addViscositySourceTermsToResidual
         higherOrderTerm2 += dHigherOrderTerm2[mu];
       }
 
-      // Term g*(3*eta*b^mu b_\nu/b^2 u^\nu_{;\nu}+Psi)/tau
+      // We now compute the target pressure anisotropy.
+      // dP_0 = 3*eta*b^mu*b^nu u_{mu;nu} - eta * u^{mu}_{;mu}
       REAL TargetPsi = 0.;
       REAL g = sqrt(-geomCenter.gDet);
       REAL norm = g;
@@ -420,6 +421,7 @@ void addViscositySourceTermsToResidual
       #endif	
       }
 
+      //Put the residual together
       #if (TIME_STEPPING == EXPLICIT)
 
       INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
@@ -427,7 +429,7 @@ void addViscositySourceTermsToResidual
         INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
           ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
            + g*( elemCenter.primVars[PSI]
-                 + TargetPsi
+                 - TargetPsi
                )
           )/norm;
 
@@ -438,7 +440,7 @@ void addViscositySourceTermsToResidual
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
 	  ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
 	   + g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
-		 + TargetPsi
+		 - TargetPsi
 		 )
 	   )/norm;
       #endif

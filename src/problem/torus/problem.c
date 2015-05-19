@@ -57,8 +57,8 @@
     //Closure for firehose instability
     REAL psiCeil = ClosureFactor*getbSqr(elem, geom);
     //Closure for mirror instability
-    if(elem->primVars[PSI]<0.)
-      psiCeil *= 0.5;
+    //if(elem->primVars[PSI]>0.)
+    //  psiCeil *= 0.5;
 
     REAL tauDynamical = pow(Rad,1.5);
     REAL lambda       = 0.01;
@@ -833,9 +833,9 @@ void applyFloor(const int iTile, const int jTile,
     //	     primTile[INDEX_TILE(&zone, PSI)],bSqr,r);
     //if(r < 1.5)
     //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
-    REAL psimax = 10.*bSqr*ClosureFactor;
-    if(primTile[INDEX_TILE(&zone, PSI)]<0.)
-      psimax*=0.5;
+    REAL psimax = 1.2*bSqr*ClosureFactor;
+    //if(primTile[INDEX_TILE(&zone, PSI)]>0.)
+    //  psimax*=0.5;
     if(r<3.)
       psimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(psi)>psimax)
