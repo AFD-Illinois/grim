@@ -834,6 +834,8 @@ void applyFloor(const int iTile, const int jTile,
     //if(r < 1.5)
     //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
     REAL psimax = 10.*bSqr*ClosureFactor;
+    if(primTile[INDEX_TILE(&zone, PSI)]<0.)
+      psimax*=0.5;
     if(r<3.)
       psimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(psi)>psimax)
