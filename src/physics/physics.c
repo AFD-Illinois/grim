@@ -99,8 +99,10 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
         * (elem->uCon[mu]*bCov[nu] + elem->bCon[mu]*uCov[nu])
       #endif 
       #if  (VISCOSITY)
-	+elem->primVars[PSI]/bSqr*elem->bCon[mu]*bCov[nu]
-	-elem->primVars[PSI]/3.
+	//Add -dP*(b^mu b^nu b^{-2} - 1/3 h^{mu nu})
+	// with dP = psi = pressure anisotropy
+	-elem->primVars[PSI]/bSqr*elem->bCon[mu]*bCov[nu]
+	+elem->primVars[PSI]/3.
 	*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
       #endif
                         ;

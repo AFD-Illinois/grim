@@ -225,7 +225,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B2]  = 0.;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PSI] = 0.0624512526648 + 0.0186932205343*I;
+        deltaPrimVars[PSI] = -0.0624512526648 - 0.0186932205343*I;
 
         REAL k1 = 2*M_PI;
         REAL k2 = 0.;
@@ -262,7 +262,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B2]  = 0.00697678484543 + 1.91989053629e-05*I;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PSI] = -0.0129157109207 - 0.00431579622043*I;
+        deltaPrimVars[PSI] = 0.0129157109207 + 0.00431579622043*I;
 
         REAL k1 = 2*M_PI;
 
@@ -336,7 +336,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B2]  = 0.;
         deltaPrimVars[B3]  = 0.;
-	deltaPrimVars[PSI]  = 0.00691108899638 + 0.000221744119852*I;
+	deltaPrimVars[PSI]  = -0.00691108899638 - 0.000221744119852*I;
 
 	etaProblem    = .1;
         tauVisProblem = 10.;
