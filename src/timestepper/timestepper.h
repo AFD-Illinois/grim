@@ -27,10 +27,10 @@ struct timeStepper
   Vec primPetscVec;
   Vec residualPetscVec;
   Vec OldresidualPetscVec;
-  Vec LastLambdaresidualPetscVec;
+  Vec LastStepresidualPetscVec;
   Vec LambdaresidualPetscVec;
   Vec primPetscVecOld;
-  Vec primPetscVecLastLambda;
+  Vec primPetscVecLastStep;
   Vec primPetscVecLambda;
   Vec primPetscVecInt;
   Vec primPetscVecHalfStep;

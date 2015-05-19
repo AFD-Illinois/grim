@@ -83,7 +83,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
                  &ts->X1Size, &ts->X2Size, &ts->X3Size);
   
   DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecOld);
-  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecLastLambda);
+  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecLastStep);
   DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecLambda);
   DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecHalfStep);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->divFluxPetscVecOld);
@@ -92,7 +92,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->residualPetscVec);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->OldresidualPetscVec);
   DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->LambdaresidualPetscVec);
-  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->LastLambdaresidualPetscVec);
+  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->LastStepresidualPetscVec);
 
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
     DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->primPetscVec);
@@ -101,7 +101,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   #endif
 
   VecSet(ts->primPetscVecOld, 0.);
-  VecSet(ts->primPetscVecLastLambda, 0.);
+  VecSet(ts->primPetscVecLastStep, 0.);
   VecSet(ts->primPetscVecLambda, 0.);
   VecSet(ts->primPetscVecHalfStep, 0.);
   VecSet(ts->divFluxPetscVecOld, 0.);
@@ -110,7 +110,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   VecSet(ts->residualPetscVec, 0.);
   VecSet(ts->OldresidualPetscVec, 0.);
   VecSet(ts->LambdaresidualPetscVec, 0.);
-  VecSet(ts->LastLambdaresidualPetscVec, 0.);
+  VecSet(ts->LastStepresidualPetscVec, 0.);
   VecSet(ts->primPetscVec, 0.);
 
   SNESSetFunction(ts->snes, ts->residualPetscVec,
@@ -490,6 +490,9 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
  */
 void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Start time step \n");
+  PetscErrorCode errCode;
+
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
 
     /* First go from t=n to t=n+1/2 */
@@ -504,217 +507,179 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 
     int MAX_IT = 3;
     int MAX_LAMBDA_LOOPS = 10;
-    REAL atol = 1.e-8;
-    REAL rtol = 1.e-6;
-    REAL OrigRes = 0.;
+    double ALPHA_LS = 1.e-4;
+    double LAMBDA_MIN = 1.e-12;
+    REAL atol = 1.e-7;
+    REAL rtol = 1.e-5;
 
     ARRAY(OldresidualLocal);
     ARRAY(LambdaresidualLocal);
-    ARRAY(LastLambdaresidualLocal);
+    ARRAY(LastStepresidualLocal);
     ARRAY(residualLocal);
-    ARRAY(OldprimVecLocal);
     ARRAY(HalfStepprimVecLocal);
-    ARRAY(LastLambdaprimVecLocal);
+    ARRAY(OldprimVecLocal);
+    ARRAY(LastStepprimVecLocal);
     ARRAY(primVecLocal);
     ARRAY(LambdaprimVecLocal);
-
+    
+    
+    int Npoints = ts->X1Size*ts->X2Size;
+    REAL mLambda[Npoints];
+    int mConverged[Npoints];
     errCode = computeResidual(ts->snes,ts->primPetscVecOld,ts->OldresidualPetscVec,ts);
     VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
-    VecCopy(ts->OldresidualPetscVec,ts->LastLambdaresidualPetscVec);
-    VecCopy(ts->primPetscVecHalfStep, ts->primPetscVecLastLambda);
-
+    VecCopy(ts->OldresidualPetscVec, ts->residualPetscVec);
     DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->OldresidualPetscVec,
 		       &OldresidualLocal);
     DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
 		       &OldprimVecLocal);
+    //Newton linesearch method
     for(int it=0;it<MAX_IT;it++)
       {
+	VecCopy(ts->residualPetscVec,ts->LastStepresidualPetscVec);
+	VecCopy(ts->primPetscVecHalfStep, ts->primPetscVecLastStep);
+	DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastStep,
+                           &LastStepprimVecLocal);
+	DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LastStepresidualPetscVec,
+                           &LastStepresidualLocal);
+	//1) Standard petsc inversion. Should use basic linesearch, and snes_max_it=1
 	errCode = SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
 	int AllPointsConverged = 0;
-	REAL minlambda = 1.e-5;
-	
-	DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastLambda,
-			   &LastLambdaprimVecLocal);
-	DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LastLambdaresidualPetscVec,
-                           &LastLambdaresidualLocal);
+	DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
+                           &primVecLocal);
+	DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
+                           &residualLocal);
+	VecCopy(ts->residualPetscVec,ts->LambdaresidualPetscVec);
+	VecCopy(ts->primPetscVecHalfStep, ts->primPetscVecLambda);
+	//Linesearch within each step
 	for(int itlam = 0; itlam<MAX_LAMBDA_LOOPS && AllPointsConverged==0;itlam++)
 	  {
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-			       &residualLocal);
-	    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
-			       &primVecLocal);
 	    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
                                &LambdaprimVecLocal);
-	    REAL DiagOldRes = 0.;
-	    REAL DiagFullRes = 0.;
-	    REAL DiagLamRes = 0.;
-
-	    AllPointsConverged = 1;
-             #if (USE_OPENMP)
-               #pragma omp parallel for
-             #endif
-	    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-	      {
-		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-		  {
-		    struct gridZone zone;
-		    setGridZone(iTile, jTile,
-				iInTile, jInTile,
-				ts->X1Start, ts->X2Start,
-				ts->X1Size, ts->X2Size,
-				&zone);
-		    REAL res = 0.;
-		    REAL Oldres = 0.;
-		    REAL Lastres = 0.;
-		    REAL temp = 0.;
-		    for (int var=0; var<DOF; var++)
-		      {
-			temp = INDEX_PETSC(OldresidualLocal,&zone,var);
-			Oldres+=temp*temp;
-			temp = INDEX_PETSC(residualLocal,&zone,var);
-			res+=temp*temp;
-		      }
-		    res=sqrt(res);
-		    Oldres=sqrt(Oldres);
-		    DiagOldRes += Oldres;
-		    DiagFullRes += res;
-		    if(fabs(res)>fabs(Oldres))
-		      AllPointsConverged=0;
-		    REAL lambda = .5;
-		    if(Oldres<res)
-		      lambda = Oldres/2./res;
-		    for (int var=0; var<DOF; var++)
-		      {
-			INDEX_PETSC(LambdaprimVecLocal,&zone,var)=
-			  (1.-lambda)*INDEX_PETSC(OldprimVecLocal,&zone,var)
-			  +lambda*INDEX_PETSC(primVecLocal,&zone,var);
-		      }
-		  }
-	      }
-	    if(it==0)
-	      OrigRes=DiagOldRes;
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
-				   ts->primPetscVecLambda,
-				   &LambdaprimVecLocal);
-	    errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LambdaresidualPetscVec,
 			       &LambdaresidualLocal);
-	    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
-                               &LambdaprimVecLocal);
+	    //Compute L2 norm of residual pointwise
+	    AllPointsConverged = 1;
+	    int NptsNotConv = 0;
+	    REAL DiagOldRes = 0.;
+	    REAL DiagNewRes = 0.;
             #if (USE_OPENMP)
               #pragma omp parallel for
             #endif
-	    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-	      {
-		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-		  {
+            LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+              {
+                LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+                  {
+		    int idx = iTile*ts->X2Size*TILE_SIZE_X1
+		      +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
+		      iInTile*TILE_SIZE_X2+jInTile;
+		    if(itlam==0)
+		      {
+			mLambda[idx]=1.;
+			mConverged[idx]=0;
+		      }
 		    struct gridZone zone;
 		    setGridZone(iTile, jTile,
 				iInTile, jInTile,
 				ts->X1Start, ts->X2Start,
 				ts->X1Size, ts->X2Size,
 				&zone);
-		    REAL LastLambdares = 0.;
-		    REAL Lambdares = 0.;
 		    REAL Oldres = 0.;
-		    REAL res = 0.;
+		    REAL Lambdares = 0.;
+		    REAL Firstres = 0.;
 		    REAL temp = 0.;
 		    for (int var=0; var<DOF; var++)
 		      {
-			temp = INDEX_PETSC(LastLambdaresidualLocal,&zone,var);
-                        LastLambdares+=temp*temp;
+			temp = INDEX_PETSC(LastStepresidualLocal,&zone,var);
+			Oldres+=temp*temp;
 			temp = INDEX_PETSC(LambdaresidualLocal,&zone,var);
-			Lambdares+=temp*temp;
+			Lambdares+=temp*temp; 
 			temp = INDEX_PETSC(OldresidualLocal,&zone,var);
-                        Oldres+=temp*temp;
-                        temp = INDEX_PETSC(residualLocal,&zone,var);
-                        res+=temp*temp;
+                        Firstres+=temp*temp;
 		      }
-		    LastLambdares=sqrt(LastLambdares);
+		    DiagOldRes += Oldres;
+		    DiagNewRes += Lambdares;
 		    Lambdares=sqrt(Lambdares);
-		    res=sqrt(res);
-                    Oldres=sqrt(Oldres);
-		    DiagLamRes += Lambdares;
-		    if(res<Lambdares && res<Oldres && res<LastLambdares)
-		      {}//don't use line search
+		    Oldres=sqrt(Oldres);
+		    Firstres=sqrt(Firstres);
+		    //Stop if we already converged (we went this far just
+		    //to include all points in the residual)
+		    if(mConverged[idx]==1)
+		      continue;
+		    if(Lambdares<Oldres*(1.-mLambda[idx]*ALPHA_LS))
+		      {
+			//Acceptable end to the linesearch
+			mConverged[idx]=1;
+		      }
 		    else
 		      {
-			if(it>0 && LastLambdares<Lambdares && LastLambdares<Oldres)
+			//if the residual was already small, just accept it...
+			if(Oldres<atol+rtol*Firstres)
 			  {
 			    for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-				INDEX_PETSC(LastLambdaprimVecLocal,&zone,var);
-			  }
-			else if(itlam==MAX_LAMBDA_LOOPS-1 && Oldres<Lambdares)
-			  {
-			    for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-				INDEX_PETSC(OldprimVecLocal,&zone,var);
+			      INDEX_PETSC(LambdaprimVecLocal,&zone,var)= 
+				INDEX_PETSC(LastStepprimVecLocal,&zone,var);
+			    mConverged[idx]=1;
+			    mLambda[idx]=0.;
+			    DiagNewRes+=Oldres*Oldres-Lambdares*Lambdares;
 			  }
 			else
 			  {
+			    //backtrack
+			    REAL lamupd = Oldres/(Oldres+Lambdares);
+			    if(lamupd>0.5)
+			      lamupd=0.5;
+			    if(lamupd<0.1 && itlam==0)
+			      lamupd=0.1;
+			    mLambda[idx]*=lamupd;
+			    if(mLambda[idx]<LAMBDA_MIN)
+			      mLambda[idx]=LAMBDA_MIN;
 			    for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-				INDEX_PETSC(LambdaprimVecLocal,&zone,var);
+			      INDEX_PETSC(LambdaprimVecLocal,&zone,var)=
+				(1.-mLambda[idx])*INDEX_PETSC(LastStepprimVecLocal,&zone,var)+
+				mLambda[idx]*INDEX_PETSC(primVecLocal,&zone,var);
+			    AllPointsConverged=0;
+			    NptsNotConv++;
 			  }
 		      }
-		  }  
+		  }
 	      }
 	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
-				   ts->primPetscVecHalfStep,
-				   &primVecLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-                                   &residualLocal);
-	    errCode = computeResidual(ts->snes,ts->primPetscVecHalfStep,ts->residualPetscVec,ts);
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-			       &residualLocal);
-	    REAL DiagFinalRes = 0.;
-            #if (USE_OPENMP)
-              #pragma omp parallel for
-            #endif
-	    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-	      {
-		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-		  {
-		    struct gridZone zone;
-		    setGridZone(iTile, jTile,
-				iInTile, jInTile,
-				ts->X1Start, ts->X2Start,
-				ts->X1Size, ts->X2Size,
-				&zone);
-		    REAL res = 0.;
-		    REAL temp = 0.;
-		    for (int var=0; var<DOF; var++)
-		      {
-			temp = INDEX_PETSC(residualLocal,&zone,var);
-			res+=temp*temp;
-		      }
-		    res=sqrt(res);
-		    DiagFinalRes += res;
-		  }  
-	      }
-	    printf("OldRes = %e; FullRes = %e; LamRes = %e; FinalRes = %e\n",DiagOldRes,DiagFullRes,DiagLamRes,DiagFinalRes);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-				   &residualLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->LambdaresidualPetscVec,
-                               &LambdaresidualLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
-                               &LambdaprimVecLocal);
-	    if(DiagFinalRes<atol+rtol*OrigRes)
-	      break;
+				   ts->primPetscVecLambda,
+				   &LambdaprimVecLocal);
+	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, 
+				   ts->LambdaresidualPetscVec,
+				   &LambdaresidualLocal);
+	    DiagOldRes = sqrt(DiagOldRes);
+	    DiagNewRes = sqrt(DiagNewRes);
+	    if(itlam==0)
+	      printf("Step %i - Initial residual = %e \n",it,DiagOldRes);
+	    printf("New residual = %e. ",DiagNewRes);
+	    printf("%i of %i points have not converged.\n",NptsNotConv,Npoints);
+	    errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	  }
-	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastLambda,
-			   &LastLambdaprimVecLocal);
-	DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->LastLambdaresidualPetscVec,
-                           &LastLambdaresidualLocal);
-	VecCopy(ts->residualPetscVec,ts->LastLambdaresidualPetscVec);
-	VecCopy(ts->primPetscVecHalfStep, ts->primPetscVecLastLambda);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			       ts->primPetscVecHalfStep,
+			       &primVecLocal);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, 
+			       ts->residualPetscVec,
+			       &residualLocal);
+	VecCopy(ts->LambdaresidualPetscVec,ts->residualPetscVec);
+	VecCopy(ts->primPetscVecLambda, ts->primPetscVecHalfStep);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			       ts->primPetscVecLastStep,
+			       &LastStepprimVecLocal);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, 
+			       ts->LastStepresidualPetscVec,
+			       &LastStepresidualLocal);
       }
     DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->OldresidualPetscVec,
 		       &OldresidualLocal);
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecOld,
     &OldprimVecLocal);
-
+    
+    //VecCopy(ts->primPetscVecOld, ts->primPetscVecHalfStep);
+    //errCode = SNESSolve(ts->snes, NULL, ts->primPetscVecHalfStep);
     //CHKERRQ(errCode);
 
     /* Problem dependent half step diagnostics */
@@ -745,39 +710,44 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     #endif
 
     ts->dt = dt;
-    
+
+    //VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
+    //errCode = SNESSolve(ts->snes, NULL, ts->primPetscVec);
     errCode = computeResidual(ts->snes,ts->primPetscVecHalfStep,ts->OldresidualPetscVec,ts);
     VecCopy(ts->primPetscVecHalfStep, ts->primPetscVec);
-    VecCopy(ts->OldresidualPetscVec,ts->LastLambdaresidualPetscVec);
-    VecCopy(ts->primPetscVecHalfStep, ts->primPetscVecLastLambda);
-
+    VecCopy(ts->OldresidualPetscVec, ts->residualPetscVec);
     DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->OldresidualPetscVec,
 		       &OldresidualLocal);
     DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
 		       &HalfStepprimVecLocal);
     for(int it=0;it<MAX_IT;it++)
       {
+	VecCopy(ts->residualPetscVec,ts->LastStepresidualPetscVec);
+        VecCopy(ts->primPetscVec, ts->primPetscVecLastStep);
+	DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastStep,
+                           &LastStepprimVecLocal);
+        DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LastStepresidualPetscVec,
+                           &LastStepresidualLocal);
 	errCode = SNESSolve(ts->snes, NULL, ts->primPetscVec);
 	int AllPointsConverged = 0;
-	REAL minlambda = 1.e-5;
-
-	DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastLambda,
-			   &LastLambdaprimVecLocal);
-	DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LastLambdaresidualPetscVec,
-                           &LastLambdaresidualLocal);
+        DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVec,
+                           &primVecLocal);
+        DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
+                           &residualLocal);
+        VecCopy(ts->residualPetscVec,ts->LambdaresidualPetscVec);
+        VecCopy(ts->primPetscVec, ts->primPetscVecLambda);
+	//Linesearch within each step
 	for(int itlam = 0; itlam<MAX_LAMBDA_LOOPS && AllPointsConverged==0;itlam++)
 	  {
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-			       &residualLocal);
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->primPetscVec,
-			   &primVecLocal);
 	    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
                                &LambdaprimVecLocal);
-		
-	    REAL DiagOldRes = 0.;
-	    REAL DiagFullRes = 0.;
-	    REAL DiagLamRes = 0.;
-	    AllPointsConverged = 1;
+            DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LambdaresidualPetscVec,
+                               &LambdaresidualLocal);
+	    //Compute L2 norm of residual pointwise                                                                                                                         
+            AllPointsConverged = 1;
+            int NptsNotConv = 0;
+            REAL DiagOldRes = 0.;
+            REAL DiagNewRes = 0.;
             #if (USE_OPENMP)
               #pragma omp parallel for
             #endif
@@ -785,163 +755,163 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 	      {
 		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
 		  {
+		    int idx = iTile*ts->X2Size*TILE_SIZE_X1
+		      +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
+		      iInTile*TILE_SIZE_X2+jInTile;
+		    if(itlam==0)
+		      {
+			mLambda[idx]=1.;
+			mConverged[idx]=0;
+		      }
 		    struct gridZone zone;
 		    setGridZone(iTile, jTile,
 				iInTile, jInTile,
 				ts->X1Start, ts->X2Start,
 				ts->X1Size, ts->X2Size,
 				&zone);
-		    REAL res = 0.;
 		    REAL Oldres = 0.;
-		    REAL temp = 0.;
-		    for (int var=0; var<DOF; var++)
-		      {
-			temp = INDEX_PETSC(OldresidualLocal,&zone,var);
-			Oldres+=temp*temp;
-			temp = INDEX_PETSC(residualLocal,&zone,var);
-			res+=temp*temp;
-		      }
-		    res=sqrt(res);
-		    Oldres=sqrt(Oldres);
-		    DiagOldRes += Oldres;
-		    DiagFullRes += res;
-		    if(fabs(res)>fabs(Oldres))
-		      AllPointsConverged=0;
-		    REAL lambda = .5;
-                    if(Oldres<res)
-		      lambda = Oldres/2./res;
-		    for (int var=0; var<DOF; var++)
-		      {
-			INDEX_PETSC(LambdaprimVecLocal,&zone,var)=
-			  (1.-lambda)*INDEX_PETSC(HalfStepprimVecLocal,&zone,var)
-			  +lambda*INDEX_PETSC(primVecLocal,&zone,var);
-		      }
-		  }
-	      }
-	    if(it==0)
-	      OrigRes=DiagOldRes;
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
-				   ts->primPetscVecLambda,
-				   &LambdaprimVecLocal);
-	    errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->LambdaresidualPetscVec,
-			       &LambdaresidualLocal);
-	    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
-                               &LambdaprimVecLocal);
-            #if (USE_OPENMP)
-              #pragma omp parallel for
-            #endif
-	    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-	      {
-		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-		  {
-		    struct gridZone zone;
-		    setGridZone(iTile, jTile,
-				iInTile, jInTile,
-				ts->X1Start, ts->X2Start,
-				ts->X1Size, ts->X2Size,
-				&zone);
-		    REAL res = 0.;
-		    REAL LastLambdares = 0.;
 		    REAL Lambdares = 0.;
-                    REAL Oldres = 0.;
+		    REAL Firstres = 0.;
 		    REAL temp = 0.;
 		    for (int var=0; var<DOF; var++)
 		      {
-			temp = INDEX_PETSC(LastLambdaresidualLocal,&zone,var);
-                        LastLambdares+=temp*temp;
-			temp = INDEX_PETSC(LambdaresidualLocal,&zone,var);
-			Lambdares+=temp*temp;
 			temp = INDEX_PETSC(OldresidualLocal,&zone,var);
-                        Oldres+=temp*temp;
-                        temp = INDEX_PETSC(residualLocal,&zone,var);
-                        res+=temp*temp;
+                        Firstres+=temp*temp;
+			temp = INDEX_PETSC(LastStepresidualLocal,&zone,var);
+			Oldres+=temp*temp;
+			temp = INDEX_PETSC(LambdaresidualLocal,&zone,var);
+			Lambdares+=temp*temp; 
 		      }
-		    LastLambdares=sqrt(LastLambdares);
+		    DiagOldRes += Oldres;
+		    DiagNewRes += Lambdares;
 		    Lambdares=sqrt(Lambdares);
-                    res=sqrt(res);
-                    Oldres=sqrt(Oldres);
-                    DiagLamRes += Lambdares;
-		    if(res<Lambdares && res<Oldres && res<LastLambdares)
-		      {}//don't use line search
+		    Oldres=sqrt(Oldres);
+		    Firstres=sqrt(Firstres);
+		    //Stop if we already converged (we went this far just
+		    //to include all points in the residual)
+		    if(mConverged[idx]==1)
+		      continue;
+		    if(Lambdares<Oldres*(1.-mLambda[idx]*ALPHA_LS))
+		      {
+			//Acceptable end to the linesearch
+			mConverged[idx]=1;
+		      }
 		    else
-                      {
-			if(it>0 && LastLambdares<Lambdares && LastLambdares<Oldres)
-                          {
-                            for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-                                INDEX_PETSC(LastLambdaprimVecLocal,&zone,var);
-                          }
-			else if(itlam==MAX_LAMBDA_LOOPS-1 && Oldres<Lambdares)
+		      {
+			//if the residual was already small, just accept it...
+			if(Oldres<atol+rtol*Firstres)
 			  {
 			    for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-				INDEX_PETSC(HalfStepprimVecLocal,&zone,var);
+			      INDEX_PETSC(LambdaprimVecLocal,&zone,var)= 
+				INDEX_PETSC(LastStepprimVecLocal,&zone,var);
+			    mConverged[idx]=1;
+			    mLambda[idx]=0.;
 			  }
 			else
 			  {
+			    //backtrack
+			    REAL lamupd = Oldres/(Oldres+Lambdares);
+			    if(lamupd>0.5)
+			      lamupd=0.5;
+			    if(lamupd<0.1 && itlam==0)
+			      lamupd=0.1;
+			    mLambda[idx]*=lamupd;
+			    if(mLambda[idx]<LAMBDA_MIN)
+			      mLambda[idx]=LAMBDA_MIN;
 			    for (int var=0; var<DOF; var++)
-			      INDEX_PETSC(primVecLocal,&zone,var)=
-				INDEX_PETSC(LambdaprimVecLocal,&zone,var);
+			      INDEX_PETSC(LambdaprimVecLocal,&zone,var)=
+				(1.-mLambda[idx])*INDEX_PETSC(LastStepprimVecLocal,&zone,var)+
+				mLambda[idx]*INDEX_PETSC(primVecLocal,&zone,var);
+			    AllPointsConverged=0;
+			    NptsNotConv++;
 			  }
-                      }
-		  }  
-	      }
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones,
-				   ts->primPetscVec,
-				   &primVecLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-                                   &residualLocal);
-	    errCode = computeResidual(ts->snes,ts->primPetscVec,ts->residualPetscVec,ts);
-	    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-			       &residualLocal);
-	    REAL DiagFinalRes = 0.;
-            #if (USE_OPENMP)
-              #pragma omp parallel for
-            #endif
-	    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-	      {
-		LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-		  {
-		    struct gridZone zone;
-		    setGridZone(iTile, jTile,
-				iInTile, jInTile,
-				ts->X1Start, ts->X2Start,
-				ts->X1Size, ts->X2Size,
-				&zone);
-		    REAL res = 0.;
-		    REAL temp = 0.;
-		    for (int var=0; var<DOF; var++)
-		      {
-			temp = INDEX_PETSC(residualLocal,&zone,var);
-			res+=temp*temp;
 		      }
-		    res=sqrt(res);
-		    DiagFinalRes += res;
-		  }  
+		  }
 	      }
-	    printf("OldRes = %e; FullRes = %e; LamRes = %e; FinalRes = %e\n",DiagOldRes,DiagFullRes,DiagLamRes,DiagFinalRes);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
-				   &residualLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->LambdaresidualPetscVec,
-                               &LambdaresidualLocal);
-	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLambda,
-                               &LambdaprimVecLocal);
-	    if(DiagFinalRes<atol+rtol*OrigRes)
-	      break;
+	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+				   ts->primPetscVecLambda,
+				   &LambdaprimVecLocal);
+	    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones,
+                                   ts->LambdaresidualPetscVec,
+                                   &LambdaresidualLocal);
+            DiagOldRes = sqrt(DiagOldRes);
+            DiagNewRes = sqrt(DiagNewRes);
+	    if(itlam==0 && it==0)
+	      printf("Initial residual = %e\n",DiagOldRes);
+	    if(itlam==0)
+	      printf("Step %i \n",it);
+	    printf("New residual = %e. ",DiagNewRes);
+	    printf("%i of %i points have not converged.\n",NptsNotConv,Npoints);
+	    errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	  }
-	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecLastLambda,
-			   &LastLambdaprimVecLocal);
-	DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->LastLambdaresidualPetscVec,
-                           &LastLambdaresidualLocal);
-	VecCopy(ts->residualPetscVec,ts->LastLambdaresidualPetscVec);
-        VecCopy(ts->primPetscVec, ts->primPetscVecLastLambda);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			       ts->primPetscVec,
+			       &primVecLocal);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, 
+			       ts->residualPetscVec,
+			       &residualLocal);
+	VecCopy(ts->LambdaresidualPetscVec,ts->residualPetscVec);
+	VecCopy(ts->primPetscVecLambda, ts->primPetscVec);
+	DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+                               ts->primPetscVecLastStep,
+                               &LastStepprimVecLocal);
+        DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones,
+                               ts->LastStepresidualPetscVec,
+                               &LastStepresidualLocal);
       }
     DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, ts->OldresidualPetscVec,
 		       &OldresidualLocal);
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVecHalfStep,
 		       &HalfStepprimVecLocal);
     
+    //Diagnostics
+    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, ts->primPetscVec,
+		       &primVecLocal);
+    DMDAVecGetArrayDOF(ts->dmdaWithoutGhostZones, ts->residualPetscVec,
+		       &residualLocal);   
+    int NptsResMag[16];
+    for(int i=0;i<16;i++)
+      NptsResMag[i]=0;
+    #if (USE_OPENMP)
+      #pragma omp parallel for
+    #endif
+    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+      {
+	LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+	  {
+	    struct gridZone zone;
+	    setGridZone(iTile, jTile,
+			iInTile, jInTile,
+			ts->X1Start, ts->X2Start,
+			ts->X1Size, ts->X2Size,
+			&zone);
+	    REAL res = 0.;
+	    REAL temp = 0.;
+	    for (int var=0; var<DOF; var++)
+	      {
+		temp = INDEX_PETSC(residualLocal,&zone,var);
+		res+=temp*temp;
+	      }
+	    res=sqrt(res);
+	    res=log10(res+1.e-15);
+	    for(int i=0;i<16;i++)
+	      if(res>-i)
+		{
+		  NptsResMag[i]++;
+		  break;
+		}
+	  }
+      }
+    printf("Distribution of residuals : ");
+    for(int i=0;i<16;i++)
+      printf("%i ;", NptsResMag[i]);
+    printf("\n");
+    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			   ts->primPetscVec,
+			   &primVecLocal);
+    DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones,
+			   ts->residualPetscVec,
+			   &residualLocal);    
     //CHKERRQ(errCode);
 
   #elif (TIME_STEPPING==IMPLICIT)
@@ -996,14 +966,14 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
 {
   VecDestroy(&ts->primPetscVecOld);
-  VecDestroy(&ts->primPetscVecLastLambda);
+  VecDestroy(&ts->primPetscVecLastStep);
   VecDestroy(&ts->primPetscVecLambda);
   VecDestroy(&ts->divFluxPetscVecOld);
   VecDestroy(&ts->conservedVarsPetscVecOld);
   VecDestroy(&ts->sourceTermsPetscVecOld);
   VecDestroy(&ts->residualPetscVec);
   VecDestroy(&ts->OldresidualPetscVec);
-  VecDestroy(&ts->LastLambdaresidualPetscVec);
+  VecDestroy(&ts->LastStepresidualPetscVec);
   VecDestroy(&ts->LambdaresidualPetscVec);
   VecDestroy(&ts->primPetscVec);
   VecDestroy(&ts->connectionPetscVec);
