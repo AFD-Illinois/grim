@@ -517,7 +517,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     
     
     int Npoints = ts->X1Size*ts->X2Size;
-    int UseCustomLineSearch = 0;
+    int UseCustomLineSearch = 1;
     REAL mLambda[Npoints];
     int mConverged[Npoints];
 
