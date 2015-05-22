@@ -245,12 +245,21 @@ void addViscositySourceTermsToResidual
       
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
-        dHigherOrderTerm2[0] = 
-          (elemCenter.primVars[PSI] * TCenter)
-        / (2.*betaCenter) 
-        * sqrt(-geomCenter.gDet) 
-        * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-
+      //dHigherOrderTerm2[0] = 
+      //    (elemCenter.primVars[PSI] * TCenter)
+      //  / (2.*betaCenter) 
+      //  * sqrt(-geomCenter.gDet) 
+      //  * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
+        REAL betaoTratio = beta*TOld/T/betaOld;
+	if(betaoTratio > 1.1)
+	  betaoTratio = 1.1;
+	if(betaoTratio < 0.9)
+	  betaoTratio = 0.9;
+        dHigherOrderTerm2[0] =
+	  sqrt(-geomCenter.gDet)*elemCenter.primVars[PSI]/2./dt*
+	  ((elem.uCon[0]-elemOld.uCon[0])+elemCenter.uCon[0]*
+	   (log(betaoTratio)));
+      
         dHigherOrderTerm2[1] = 
           (elemCenter.primVars[PSI] * TCenter)
         / (2.*betaCenter) 
@@ -264,7 +273,7 @@ void addViscositySourceTermsToResidual
           / (2.*betaCenter) 
           * INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 1);
         #endif
-
+	  
       #elif (TIME_STEPPING == IMPLICIT)
 
         dHigherOrderTerm2[0] = 
@@ -437,8 +446,24 @@ void addViscositySourceTermsToResidual
   
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
 
+	/*if(iTile == 1 && jTile == 3 && iInTile == 11 && jInTile == 13)
+	  {
+	    printf("Residual from flux = %e; HO1 = %e; HO2 = %e; TargetPsi = %e; Psi = %e\n",
+		   INDEX_PETSC(residualGlobal, &zoneCenter, PSI),
+		   - higherOrderTerm1 *elem.tauVis/norm,
+		   higherOrderTerm2*elem.tauVis/norm,
+		   0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])*g/norm,
+		   -g*TargetPsi/norm);
+	    printf("Rho = %e; u = %e; psi = %e; bSqr = %e\n",
+		   elem.primVars[RHO],
+		   elem.primVars[UU],
+		   elem.primVars[PSI],
+		   getbSqr(&elem, &geomCenter)
+		   );
+		   }*/
+
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-	  ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
+	  ((- higherOrderTerm1 + 1.*higherOrderTerm2)*elem.tauVis
 	   + g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
 		 - TargetPsi
 		 )

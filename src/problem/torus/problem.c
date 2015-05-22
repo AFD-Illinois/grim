@@ -67,16 +67,21 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                    );
     
     //Closure for firehose instability
-    REAL psiCeil = ClosureFactor*getbSqr(elem, geom);
-    //Closure for mirror instability
-    //if(elem->primVars[PSI]>0.)
-    //  psiCeil *= 0.5;
-
+    REAL b2 = getbSqr(elem, geom);
+    REAL psiCeil = ClosureFactor*b2;
+    //Closure for mirror / ion cyclotron instability
+    if(elem->primVars[PSI]>0.)
+      {
+	psiCeil *= 0.5;
+	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45);
+	if(ionCeil<psiCeil)
+	  psiCeil=ionCeil;
+      }
     REAL tauDynamical = pow(Rad,1.5);
     REAL lambda       = 0.01;
     REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
     y = (y-1)/lambda;
-    REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-10;
+    REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-05;
 
     REAL ViscousCoeff = VISCOSITY_ALPHA;
     REAL tau     = tauDynamical*fermiDirac;
@@ -803,6 +808,7 @@ void applyFloor(const int iTile, const int jTile,
     if (u < uFloor)
     {
       primTile[INDEX_TILE(&zone, UU)] = uFloor;
+      u = uFloor;
     }
 
     #if (CONDUCTION)
@@ -842,14 +848,15 @@ void applyFloor(const int iTile, const int jTile,
 #if VISCOSITY
     REAL psi = primTile[INDEX_TILE(&zone, PSI)];
     REAL bSqr = getbSqr(&elem, &geom);
-    //if(iTile == 1 && jTile == 6 && iInTile == 6 && jInTile == 12)
-    //  printf("Applying floors with psi = %e; b^2 = %e; r = %e\n\n",
-    //	     primTile[INDEX_TILE(&zone, PSI)],bSqr,r);
-    //if(r < 1.5)
-    //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
-    REAL psimax = 1.2*bSqr*ClosureFactor;
-    //if(primTile[INDEX_TILE(&zone, PSI)]>0.)
-    //  psimax*=0.5;
+    REAL psimax = 1.07*bSqr*ClosureFactor;
+    if(primTile[INDEX_TILE(&zone, PSI)]>0.)
+      {
+	psimax*=0.5;
+	REAL P = (ADIABATIC_INDEX-1.)*u;
+	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45);
+	if(ionCeil*1.07<psimax)
+	  psimax = 1.07*ionCeil;
+      }
     if(r<3.)
       psimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(psi)>psimax)
