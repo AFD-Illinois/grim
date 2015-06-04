@@ -192,9 +192,10 @@ PetscErrorCode computeResidual(SNES snes,
         struct geometry geom; setGeometry(XCoords, &geom);
 
         /* Now we need to compute conservedVarsOld using data from
-         * primOldLocal. */
+         * primOldGlobal. The computation of conservedVarsOld need not be done
+         * during the second half step. Put a switch here to avoid it. */
         struct fluidElement elem;
-        setFluidElement(&INDEX_PETSC(primOldLocal, &zone, 0), &geom, &elem);
+        setFluidElement(&INDEX_PETSC(primOldGlobal, &zone, 0), &geom, &elem);
         computeFluxes(&elem, &geom, 0, conservedVars);
 
         for (int var=0; var<DOF; var++)
