@@ -7,7 +7,6 @@ void addViscositySourceTermsToResidual
   ARRAY(connectionGlobal),
   ARRAY(graduConVisGlobal), 
   ARRAY(graduConHigherOrderTerm1VisGlobal),
-  ARRAY(graduConHigherOrderTerm2VisGlobal),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -36,7 +35,6 @@ void addViscositySourceTermsToResidual
     {
       REAL graduConVis[COMPUTE_DIM*NDIM];
       REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM];
-      REAL graduConHigherOrderTerm2Vis[COMPUTE_DIM];
       computeViscositySpatialGradientTerms
         (primTile, 
          iTile, jTile, 
@@ -44,8 +42,7 @@ void addViscositySourceTermsToResidual
          X1Start, X2Start,
          X1Size, X2Size, 
          graduConVis, 
-         graduConHigherOrderTerm1Vis,
-         graduConHigherOrderTerm2Vis
+         graduConHigherOrderTerm1Vis
         );
       
       for (int mu=0; mu<NDIM; mu++)
@@ -56,9 +53,6 @@ void addViscositySourceTermsToResidual
       INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0) = 
         graduConHigherOrderTerm1Vis[0];
 
-      INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 0) = 
-        graduConHigherOrderTerm2Vis[0];
-
       #if (COMPUTE_DIM==2)
         for (int mu=0; mu<NDIM; mu++)
         {
@@ -68,8 +62,6 @@ void addViscositySourceTermsToResidual
         INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1) = 
           graduConHigherOrderTerm1Vis[1];
 
-        INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 1) = 
-          graduConHigherOrderTerm2Vis[1];
       #endif
     } 
     else
@@ -77,7 +69,6 @@ void addViscositySourceTermsToResidual
       #if (TIME_STEPPING==IMPLICIT)
         REAL graduConVis[COMPUTE_DIM*NDIM];
         REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM];
-        REAL graduConHigherOrderTerm2Vis[COMPUTE_DIM];
         computeViscositySpatialGradientTerms
           (primTile, 
            iTile, jTile, 
@@ -86,7 +77,6 @@ void addViscositySourceTermsToResidual
            X1Size, X2Size, 
            graduConVis,
            graduConHigherOrderTerm1Vis,
-           graduConHigherOrderTerm2Vis
           );
       #endif
 
@@ -132,88 +122,69 @@ void addViscositySourceTermsToResidual
                         &geomCenter, &elemCenter);
       }
 
-      //For limiting
-      REAL xCoords[NDIM];
-      XTox(geomCenter.XCoords, xCoords);
-      REAL rhofloor = RHO_FLOOR *pow(xCoords[1],RHO_FLOOR_FALLOFF);
-      REAL ufloor   = UU_FLOOR *pow(xCoords[1],UU_FLOOR_FALLOFF);
-      
       //Temperature information
-      REAL TOld =   (ADIABATIC_INDEX-1.)
-                  * INDEX_PETSC(primOldGlobal, &zoneCenter, UU)
-                  / INDEX_PETSC(primOldGlobal, &zoneCenter, RHO);
-
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
         REAL TCenter =   (ADIABATIC_INDEX-1.)
                        * elemCenter.primVars[UU]
                        / elemCenter.primVars[RHO];
-	REAL T    =   TCenter;
-	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
-	   INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
-	  T = (ADIABATIC_INDEX-1.)
-	    * elem.primVars[UU]
-	    / elem.primVars[RHO];
       #elif (TIME_STEPPING == IMPLICIT)
-	REAL T    =   TOld;
-	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
-	   INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
-	  T = (ADIABATIC_INDEX-1.)
-	    * elem.primVars[UU]
-	    / elem.primVars[RHO];
+	REAL TCenter = (ADIABATIC_INDEX-1.)
+	  * elem.primVars[UU]
+	  / elem.primVars[RHO];
+      #endif
+      if(TCenter<1.e-12)
+	TCenter = 1.e-12;
+
+	//Compute beta at Center
+	//where beta = tauVis/2/eta
+      #if (HIGHORDERTERMS_VISCOSITY)
+        #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
+          REAL betaCenter = elemCenter.tauVis/(elemCenter.eta*2.);
+        #elif (TIME_STEPPING == IMPLICIT)
+          REAL betaCenter = 0.5*(  (elem.tauVis/(elem.eta*2.) )
+				 + (elemOld.tauVis/(elemOld.eta*2.) )
+				 );
+        #endif
       #endif
 
+      REAL divUCoeff = 1.;
+      #if (HIGHORDERTERMS_VISCOSITY)
+        divUCoeff = .5;
+      #endif
 
       /* Higher order term 1 
-       * (Psi+1/2/beta)*(sqrt(g)*u^\mu)_{,\mu} *
-       * where beta = tauVis/2/eta */
-      REAL betaOld    = elemOld.tauVis/(elemOld.eta*2.);
-      #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
-
-        REAL betaCenter = elemCenter.tauVis/(elemCenter.eta*2.);
-
-      #elif (TIME_STEPPING == IMPLICIT)
-
-        REAL betaCenter = 0.5*(  (elem.tauVis/(elem.eta*2.) )
-                               + (elemOld.tauVis/(elemOld.eta*2.) )
-                              );  
-      #endif
-	//limiting
-	REAL beta       = betaCenter;
-	if(INDEX_PETSC(primGlobal, &zoneCenter, UU)>ufloor &&
-	  INDEX_PETSC(primGlobal, &zoneCenter, RHO)>rhofloor)
-	  beta = elem.tauVis/(elem.eta*2.);
-
+       * Psi/2*(sqrt(g)*u^\mu)_{,\mu} */
       REAL dHigherOrderTerm1[NDIM];
       
       #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
 
         dHigherOrderTerm1[0] = 
-          elemCenter.primVars[PSI] 
+          divUCoeff*elemCenter.primVars[PSI] 
         * sqrt(-geomCenter.gDet) 
         * (elem.uCon[0] - elemOld.uCon[0])/dt;
       
 
         dHigherOrderTerm1[1] = 
-          elemCenter.primVars[PSI]
+          divUCoeff*elemCenter.primVars[PSI]
         * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0);
 
         dHigherOrderTerm1[2] = 0.; dHigherOrderTerm1[3] = 0.;
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-            elemCenter.primVars[PSI]
+            divUCoeff*elemCenter.primVars[PSI]
           * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1);
         #endif
 
       #elif (TIME_STEPPING == IMPLICIT)
 
         dHigherOrderTerm1[0] = 
-          0.5 * (elem.primVars[PSI] + elemOld.primVars[PSI])
+          0.5 * divUCoeff * (elem.primVars[PSI] + elemOld.primVars[PSI])
               * sqrt(-geomCenter.gDet) 
               * (elem.uCon[0] - elemOld.uCon[0])/dt;
       
         dHigherOrderTerm1[1] = 
-          0.5*(  (  elemOld.primVars[PSI]
+          0.5* divUCoeff * (  (  elemOld.primVars[PSI]
                   * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 0)
                  )
                + 
@@ -226,7 +197,7 @@ void addViscositySourceTermsToResidual
 
         #if (COMPUTE_DIM==2)
           dHigherOrderTerm1[2] = 
-	    0.5*(  (  elemOld.primVars[PSI]
+	    0.5* divUCoeff * (  (  elemOld.primVars[PSI]
                   * INDEX_PETSC(graduConHigherOrderTerm1VisGlobal, &zoneCenter, 1)
                  )
                + 
@@ -238,86 +209,10 @@ void addViscositySourceTermsToResidual
 
       #endif /* TIME_STEPPING options for higherOrderTerm1 */
 
-      /* Higher order term 2 
-       * (Psi*T)/(2*beta) * (beta*g*u^\mu/T)_{,\mu}*/
-
-      REAL dHigherOrderTerm2[NDIM];
-      
-      #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
-
-      //dHigherOrderTerm2[0] = 
-      //    (elemCenter.primVars[PSI] * TCenter)
-      //  / (2.*betaCenter) 
-      //  * sqrt(-geomCenter.gDet) 
-      //  * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-        REAL betaoTratio = beta*TOld/T/betaOld;
-	if(betaoTratio > 1.1)
-	  betaoTratio = 1.1;
-	if(betaoTratio < 0.9)
-	  betaoTratio = 0.9;
-        dHigherOrderTerm2[0] =
-	  sqrt(-geomCenter.gDet)*elemCenter.primVars[PSI]/2./dt*
-	  ((elem.uCon[0]-elemOld.uCon[0])+elemCenter.uCon[0]*
-	   (log(betaoTratio)));
-      
-        dHigherOrderTerm2[1] = 
-          (elemCenter.primVars[PSI] * TCenter)
-        / (2.*betaCenter) 
-        * INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 0);
-
-        dHigherOrderTerm2[2] = 0.; dHigherOrderTerm2[3] = 0.;
-
-        #if (COMPUTE_DIM==2)
-          dHigherOrderTerm2[2] = 
-            (elemCenter.primVars[PSI] * TCenter)
-          / (2.*betaCenter) 
-          * INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 1);
-        #endif
-	  
-      #elif (TIME_STEPPING == IMPLICIT)
-
-        dHigherOrderTerm2[0] = 
-          0.5*(  (elem.primVars[PSI] * T/(2.*beta) )
-               + (elemOld.primVars[PSI] * TOld/(2.*betaOld) )
-              )
-        * sqrt(-geomCenter.gDet) 
-        * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-
-
-        dHigherOrderTerm2[1] = 
-          0.5*(  (  elemOld.primVars[PSI] * TOld/(2.*betaOld) 
-                  * INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 0)
-                 )
-               + 
-                 (  elem.primVars[PSI] * T/(2.*beta)
-                  * graduConHigherOrderTerm2Vis[0]
-                 )
-              );
-
-        dHigherOrderTerm2[2] = 0.; dHigherOrderTerm2[3] = 0.;
-
-        #if (COMPUTE_DIM==2)
-          dHigherOrderTerm2[2] = 
-            0.5*(  (  elemOld.primVars[PSI] * TOld/(2.*betaOld) 
-                    * INDEX_PETSC(graduConHigherOrderTerm2VisGlobal, &zoneCenter, 1)
-                   )
-                + 
-                   (  elem.primVars[PSI] * T/(2.*beta)
-                    * graduConHigherOrderTerm2Vis[1]
-                   )
-                );
-        #endif
-
-      #endif
-
       REAL higherOrderTerm1 = 0.;
-      REAL higherOrderTerm2 = 0.;
       for (int mu=0; mu<NDIM; mu++)
-      {
         higherOrderTerm1 += dHigherOrderTerm1[mu];
-        higherOrderTerm2 += dHigherOrderTerm2[mu];
-      }
-
+      
       // We now compute the target pressure anisotropy.
       // dP_0 = 3*eta*b^mu*b^nu u_{mu;nu} - eta * u^{mu}_{;mu}
       REAL TargetPsi = 0.;
@@ -429,6 +324,11 @@ void addViscositySourceTermsToResidual
 	  }
       #endif	
       }
+      //Now transform from dP to psi = dP * sqrt(beta/T)
+
+      #if (HIGHORDERTERMS_VISCOSITY)
+        TargetPsi*=sqrt(betaCenter/TCenter);
+      #endif
 
       //Put the residual together
       #if (TIME_STEPPING == EXPLICIT)
@@ -436,7 +336,7 @@ void addViscositySourceTermsToResidual
       INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-          ((- higherOrderTerm1 + 0.*higherOrderTerm2)*elem.tauVis
+          (- higherOrderTerm1*elem.tauVis
            + g*( elemCenter.primVars[PSI]
                  - TargetPsi
                )
@@ -444,30 +344,53 @@ void addViscositySourceTermsToResidual
 
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
-	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elem.tauVis;
-
-	/*if(iTile == 1 && jTile == 3 && iInTile == 11 && jInTile == 13)
-	  {
-	    printf("Residual from flux = %e; HO1 = %e; HO2 = %e; TargetPsi = %e; Psi = %e\n",
-		   INDEX_PETSC(residualGlobal, &zoneCenter, PSI),
-		   - higherOrderTerm1 *elem.tauVis/norm,
-		   higherOrderTerm2*elem.tauVis/norm,
-		   0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])*g/norm,
-		   -g*TargetPsi/norm);
-	    printf("Rho = %e; u = %e; psi = %e; bSqr = %e\n",
-		   elem.primVars[RHO],
-		   elem.primVars[UU],
-		   elem.primVars[PSI],
-		   getbSqr(&elem, &geomCenter)
-		   );
-		   }*/
-
+	REAL flux = INDEX_PETSC(residualGlobal, &zoneCenter, PSI);
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI) += 
-	  ((- higherOrderTerm1 + 1.*higherOrderTerm2)*elem.tauVis
-	   + g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
+	  (- higherOrderTerm1 //*elem.tauVis
+	   + g/elemCenter.tauVis
+	   *(0.5*(elem.primVars[PSI]+elemOld.primVars[PSI]) 
+	   //+ g*( 0.5*(elem.primVars[PSI] + elemOld.primVars[PSI])
 		 - TargetPsi
 		 )
 	   )/norm;
+	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elemCenter.tauVis;
+
+	if(0)
+	  {
+	    if(iTile == 2 && jTile == 4 && iInTile == 3 && jInTile == 5)
+	      {
+		REAL xCoords[NDIM];
+		XTox(geomCenter.XCoords, xCoords);
+		REAL bCov[NDIM], bSqr, uCov[NDIM];
+		bSqr = getbSqr(&elem, &geomCenter);
+		conToCov(elem.uCon, &geomCenter, uCov);
+		conToCov(elem.bCon, &geomCenter, bCov);
+		
+		printf("Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
+		       elem.primVars[RHO],
+		       elem.primVars[UU],
+		       elem.primVars[U1],
+		       elem.primVars[U2],
+		       elem.primVars[U3],
+		       elem.primVars[B1],
+		       elem.primVars[B2],
+		       elem.primVars[B3],
+		       elem.primVars[PSI]);
+		printf("Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e; Tau = %e\n",
+		       elem.gamma,elem.uCon[0],uCov[1],bSqr,elem.tauVis);
+		printf("Residual = %e; Flux = %e; Target = %e; HO = %e\n",
+		       INDEX_PETSC(residualGlobal, &zoneCenter, PSI),
+		       flux,
+		       TargetPsi,
+		       - higherOrderTerm1 *elem.tauVis/norm);
+	      }
+	  }
+
+      #endif
+
+      //Renormalize residual, so that it scales like dP
+      #if (HIGHORDERTERMS_VISCOSITY)
+	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=sqrt(TCenter/betaCenter);
       #endif
 
     }
@@ -483,8 +406,7 @@ void computeViscositySpatialGradientTerms
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
   REAL graduConVis[COMPUTE_DIM*NDIM],
-  REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM],
-  REAL graduConHigherOrderTerm2Vis[COMPUTE_DIM]
+  REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM]
 )
 {
 #if (VISCOSITY)
@@ -494,7 +416,6 @@ void computeViscositySpatialGradientTerms
   struct fluidElement elem;
   REAL uConLeft[NDIM], uConCenter[NDIM], uConRight[NDIM];
   REAL gLeft, gCenter, gRight;
-  REAL betaLeft, betaCenter, betaRight; /* Israel-Stewart's Beta */
 
   setGridZone(iTile, jTile,
               iInTile, jInTile,
@@ -502,30 +423,10 @@ void computeViscositySpatialGradientTerms
               X1Size, X2Size, 
               &zoneCenter);
 
-  REAL TCenter  =   (ADIABATIC_INDEX-1.)
-                  * primTile[INDEX_TILE(&zoneCenter, UU)]
-                  / primTile[INDEX_TILE(&zoneCenter, RHO)];
-  REAL TLeftX1  =   (ADIABATIC_INDEX-1.)
-                  * primTile[INDEX_TILE_MINUS_ONE_X1(&zoneCenter, UU)]
-                  / primTile[INDEX_TILE_MINUS_ONE_X1(&zoneCenter, RHO)];
-  REAL TRightX1 =  (ADIABATIC_INDEX-1.)
-                  * primTile[INDEX_TILE_PLUS_ONE_X1(&zoneCenter, UU)]
-                  / primTile[INDEX_TILE_PLUS_ONE_X1(&zoneCenter, RHO)];
-  #if (COMPUTE_DIM==2)
-    REAL TLeftX2  =   (ADIABATIC_INDEX-1.)
-                    * primTile[INDEX_TILE_MINUS_ONE_X2(&zoneCenter, UU)]
-                    / primTile[INDEX_TILE_MINUS_ONE_X2(&zoneCenter, RHO)];
-    REAL TRightX2 =   (ADIABATIC_INDEX-1.)
-                    * primTile[INDEX_TILE_PLUS_ONE_X2(&zoneCenter, UU)]
-                    / primTile[INDEX_TILE_PLUS_ONE_X2(&zoneCenter, RHO)];
-  #endif
-
-
   /* uConCenter */
   getXCoords(&zoneCenter, CENTER, XCoords);
   setGeometry(XCoords, &geom); gCenter = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
-  betaCenter = elem.tauVis/(elem.eta*2.);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConCenter[mu] = elem.uCon[mu];
@@ -540,7 +441,6 @@ void computeViscositySpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaLeft = elem.tauVis/(elem.eta*2.);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConLeft[mu] = elem.uCon[mu];
@@ -555,7 +455,6 @@ void computeViscositySpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaRight = elem.tauVis/(elem.eta*2.);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConRight[mu] = elem.uCon[mu];
@@ -574,13 +473,6 @@ void computeViscositySpatialGradientTerms
                            gCenter*uConCenter[1],
                            gRight*uConRight[1])/zoneCenter.dX1;
 
-  graduConHigherOrderTerm2Vis[0] = 
-    slopeLimitedDerivative
-      (betaLeft*gLeft*uConLeft[1]/TLeftX1,
-       betaCenter*gCenter*uConCenter[1]/TCenter,
-       betaRight*gRight*uConRight[1]/TRightX1
-      )/zoneCenter.dX1;
-
   #if (COMPUTE_DIM==2)
     /* uConLeft */
     setGridZone(iTile, jTile,
@@ -591,7 +483,6 @@ void computeViscositySpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaLeft = elem.tauVis/(elem.eta*2.);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConLeft[mu] = elem.uCon[mu];
@@ -606,7 +497,6 @@ void computeViscositySpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaRight = elem.tauVis/(elem.eta*2.);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConRight[mu] = elem.uCon[mu];
@@ -624,13 +514,6 @@ void computeViscositySpatialGradientTerms
       slopeLimitedDerivative(gLeft*uConLeft[2],
                              gCenter*uConCenter[2],
                              gRight*uConRight[2])/zoneCenter.dX2;
-
-    graduConHigherOrderTerm2Vis[1] = 
-      slopeLimitedDerivative
-        (betaLeft*gLeft*uConLeft[2]/TLeftX2,
-         betaCenter*gCenter*uConCenter[2]/TCenter,
-         betaRight*gRight*uConRight[2]/TRightX2
-        )/zoneCenter.dX2;
 
   #endif
 

@@ -50,6 +50,8 @@
       U = UU_FLOOR_MIN;
     REAL P   = (ADIABATIC_INDEX-1.)*U;
     REAL T   = P/Rho;
+    if(T<1.e-12)
+      T=1.e-12;
     REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
                     / (Rho+U)
                    );
@@ -61,19 +63,25 @@
     if(elem->primVars[PSI]>0.)
       {
 	psiCeil *= 0.5;
-	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45);
-	if(ionCeil<psiCeil)
-	  psiCeil=ionCeil;
+	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45)*ClosureFactor;
+	//if(ionCeil<psiCeil)
+	//  psiCeil=ionCeil;
       }
+    REAL ViscousCoeff = VISCOSITY_ALPHA;
+    REAL beta = 0.5/(ViscousCoeff*cs*cs*Rho);
+    //Transform from dP_max to Psi_max
+    #if (HIGHORDERTERMS_VISCOSITY)
+      psiCeil*=sqrt(beta/T);
+    #endif
+
     REAL tauDynamical = pow(Rad,1.5);
     REAL lambda       = 0.01;
     REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
     y = (y-1)/lambda;
     REAL fermiDirac   = exp(-y)/(exp(-y) + 1.)+1.e-05;
 
-    REAL ViscousCoeff = VISCOSITY_ALPHA;
     REAL tau     = tauDynamical*fermiDirac;
-    elem->eta    = ViscousCoeff*cs*cs*tau*Rho;
+    elem->eta    = 0.5*tau/beta;
     elem->tauVis = tau;
   }
 #endif
@@ -410,6 +418,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primTile[INDEX_TILE(&zone, RHO)]/rhoMax;
       primTile[INDEX_TILE(&zone, UU)] =
         primTile[INDEX_TILE(&zone, UU)]/rhoMax;
+      
     }
     
     applyFloor(iTile, jTile, 
@@ -783,22 +792,16 @@ void applyFloor(const int iTile, const int jTile,
     }
 
     if (uFloor < UU_FLOOR_MIN)
-    {
-      uFloor = UU_FLOOR_MIN;
-    }
-
+      {
+	uFloor = UU_FLOOR_MIN;
+      }
 
     REAL rho = primTile[INDEX_TILE(&zone, RHO)];
     REAL u   = primTile[INDEX_TILE(&zone, UU)];
-
     if (rho < rhoFloor)
     {
       primTile[INDEX_TILE(&zone, RHO)] = rhoFloor;
-    }
-    if (u < uFloor)
-    {
-      primTile[INDEX_TILE(&zone, UU)] = uFloor;
-      u = uFloor;
+      rho = rhoFloor;
     }
 
     #if (CONDUCTION)
@@ -814,6 +817,21 @@ void applyFloor(const int iTile, const int jTile,
       }
     #endif
 
+    /*if(r<0.9*R_INNER_EDGE)
+      {
+	//Get uFloor from minimum entropy = 1.1*s_0
+	//when in the funnel (s_0<0.)
+	//NOTE: this should be computed from ADIABAT, but the
+	//renormalization of u and rho modifies the adiabat...
+	REAL smin = -15.0;//log(ADIABAT/(ADIABATIC_INDEX-1.))/(ADIABATIC_INDEX-1.)*1.1;
+	uFloor=pow(rho,ADIABATIC_INDEX)*exp((ADIABATIC_INDEX-1.)*smin);
+	}*/
+    if (u < uFloor)
+      {
+	primTile[INDEX_TILE(&zone, UU)] = uFloor;
+	u = uFloor;
+      } 
+    
     struct geometry geom;
     setGeometry(XCoords, &geom);
 
@@ -834,17 +852,26 @@ void applyFloor(const int iTile, const int jTile,
 #if VISCOSITY
     REAL psi = primTile[INDEX_TILE(&zone, PSI)];
     REAL bSqr = getbSqr(&elem, &geom);
+    REAL P = (ADIABATIC_INDEX-1.)*u;
+    REAL T = P/rho;
+    if(T<1.e-12)
+      T=1.e-12;
     REAL psimax = 1.07*bSqr*ClosureFactor;
     if(primTile[INDEX_TILE(&zone, PSI)]>0.)
       {
 	psimax*=0.5;
-	REAL P = (ADIABATIC_INDEX-1.)*u;
-	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45);
-	if(ionCeil*1.07<psimax)
-	  psimax = 1.07*ionCeil;
+	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45)*ClosureFactor;
+	//if(ionCeil*1.07<psimax)
+	//  psimax = 1.07*ionCeil;
       }
-    if(r<3.)
-      psimax *= exp(-pow((3.-r)/0.5,2.));
+    //transform from dP_max to psi_max
+    #if (HIGHORDERTERMS_VISCOSITY)
+      REAL beta = 0.5*elem.tauVis/elem.eta;
+      psimax *= sqrt(beta/T);
+    #endif
+    REAL dr=0.;//0.5*sqrt(log(ClosureFactor));
+    if(r-dr<3.)
+      psimax *= exp(-pow((3.+dr-r)/0.5,2.));
     if(fabs(psi)>psimax)
       if(psi>0.)
 	primTile[INDEX_TILE(&zone, PSI)] = psimax;
@@ -852,7 +879,59 @@ void applyFloor(const int iTile, const int jTile,
 	primTile[INDEX_TILE(&zone, PSI)] = -psimax;
 #endif
   }
+}
 
+void RemoveTemperatureSpikes(const int iTile, const int jTile,
+			     const int X1Start, const int X2Start,
+			     const int X1Size, const int X2Size,
+			     REAL primTile[ARRAY_ARGS TILE_SIZE])
+{
+  //Remove spikes in T
+  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+    {
+      struct gridZone zone;
+      setGridZone(iTile, jTile,
+		  iInTile, jInTile,
+		  X1Start, X2Start,
+		  X1Size, X2Size,
+		  &zone);
+      
+      REAL T = (ADIABATIC_INDEX-1.)*primTile[INDEX_TILE(&zone,UU)]/
+	primTile[INDEX_TILE(&zone,RHO)];
+      REAL Tm1 = (ADIABATIC_INDEX-1.)*primTile[INDEX_TILE_MINUS_ONE_X1(&zone,UU)]
+	/primTile[INDEX_TILE_MINUS_ONE_X1(&zone,RHO)];
+      REAL Tp1 = (ADIABATIC_INDEX-1.)*primTile[INDEX_TILE_PLUS_ONE_X1(&zone,UU)]
+        /primTile[INDEX_TILE_PLUS_ONE_X1(&zone,RHO)];
+      REAL Tm2 = (ADIABATIC_INDEX-1.)*primTile[INDEX_TILE_MINUS_ONE_X2(&zone,UU)]
+        /primTile[INDEX_TILE_MINUS_ONE_X2(&zone,RHO)];
+      REAL Tp2 = (ADIABATIC_INDEX-1.)*primTile[INDEX_TILE_PLUS_ONE_X2(&zone,UU)]
+        /primTile[INDEX_TILE_PLUS_ONE_X2(&zone,RHO)];
+      REAL Tavg = sqrt(sqrt(Tm1*Tp1)*sqrt(Tm2*Tp2));
+
+      if(T<0.1*Tavg || T>10.*Tavg)
+	{
+	  REAL oldRho  = primTile[INDEX_TILE(&zone,RHO)];
+	  REAL oldU = primTile[INDEX_TILE(&zone,UU)];
+	  REAL newU = oldRho*Tavg/(ADIABATIC_INDEX-1.);
+
+	  REAL XCoords[NDIM];
+	  REAL xCoords[NDIM];
+	  getXCoords(&zone, CENTER, XCoords);
+	  XTox(XCoords, xCoords);
+	  REAL r = xCoords[1];
+
+	  if(r<0.9*R_INNER_EDGE)
+	    {
+	      primTile[INDEX_TILE(&zone,UU)]=newU;
+	      struct geometry geom;
+	      setGeometry(XCoords, &geom);
+	      REAL g = sqrt(-geom.gDet);
+	      REAL dS   = 3.*log(newU/oldU)*g*oldRho*zone.dX1*zone.dX2;
+	      printf("Removing spike at %i %i %i %i; T = %e; Tn = %e, %e, %e, %e; dS = %e; R = %e \n",
+		     iTile,jTile,iInTile,jInTile,T,Tm1,Tp1,Tm2,Tp2,dS,r);
+	    }
+	}
+    }
 }
 
 void applyAdditionalProblemSpecificBCs
@@ -970,7 +1049,6 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
   LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
   {
     REAL primTile[TILE_SIZE];
-
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
     {
       struct gridZone zone;
@@ -986,12 +1064,10 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
         INDEX_PETSC(primHalfStepGlobal, &zone, var);
       }
     }
-
     applyFloor(iTile, jTile,
                ts->X1Start, ts->X2Start,
                ts->X1Size, ts->X2Size,
                primTile);
-
     LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
     {
       struct gridZone zone;
@@ -1007,11 +1083,84 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
         primTile[INDEX_TILE(&zone, var)];
       }
     }
-
   }
 
-  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
-                         ts->primPetscVecHalfStep, &primHalfStepGlobal);
+  #if (HIGHORDERTERMS_VISCOSITY)
+    Vec primPetscVecLocal;
+    DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+    DMGlobalToLocalBegin(ts->dmdaWithGhostZones,
+			 ts->primPetscVecHalfStep,
+			 INSERT_VALUES,
+			 primPetscVecLocal);
+    DMGlobalToLocalEnd(ts->dmdaWithGhostZones,
+		       ts->primPetscVecHalfStep,
+		       INSERT_VALUES,
+		       primPetscVecLocal);
+    ARRAY(primLocal);
+    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
+		       &primLocal);
+      
+    #if (USE_OPENMP)
+      #pragma omp parallel for
+    #endif
+    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+      {
+	REAL primTile[TILE_SIZE];
+	
+	LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+	  {
+	    struct gridZone zone;
+	    setGridZone(iTile, jTile,
+			iInTile, jInTile,
+			ts->X1Start, ts->X2Start,
+			ts->X1Size, ts->X2Size,
+			&zone);
+	    for (int var=0; var<DOF; var++)
+	      {
+		primTile[INDEX_TILE(&zone, var)] =
+		  INDEX_PETSC(primLocal, &zone, var);
+	      }
+	  }
+	
+	
+	applyTileBoundaryConditions(iTile, jTile,
+				    ts->X1Start, ts->X2Start,
+				    ts->X1Size, ts->X2Size,
+				    primTile);
+	applyAdditionalProblemSpecificBCs(iTile, jTile,
+					  ts->X1Start, ts->X2Start,
+					  ts->X1Size, ts->X2Size,
+					  ts->problemSpecificData,
+					  primTile);
+	
+	RemoveTemperatureSpikes(iTile, jTile,
+				ts->X1Start, ts->X2Start,
+				ts->X1Size, ts->X2Size,
+				primTile);
+	
+	LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+	  {
+	    struct gridZone zone;
+	    setGridZone(iTile, jTile,
+			iInTile, jInTile,
+			ts->X1Start, ts->X2Start,
+			ts->X1Size, ts->X2Size,
+			&zone);
+	    for (int var=0; var<DOF; var++)
+	      {
+		INDEX_PETSC(primHalfStepGlobal, &zone, var) =
+		  primTile[INDEX_TILE(&zone, var)];
+	      }
+	  }
+    }
+    
+    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+			   primPetscVecLocal, &primLocal);
+    DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+  #endif
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			 ts->primPetscVecHalfStep, &primHalfStepGlobal);
+
 }
 
 void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
@@ -1039,7 +1188,6 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
                   ts->X1Start, ts->X2Start,
                   ts->X1Size, ts->X2Size,
                   &zone);
-
       for (int var=0; var<DOF; var++)
       {
         primTile[INDEX_TILE(&zone, var)] =
@@ -1070,8 +1218,81 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
-  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
-                         ts->primPetscVec, &primGlobal);
+  #if (HIGHORDERTERMS_VISCOSITY)
+    Vec primPetscVecLocal;
+    DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+    ARRAY(primLocal);
+    DMDAVecGetArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
+		       &primLocal);
+    
+    DMGlobalToLocalBegin(ts->dmdaWithGhostZones,
+			 ts->primPetscVec,
+			 INSERT_VALUES,
+			 primPetscVecLocal);
+    DMGlobalToLocalEnd(ts->dmdaWithGhostZones,
+		       ts->primPetscVec,
+		       INSERT_VALUES,
+		       primPetscVecLocal); 
+
+    #if (USE_OPENMP)
+      #pragma omp parallel for
+    #endif
+    LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
+      {
+	REAL primTile[TILE_SIZE];
+	
+	LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+	  {
+	    struct gridZone zone;
+	    setGridZone(iTile, jTile,
+			iInTile, jInTile,
+			ts->X1Start, ts->X2Start,
+			ts->X1Size, ts->X2Size,
+			&zone);
+	    for (int var=0; var<DOF; var++)
+	      {
+		primTile[INDEX_TILE(&zone, var)] =
+		  INDEX_PETSC(primLocal, &zone, var);
+	      }
+	  }
+	
+	
+	applyTileBoundaryConditions(iTile, jTile,
+				    ts->X1Start, ts->X2Start,
+				    ts->X1Size, ts->X2Size,
+				    primTile);
+	applyAdditionalProblemSpecificBCs(iTile, jTile,
+					  ts->X1Start, ts->X2Start,
+					  ts->X1Size, ts->X2Size,
+					  ts->problemSpecificData,
+					  primTile);
+	RemoveTemperatureSpikes(iTile, jTile,
+				ts->X1Start, ts->X2Start,
+				ts->X1Size, ts->X2Size,
+				primTile);
+	LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+	  {
+	    struct gridZone zone;
+	    setGridZone(iTile, jTile,
+			iInTile, jInTile,
+			ts->X1Start, ts->X2Start,
+			ts->X1Size, ts->X2Size,
+			&zone);
+	    
+	    for (int var=0; var<DOF; var++)
+	      {
+		INDEX_PETSC(primGlobal, &zone, var) =
+		  primTile[INDEX_TILE(&zone, var)];
+	      }
+	  }
+      }
+    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, 
+			   primPetscVecLocal, &primLocal);
+			   DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
+  #endif
+				
+  DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
+			 ts->primPetscVec, &primGlobal);
 }
 
 void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],

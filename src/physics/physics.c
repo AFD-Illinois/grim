@@ -80,6 +80,20 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   conToCov(elem->uCon, geom, uCov);
   conToCov(elem->bCon, geom, bCov);
 
+  //Recover dP from psi (which is either dP of dP * (beta/T)^(1/2)
+  //depending on whether we use higher order terms in the evolution
+  //equation for dP.
+  #if  (VISCOSITY)
+    REAL dP = elem->primVars[PSI];
+    #if (HIGHORDERTERMS_VISCOSITY)
+      REAL beta = elem->tauVis*0.5/elem->eta;
+      REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+      if(T<1.e-12)
+        T=1.e-12;
+      dP *= sqrt(T/beta);
+    #endif
+  #endif
+
   for (int mu=0; mu<NDIM; mu++)
   {
     elem->moments[N_UP(mu)] = elem->primVars[RHO]*elem->uCon[mu];
@@ -100,9 +114,8 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
       #endif 
       #if  (VISCOSITY)
 	//Add -dP*(b^mu b^nu b^{-2} - 1/3 h^{mu nu})
-	// with dP = psi = pressure anisotropy
-	-elem->primVars[PSI]/bSqr*elem->bCon[mu]*bCov[nu]
-	+elem->primVars[PSI]/3.
+	-dP/bSqr*elem->bCon[mu]*bCov[nu]
+	+dP/3.
 	*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
       #endif
                         ;
