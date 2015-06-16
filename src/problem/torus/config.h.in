@@ -33,6 +33,7 @@
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
 #cmakedefine01  CONDUCTION
 #cmakedefine01  VISCOSITY
+#cmakedefine01  HIGHORDERTERMS_VISCOSITY
 
 
 /* Viscosity Model */

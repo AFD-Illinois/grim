@@ -16,7 +16,7 @@ set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
+set(N1 "144")
 set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -40,6 +40,7 @@ set(USE_OPENMP   "YES")
 set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "OFF")
 set(VISCOSITY  "ON")
+set(HIGHORDERTERMS_VISCOSITY "OFF")
 
 set(VISCOSITY_CLOSURE_COEFF "1.")
 set(VISCOSITY_ALPHA "1.")
@@ -55,7 +56,7 @@ set(H_SLOPE "0.3") # Refinement in the theta direction to better resolve the
 
 # Domain
 set(R_A     "0.98*(1. + sqrt(1. - ${BH_SPIN}*${BH_SPIN}))")
-set(R_B     "40.")
+set(R_B     "63.")
 
 set(X1_A  "log(R_A)")
 set(X1_B  "log(R_B)")
@@ -79,7 +80,7 @@ set(R_INNER_EDGE            "6.")
 set(ADIABAT                 "1e-3")
 set(PLASMA_BETA             "1e2")
 set(PERTURBATIONS_AMPLITUDE "4e-2")
-set(NB_MAGNETIC_LOOPS       "2")
+set(NB_MAGNETIC_LOOPS       "1")
 
 # Floor values
 set(RHO_FLOOR         "1e-3")

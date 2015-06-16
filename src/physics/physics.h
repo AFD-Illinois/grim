@@ -121,7 +121,6 @@ void addViscositySourceTermsToResidual
   ARRAY(connectionGlobal),
   ARRAY(graduConVisGlobal), 
   ARRAY(graduConHigherOrderTerm1VisGlobal),
-  ARRAY(graduConHigherOrderTerm2VisGlobal),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -140,8 +139,7 @@ void computeViscositySpatialGradientTerms
   const int X1Start, const int X2Start,
   const int X1Size, const int X2Size,
   REAL graduConVis[COMPUTE_DIM*NDIM],
-  REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM],
-  REAL graduConHigherOrderTerm2Vis[COMPUTE_DIM]
+  REAL graduConHigherOrderTerm1Vis[COMPUTE_DIM]
 );
 #endif
 
