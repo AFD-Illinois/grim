@@ -355,36 +355,6 @@ void addViscositySourceTermsToResidual
 	   )/norm;
 	INDEX_PETSC(residualGlobal, &zoneCenter, PSI)*=elemCenter.tauVis;
 
-	if(0)
-	  {
-	    if(iTile == 2 && jTile == 4 && iInTile == 3 && jInTile == 5)
-	      {
-		REAL xCoords[NDIM];
-		XTox(geomCenter.XCoords, xCoords);
-		REAL bCov[NDIM], bSqr, uCov[NDIM];
-		bSqr = getbSqr(&elem, &geomCenter);
-		conToCov(elem.uCon, &geomCenter, uCov);
-		conToCov(elem.bCon, &geomCenter, bCov);
-		
-		printf("Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
-		       elem.primVars[RHO],
-		       elem.primVars[UU],
-		       elem.primVars[U1],
-		       elem.primVars[U2],
-		       elem.primVars[U3],
-		       elem.primVars[B1],
-		       elem.primVars[B2],
-		       elem.primVars[B3],
-		       elem.primVars[PSI]);
-		printf("Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e; Tau = %e\n",
-		       elem.gamma,elem.uCon[0],uCov[1],bSqr,elem.tauVis);
-		printf("Residual = %e; Flux = %e; Target = %e; HO = %e\n",
-		       INDEX_PETSC(residualGlobal, &zoneCenter, PSI),
-		       flux,
-		       TargetPsi,
-		       - higherOrderTerm1 *elem.tauVis/norm);
-	      }
-	  }
 
       #endif
 

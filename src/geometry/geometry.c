@@ -1,22 +1,21 @@
 #include "geometry.h"
 
-/**
- *  Convert from computational coordinates X^mu = {t, X1, X2, phi} to the
- *  physical coordinates x^mu = {t, r, theta, phi}. This is useful for
- *  concentrating grid points where there are needed. Here we use the following
- *  transformation:
+/* Convert from computational coordinates X^mu = {t, X1, X2, phi} to the
+ * physical coordinates x^mu = {t, r, theta, phi}. This is useful for
+ * concentrating grid points where there are needed. Here we use the following
+ * transformation:
  *
- *  r = exp(X1) - (1)
- *  theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) - (2)
+ * r = exp(X1) - (1)
+ * theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) - (2)
  *
- *  Eqn (1) concentrates points near the horizon and Eqn (2) concentrates points
- *  towards the midplane as the parameter H_SLOPE is decreased from 1 to 0.
- *  
- *  Ref: "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole"
- *       Jonathan C. McKinney and Charles F. Gammie
+ * Eqn (1) concentrates points near the horizon and Eqn (2) concentrates points
+ * towards the midplane as the parameter H_SLOPE is decreased from 1 to 0.
+ * 
+ * Ref: "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole"
+ *      Jonathan C. McKinney and Charles F. Gammie, 2004
  *
- *  @param X Computational coordinates X^mu = {t, X1, X2, phi}
- *  @param x Physical coordinates x^mu = {t, r, theta, phi}
+ * @param Input: X Computational coordinates X^mu = {t, X1, X2, phi}
+ * @param Output: x Physical coordinates x^mu = {t, r, theta, phi}
 */
 void XTox(const REAL X[ARRAY_ARGS NDIM], 
           REAL x[ARRAY_ARGS NDIM])
@@ -76,7 +75,7 @@ void setGeometry(const REAL X[ARRAY_ARGS NDIM],
  *      = g_alpha_beta dX^alpha dX^beta
  *
  *  Ref: "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole"
- *       Jonathan C. McKinney and Charles F. Gammie
+ *       Jonathan C. McKinney and Charles F. Gammie, 2004
  *   
  * This function is not directly called by the user. All geometrical quantities
  * are set by calling setGeometry(). 

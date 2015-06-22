@@ -108,15 +108,9 @@ void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 
 void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
-#if (CONDUCTION)
-  void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
-  void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+#if (CONDUCTION || VISCOSITY)
+  void initDissipationDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
+  void destroyDissipationDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
 #endif
-
-#if (VISCOSITY)
-  void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
-  void destroyViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1]);
-#endif
-
 
 #endif /* GRIM_TIMESTEPPER_H_ */

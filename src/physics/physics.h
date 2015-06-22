@@ -4,31 +4,28 @@
 #include "../inputs.h"
 
 /* Primitive variable mnemonics */
-#define RHO             (0)
-#define UU              (1)
+#define RHO             (0) /* Rest mass density */
+#define UU              (1) /* Internal energy */
 #define U1              (2)
 #define U2              (3)
 #define U3              (4)
 #define B1              (5)
 #define B2              (6)
 #define B3              (7)
-#if (CONDUCTION && VISCOSITY)
+#if (CONDUCTION == ON && VISCOSITY == ON)
   #define PHI           (8)
   #define PSI           (9)
   #define DOF           (10)
-#elif (CONDUCTION)
+#elif (CONDUCTION == ON && VISCOSITY == OFF)
   #define PHI           (8)
   #define DOF           (9)
-#elif (VISCOSITY)
+#elif (CONDUCTION == OFF && VISCOSITY == ON)
   #define PSI           (8)
   #define DOF           (9)
 #else
   #define DOF           (8)
 #endif
-
-/* Contains all the variables needed for physics. Independent variables are only
- * primVars. The rest are auxiliary variables stored for convenience.
- */
+/* DOF == Total Degrees Of Freedom == Total number of equations solved for */
 
 #define DELTA(mu, nu) (mu==nu ? 1 : 0)
 
@@ -39,22 +36,30 @@
 /* Indices for the Christoffel symbols */
 #define GAMMA_UP_DOWN_DOWN(eta,mu,nu) (eta+NDIM*(mu+NDIM*(nu) ) )
 
+/* struct containing all the variables needed for physics. Independent variables
+ * are only primVars. The rest are auxiliary variables stored for convenience.
+ */
 struct fluidElement
 {
-  REAL gamma;
-  REAL primVars[DOF];
-  REAL uCon[NDIM];
-  REAL bCon[NDIM];
-  REAL moments[20]; 
+  REAL primVars[DOF]; /* All the variables that need to be solved for */
+  REAL gamma;       /* Lorentz factor      : see setGamma() for description */
+  REAL uCon[NDIM];  /* Fluid four-velocity : see setUCon() */
+  REAL bCon[NDIM];  /* Magnetic field four-vector : see setBCon() */
+  REAL moments[20]; /* 4 components of N^\mu + 16 components of T^{\mu \nu} 
+                       : see computeMoments() */
+
   /* TODO: We have 4 independent components of N^\mu and 10
   independent components of T^\mu^\nu, so do something later to exploit the
-  symmetry of T^\mu^\nu */
+  symmetry of T^\mu^\nu.*/
 
+  /* Dissipation coefficients: \chi for conduction and \nu for viscosity
+   * Relaxation time scales  : tauConduction and tauViscosity 
+   * Ref: EMHD model paper -- Chandra et. al., 2015 */
   #if (CONDUCTION)
-    REAL kappa, tau;
+    REAL chi, tauConduction;
   #endif
   #if (VISCOSITY)
-    REAL eta, tauVis;
+    REAL nu, tauViscosity;
   #endif
 };
 

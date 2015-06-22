@@ -7,13 +7,6 @@ PetscErrorCode computeResidual(SNES snes,
 {
   struct timeStepper *ts = (struct timeStepper*)ptr;
 
-  int X1Start, X2Start, X3Start;
-  int X1Size, X2Size, X3Size;
-
-  DMDAGetCorners(ts->dmdaWithGhostZones,
-                 &X1Start, &X2Start, &X3Start,
-                 &X1Size, &X2Size, &X3Size);
-
   ARRAY(primGlobal);
   ARRAY(primOldGlobal);
   ARRAY(primHalfStepGlobal);
