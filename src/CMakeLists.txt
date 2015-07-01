@@ -18,8 +18,8 @@ project(grim)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/Users/francoisfoucart/Work/petsc")
-set(PETSC_ARCH "arch-darwin-c-opt")
+set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+#set(PETSC_ARCH "arch-darwin-c-opt")
 
 # Double or float precision?
 set(REAL "double")
@@ -43,7 +43,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "performance_test")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
@@ -63,10 +63,10 @@ find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
 find_package(PETSc REQUIRED)
-#find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 include_directories(${PETSC_INCLUDES} ${GSL_INCLUDE_DIRS})
 
@@ -75,7 +75,7 @@ add_subdirectory(physics)
 add_subdirectory(reconstruct)
 add_subdirectory(riemannsolver)
 add_subdirectory(boundary)
-add_subdirectory(gridzone)
+add_subdirectory(grid)
 add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
@@ -85,7 +85,7 @@ add_subdirectory(problem)
 
 add_executable(grim grim.c grim.h)
 
-target_link_libraries(grim geometry physics reconstruct boundary gridzone
+target_link_libraries(grim geometry physics reconstruct boundary grid
                       timestepper
                       ${MATH_LIBRARIES}
                       ${PETSC_LIBRARIES})

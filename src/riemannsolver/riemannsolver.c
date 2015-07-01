@@ -8,7 +8,8 @@ REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
                    const REAL primVarsLeft[ARRAY_ARGS DOF],
                    const REAL primVarsRight[ARRAY_ARGS DOF],
                    const struct geometry geom[ARRAY_ARGS DOF],
-                   const int dir, REAL fluxes[ARRAY_ARGS DOF])
+                   const int dir, REAL fluxes[ARRAY_ARGS DOF]
+                  )
 {
   REAL cMinLeft, cMaxLeft;
   struct fluidElement elem;

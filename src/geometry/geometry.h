@@ -3,10 +3,7 @@
 
 #include <math.h>
 #include "../inputs.h"
-#include "../gridzone/gridzone.h"
-
-#define MINKOWSKI   (0)
-#define KERRSCHILD  (1)
+#include "macros.h"
 
 /* struct geometry
  *

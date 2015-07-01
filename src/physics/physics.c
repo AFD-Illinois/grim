@@ -152,11 +152,8 @@ void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
   setGamma(geom, elem);
   setUCon(geom, elem);
   setBCon(geom, elem);
-  #if (CONDUCTION)
-    setConductionParameters(geom, elem);
-  #endif
-  #if (VISCOSITY)
-    setViscosityParameters(geom, elem);
+  #if (CONDUCTION || VISCOSITY)
+    //setDiffusionCoefficients(geom, elem);
   #endif
   computeMoments(geom, elem);
 }
@@ -170,7 +167,8 @@ void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
  * @param Output: elem, a fluid element whose  will be set by this function
 */ 
 void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
-                    struct fluidElement elem[ARRAY_ARGS 1])
+                    struct fluidElement elem[ARRAY_ARGS 1]
+                   )
 {
   REAL pressure = (ADIABATIC_INDEX - 1.)*elem->primVars[UU];
   REAL bCov[NDIM], bSqr, uCov[NDIM];
