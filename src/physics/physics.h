@@ -2,7 +2,7 @@
 #define GRIM_PHYSICS_H_
 
 #include "../inputs.h"
-#include "../geometry/macros.h"     /* Determines METRIC */
+#include "../geometry/geometry.h"   /* Determines METRIC and imports geometry struct*/
 #include "../reconstruct/macros.h"  /* Determines NG */
 #include "../problem/problem.h"     /* imports setDiffusionCoefficients() */
 #include "macros.h"
@@ -51,6 +51,22 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
                         const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
+
+REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],
+                   const REAL fluxRight[ARRAY_ARGS DOF],
+                   const REAL conservedVarsLeft[ARRAY_ARGS DOF],
+                   const REAL conservedVarsRight[ARRAY_ARGS DOF],
+                   const REAL primVarsLeft[ARRAY_ARGS DOF],
+                   const REAL primVarsRight[ARRAY_ARGS DOF],
+                   const struct geometry geom[ARRAY_ARGS DOF],
+                   const int dir, REAL fluxes[ARRAY_ARGS DOF]
+                  );
+
+void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
+                const struct geometry geom[ARRAY_ARGS 1],
+                const int dir,
+                REAL cMin[ARRAY_ARGS 1], REAL cMax[ARRAY_ARGS 1]
+               );
 
 //#if (CONDUCTION)
 //void addConductionSourceTermsToResidual

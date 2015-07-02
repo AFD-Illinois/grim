@@ -61,65 +61,65 @@ void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
   {
     case CORNER:            /* (i,j,k) */
       
-      X[1] = X1_A + zone->iGlobal*zone->dX1;
-      X[2] = X2_A + zone->jGlobal*zone->dX2;
-      X[3] = X3_A + zone->kGlobal*zone->dX3;
+      X[1] = X1_A + zone->iGlobal*zone->dX[1];
+      X[2] = X2_A + zone->jGlobal*zone->dX[2];
+      X[3] = X3_A + zone->kGlobal*zone->dX[3];
 
       break;
 
     case CENTER:            /* (i+0.5,j+0.5, k+0.5) */
 
-      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX[3];
 
       break;
 
     case FACE_X1:           /* (i,j+0.5,k+0.5) */
 
-      X[1] = X1_A + zone->iGlobal*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal      )*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX[3];
 
       break;
 
     case FACE_X1_PLUS_ONE:  /* (i+1,j+0.5,k+0.5) */
 
-      X[1] = X1_A + (zone->iGlobal + 1)*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 1  )*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX[3];
 
       break;
 
     case FACE_X2:           /* (i+0.5,j,k+0.5) */
 
-      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX1;
-      X[2] = X2_A + zone->jGlobal*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal      )*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX[3];
 
       break;
 
     case FACE_X2_PLUS_ONE:  /* (i+0.5,j+1,k+0.5) */
 
-      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 1)*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 1  )*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 0.5)*zone->dX[3];
 
       break;
 
     case FACE_X3:           /* (i+0.5,j+0.5,k) */
 
-      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX2;
-      X[3] = X3_A + zone->kGlobal*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal      )*zone->dX[3];
 
       break;
 
     case FACE_X3_PLUS_ONE:  /* (i+0.5,j+0.5,k+1) */
 
-      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX1;
-      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX2;
-      X[3] = X3_A + (zone->kGlobal + 1)*zone->dX3;
+      X[1] = X1_A + (zone->iGlobal + 0.5)*zone->dX[1];
+      X[2] = X2_A + (zone->jGlobal + 0.5)*zone->dX[2];
+      X[3] = X3_A + (zone->kGlobal + 1  )*zone->dX[3];
 
       break;
 
@@ -353,7 +353,7 @@ void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
 {
   #if (COMPUTE_DIM == 1 || COMPUTE_DIM == 2)
 
-    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG, 0, 0)
     {
       struct gridZone zone;
       setZone(iInTile, jInTile, 0, tile, &zone);
@@ -374,15 +374,15 @@ void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
   
     if (tile->kGlobal == tile->kLocalStart)
     {
-      for (int kInTile=-NG; kInTile <= NG; kInTile++)
+      LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
+                       -NG, TILE_SIZE_X2+NG,
+                       -NG, TILE_SIZE_X3+NG
+                      )
       {
-        LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
-        {
-          struct gridZone zone;
-          setZone(iInTile, jInTile, kInTile, tile, &zone);
+        struct gridZone zone;
+        setZone(iInTile, jInTile, kInTile, tile, &zone);
 
-          primTile[INDEX_TILE(zone, var)] = INDEX_GRID_GHOST(grid, zone, var);
-        }
+        primTile[INDEX_TILE(zone, var)] = INDEX_GRID_GHOST(grid, zone, var);
       }
     }
     else
@@ -392,10 +392,13 @@ void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
               sizeof(REAL[(TILE_SIZE_X1+2*NG)*(TILE_SIZE_X2+2*NG)*(2*NG)*DOF])
              );
 
-      LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
+      LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
+                       -NG, TILE_SIZE_X2+NG,
+                        NG, TILE_SIZE_X3+NG
+                      )
       {
         struct gridZone zone;
-        setZone(iInTile, jInTile, NG, tile, &zone);
+        setZone(iInTile, jInTile, kInTile, tile, &zone);
 
         primTile[INDEX_TILE(zone, var)] = INDEX_GRID_GHOST(grid, zone, var);
       }

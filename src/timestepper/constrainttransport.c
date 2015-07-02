@@ -1,6 +1,8 @@
 #include "timestepper.h"
 
-void fluxCT(REAL fluxesTile[COMPUTE_DIM][ARRAY_ARGS TILE_SIZE(DOF)])
+void fluxCT(const struct gridTile tile[ARRAY_ARGS 1],
+            REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)]
+           )
 {
   #if (COMPUTE_DIM==1)
     return;
@@ -21,6 +23,8 @@ void fluxCT(REAL fluxesTile[COMPUTE_DIM][ARRAY_ARGS TILE_SIZE(DOF)])
                    0, TILE_SIZE_X3+1
                   )
   {
+    struct gridZone zone;
+    setZone(iInTile, jInTile, kInTile, tile, &zone);
 
     emfX3[INDEX_TILE(&zone, 0)] = 
       0.25*(  fluxesTile[X1][INDEX_TILE(&zone, B2)]
@@ -49,13 +53,13 @@ void fluxCT(REAL fluxesTile[COMPUTE_DIM][ARRAY_ARGS TILE_SIZE(DOF)])
   struct gridZone zoneAtTileEdge;
   setZone(0, 0, 0, tile, &zoneAtTileEdge);
 
-  memset(&fluxesTile[X1][INDEX_TILE(&zone, B1)], 
+  memset(&fluxesTile[X1][INDEX_TILE(&zoneAtTileEdge, B1)], 
          0., sizeof(REAL[TILE_SIZE(1)])
         );
-  memset(&fluxesTile[X2][INDEX_TILE(&zone, B2)], 
+  memset(&fluxesTile[X2][INDEX_TILE(&zoneAtTileEdge, B2)], 
          0., sizeof(REAL[TILE_SIZE(1)])
         );
-  memset(&fluxesTile[X3][INDEX_TILE(&zone, B3)], 
+  memset(&fluxesTile[X3][INDEX_TILE(&zoneAtTileEdge, B3)], 
          0., sizeof(REAL[TILE_SIZE(1)])
         );
 
@@ -64,6 +68,9 @@ void fluxCT(REAL fluxesTile[COMPUTE_DIM][ARRAY_ARGS TILE_SIZE(DOF)])
                    0, TILE_SIZE_X3+1
                   )
   {
+    struct gridZone zone;
+    setZone(iInTile, jInTile, kInTile, tile, &zone);
+
     fluxesTile[X1][INDEX_TILE(&zone, B2)] =
       0.5*(  emfX3[INDEX_TILE(&zone, 0)]
            + emfX3[INDEX_TILE_OFFSET(0, 1, 0, &zone, 0)]

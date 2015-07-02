@@ -53,38 +53,38 @@ void reconstruct(const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
 {
   int indexMinus2, indexMinus1, index0, indexPlus1, indexPlus2;
 
-  if (dir==1)
-  {
-    indexMinus2 = INDEX_TILE_OFFSET(-2, 0, 0, zone, 0);
-    indexMinus1 = INDEX_TILE_OFFSET(-1, 0, 0, zone, 0);
-    index0      = INDEX_TILE_OFFSET( 0, 0, 0, zone, 0);
-    indexPlus1  = INDEX_TILE_OFFSET( 1, 0, 0, zone, 0);
-    indexPlus2  = INDEX_TILE_OFFSET( 2, 0, 0, zone, 0);
-  }
-  else if (dir==2)
-  {
-    indexMinus2 = INDEX_TILE_OFFSET(0, -2, 0, zone, 0);
-    indexMinus1 = INDEX_TILE_OFFSET(0, -1, 0, zone, 0);
-    index0      = INDEX_TILE_OFFSET(0,  0, 0, zone, 0);
-    indexPlus1  = INDEX_TILE_OFFSET(0,  1, 0, zone, 0);
-    indexPlus2  = INDEX_TILE_OFFSET(0,  2, 0, zone, 0);
-  }
-  else if (dir==3)
-  {
-    indexMinus2 = INDEX_TILE_OFFSET(0, 0, -2, zone, 0);
-    indexMinus1 = INDEX_TILE_OFFSET(0, 0, -1, zone, 0);
-    index0      = INDEX_TILE_OFFSET(0, 0,  0, zone, 0);
-    indexPlus1  = INDEX_TILE_OFFSET(0, 0,  1, zone, 0);
-    indexPlus2  = INDEX_TILE_OFFSET(0, 0,  2, zone, 0);
-  }
-
   LOOP_INSIDE_TILE(-1, TILE_SIZE_X1+1,
                    -1, TILE_SIZE_X2+1,
                    -1, TILE_SIZE_X3+1
                   )
   {
     struct gridZone zone;
-    setGridZone(iInTile, jInTile, kInTile, tile, &zone);
+    setZone(iInTile, jInTile, kInTile, tile, &zone);
+
+    if (dir==1)
+    {
+      indexMinus2 = INDEX_TILE_OFFSET(-2, 0, 0, &zone, 0);
+      indexMinus1 = INDEX_TILE_OFFSET(-1, 0, 0, &zone, 0);
+      index0      = INDEX_TILE_OFFSET( 0, 0, 0, &zone, 0);
+      indexPlus1  = INDEX_TILE_OFFSET( 1, 0, 0, &zone, 0);
+      indexPlus2  = INDEX_TILE_OFFSET( 2, 0, 0, &zone, 0);
+    }
+    else if (dir==2)
+    {
+      indexMinus2 = INDEX_TILE_OFFSET(0, -2, 0, &zone, 0);
+      indexMinus1 = INDEX_TILE_OFFSET(0, -1, 0, &zone, 0);
+      index0      = INDEX_TILE_OFFSET(0,  0, 0, &zone, 0);
+      indexPlus1  = INDEX_TILE_OFFSET(0,  1, 0, &zone, 0);
+      indexPlus2  = INDEX_TILE_OFFSET(0,  2, 0, &zone, 0);
+    }
+    else if (dir==3)
+    {
+      indexMinus2 = INDEX_TILE_OFFSET(0, 0, -2, &zone, 0);
+      indexMinus1 = INDEX_TILE_OFFSET(0, 0, -1, &zone, 0);
+      index0      = INDEX_TILE_OFFSET(0, 0,  0, &zone, 0);
+      indexPlus1  = INDEX_TILE_OFFSET(0, 0,  1, &zone, 0);
+      indexPlus2  = INDEX_TILE_OFFSET(0, 0,  2, &zone, 0);
+    }
 
     #if (RECONSTRUCTION == MONOTONIZED_CENTRAL || \
          RECONSTRUCTION == MIN_MOD \

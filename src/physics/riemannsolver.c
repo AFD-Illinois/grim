@@ -1,4 +1,4 @@
-#include "riemannsolver.h"
+#include "physics.h"
 
 /* Returns a wavespeed */
 REAL riemannSolver(const REAL fluxLeft[ARRAY_ARGS DOF],

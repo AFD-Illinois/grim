@@ -89,4 +89,9 @@ void setZone(const int iInTile, const int jInTile, const int kInTile,
              struct gridZone zone[ARRAY_ARGS 1]
             );
 
+void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
+                  const struct gridTile tile[ARRAY_ARGS 1],
+                  REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)]
+                 );
+
 #endif /* GRIM_GRID_H_ */

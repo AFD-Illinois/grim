@@ -9,9 +9,9 @@
 #include "../geometry/geometry.h"
 #include "../boundary/boundary.h"
 #include "../reconstruct/reconstruct.h"
-#include "../riemannsolver/riemannsolver.h"
 #include "../physics/physics.h"
 #include "../problem/problem.h"
+#include "macros.h"
 
 #if (USE_OPENMP)
   #include <omp.h>
@@ -67,13 +67,16 @@ PetscErrorCode computeResidual(SNES snes,
                                void *ptr
                               );
 
-//void computeFluxesOverTile(const REAL primTile[ARRAY_ARGS TILE_SIZE],
-//                           const struct gridTile tile[ARRAY_ARGS 1],
-//                           REAL fluxX1Tile[ARRAY_ARGS TILE_SIZE],
-//                           REAL fluxX2Tile[ARRAY_ARGS TILE_SIZE],
-//                           ARRAY(dtGlobal)
-//                          );
-//
+void computeFluxesOverTile
+  (const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
+   const struct gridTile tile[ARRAY_ARGS 1],
+   REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)],
+   struct gridData dtGrid[ARRAY_ARGS 1]
+  );
+
+void fluxCT(const struct gridTile tile[ARRAY_ARGS 1],
+            REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)]
+           );
 //void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 //
 //void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);

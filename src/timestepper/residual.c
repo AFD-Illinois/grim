@@ -32,7 +32,7 @@ PetscErrorCode computeResidual(SNES snes,
         struct gridTile tile;
         setTile(iTile, jTile, kGlobal, &ts->primN, &tile);
 
-        LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+        LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2, 0, TILE_SIZE_X3)
         {
           struct gridZone zone;
           setZone(iInTile, jInTile, 0, &tile, &zone);
@@ -76,7 +76,7 @@ PetscErrorCode computeResidual(SNES snes,
         struct gridTile tile;
         setTile(iTile, jTile, kGlobal, &ts->primNPlusHalf, &tile);
 
-        LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
+        LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2, 0, TILE_SIZE_X3)
         {
           struct gridZone zone;
           setZone(iInTile, jInTile, 0, &tile, &zone);
@@ -118,11 +118,11 @@ PetscErrorCode computeResidual(SNES snes,
       setTile(iTile, jTile, kGlobal, &ts->primN, &tile);
 
       REAL primTile[TILE_SIZE(DOF)];
-      REAL fluxX1Tile[TILE_SIZE(DOF)], fluxX2Tile[TILE_SIZE(DOF)];
+      REAL fluxesTile[COMPUTE_DIM][TILE_SIZE(DOF)];
 
       /* Load data from the global memory on RAM onto a tile small enough
         * to reside on the cache */
-      loadPrimTile(prim, tile, primTile);
+      loadPrimTile(prim, &tile, primTile);
 
       /* Sync point */
       
@@ -135,9 +135,9 @@ PetscErrorCode computeResidual(SNES snes,
 //      /* Sync point */
 //  
 //      /* Work on the tiles.*/
-      computeFluxesOverTile(tile, primTile,
-                            fluxX1Tile, fluxX2Tile,
-                            ts->dtGrid
+      computeFluxesOverTile(primTile, &tile,
+                            fluxesTile,
+                            &ts->dtGrid
                            );
 
 //      applyProblemSpecificFluxFilter(tile,
