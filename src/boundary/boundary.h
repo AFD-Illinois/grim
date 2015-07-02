@@ -3,7 +3,7 @@
 
 #include "../inputs.h"
 #include "../grid/grid.h"
-#include "../physics/macros.h"
+#include "../physics/macros.h" /* Determines DOF */
 #include "macros.h"
 
 /* Periodic boundary conditions are handled by Petsc since data needs to be
@@ -11,8 +11,7 @@
  * appropriate data in the local array. Simply copy that */
 
 
-//void applyTileBoundaryConditions(const int iTile, const int jTile,
-//                                 const int X1Start, const int X2Start,
-//                                 const int X1Size, const int X2Size,
-//                                 REAL tile[ARRAY_ARGS TILE_SIZE]);
+void applyTileBoundaryConditions(const struct gridTile tile[ARRAY_ARGS 1],
+                                 REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)]
+                                );
 #endif /* GRIM_BOUNDARY_H_ */

@@ -71,6 +71,10 @@
   #define INDEX_TILE_OFFSET(iOffset,jOffset,kOffset,zone,var) \
     ((zone)->iInTile + (iOffset) + NG + (TILE_SIZE_X1+2*NG)*(var))
 
+  /* Returns the index given indices inside a tile */
+  #define INDEX_TILE_MANUAL(iInTile, jInTile, kInTile,var) \
+    ((iInTile) + NG + (TILE_SIZE_X1+2*NG)*(var))
+
   /* Macro needed to access Petsc's global Vecs */
   #define INDEX_GRID(grid,zone,var) ((grid)->ptr[(zone)->iGlobal][var])
 
@@ -99,6 +103,14 @@
     ( (zone)->iInTile + (iOffset) + NG + (TILE_SIZE_X1+2*NG)\
       * ( \
           (zone)->jInTile + (jOffset) + NG + (TILE_SIZE_X2+2*NG)*(var)\
+        ) \
+    )
+
+  /* Returns the index given indices inside a tile */
+  #define INDEX_TILE_MANUAL(iInTile, jInTile, kInTile,var) \
+    ( (iInTile) + NG + (TILE_SIZE_X1+2*NG)\
+      * ( \
+          (jInTile) + NG + (TILE_SIZE_X2+2*NG)*(var)\
         ) \
     )
 
@@ -137,6 +149,15 @@
       * ( \
           (zone)->jInTile + (jOffset) + NG + (TILE_SIZE_X2+2*NG) \
          *((kOffset) + NG + (1+2*NG)*(var) )\
+        ) \
+    )
+
+  /* Returns the index given indices inside a tile */
+  #define INDEX_TILE_MANUAL(iInTile, jInTile, kInTile,var) \
+    ( (iInTile) + NG + (TILE_SIZE_X1+2*NG)\
+      * ( \
+          (jInTile) + NG + (TILE_SIZE_X2+2*NG) \
+         *((kInTile) + NG + (1+2*NG)*(var) )\
         ) \
     )
 
