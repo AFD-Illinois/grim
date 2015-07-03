@@ -49,7 +49,7 @@ PetscErrorCode computeResidual(SNES snes,
     LOOP_OVER_TILES(prim)
     {
       struct gridTile tile;
-      setTile(iTile, jTile, kGlobal, &ts->primN, &tile);
+      setTile(iTile, jTile, kGlobal, prim, &tile);
 
       REAL primTile[TILE_SIZE(DOF)];
       REAL fluxesTile[COMPUTE_DIM][TILE_SIZE(DOF)];

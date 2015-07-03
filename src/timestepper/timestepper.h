@@ -85,8 +85,9 @@ void computeSourcesAndConservedVarsOverGrid
    struct gridData sourcesGrid[ARRAY_ARGS 1],
    struct gridData conservedVarsGrid[ARRAY_ARGS 1]
   );
-//void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
-//
+
+void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
+
 //void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 //
 ////#if (CONDUCTION || VISCOSITY)

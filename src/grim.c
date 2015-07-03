@@ -6,7 +6,7 @@ int main(int argc, char **argv)
   
   struct timeStepper ts;
   timeStepperInit(&ts);
-//
+
 //  while (ts.t + ts.dt < FINAL_TIME)
 //  {
 //    timeStep(&ts);
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 //  }
 //
 //  timeStepperDestroy(&ts);
-
+//
   PetscFinalize();  
   return(0);
 }

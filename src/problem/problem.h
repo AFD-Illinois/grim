@@ -11,8 +11,8 @@
 #include PROBLEM_DATA /* Includes the problem struct defined in the specific
                          problem folder */
 
-//void initialConditions(struct timeStepper ts[ARRAY_ARGS 1]);
-//
+void initialConditions(struct timeStepper ts[ARRAY_ARGS 1]);
+
 //void applyFloor(const int iTile, const int jTile,
 //                const int X1Start, const int X2Start,
 //                const int X1Size, const int X2Size,

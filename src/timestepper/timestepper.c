@@ -55,20 +55,44 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   if (ts->primN.iLocalSize % TILE_SIZE_X1 != 0)
   {
     PetscPrintf(PETSC_COMM_WORLD,
-                "TILE_SIZE_X1 = %d does not divide X1Size = %d exactly\n",
+                "TILE_SIZE_X1 = %d does not divide iLocalSize = %d exactly\n",
                 TILE_SIZE_X1, ts->primN.iLocalSize
                );
     MPI_Abort(PETSC_COMM_WORLD, 1);
   }
+  #if (USE_OPENMP)
+  if (ts->primN.iLocalSize / TILE_SIZE_X1 % omp_get_max_threads() != 0)
+  {
+    PetscPrintf(PETSC_COMM_WORLD,
+                "Tiles per OpenMP thread in X1 = %f not a perfect integer\n",
+                  (REAL)ts->primN.iLocalSize \
+                / (REAL) TILE_SIZE_X1 \
+                / (REAL) omp_get_max_threads()
+               );
+    MPI_Abort(PETSC_COMM_WORLD, 1);
+  }
+  #endif
   #if (COMPUTE_DIM==2 || COMPUTE_DIM==3)
     if (ts->primN.jLocalSize % TILE_SIZE_X2 != 0)
     {
       PetscPrintf(PETSC_COMM_WORLD,
-                  "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
+                  "TILE_SIZE_X2 = %d does not divide jLocalSize = %d exactly\n",
                   TILE_SIZE_X2, ts->primN.jLocalSize
                  );
       MPI_Abort(PETSC_COMM_WORLD, 1);
     }
+    #if (USE_OPENMP)
+    if (ts->primN.jLocalSize / TILE_SIZE_X2 % omp_get_max_threads() != 0)
+    {
+      PetscPrintf(PETSC_COMM_WORLD,
+                  "Tiles per OpenMP thread in X2 = %f not a perfect integer\n",
+                    (REAL)ts->primN.jLocalSize \
+                  / (REAL) TILE_SIZE_X2 \
+                  / (REAL) omp_get_max_threads()
+                 );
+      MPI_Abort(PETSC_COMM_WORLD, 1);
+    }
+    #endif
   #endif
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
@@ -163,325 +187,53 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
               "#################################################\n");
   PetscPrintf(PETSC_COMM_WORLD, "\n");
 
-//  /* Precompute the Chritoffel symbols gammaUpDownDown */
-//  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
-//  setChristoffelSymbols(ts);
-//  PetscPrintf(PETSC_COMM_WORLD, "done\n");
-//
-//  #if (RESTART)
-//    PetscMPIInt rank;
-//    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
-//
-//    if (rank==0)
-//    {
-//      if (access(RESTART_FILE, F_OK) != -1)
-//      {
-//        /* File exists */
-//        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", RESTART_FILE); 
-//      }
-//      else
-//      {
-//        /* File does not exist */
-//        PetscPrintf(PETSC_COMM_WORLD, "\n");
-//        //SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
-//        //         RESTART_FILE);
-//      }
-//    }
-//
-//    PetscViewer viewer;
-//    PetscViewerHDF5Open(PETSC_COMM_WORLD, "restartfile.h5",
-//                        FILE_MODE_READ, &viewer);
-//    PetscObjectSetName((PetscObject) ts->primPetscVecOld, "primVars");
-//    VecLoad(ts->primPetscVecOld, viewer);
-//    PetscViewerDestroy(&viewer);
-//
-//  #else
-//
-//    /* Set initialConditions from problem */
-//    initialConditions(ts);
-//
-//  #endif /* RESTART option */
-//
-//  /* Output the initial conditions */
+  /* Precompute the Chritoffel symbols gammaUpDownDown */
+  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
+  setChristoffelSymbols(ts);
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
+
+  #if (RESTART)
+    PetscMPIInt rank;
+    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
+
+    if (rank==0)
+    {
+      if (access(RESTART_FILE, F_OK) != -1)
+      {
+        /* File exists */
+        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", RESTART_FILE); 
+      }
+      else
+      {
+        /* File does not exist */
+        PetscPrintf(PETSC_COMM_WORLD, "\n");
+        PetscPrintf(PETSC_COMM_WORLD, "Restart file %s does not exist\n",
+                    RESTART_FILE
+                   );
+        MPI_Abort(PETSC_COMM_WORLD, 1);
+      }
+    }
+
+    PetscViewer viewer;
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, "restartfile.h5",
+                        FILE_MODE_READ, &viewer);
+    PetscObjectSetName((PetscObject) ts->primPetscVecOld, "primVars");
+    VecLoad(ts->primPetscVecOld, viewer);
+    PetscViewerDestroy(&viewer);
+
+  #else
+
+    /* Set initialConditions from problem */
+    //initialConditions(ts);
+
+  #endif /* RESTART option */
+
+  /* Output the initial conditions */
 //  VecCopy(ts->primPetscVecOld, ts->primPetscVec);
 //  diagnostics(ts);
 
 }
 
-//void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
-//{
-//  SNESCreate(PETSC_COMM_WORLD, &ts->snes);
-//
-//  /* Periodic boundary conditions handled by Petsc since it is a global boundary
-//   * condition. Here we check for the boundary at the left edge. Obviously the
-//   * boundary at the right edge also must be PERIODIC if left edge is PERIODIC */
-//  #if (COMPUTE_DIM==1)
-//
-//    #if (PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
-//      DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_PERIODIC, N1, DOF, NG, NULL,
-//                   &ts->dmdaWithGhostZones);
-//    #else
-//      DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, N1, DOF, NG, NULL,
-//                   &ts->dmdaWithGhostZones);
-//    #endif
-//  
-//  #elif (COMPUTE_DIM==2)
-//
-//      #if (PHYSICAL_BOUNDARY_TOP_EDGE==PERIODIC && PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
-//        DMDACreate2d(PETSC_COMM_WORLD, 
-//                     DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
-//                     DMDA_STENCIL_BOX,
-//                     N1, N2,
-//                     PETSC_DECIDE, PETSC_DECIDE,
-//                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-//
-//      #elif (PHYSICAL_BOUNDARY_LEFT_EDGE==PERIODIC)
-//        DMDACreate2d(PETSC_COMM_WORLD, 
-//                     DM_BOUNDARY_PERIODIC, DM_BOUNDARY_GHOSTED,
-//                     DMDA_STENCIL_BOX,
-//                     N1, N2,
-//                     PETSC_DECIDE, PETSC_DECIDE,
-//                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-//
-//      #elif (PHYSICAL_BOUNDARY_TOP_EDGE==PERIODIC)
-//        DMDACreate2d(PETSC_COMM_WORLD, 
-//                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_PERIODIC,
-//                     DMDA_STENCIL_BOX,
-//                     N1, N2,
-//                     PETSC_DECIDE, PETSC_DECIDE,
-//                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-//      #else
-//        DMDACreate2d(PETSC_COMM_WORLD, 
-//                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-//                     DMDA_STENCIL_BOX,
-//                     N1, N2,
-//                     PETSC_DECIDE, PETSC_DECIDE,
-//                     DOF, NG, PETSC_NULL, PETSC_NULL, &ts->dmdaWithGhostZones);
-//      #endif
-//
-//  #endif /* Choose dim and create dmdaWithGhostZones */
-//
-//  /* Now create dmdaWithoutGhostZones for the vectors that don't need
-//   * communication */
-//  #if (COMPUTE_DIM==1)
-//    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, DOF, 0, NULL,
-//                 &ts->dmdaWithoutGhostZones);
-//  #elif (COMPUTE_DIM==2)
-//    DMDACreate2d(PETSC_COMM_WORLD, 
-//                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
-//                 DMDA_STENCIL_BOX,
-//                 N1, N2,
-//                 PETSC_DECIDE, PETSC_DECIDE,
-//                 DOF, 0, PETSC_NULL, PETSC_NULL, &ts->dmdaWithoutGhostZones);
-//  #endif /* Choose dimension */
-//
-//  /* If explicit or imex time stepping, then create another DM with no ghost
-//   * zones. Graph coloring with ensure that the number of evaluations to construct
-//   * the jacobian will be equal to DOF^2 */
-//  #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-//    SNESSetDM(ts->snes, ts->dmdaWithoutGhostZones);
-//  #elif (TIME_STEPPING==IMPLICIT)
-//  /* If implicit time stepping, then use the DM created earlier which has ghost
-//   * zones, in SNES */
-//    SNESSetDM(ts->snes, ts->dmdaWithGhostZones);
-//  #endif
-//
-//  DMDAGetCorners(ts->dmdaWithGhostZones,
-//                 &ts->X1Start, &ts->X2Start, &ts->X3Start,
-//                 &ts->X1Size, &ts->X2Size, &ts->X3Size);
-//  
-//  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecOld);
-//  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecLastStep);
-//  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecLambda);
-//  DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVecHalfStep);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->divFluxPetscVecOld);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->conservedVarsPetscVecOld);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->sourceTermsPetscVecOld);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->residualPetscVec);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->OldresidualPetscVec);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->LambdaresidualPetscVec);
-//  DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->LastStepresidualPetscVec);
-//
-//  #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-//    DMCreateGlobalVector(ts->dmdaWithoutGhostZones, &ts->primPetscVec);
-//  #elif (TIME_STEPPING==IMPLICIT)
-//    DMCreateGlobalVector(ts->dmdaWithGhostZones, &ts->primPetscVec);
-//  #endif
-//
-//  VecSet(ts->primPetscVecOld, 0.);
-//  VecSet(ts->primPetscVecLastStep, 0.);
-//  VecSet(ts->primPetscVecLambda, 0.);
-//  VecSet(ts->primPetscVecHalfStep, 0.);
-//  VecSet(ts->divFluxPetscVecOld, 0.);
-//  VecSet(ts->conservedVarsPetscVecOld, 0.);
-//  VecSet(ts->sourceTermsPetscVecOld, 0.);
-//  VecSet(ts->residualPetscVec, 0.);
-//  VecSet(ts->OldresidualPetscVec, 0.);
-//  VecSet(ts->LambdaresidualPetscVec, 0.);
-//  VecSet(ts->LastStepresidualPetscVec, 0.);
-//  VecSet(ts->primPetscVec, 0.);
-//
-//  SNESSetFunction(ts->snes, ts->residualPetscVec,
-//                  computeResidual, ts);
-//
-//  SNESSetFromOptions(ts->snes);
-//
-//  ts->dt = DT;
-//  ts->t = START_TIME;
-//  ts->tDump = START_TIME;
-//
-//  ts->timeStepCounter = 0;
-//  ts->dumpCounter = 0;
-//
-//  ts->computeOldSourceTermsAndOldDivOfFluxes = 0;
-//  ts->computeDivOfFluxAtTimeN = 0;
-//  ts->computeDivOfFluxAtTimeNPlusHalf = 0;
-//  ts->computeSourceTermsAtTimeN = 0;
-//  ts->computeSourceTermsAtTimeNPlusHalf = 0;
-//
-//  /* Now create dmda for the connection coefficients */
-//  #if (COMPUTE_DIM==1)
-//    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, 64, 0, NULL,
-//                 &ts->connectionDMDA);
-//  #elif (COMPUTE_DIM==2)
-//    DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
-//                 DMDA_STENCIL_BOX, N1, N2, PETSC_DECIDE, PETSC_DECIDE,
-//                 64, 0, PETSC_NULL, PETSC_NULL, &ts->connectionDMDA);
-//  #endif /* Choose dimension */
-//
-//  DMCreateGlobalVector(ts->connectionDMDA, &ts->connectionPetscVec);
-//
-//  /* Now create dmda for dt */
-//  #if (COMPUTE_DIM==1)
-//    DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, N1, COMPUTE_DIM, 0, NULL,
-//                 &ts->dmdaDt);
-//  #elif (COMPUTE_DIM==2)
-//    DMDACreate2d(PETSC_COMM_WORLD, 
-//                 DM_BOUNDARY_NONE, DM_BOUNDARY_NONE,
-//                 DMDA_STENCIL_BOX,
-//                 N1, N2,
-//                 PETSC_DECIDE, PETSC_DECIDE,
-//                 COMPUTE_DIM, 0, PETSC_NULL, PETSC_NULL,
-//                 &ts->dmdaDt);
-//  #endif /* Choose dimension */
-//
-//  DMCreateGlobalVector(ts->dmdaDt, &ts->dtPetscVec);
-//
-//  #if (CONDUCTION)
-//  initConductionDataStructures(ts);
-//  #endif
-//
-//  #if (VISCOSITY)
-//  initViscosityDataStructures(ts);
-//  #endif
-//
-//
-//  /* Initialize problem dependent data */
-//  PetscMalloc1(1, &ts->problemSpecificData);
-//
-//  if (ts->X1Size % TILE_SIZE_X1 != 0)
-//  {
-//    SETERRQ2(PETSC_COMM_WORLD, 1,
-//             "TILE_SIZE_X1 = %d does not divide X1Size = %d exactly\n",
-//             TILE_SIZE_X1, ts->X1Size);
-//  }
-//  #if (COMPUTE_DIM==2)
-//    if (ts->X2Size % TILE_SIZE_X2 != 0)
-//    {
-//      SETERRQ2(PETSC_COMM_WORLD, 1,
-//               "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
-//               TILE_SIZE_X2, ts->X2Size);
-//    }
-//  #endif
-//
-//  PetscPrintf(PETSC_COMM_WORLD, "\n");
-//  PetscPrintf(PETSC_COMM_WORLD,
-//              "#################################################\n");
-//  PetscPrintf(PETSC_COMM_WORLD,
-//              "           Memory allocation complete\n\n");
-//
-//  int numProcs;
-//  MPI_Comm_size(PETSC_COMM_WORLD, &numProcs);
-//  PetscPrintf(PETSC_COMM_WORLD,
-//              " Number of MPI procs being used       = %d\n",
-//              numProcs);
-//  #if (COMPUTE_DIM==1)
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid size                            = %d\n",
-//                N1);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid points in each MPI process      = %d\n",
-//                ts->X1Size);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid points in each tile             = %d\n",
-//                TILE_SIZE_X1);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Number of tiles in each MPI process  = %d\n",
-//                ts->X1Size/TILE_SIZE_X1);
-//  #elif (COMPUTE_DIM==2)
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid size                            = %d x %d\n",
-//                N1, N2);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid points in each MPI process      = %d x %d\n",
-//                ts->X1Size, ts->X2Size);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Grid points in each tile             = %d x %d\n",
-//                TILE_SIZE_X1, TILE_SIZE_X2);
-//    PetscPrintf(PETSC_COMM_WORLD,
-//                " Number of tiles in each MPI process  = %d x %d\n",
-//                ts->X1Size/TILE_SIZE_X1, ts->X2Size/TILE_SIZE_X2);
-//  #endif
-//
-//  PetscPrintf(PETSC_COMM_WORLD,
-//              "#################################################\n");
-//  PetscPrintf(PETSC_COMM_WORLD, "\n");
-//
-//  /* Precompute the Chritoffel symbols gammaUpDownDown */
-//  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
-//  setChristoffelSymbols(ts);
-//  PetscPrintf(PETSC_COMM_WORLD, "done\n");
-//
-//  #if (RESTART)
-//    PetscMPIInt rank;
-//    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
-//
-//    if (rank==0)
-//    {
-//      if (access(RESTART_FILE, F_OK) != -1)
-//      {
-//        /* File exists */
-//        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", RESTART_FILE); 
-//      }
-//      else
-//      {
-//        /* File does not exist */
-//        PetscPrintf(PETSC_COMM_WORLD, "\n");
-//        //SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
-//        //         RESTART_FILE);
-//      }
-//    }
-//
-//    PetscViewer viewer;
-//    PetscViewerHDF5Open(PETSC_COMM_WORLD, "restartfile.h5",
-//                        FILE_MODE_READ, &viewer);
-//    PetscObjectSetName((PetscObject) ts->primPetscVecOld, "primVars");
-//    VecLoad(ts->primPetscVecOld, viewer);
-//    PetscViewerDestroy(&viewer);
-//
-//  #else
-//
-//    /* Set initialConditions from problem */
-//    initialConditions(ts);
-//
-//  #endif /* RESTART option */
-//
-//  /* Output the initial conditions */
-//  VecCopy(ts->primPetscVecOld, ts->primPetscVec);
-//  diagnostics(ts);
-//
-//}
-//
 //#if (CONDUCTION)
 //void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
 //{
@@ -599,100 +351,74 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
 //  DMDestroy(&ts->graduConHigherOrderTermsVisDM);
 //}
 //#endif
-//
-//void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
-//{
-//  VecSet(ts->connectionPetscVec, 0.);
-//
-//  ARRAY(connectionGlobal);
-//  DMDAVecGetArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
-//                     &connectionGlobal);
-//
-//  #if (USE_OPENMP)
-//    #pragma omp parallel for
-//  #endif
-//  LOOP_OVER_TILES(ts->X1Size, ts->X2Size)
-//  {
-//    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
-//    {
-//      
-//      struct gridZone zone;
-//      setGridZone(iTile, jTile,
-//                  iInTile, jInTile,
-//                  ts->X1Start, ts->X2Start,
-//                  ts->X1Size, ts->X2Size,
-//                  &zone);
-//
-//      REAL XCoords[NDIM];
-//      getXCoords(&zone, CENTER, XCoords);
-//      struct geometry geom; setGeometry(XCoords, &geom);
-//
-//      /* Now compute connectionGlobal with 
-//       * Index Up   - eta
-//       * Index down - mu
-//       * Index down - nu */
-//      for (int eta=0; eta<NDIM; eta++)
-//      {
-//        for (int mu=0; mu<NDIM; mu++)
-//        {
-//          for (int nu=0; nu<NDIM; nu++)
-//          {
-//            for (int alpha=0; alpha<NDIM; alpha++)
-//            {
-//              #if (COMPUTE_DIM==1)
-//                connectionGlobal[zone.i][GAMMA_UP_DOWN_DOWN(eta, mu, nu)]
-//              #elif (COMPUTE_DIM==2)
-//                connectionGlobal[zone.j][zone.i][GAMMA_UP_DOWN_DOWN(eta, mu, nu)]
-//              #endif
-//              +=
-//                geom.gCon[eta][alpha]
-//              * gammaDownDownDown(alpha, mu, nu, XCoords);
-//            }
-//          }
-//        }
-//      }
-//
-//    }
-//  }
-//
-//  DMDAVecRestoreArrayDOF(ts->connectionDMDA, ts->connectionPetscVec,
-//                         &connectionGlobal);
-//}
-//
-//void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
-//{
-//  VecDestroy(&ts->primPetscVecOld);
-//  VecDestroy(&ts->primPetscVecLastStep);
-//  VecDestroy(&ts->primPetscVecLambda);
-//  VecDestroy(&ts->divFluxPetscVecOld);
-//  VecDestroy(&ts->conservedVarsPetscVecOld);
-//  VecDestroy(&ts->sourceTermsPetscVecOld);
-//  VecDestroy(&ts->residualPetscVec);
-//  VecDestroy(&ts->OldresidualPetscVec);
-//  VecDestroy(&ts->LastStepresidualPetscVec);
-//  VecDestroy(&ts->LambdaresidualPetscVec);
-//  VecDestroy(&ts->primPetscVec);
-//  VecDestroy(&ts->connectionPetscVec);
-//
-//  DMDestroy(&ts->dmdaWithGhostZones);
-//  DMDestroy(&ts->dmdaWithoutGhostZones);
-//  DMDestroy(&ts->connectionDMDA);
-//
-//  SNESDestroy(&ts->snes);
-//
-//  PetscFree(ts->problemSpecificData);
-//
-//  #if (CONDUCTION)
-//    destroyConductionDataStructures(ts);
-//  #endif
-//
-//  #if (VISCOSITY)
-//    destroyViscosityDataStructures(ts);
-//  #endif
-//
-//  PetscPrintf(PETSC_COMM_WORLD, "\n");
-//  PetscPrintf(PETSC_COMM_WORLD, "################################\n");
-//  PetscPrintf(PETSC_COMM_WORLD, "# Memory deallocation complete #\n");
-//  PetscPrintf(PETSC_COMM_WORLD, "################################\n");
-//  PetscPrintf(PETSC_COMM_WORLD, "\n");
-//}
+
+void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  setPointerToVec(&ts->connection);
+
+  LOOP_OVER_TILES(&ts->connection)
+  {
+    struct gridTile tile;
+    setTile(iTile, jTile, kGlobal, &ts->connection, &tile);
+
+    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2, 0, TILE_SIZE_X3)
+    {
+      
+      struct gridZone zone;
+      setZone(iInTile, jInTile, kInTile, &tile, &zone);
+
+      REAL XCoords[NDIM];
+      getXCoords(&zone, CENTER, XCoords);
+      struct geometry geom; setGeometry(XCoords, &geom);
+
+      /* Now compute connectionGlobal with 
+       * Index Up   - eta
+       * Index down - mu
+       * Index down - nu */
+      for (int eta=0; eta<NDIM; eta++)
+      {
+        for (int mu=0; mu<NDIM; mu++)
+        {
+          for (int nu=0; nu<NDIM; nu++)
+          {
+            for (int alpha=0; alpha<NDIM; alpha++)
+            {
+              INDEX_GRID(&ts->connection, &zone, GAMMA_UP_DOWN_DOWN(eta, mu, nu))
+                +=
+                  geom.gCon[eta][alpha]
+                * gammaDownDownDown(alpha, mu, nu, XCoords);
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+  restorePointerToVec(&ts->connection);
+}
+
+void timeStepperDestroy(struct timeStepper ts[ARRAY_ARGS 1])
+{
+  destroyGridData(&ts->primNPlusOne);
+  destroyGridData(&ts->primNPlusHalf);
+  destroyGridData(&ts->primN);
+
+  destroyGridData(&ts->conservedVarsN);
+  destroyGridData(&ts->divFluxes);
+  destroyGridData(&ts->sources);
+
+  destroyGridData(&ts->residual);
+  destroyGridData(&ts->dtGrid);
+  destroyGridData(&ts->connection);
+
+  SNESDestroy(&ts->snes);
+
+  PetscFree(ts->problemSpecificData);
+
+  PetscPrintf(PETSC_COMM_WORLD, "\n");
+  PetscPrintf(PETSC_COMM_WORLD, "################################\n");
+  PetscPrintf(PETSC_COMM_WORLD, "# Memory deallocation complete #\n");
+  PetscPrintf(PETSC_COMM_WORLD, "################################\n");
+  PetscPrintf(PETSC_COMM_WORLD, "\n");
+}

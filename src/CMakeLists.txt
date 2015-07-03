@@ -15,10 +15,10 @@ project(grim)
 
 
 # ------------------------------USER OPTIONS----------------------------------#
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -qopt-report=5 -qopt-report-phase=vec")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+set(PETSC_DIR "/home/manic/petsc_installation")
 #set(PETSC_ARCH "arch-darwin-c-opt")
 
 # Double or float precision?
