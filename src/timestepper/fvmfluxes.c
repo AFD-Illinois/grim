@@ -1,8 +1,8 @@
 #include "timestepper.h"
 
 void computeFluxesOverTile
-  (const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
-   const struct gridTile tile[ARRAY_ARGS 1],
+  (const struct gridTile tile[ARRAY_ARGS 1],
+   const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
    REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)],
    struct gridData dtGrid[ARRAY_ARGS 1]
   )

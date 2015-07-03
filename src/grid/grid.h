@@ -28,7 +28,7 @@ struct gridData
 struct gridTile
 {
   int iTile, jTile, kGlobal;
-  int iLocalStart, jLocalStart;
+  int iLocalStart, jLocalStart, kLocalStart;
 };
 
 struct gridZone

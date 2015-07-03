@@ -22,8 +22,8 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   initGridData(DOF, NG, &ts->primN);
 
   initGridData(DOF, 0, &ts->conservedVarsN);
-  initGridData(DOF, 0, &ts->sourcesN);
-  initGridData(DOF, 0, &ts->sourcesNPlusHalf);
+  initGridData(DOF, 0, &ts->divFluxes);
+  initGridData(DOF, 0, &ts->sources);
 
   initGridData(DOF, 0, &ts->residual);
 
@@ -40,14 +40,14 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   ts->tDump = START_TIME;
 
   ts->timeStepCounter = 0;
-  ts->dumpCounter = 0;
+  ts->dumpCounter     = 0;
 
   ts->isZerothIterationOfSNES = 0;
 
-  ts->computeDivOfFluxAtN = 0;
+  ts->computeDivOfFluxAtN         = 0;
   ts->computeDivOfFluxAtNPlusHalf = 0;
-  ts->computeSourcesAtN = 0;
-  ts->computeSourcesAtNPlusHalf = 0;
+  ts->computeSourcesAtN           = 0;
+  ts->computeSourcesAtNPlusHalf   = 0;
 
   /* Initialize problem dependent data */
   PetscMalloc1(1, &ts->problemSpecificData);

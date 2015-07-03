@@ -32,8 +32,8 @@ struct timeStepper
   struct gridData primN;
 
   struct gridData conservedVarsN;
-  struct gridData sourcesN;
-  struct gridData sourcesNPlusHalf;
+  struct gridData divFluxes;  /* Stores either divFluxesN or divFluxesNPlusHalf */
+  struct gridData sources;    /* Stores either sourcesN or sourcesNPlusHalf */
   
   struct gridData residual;
 
@@ -68,8 +68,8 @@ PetscErrorCode computeResidual(SNES snes,
                               );
 
 void computeFluxesOverTile
-  (const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
-   const struct gridTile tile[ARRAY_ARGS 1],
+  (const struct gridTile tile[ARRAY_ARGS 1],
+   const REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)],
    REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)],
    struct gridData dtGrid[ARRAY_ARGS 1]
   );
@@ -77,6 +77,14 @@ void computeFluxesOverTile
 void fluxCT(const struct gridTile tile[ARRAY_ARGS 1],
             REAL fluxesTile[ARRAY_ARGS COMPUTE_DIM][TILE_SIZE(DOF)]
            );
+
+void computeSourcesAndConservedVarsOverGrid
+  (const int computeConservedVars,
+   const struct gridData prim[ARRAY_ARGS 1],
+   const struct gridData connection[ARRAY_ARGS 1],
+   struct gridData sourcesGrid[ARRAY_ARGS 1],
+   struct gridData conservedVarsGrid[ARRAY_ARGS 1]
+  );
 //void setChristoffelSymbols(struct timeStepper ts[ARRAY_ARGS 1]);
 //
 //void diagnostics(struct timeStepper ts[ARRAY_ARGS 1]);

@@ -344,6 +344,7 @@ void setTile(const int iTile, const int jTile, const int kGlobal,
 
   tile->iLocalStart = grid->iLocalStart;
   tile->jLocalStart = grid->jLocalStart;
+  tile->kLocalStart = grid->kLocalStart;
 }
 
 void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
@@ -351,15 +352,17 @@ void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
                   REAL primTile[ARRAY_ARGS TILE_SIZE(DOF)]
                  )
 {
-  #if (COMPUTE_DIM == 1 || COMPUTE_DIM == 2)
-
-    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG, 0, 0)
+  if (tile->kGlobal == tile->kLocalStart)
+  {
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
+                     -NG, TILE_SIZE_X2+NG,
+                     -NG, TILE_SIZE_X3+NG
+                    )
     {
       struct gridZone zone;
-      setZone(iInTile, jInTile, 0, tile, &zone);
+      setZone(iInTile, jInTile, kInTile, tile, &zone);
 
       REAL primVars[DOF];
-
       memcpy(primVars, &INDEX_GRID_GHOST(grid, &zone, 0), 
              sizeof(REAL[DOF])
             );
@@ -369,40 +372,34 @@ void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],
         primTile[INDEX_TILE(&zone, var)] = primVars[var];
       }
     }
+  }
+  else
+  {
+    struct gridZone zoneAtTileEdge;
+    setZone(0, 0, 0, tile, &zoneAtTileEdge);
 
-  #elif (COMPUTE_DIM == 3)
-  
-    if (tile->kGlobal == tile->kLocalStart)
+    memmove(&primTile[INDEX_TILE_OFFSET(0, 0, NG,   &zoneAtTileEdge, 0)],
+            &primTile[INDEX_TILE_OFFSET(0, 0, NG-1, &zoneAtTileEdge, 0)],
+            sizeof(REAL[(TILE_SIZE_X1+2*NG)*(TILE_SIZE_X2+2*NG)*(2*NG)*DOF])
+           );
+
+    LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
+                     -NG, TILE_SIZE_X2+NG,
+                      NG, TILE_SIZE_X3+NG
+                    )
     {
-      LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
-                       -NG, TILE_SIZE_X2+NG,
-                       -NG, TILE_SIZE_X3+NG
-                      )
-      {
-        struct gridZone zone;
-        setZone(iInTile, jInTile, kInTile, tile, &zone);
+      struct gridZone zone;
+      setZone(iInTile, jInTile, kInTile, tile, &zone);
 
-        primTile[INDEX_TILE(zone, var)] = INDEX_GRID_GHOST(grid, zone, var);
+      REAL primVars[DOF];
+      memcpy(primVars, &INDEX_GRID_GHOST(grid, &zone, 0), 
+             sizeof(REAL[DOF])
+            );
+
+      for (int var=0; var<DOF; var++)
+      {
+        primTile[INDEX_TILE(&zone, var)] = primVars[var];
       }
     }
-    else
-    {
-      memmove(&primTile[INDEX_TILE_OFFSET(0, 0, NG,   0)],
-              &primTile[INDEX_TILE_OFFSET(0, 0, NG-1, 0)], 
-              sizeof(REAL[(TILE_SIZE_X1+2*NG)*(TILE_SIZE_X2+2*NG)*(2*NG)*DOF])
-             );
-
-      LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG,
-                       -NG, TILE_SIZE_X2+NG,
-                        NG, TILE_SIZE_X3+NG
-                      )
-      {
-        struct gridZone zone;
-        setZone(iInTile, jInTile, kInTile, tile, &zone);
-
-        primTile[INDEX_TILE(zone, var)] = INDEX_GRID_GHOST(grid, zone, var);
-      }
-    }
-
-  #endif
+  }
 }
