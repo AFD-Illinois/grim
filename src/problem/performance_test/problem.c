@@ -17,12 +17,27 @@
 
 void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 {
-  PetscRandom randomNumberGenerator;
-  PetscRandomCreate(PETSC_COMM_WORLD, &randomNumberGenerator);
-  VecSetRandom(ts->primN.vec, randomNumberGenerator);
-  PetscRandomDestroy(&randomNumberGenerator);
+  VecSetRandom(ts->primN.vec, NULL);
 
-  PetscPrintf(PETSC_COMM_WORLD, "In here\n");
+//  startFillingVecGhost(&ts->primN);
+//
+//  finishFillingVecGhost(&ts->primN);
+  setPointerToVec(&ts->primN);
+  setPointerToVec(&ts->connection);
+  setPointerToVec(&ts->conservedVarsN);
+  setPointerToVec(&ts->sources);
+
+  for (int n=0; n<1000; n++)
+  {
+    PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);
+    computeSourcesAndConservedVarsOverGrid
+      (1, &ts->primN, &ts->connection, &ts->sources, &ts->conservedVarsN);
+  }
+
+  restorePointerToVec(&ts->primN);
+  restorePointerToVec(&ts->connection);
+  restorePointerToVec(&ts->conservedVarsN);
+  restorePointerToVec(&ts->sources);
 }
 
 //void applyFloor(const int iTile, const int jTile,

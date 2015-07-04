@@ -224,7 +224,7 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   #else
 
     /* Set initialConditions from problem */
-    //initialConditions(ts);
+    initialConditions(ts);
 
   #endif /* RESTART option */
 

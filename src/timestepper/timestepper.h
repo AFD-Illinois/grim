@@ -9,8 +9,6 @@
 #include "../geometry/geometry.h"
 #include "../boundary/boundary.h"
 #include "../reconstruct/reconstruct.h"
-#include "../physics/physics.h"
-#include "../problem/problem.h"
 #include "macros.h"
 
 #if (USE_OPENMP)
@@ -50,6 +48,12 @@ struct timeStepper
   int computeSourcesAtNPlusHalf;
   int computeConsVarsAndSourcesAtN;
 };
+
+/* The problem.h library needs the timeStepper struct. So import it after
+ * declaring the timeStepper struct. Import physics.h also here since it imports
+ * the problem.h library on its own */
+#include "../physics/physics.h"
+#include "../problem/problem.h"
 
 /* User functions */
 
