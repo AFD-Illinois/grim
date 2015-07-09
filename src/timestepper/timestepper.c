@@ -13,22 +13,58 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
    * coloring with ensure that the number of evaluations to construct the
    * jacobian will be equal to DOF^2 */
   #if (TIME_STEPPING==EXPLICIT || TIME_STEPPING==IMEX)
-    initGridData(DOF, 0, &ts->primNPlusOne);
+    initGridData(N1, N2, N3, DOF, 0, &ts->primNPlusOne);
   #elif (TIME_STEPPING==IMPLICIT)
-    initGridData(DOF, NG, &ts->primNPlusOne);
+    initGridData(N1, N2, N3, DOF, NG, &ts->primNPlusOne);
   #endif
 
-  initGridData(DOF, NG, &ts->primNPlusHalf);
-  initGridData(DOF, NG, &ts->primN);
+  initGridData(N1, N2, N3, DOF, NG, &ts->primNPlusHalf);
+  initGridData(N1, N2, N3, DOF, NG, &ts->primN);
 
-  initGridData(DOF, 0, &ts->conservedVarsN);
-  initGridData(DOF, 0, &ts->divFluxes);
-  initGridData(DOF, 0, &ts->sources);
+  initGridData(N1/TILE_SIZE_X1, N2, N3, DOF*TILE_SIZE_X1, 0, 
+               &ts->conservedVarsN
+               );
+  initGridData(N1/TILE_SIZE_X1, N2, N3, DOF*TILE_SIZE_X1, 0, 
+               &ts->divFluxes
+               );
+  initGridData(N1/TILE_SIZE_X1, N2, N3, DOF*TILE_SIZE_X1, 0, 
+               &ts->sources
+               );
 
-  initGridData(DOF, 0, &ts->residual);
+  initGridData(N1, N2, N3, DOF, 0, &ts->residual);
 
-  initGridData(COMPUTE_DIM, 0, &ts->dtGrid);
-  initGridData(64, 0, &ts->connection);
+  initGridData(N1/TILE_SIZE_X1, N2, N3, COMPUTE_DIM*TILE_SIZE_X1, 0, 
+               &ts->dtGrid
+              );
+  initGridData(N1/TILE_SIZE_X1, N2, N3, 64*TILE_SIZE_X1, 0, 
+               &ts->connection
+              );
+
+  initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+               &ts->geomCenter
+              );
+  initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+               &ts->geomFaceX1
+              );
+  initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+               &ts->geomFaceX1PlusOne
+              );
+  #if (COMPUTE_DIM == 2 || COMPUTE_DIM==3)
+    initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+                 &ts->geomFaceX2
+                );
+    initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+                 &ts->geomFaceX2PlusOne
+                );
+  #endif
+  #if (COMPUTE_DIM == 3)
+    initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+                 &ts->geomFaceX3
+                );
+    initGridData(N1/TILE_SIZE_X1, N2, N3, 42*TILE_SIZE_X1, 0,
+                 &ts->geomFaceX3PlusOne
+                );
+  #endif
 
   SNESCreate(PETSC_COMM_WORLD, &ts->snes);
   SNESSetDM(ts->snes, ts->primNPlusOne.dm);
@@ -188,9 +224,9 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   PetscPrintf(PETSC_COMM_WORLD, "\n");
 
   /* Precompute the Chritoffel symbols gammaUpDownDown */
-  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
-  setChristoffelSymbols(ts);
-  PetscPrintf(PETSC_COMM_WORLD, "done\n");
+//  PetscPrintf(PETSC_COMM_WORLD, "Computing Christoffel symbols...");
+//  setChristoffelSymbols(ts);
+//  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
   #if (RESTART)
     PetscMPIInt rank;

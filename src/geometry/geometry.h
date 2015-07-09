@@ -18,10 +18,6 @@
  *      = (g_mu_nu (dx^mu/dX^alpha) (dx^nu/dX^beta)) dX^alpha dX^beta
  *      = g_alpha_beta dX^alpha dX^beta
  *
- * Note that we do not store the connection coefficients because they are only
- * used to compute the source terms at the center of a zone and this is only
- * done once inside the zone.
- *
  * The values of this struct are all set by calling setGeometry().
 */
 struct geometry

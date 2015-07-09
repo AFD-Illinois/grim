@@ -53,7 +53,8 @@
 */
 void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
                 const int location,
-                REAL X[ARRAY_ARGS NDIM])
+                REAL X[ARRAY_ARGS NDIM]
+               )
 {
   X[0] = 0.; /* Don't care about the time coordinate. Just set to 0.*/
 
@@ -132,7 +133,8 @@ void getXCoords(const struct gridZone zone[ARRAY_ARGS 1],
   }
 }
 
-void initGridData(const int numVar, const int numGhost,
+void initGridData(const int numX1, const int numX2, const int numX3,
+                  const int numVar, const int numGhost,
                   struct gridData grid[ARRAY_ARGS 1]
                  )
 {
@@ -157,12 +159,12 @@ void initGridData(const int numVar, const int numGhost,
 
   #if (COMPUTE_DIM==1)
 
-    DMDACreate1d(PETSC_COMM_WORLD, boundaryX1, N1,
+    DMDACreate1d(PETSC_COMM_WORLD, boundaryX1, numX1,
                  numVar, 0, NULL,
                  &grid->dm
                 );
 
-    DMDACreate1d(PETSC_COMM_WORLD, boundaryX1, N1,
+    DMDACreate1d(PETSC_COMM_WORLD, boundaryX1, numX1,
                  numVar, numGhost, NULL,
                  &grid->dmGhost
                 );
@@ -172,7 +174,7 @@ void initGridData(const int numVar, const int numGhost,
     DMDACreate2d(PETSC_COMM_WORLD, 
                  boundaryX1, boundaryX2,
                  DMDA_STENCIL_BOX,
-                 N1, N2,
+                 numX1, numX2,
                  PETSC_DECIDE, PETSC_DECIDE,
                  numVar, 0,
                  PETSC_NULL, PETSC_NULL,
@@ -182,7 +184,7 @@ void initGridData(const int numVar, const int numGhost,
     DMDACreate2d(PETSC_COMM_WORLD, 
                  boundaryX1, boundaryX2,
                  DMDA_STENCIL_BOX,
-                 N1, N2,
+                 numX1, numX2,
                  PETSC_DECIDE, PETSC_DECIDE,
                  numVar, numGhost,
                  PETSC_NULL, PETSC_NULL,
@@ -194,7 +196,7 @@ void initGridData(const int numVar, const int numGhost,
     DMDACreate3d(PETSC_COMM_WORLD, 
                  boundaryX1, boundaryX2, boundaryX3,
                  DMDA_STENCIL_BOX,
-                 N1, N2, N3,
+                 numX1, numX2, numX3,
                  PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE
                  numVar, 0, 
                  PETSC_NULL, PETSC_NULL, PETSC_NULL,
@@ -204,7 +206,7 @@ void initGridData(const int numVar, const int numGhost,
     DMDACreate3d(PETSC_COMM_WORLD, 
                  boundaryX1, boundaryX2, boundaryX3,
                  DMDA_STENCIL_BOX,
-                 N1, N2, N3,
+                 numX1, numX2, numX3,
                  PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE
                  numVar, numGhost, 
                  PETSC_NULL, PETSC_NULL, PETSC_NULL,
@@ -216,11 +218,11 @@ void initGridData(const int numVar, const int numGhost,
   /* Get local indices for looping over the array owned by the current proc */
   DMDAGetCorners(grid->dm,
                  &grid->iLocalStart, &grid->jLocalStart, &grid->kLocalStart,
-                 &grid->iLocalSize,  &grid->jLocalSize,  &grid->kLocalSize
+                 &grid->localSizeX1, &grid->localSizeX2, &grid->localSizeX3
                 );
 
-  grid->numTilesX1 = grid->iLocalSize/TILE_SIZE_X1;
-  grid->numTilesX2 = grid->jLocalSize/TILE_SIZE_X2;
+  grid->numTilesX1 = grid->localSizeX1/TILE_SIZE_X1;
+  grid->numTilesX2 = grid->localSizeX2/TILE_SIZE_X2;
 
   DMCreateGlobalVector(grid->dm, &grid->vec);
   DMCreateLocalVector(grid->dmGhost, &grid->vecGhost);
@@ -294,57 +296,6 @@ void finishFillingVecGhostWithExternalVec(Vec externalVec,
                                          )
 {
   DMGlobalToLocalEnd(grid->dm, externalVec, INSERT_VALUES, grid->vecGhost); 
-}
-
-/* Function to set a {\tt gridZone}.
- *
- * Note that the macro LOOP_OVER_TILES defines the variables iTile, jTile and 
- * kGlobal.
- *
- * @param: Input: iInTile, X1 index inside a tile.
- * @param: Input: jInTile, X2 index inside a tile.
- * @param: Input: tile, a {\tt gridTile} struct.
- * @param: Output: zone, the {\tt gridZone} with its parameters set.
- */
-void setZone(const int iInTile, const int jInTile, const int kInTile,
-             const struct gridTile tile[ARRAY_ARGS 1],
-             struct gridZone zone[ARRAY_ARGS 1]
-            )
-{
-  zone->iInTile = iInTile;
-  zone->jInTile = jInTile;
-  zone->kInTile = kInTile;
-
-  zone->iGlobal = tile->iLocalStart + iInTile + tile->iTile*TILE_SIZE_X1;
-  zone->jGlobal = tile->jLocalStart + jInTile + tile->jTile*TILE_SIZE_X2;
-  zone->kGlobal = kInTile + tile->kGlobal; /* kInTile = 0 == kGlobal */
-  
-  zone->dX[0] = 0.;
-  zone->dX[1] = (X1_B - X1_A)/((REAL)N1);
-  #if (COMPUTE_DIM==1)
-    zone->dX[2] = 0.;
-    zone->dX[3] = 0.;
-  #elif (COMPUTE_DIM==2)
-    zone->dX[2] = (X2_B - X2_A)/((REAL)N2);
-    zone->dX[3] = 0.;
-  #elif (COMPUTE_DIM==3)
-    zone->dX[2] = (X2_B - X2_A)/((REAL)N2);
-    zone->dX[3] = (X3_B - X3_A)/((REAL)N3);
-  #endif
-}
-
-void setTile(const int iTile, const int jTile, const int kGlobal,
-             const struct gridData grid[ARRAY_ARGS 1],
-             struct gridTile tile[ARRAY_ARGS 1]
-            )
-{
-  tile->iTile = iTile;
-  tile->jTile = jTile;
-  tile->kGlobal = kGlobal;
-
-  tile->iLocalStart = grid->iLocalStart;
-  tile->jLocalStart = grid->jLocalStart;
-  tile->kLocalStart = grid->kLocalStart;
 }
 
 void loadPrimTile(const struct gridData grid[ARRAY_ARGS 1],

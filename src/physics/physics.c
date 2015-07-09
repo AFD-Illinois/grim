@@ -1,171 +1,181 @@
 #include "physics.h"
 
-/* Compute the Lorentz factor \gamma in the coordinate frame
- *
- * gamma = \sqrt{1 + q^2}
- *
- * where
- *
- * q^2 = g_{ij} \~{u}^i \~{u}^j
- *
- * and \~{u}^i are the primitive variables U1, U2, and U3
- *
- * Ref: Eqn (17) and the paragraph below in 
- *      "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole"
- *      Jonathan C. McKinney and Charles F. Gammie, 2004
- *
- * @param Input: geom, a geometry struct
- * @param Output: elem, a fluid element whose gamma parameter will be set by
- *                this function
-*/ 
-void setGamma(const struct geometry geom[ARRAY_ARGS 1],
-              struct fluidElement elem[ARRAY_ARGS 1])
+void setFluidElement
+  (POINTER_TO_VEC(prim),
+   const struct gridStrip strip[ARRAY_ARGS 1],
+   const struct geometry geom[ARRAY_ARGS 1],
+   struct fluidElementStrip elem[ARRAY_ARGS 1]
+  )
 {
-  elem->gamma = 
-    sqrt(1 + geom->gCov[1][1]*elem->primVars[U1]*elem->primVars[U1]
-           + geom->gCov[2][2]*elem->primVars[U2]*elem->primVars[U2] 
-           + geom->gCov[3][3]*elem->primVars[U3]*elem->primVars[U3]
-
-         + 2*(  geom->gCov[1][2]*elem->primVars[U1]*elem->primVars[U2]
-              + geom->gCov[1][3]*elem->primVars[U1]*elem->primVars[U3] 
-              + geom->gCov[2][3]*elem->primVars[U2]*elem->primVars[U3]
-             )
-        );
-}
-
-/* Compute the four-velocity u^\mu in the coordinate frame
- *
- * The primitive variables are 
- * U1 \equiv \~{u}^1
- * U2 \equiv \~{u}^2
- * U3 \equiv \~{u}^3
- *
- * with range = (-infty, infty)
- *
- * The variables \~{u}^i are defined using
- *
- * \~{u}^i \equiv u^i + \frac{\gamma \beta^i}{\alpha}
- *
- * where \beta^i = g^{0i} \alpha^2 is the shift
- *       \alpha^2 = -1/g^{00} is the lapse.
- *
- * Therefore, the four-velocity u^i is
- *
- * u^{i} = \~{u}^i - \frac{\gamma \beta^i}{\alpha}
- *       = \~{u}^i - \gamma g^{0i} \alpha
- *
- * In addition
- *
- * u^{0} = \frac{\gamma}{\alpha}
- *
- * Ref: 1) Eqn (17) and the paragraph below in 
- *         "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole",
- *         Jonathan C. McKinney and Charles F. Gammie, 2004
- *
- *      2) Paragraph above Eqn (16) and above Eqn (22) in 
- *         "Primitive Variable Solvers for Conservative General Relativistic
- *         Magnetohydrodynamics", Noble et. al., 2006
- *
- * @param Input: geom, a geometry struct
- * @param Output: elem, a fluid element whose uCon will be set by this function
- *
-*/ 
-void setUCon(const struct geometry geom[ARRAY_ARGS 1],
-             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  elem->uCon[0] = elem->gamma/geom->alpha;
-
-  for (int i=1; i<NDIM; i++)
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
   {
-    elem->uCon[i] =  elem->primVars[U1+i-1] 
-                   - elem->gamma*geom->gCon[0][i]*geom->alpha;
-  }
-}
+    SET_STRIP_GLOBAL_INDICES(strip);
 
-/* Compute the magnetic field four-vector b^\mu in the coordinate frame
- *
- * The magnetic field primitive variables are 
- * B1 \equiv *F^{1t}
- * B2 \equiv *F^{2t}
- * B3 \equiv *F^{3t}
- *
- * The variables B^i are used to construct a four-vector b^\mu with
- *
- * b^t = g_{i \mu} B^i u^\mu = B^i u_i
- *
- * b^i = (B^i + u^i b^t)/u^t
- *
- * The above b^\mu is (0, B1, B2, B3) in a comoving tetrad and satisfies 
- * b^\mu u_\mu = 0
- *
- * Ref: 1) Paragraph above Eqn (18) in
- *         "A Measurement of the Electromagnetic Luminosity of a Kerr Black Hole",
- *         Jonathan C. McKinney and Charles F. Gammie, 2004
- *
- * @param Input: geom, a geometry struct
- * @param Output: elem, a fluid element whose bCon will be set by this function
-*/ 
-void setBCon(const struct geometry geom[ARRAY_ARGS 1],
-             struct fluidElement elem[ARRAY_ARGS 1])
-{
-  REAL uCov[NDIM];
-
-  conToCov(elem->uCon, geom, uCov);
-
-  elem->bCon[0] =   elem->primVars[B1]*uCov[1]
-                  + elem->primVars[B2]*uCov[2] 
-                  + elem->primVars[B3]*uCov[3];
-  
-  for (int i=1; i<NDIM; i++)
-  {
-    elem->bCon[i] = (  elem->primVars[B1+i-1] 
-                     + elem->bCon[0]*elem->uCon[i]
-                    )/elem->uCon[0];
-  }
-}
-
-/* Set the {\tt fluidElement} struct, given the primitive variables and the
- * geometry as an input. The fluidElement here represents a fluid element at a
- * particular point in space-time, i.e. it is {\em Eulerian}. Thus every grid
- * zone in the computational domain has a {\tt fluidElement}, as well as a {\tt
- * geometry}. The {\tt fluidElement} struct contains all physics related
- * quantities.
- *
- * @param Input: primVars, an array of all the primitive variables, that we
- *               eventually need to solve for. All physics quantities can be 
- *               recovered by using the primitive variables, along with the 
- *               geometry at a grid zone.
- * @param Input: geom, a geometry struct
- * @param Output: elem, a fluid element whose bCon will be set by this function
-*/ 
-void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
-                     const struct geometry geom[ARRAY_ARGS 1],
-                     struct fluidElement elem[ARRAY_ARGS 1])
-{
-  for (int var=0; var<DOF; var++)
-  {
-    elem->primVars[var] = primVars[var];
+    elem->rho[iInStrip] = INDEX_VEC(prim, strip, RHO);
+    elem->uu[iInStrip]  = INDEX_VEC(prim, strip, UU);
+    elem->u1[iInStrip]  = INDEX_VEC(prim, strip, U1);
+    elem->u2[iInStrip]  = INDEX_VEC(prim, strip, U2);
+    elem->u3[iInStrip]  = INDEX_VEC(prim, strip, U3);
+    elem->b1[iInStrip]  = INDEX_VEC(prim, strip, B1);
+    elem->b2[iInStrip]  = INDEX_VEC(prim, strip, B2);
+    elem->b3[iInStrip]  = INDEX_VEC(prim, strip, B3);
   }
 
-  /* Need to be set in exactly the following order because of the dependecy
-     structure */
-  setGamma(geom, elem);
-  setUCon(geom, elem);
-  setBCon(geom, elem);
-  #if (CONDUCTION || VISCOSITY)
-    //setDiffusionCoefficients(geom, elem);
-  #endif
-  computeMoments(geom, elem);
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    elem->gammaLorentz[iInStrip] = 
+      sqrt(1 + (geom->gCov11[iInStrip]*elem->u1[iInStrip]*elem->u1[iInStrip])
+             + (geom->gCov22[iInStrip]*elem->u2[iInStrip]*elem->u2[iInStrip])
+             + (geom->gCov33[iInStrip]*elem->u3[iInStrip]*elem->u3[iInStrip])
+             + 2.*(
+                    (  geom->gCov12[iInStrip] 
+                     * elem->u1[iInStrip] * elem->u2[iInStrip]
+                    )
+                  + (  geom->gCov13[iInStrip] 
+                     * elem->u1[iInStrip] * elem->u3[iInStrip]
+                    )
+                  + (  geom->gCov23[iInStrip] 
+                     * elem->u2[iInStrip] * elem->u3[iInStrip]
+                    )
+                  )
+          );
+               
+    elem->uUp0[iInStrip] =  elem->gammaLorentz[iInStrip]
+                          / geom->alpha[iInStrip];
+
+    elem->uUp1[iInStrip] =  elem->u1[iInStrip]
+                          - (  elem->gammaLorentz[iInStrip]
+                             * geom->gCon01[iInStrip]
+                             * geom->alpha[iInStrip]
+                            );
+
+    elem->uUp2[iInStrip] =  elem->u2[iInStrip]
+                          - (  elem->gammaLorentz[iInStrip]
+                             * geom->gCon02[iInStrip]
+                             * geom->alpha[iInStrip]
+                            );
+
+    elem->uUp3[iInStrip] =  elem->u3[iInStrip]
+                          - (  elem->gammaLorentz[iInStrip]
+                             * geom->gCon03[iInStrip]
+                             * geom->alpha[iInStrip]
+                            );
+  }
+
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    elem->uDown0[iInStrip] =
+            geom->gCov00[iInStrip] * elem->uUp0[iInStrip]
+          + geom->gCov01[iInStrip] * elem->uUp1[iInStrip]
+          + geom->gCov02[iInStrip] * elem->uUp2[iInStrip]
+          + geom->gCov03[iInStrip] * elem->uUp3[iInStrip];
+
+    elem->uDown1[iInStrip] =
+            geom->gCov10[iInStrip] * elem->uUp0[iInStrip]
+          + geom->gCov11[iInStrip] * elem->uUp1[iInStrip]
+          + geom->gCov12[iInStrip] * elem->uUp2[iInStrip]
+          + geom->gCov13[iInStrip] * elem->uUp3[iInStrip];
+
+    elem->uDown2[iInStrip] =
+            geom->gCov20[iInStrip] * elem->uUp0[iInStrip]
+          + geom->gCov21[iInStrip] * elem->uUp1[iInStrip]
+          + geom->gCov22[iInStrip] * elem->uUp2[iInStrip]
+          + geom->gCov23[iInStrip] * elem->uUp3[iInStrip];
+
+    elem->uDown3[iInStrip] =
+            geom->gCov30[iInStrip] * elem->uUp0[iInStrip]
+          + geom->gCov31[iInStrip] * elem->uUp1[iInStrip]
+          + geom->gCov32[iInStrip] * elem->uUp2[iInStrip]
+          + geom->gCov33[iInStrip] * elem->uUp3[iInStrip];
+  }
+
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    elem->bUp0[iInStrip] =
+            elem->b1[iInStrip] * elem->uDown1[iInStrip]
+          + elem->b2[iInStrip] * elem->uDown2[iInStrip]
+          + elem->b3[iInStrip] * elem->uDown3[iInStrip];
+
+    elem->bUp1[iInStrip] =
+        (elem->b1[iInStrip] + elem->bUp0[iInStrip] * elem->uUp1[iInStrip])
+      / elem->uUp0[iInStrip];
+
+    elem->bUp2[iInStrip] =
+        (elem->b2[iInStrip] + elem->bUp0[iInStrip] * elem->uUp2[iInStrip])
+      / elem->uUp0[iInStrip];
+
+    elem->bUp3[iInStrip] =
+        (elem->b3[iInStrip] + elem->bUp0[iInStrip] * elem->uUp3[iInStrip])
+      / elem->uUp0[iInStrip];
+  }
+
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    elem->bDown0[iInStrip] =
+            geom->gCov00[iInStrip] * elem->bUp0[iInStrip]
+          + geom->gCov01[iInStrip] * elem->bUp1[iInStrip]
+          + geom->gCov02[iInStrip] * elem->bUp2[iInStrip]
+          + geom->gCov03[iInStrip] * elem->bUp3[iInStrip];
+
+    elem->bDown1[iInStrip] =
+            geom->gCov10[iInStrip] * elem->bUp0[iInStrip]
+          + geom->gCov11[iInStrip] * elem->bUp1[iInStrip]
+          + geom->gCov12[iInStrip] * elem->bUp2[iInStrip]
+          + geom->gCov13[iInStrip] * elem->bUp3[iInStrip];
+
+    elem->bDown2[iInStrip] =
+            geom->gCov20[iInStrip] * elem->bUp0[iInStrip]
+          + geom->gCov21[iInStrip] * elem->bUp1[iInStrip]
+          + geom->gCov22[iInStrip] * elem->bUp2[iInStrip]
+          + geom->gCov23[iInStrip] * elem->bUp3[iInStrip];
+
+    elem->bDown3[iInStrip] =
+            geom->gCov30[iInStrip] * elem->bUp0[iInStrip]
+          + geom->gCov31[iInStrip] * elem->bUp1[iInStrip]
+          + geom->gCov32[iInStrip] * elem->bUp2[iInStrip]
+          + geom->gCov33[iInStrip] * elem->bUp3[iInStrip];
+  }
+
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    elem->bSqr[iInStrip] = 
+          elem->bUp0[iInStrip] * elem->bDown0[iInStrip]
+        + elem->bUp1[iInStrip] * elem->bDown1[iInStrip]
+        + elem->bUp2[iInStrip] * elem->bDown2[iInStrip]
+        + elem->bUp3[iInStrip] * elem->bDown3[iInStrip];
+  }
+
+  setParameters(elem);
 }
 
-/* Compute and set the various moments of the distribution function in
- * {\tt fluidElement} : 
- * 1) Matter current NUp
- * 2) Stress tensor TUpDown
- *
- * @param Input: geom, a geometry struct
- * @param Output: elem, a fluid element whose  will be set by this function
-*/ 
+void computeConserved(const struct fluidElementStrip elem[ARRAY_ARGS 1],
+                      const struct geometryStrip geom[ARRAY_ARGS 1],
+                      POINTER_TO_VEC(conserved)
+                     )
+{
+  STATIC_ARRAY(conservedRHO, TILE_SIZE_X1);
+  STATIC_ARRAY(conservedUU,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedU1,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedU2,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedU3,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedB1,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedB2,  TILE_SIZE_X1);
+  STATIC_ARRAY(conservedB3,  TILE_SIZE_X1);
+
+  LOOP_INSIDE_STRIP(0, TILE_SIZE_X1)
+  {
+    conservedRHO[INDEX_STRIP(iInStrip)] =  
+                      geom->g[INDEX_STRIP(iInStrip)]
+                    * elem->rho[INDEX_STRIP(iInStrip)]
+                    * elem->uUp0[INDEX_STRIP(iInStrip)];
+
+    conservedUU[INDEX_STRIP(iInStrip)] = 
+                      
+
+  }
+
+}
+
 void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
                     struct fluidElement elem[ARRAY_ARGS 1]
                    )
@@ -221,10 +231,12 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
   #endif
 
+  #pragma vector aligned
   for (int mu=0; mu<NDIM; mu++)
   {
     elem->moments[N_UP(mu)] = elem->primVars[RHO]*elem->uCon[mu];
 
+    #pragma vector aligned
     for (int nu=0; nu<NDIM; nu++)
     {
       elem->moments[T_UP_DOWN(mu,nu)] =   
@@ -257,32 +269,6 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
 }
 
-/* {\tt grim} solves equations in the following form
- *
- *  dU_i/dt + div.F_i = S_i
- *
- *  i.e.
- *
- *  \partial_\mu F^\mu_i = S_i
- *
- *  where i   = 1..DOF   (iterates over the total number of equations)
- *        \mu = 0,1,2,3  (iterates over all the directions)
- *
- *  This routine computes the spatial fluxes when \mu (given by the input
- *  parameter dir) = 1, 2, 3 and the conserved variables when \mu = 0
- *
- *  Ref: Eqn (2), (4) and (18) in 
- *      "HARM: A Numerical Scheme for General Relativistic Magnetohydrodynamics"
- *      -- Charles F. Gammie, Jonathan C. Mckinney and Gabor Toth, 2003
- *
- *      Also see Eqn (29) and the accompanying paragraph in the above ref for
- *      notes on the modification of the energy equations (fluxes[UU]).
- *
- * @param Input: elem, a {\tt fluidElement} whose moments have been computed.
- * @param Input: geom, a {\tt geometry} struct.
- * @param Input: dir, direction in which the fluxes are needed (sets \mu).
- * @param Output: fluxes, an array containing the fluxes in the dir direction.
-*/ 
 void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
                    const struct geometry geom[ARRAY_ARGS 1],
                    const int dir,
@@ -309,55 +295,15 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
   #endif
 }
 
-/* {\tt grim} solves equations in the following form
- *
- *  dU_i/dt + div.F_i = S_i
- *
- *  i.e.
- *
- *  \partial_\mu F^\mu_i = S_i
- *
- *  where i   = 1..DOF   (iterates over the total number of equations)
- *        \mu = 0,1,2,3  (iterates over all the directions)
- *
- * This function computes the source terms S_i for all the equations that do NOT
- * have derivatives in them, such as in ideal GRMHD. In this case it returns
- * sqrt(-gDet) * T^kappa^lamda * Gamma_lamda_nu_kappa for each nu. 
- * (Eqn (4) of HARM paper). 
- *
- * When the source terms have spatial and temporal derivatives in them such as
- * in the EMHD model, the source terms are computed using () and added to the
- * residual in computeResidual() in residual.c
- *
- *  Ref:1) Ideal GRMHD source terms: Eqn (4) in 
- *      "HARM: A Numerical Scheme for General Relativistic Magnetohydrodynamics"
- *      -- Charles F. Gammie, Jonathan C. Mckinney and Gabor Toth, 2003
- *
- *      2) Additional source terms from the EMHD model : Eqn () in "grim" 
- *      -- Mani Chandra, Francois Foucart and Charles F. Gammie 
- *
- * @param Input: elem, a {\tt fluidElement} whose moments have been computed.
- * @param Input: geom, a {\tt geometry} struct.
- * @param Input: christoffel, Christoffel symbols of the second kind, indexed
- *               using the GAMMA_UP_DOWN_DOWN macro.
- * @param Output: sources, an array containing the sources terms for all the
- *                equations. Note that only the source terms of equations that
- *                do NOT have spatial and temporal derivatives in the source
- *                terms are computed. The rest are set to zero, and are added
- *                later in computeResidual() in residual.c
- */
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
                         const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF])
 {
-  for (int var=0; var<DOF; var++)
-  {
-    sourceTerms[var] = 0.;
-  }
+  memset(sourceTerms, 0., sizeof(REAL[DOF]));
 
-  #if (METRIC==KERRSCHILD)
+  #if (METRIC==MODIFIED_KERR_SCHILD)
     REAL g = sqrt(-geom->gDet);
 
     for (int nu=0; nu<NDIM; nu++)
@@ -375,13 +321,6 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
   #endif
 }
 
-/* Auxiliary function that returns b^\mu b_\mu where b^\mu is defined in
- * setBCon() above.
- *
- * @param Input: elem, a {\tt fluidElement} whose bCon has been set.
- * @param Input: geom, a {\tt geometry} struct.
- * @param Output: bSqr, bSqr = b^\mu b_\mu
- */
 REAL getbSqr(const struct fluidElement elem[ARRAY_ARGS 1],
              const struct geometry geom[ARRAY_ARGS 1])
 {

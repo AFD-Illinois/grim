@@ -7,40 +7,60 @@
 #include "../problem/problem.h"     /* imports setDiffusionCoefficients() */
 #include "macros.h"
 
-/* struct containing all the variables needed for physics. Independent variables
- * are only primVars. The rest are auxiliary variables stored for convenience.
- */
 struct fluidElement
 {
-  REAL primVars[DOF]; /* All the variables that need to be solved for */
-  REAL gamma;       /* Lorentz factor      : see setGamma() for description */
-  REAL uCon[NDIM];  /* Fluid four-velocity : see setUCon() */
-  REAL bCon[NDIM];  /* Magnetic field four-vector : see setBCon() */
-  REAL moments[20]; /* 4 components of N^\mu + 16 components of T^{\mu \nu} 
-                       : see computeMoments() */
+  STATIC_ARRAY(rho, TILE_SIZE_X1);
+  STATIC_ARRAY(uu,  TILE_SIZE_X1);
+  STATIC_ARRAY(u1,  TILE_SIZE_X1);
+  STATIC_ARRAY(u2,  TILE_SIZE_X1);
+  STATIC_ARRAY(u3,  TILE_SIZE_X1);
+  STATIC_ARRAY(b1,  TILE_SIZE_X1);
+  STATIC_ARRAY(b2,  TILE_SIZE_X1);
+  STATIC_ARRAY(b3,  TILE_SIZE_X1);
 
-  /* TODO: We have 4 independent components of N^\mu and 10
-  independent components of T^\mu^\nu, so do something later to exploit the
-  symmetry of T^\mu^\nu.*/
+  STATIC_ARRAY(gammaLorentz,  TILE_SIZE_X1);
+  STATIC_ARRAY(uUp0, TILE_SIZE_X1);
+  STATIC_ARRAY(uUp1, TILE_SIZE_X1);
+  STATIC_ARRAY(uUp2, TILE_SIZE_X1);
+  STATIC_ARRAY(uUp3, TILE_SIZE_X1);
+
+  STATIC_ARRAY(uDown0, TILE_SIZE_X1);
+  STATIC_ARRAY(uDown1, TILE_SIZE_X1);
+  STATIC_ARRAY(uDown2, TILE_SIZE_X1);
+  STATIC_ARRAY(uDown3, TILE_SIZE_X1);
+
+  STATIC_ARRAY(bUp0, TILE_SIZE_X1);
+  STATIC_ARRAY(bUp1, TILE_SIZE_X1);
+  STATIC_ARRAY(bUp2, TILE_SIZE_X1);
+  STATIC_ARRAY(bUp3, TILE_SIZE_X1);
+
+  STATIC_ARRAY(bDown0, TILE_SIZE_X1);
+  STATIC_ARRAY(bDown1, TILE_SIZE_X1);
+  STATIC_ARRAY(bDown2, TILE_SIZE_X1);
+  STATIC_ARRAY(bDown3, TILE_SIZE_X1);
+  STATIC_ARRAY(bSqr,   TILE_SIZE_X1);
+
+  STATIC_ARRAY(pressure, TILE_SIZE_X1);
 
   /* Dissipation coefficients: \chi for conduction and \nu for viscosity
    * Relaxation time scales  : tauConduction and tauViscosity 
    * Ref: EMHD model paper -- Chandra et. al., 2015 */
   #if (CONDUCTION)
-    REAL chi, tauConduction;
+    STATIC_ARRAY(chi,           TILE_SIZE_X1);
+    STATIC_ARRAY(tauConduction, TILE_SIZE_X1);
   #endif
   #if (VISCOSITY)
-    REAL nu, tauViscosity;
+    STATIC_ARRAY(nu,           TILE_SIZE_X1);
+    STATIC_ARRAY(tauViscosity, TILE_SIZE_X1);
   #endif
 };
 
 /* Public functions: */
-void setFluidElement(const REAL primVars[ARRAY_ARGS DOF],
-                     const struct geometry geom[ARRAY_ARGS 1],
-                     struct fluidElement elem[ARRAY_ARGS 1]);
-
-void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
-                    struct fluidElement elem[ARRAY_ARGS 1]);
+void setFluidElement
+  (const REAL primVars[ARRAY_ARGS DOF][TILE_SIZE_X1],
+   const struct geometry geom[ARRAY_ARGS 1],
+   struct fluidElement elem[ARRAY_ARGS 1]
+  );
 
 void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
                    const struct geometry geom[ARRAY_ARGS 1],
@@ -131,7 +151,7 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
 //#endif
 //
 /* Internal functions */
-void setGamma(const struct geometry geom[ARRAY_ARGS 1],
+inline void setGamma(const struct geometry geom[ARRAY_ARGS 1],
               struct fluidElement elem[ARRAY_ARGS 1]);
 
 void setUCon(const struct geometry geom[ARRAY_ARGS 1],

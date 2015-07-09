@@ -79,6 +79,7 @@ void finishFillingVecGhostWithExternalVec(Vec externalVec,
                                           struct gridData grid[ARRAY_ARGS 1]
                                          );
 
+#pragma omp declare simd
 void setTile(const int iTile, const int jTile, const int kGlobal,
              const struct gridData grid[ARRAY_ARGS 1],
              struct gridTile tile[ARRAY_ARGS 1]

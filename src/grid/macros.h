@@ -64,8 +64,8 @@
   #define TILE_SIZE(numVar) ((TILE_SIZE_X1+2*NG)*(numVar))
 
   /* Returns the index of the zone */
-  #define INDEX_TILE(zone,var) \
-    ((zone)->iInTile + NG + (TILE_SIZE_X1+2*NG)*(var))
+  #define INDEX_TILE(iInTile,var) \
+    (iInTile + NG + (TILE_SIZE_X1+2*NG)*(var))
 
   /* Returns the index of the zone with an offset of (iOffset, jOffset, kOffset) */
   #define INDEX_TILE_OFFSET(iOffset,jOffset,kOffset,zone,var) \
@@ -174,7 +174,6 @@
 #if (USE_OPENMP)
 
   #define LOOP_OVER_TILES(grid) \
-    _Pragma("omp parallel for") \
     for (int kGlobal = (grid)->kLocalStart; \
              kGlobal < (grid)->kLocalStart + (grid)->kLocalSize; kGlobal++) \
       for (int jTile = 0; jTile < (grid)->numTilesX2; jTile++) \
@@ -198,8 +197,6 @@
                           ) \
     for (int kInTile = 0; kInTile < 1; kInTile++ ) \
       for (int jInTile = (jInTileStart); jInTile < (jInTileEnd); jInTile++ ) \
-        _Pragma("vector aligned nontemporal") \
-        _Pragma("simd") \
         for (int iInTile = (iInTileStart); iInTile < (iInTileEnd); iInTile++ )
 
 #elif (COMPUTE_DIM==3)

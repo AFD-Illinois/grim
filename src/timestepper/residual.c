@@ -29,17 +29,44 @@ PetscErrorCode computeResidual(SNES snes,
     startFillingVecGhost(prim);
 
     if (ts->computeConsVarsAndSourcesAtN)
-    {
-      computeSourcesAndConservedVarsOverGrid
-        (1, &ts->primN, &ts->connection, &ts->sources, &ts->conservedVarsN);
+    {  
+      LOOP_OVER_TILES(&ts->primN)
+      {
+        struct gridTile tile;
+        SET_TILE_INDICES(iTile, jTile, kGlobal, &tile);
+
+        LOOP_INSIDE_TILE(0, TILE_SIZE_X2, 0, TILE_SIZE_X3)
+        {
+          struct gridStrip strip;
+          SET_STRIP_INDICES(jInTile, kInTile, &strip);
+
+          struct fluidElement elem;
+          setFluidElement(prim, &strip, geom, &elem);
+
+          computeConservedVars(&elem, geom, conservedVarsN);
+          computeSources(&elem, geom, sources);
+        }
+      }
     }
 
     if (ts->computeSourcesAtNPlusHalf)
     {
-      computeSourcesAndConservedVarsOverGrid
-        (0, &ts->primNPlusHalf, &ts->connection, &ts->sources, 
-            &ts->conservedVarsN
-        );
+      LOOP_OVER_TILES(&ts->primNPlusHalf)
+      {
+        struct gridTile tile;
+        SET_TILE_INDICES(iTile, jTile, kGlobal, &tile);
+
+        LOOP_INSIDE_TILE(0, TILE_SIZE_X2, 0, TILE_SIZE_X3)
+        {
+          struct gridStrip strip;
+          SET_STRIP_INDICES(jInTile, kInTile, &strip);
+
+          struct fluidElement elem;
+          setFluidElement(primNPlusHalf, &strip, geom, &elem);
+
+          computeSources(&elem, geom, sources);
+        }
+      }
     }
 
     finishFillingVecGhost(prim);

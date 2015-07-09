@@ -37,6 +37,7 @@ struct timeStepper
 
   struct gridData dtGrid;
   struct gridData connection;
+  struct gridData geom;
 
   struct problemData *problemSpecificData;
 
