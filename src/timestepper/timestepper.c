@@ -167,7 +167,6 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   initViscosityDataStructures(ts);
   #endif
 
-
   /* Initialize problem dependent data */
   PetscMalloc1(1, &ts->problemSpecificData);
 
@@ -186,8 +185,8 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
                   "TILE_SIZE_X2 = %d does not divide X2Size = %d exactly\n",
                   TILE_SIZE_X2, ts->X2Size
                  );
+      MPI_Abort(PETSC_COMM_WORLD, 1);
     }
-    MPI_Abort(PETSC_COMM_WORLD, 1);
   #endif
 
   PetscPrintf(PETSC_COMM_WORLD, "\n");
@@ -253,8 +252,10 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
       {
         /* File does not exist */
         PetscPrintf(PETSC_COMM_WORLD, "\n");
-        //SETERRQ1(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
-        //         RESTART_FILE);
+        PetscPrintf(PETSC_COMM_WORLD, 1, "Restart file %s does not exist\n",
+                    RESTART_FILE
+                   );
+        MPI_Abort(PETSC_COMM_WORLD, 1);
       }
     }
 

@@ -436,6 +436,7 @@ PetscErrorCode computeResidual(SNES snes,
 
 	  //if(elem.primVars[RHO]<1.e-15 || elem.primVars[UU]<1.e-15 || elem.gamma>10.)
 	  //INDEX_PETSC(residualGlobal, &zone, var) /= (elem.gamma*elem.gamma);
+    #if (VISCOSITY)
 	  if(0)
 	    {
 	      if(iTile == 0 && jTile == 3 && iInTile == 0 && jInTile == 6 && var == 4)
@@ -463,6 +464,7 @@ PetscErrorCode computeResidual(SNES snes,
 			 INDEX_PETSC(residualGlobal, &zone, var),xCoords[0]);
 		}
 	    }
+    #endif
         #elif (TIME_STEPPING==IMPLICIT)
 		
           INDEX_PETSC(residualGlobal, &zone, var) = 
@@ -589,6 +591,7 @@ PetscErrorCode computeResidual(SNES snes,
 	}
       PetscPrintf(PETSC_COMM_WORLD, "Max residual = %e (%i %i : %i %i); var = %i\n",
 	     resmax,iTmax,jTmax,imax,jmax,vmax);
+      #if (VISCOSITY)
       PetscPrintf(PETSC_COMM_WORLD, "Rho = %e; U = %e; gamma = %e; bSqr = %e; psi = %e\n",
 	     elemmax.primVars[RHO],
 	     elemmax.primVars[UU],
@@ -596,6 +599,7 @@ PetscErrorCode computeResidual(SNES snes,
 	     bmax,
 	     elemmax.primVars[PSI]
 	     );
+      #endif
     }
 
   #if (TIME_STEPPING==IMPLICIT)
