@@ -814,18 +814,6 @@ void applyFloor(const int iTile, const int jTile,
       rho = rhoFloor;
     }
 
-    #if (CONDUCTION)
-      REAL P   = (ADIABATIC_INDEX-1.)*u;
-      REAL cs  = sqrt((ADIABATIC_INDEX-1.)*P/(rho + u));
-      REAL phi = primTile[INDEX_TILE(&zone, PHI)];
-
-      REAL phiCeil = 0.9 * rho * pow(cs, 3.);
-
-      if (abs(phi) > phiCeil)
-      {
-        primTile[INDEX_TILE(&zone, PHI)] = copysign(phiCeil, phi);
-      }
-    #endif
 #if VISCOSITY
     //if(rho < 10.*rhoFloor)
     //  primTile[INDEX_TILE(&zone, PSI)] = 0.;

@@ -38,7 +38,7 @@ set(USE_OPENMP   "YES")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
-set(CONDUCTION "OFF")
+set(CONDUCTION "ON")
 set(VISCOSITY  "ON")
 set(HIGHORDERTERMS_VISCOSITY "OFF")
 
