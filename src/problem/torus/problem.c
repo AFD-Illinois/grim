@@ -586,7 +586,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
   REAL betaActual = (ADIABATIC_INDEX-1.)*uMax/(0.5*bSqrMax);
   REAL norm = sqrt(betaActual/PLASMA_BETA);
 
-  printf("Renormalizing magnetic field by %e \n",norm);
+  PetscPrintf(PETSC_COMM_WORLD, "Renormalizing magnetic field by %e \n",norm);
 
   VecStrideScale(ts->primPetscVecOld, B1, norm);
   VecStrideScale(ts->primPetscVecOld, B2, norm);
@@ -941,7 +941,7 @@ void RemoveTemperatureSpikes(const int iTile, const int jTile,
 	      setGeometry(XCoords, &geom);
 	      REAL g = sqrt(-geom.gDet);
 	      REAL dS   = 3.*log(newU/oldU)*g*oldRho*zone.dX1*zone.dX2;
-	      printf("Removing spike at %i %i %i %i; T = %e; Tn = %e, %e, %e, %e; dS = %e; R = %e \n",
+	      PetscPrintf(PETSC_COMM_WORLD, "Removing spike at %i %i %i %i; T = %e; Tn = %e, %e, %e, %e; dS = %e; R = %e \n",
 		     iTile,jTile,iInTile,jInTile,T,Tm1,Tp1,Tm2,Tp2,dS,r);
 	    }
 	}

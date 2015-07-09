@@ -366,7 +366,7 @@ void addViscositySourceTermsToResidual
 		conToCov(elem.uCon, &geomCenter, uCov);
 		conToCov(elem.bCon, &geomCenter, bCov);
 		
-		printf("Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
+		PetscPrintf(PETSC_COMM_WORLD, "Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
 		       elem.primVars[RHO],
 		       elem.primVars[UU],
 		       elem.primVars[U1],
@@ -376,9 +376,9 @@ void addViscositySourceTermsToResidual
 		       elem.primVars[B2],
 		       elem.primVars[B3],
 		       elem.primVars[PSI]);
-		printf("Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e; Tau = %e\n",
+		PetscPrintf(PETSC_COMM_WORLD, "Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e; Tau = %e\n",
 		       elem.gamma,elem.uCon[0],uCov[1],bSqr,elem.tauVis);
-		printf("Residual = %e; Flux = %e; Target = %e; HO = %e\n",
+		PetscPrintf(PETSC_COMM_WORLD, "Residual = %e; Flux = %e; Target = %e; HO = %e\n",
 		       INDEX_PETSC(residualGlobal, &zoneCenter, PSI),
 		       flux,
 		       TargetPsi,

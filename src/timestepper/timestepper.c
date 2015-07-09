@@ -655,9 +655,9 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		DiagOldRes = sqrt(DiagOldRes);
 		DiagNewRes = sqrt(DiagNewRes);
 		if(itlam==0)
-		  printf("Step %i - Initial residual = %e \n",it,DiagOldRes);
-		printf("New residual = %e. ",DiagNewRes);
-		printf("%i of %i points have not converged.\n",NptsNotConv,Npoints);
+		  PetscPrintf(PETSC_COMM_WORLD, "Step %i - Initial residual = %e \n",it,DiagOldRes);
+		PetscPrintf(PETSC_COMM_WORLD, "New residual = %e. ",DiagNewRes);
+		PetscPrintf(PETSC_COMM_WORLD, "%i of %i points have not converged.\n",NptsNotConv,Npoints);
 		errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	      }
 	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
@@ -841,11 +841,11 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		DiagOldRes = sqrt(DiagOldRes);
 		DiagNewRes = sqrt(DiagNewRes);
 		if(itlam==0 && it==0)
-		  printf("Initial residual = %e\n",DiagOldRes);
+		  PetscPrintf(PETSC_COMM_WORLD, "Initial residual = %e\n",DiagOldRes);
 		if(itlam==0)
-		  printf("Step %i \n",it);
-		printf("New residual = %e. ",DiagNewRes);
-		printf("%i of %i points have not converged.\n",NptsNotConv,Npoints);
+		  PetscPrintf(PETSC_COMM_WORLD, "Step %i \n",it);
+		PetscPrintf(PETSC_COMM_WORLD, "New residual = %e. ",DiagNewRes);
+		PetscPrintf(PETSC_COMM_WORLD, "%i of %i points have not converged.\n",NptsNotConv,Npoints);
 		errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	      }
 	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
@@ -911,10 +911,10 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		}
 	  }
       }
-    printf("Distribution of residuals : ");
+    PetscPrintf(PETSC_COMM_WORLD, "Distribution of residuals : ");
     for(int i=0;i<16;i++)
-      printf("%i ;", NptsResMag[i]);
-    printf("\n");
+      PetscPrintf(PETSC_COMM_WORLD, "%i ;", NptsResMag[i]);
+    PetscPrintf(PETSC_COMM_WORLD, "\n");
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
 			   ts->primPetscVec,
 			   &primVecLocal);

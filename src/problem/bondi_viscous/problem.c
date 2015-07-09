@@ -46,7 +46,7 @@ REAL SolveT(const REAL R, const REAL C1, const REAL C2)
   f1=FuncT(T1,R,C1,C2);
   if(f0*f1>0.)
     {
-      printf("Failed solving for T at R = %f; C1 = %f; C2 = %f \n",R,C1,C2);
+      PetscPrintf("Failed solving for T at R = %f; C1 = %f; C2 = %f \n",R,C1,C2);
       PetscPrintf(PETSC_COMM_WORLD, "Failed determination of T \n");
       exit(1);
     }

@@ -447,7 +447,7 @@ PetscErrorCode computeResidual(SNES snes,
 		  conToCov(elem.uCon, &geom, uCov);
 		  conToCov(elem.bCon, &geom, bCov);
 		  
-		  printf("Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
+		  PetscPrintf(PETSC_COMM_WORLD, "Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
 			 elem.primVars[RHO],
 			 elem.primVars[UU],
 			 elem.primVars[U1],
@@ -457,9 +457,9 @@ PetscErrorCode computeResidual(SNES snes,
 			 elem.primVars[B2],
 			 elem.primVars[B3],
 			 elem.primVars[PSI]);
-		  printf("Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e\n",
+		  PetscPrintf(PETSC_COMM_WORLD, "Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e\n",
 			 elem.gamma,elem.uCon[0],uCov[1],bSqr);
-		  printf("Residual = %e; R = %e\n",
+		  PetscPrintf(PETSC_COMM_WORLD, "Residual = %e; R = %e\n",
 			 INDEX_PETSC(residualGlobal, &zone, var),xCoords[0]);
 		}
 	    }
@@ -587,9 +587,9 @@ PetscErrorCode computeResidual(SNES snes,
 		}
 	    }
 	}
-      printf("Max residual = %e (%i %i : %i %i); var = %i\n",
+      PetscPrintf(PETSC_COMM_WORLD, "Max residual = %e (%i %i : %i %i); var = %i\n",
 	     resmax,iTmax,jTmax,imax,jmax,vmax);
-      printf("Rho = %e; U = %e; gamma = %e; bSqr = %e; psi = %e\n",
+      PetscPrintf(PETSC_COMM_WORLD, "Rho = %e; U = %e; gamma = %e; bSqr = %e; psi = %e\n",
 	     elemmax.primVars[RHO],
 	     elemmax.primVars[UU],
 	     elemmax.gamma,
