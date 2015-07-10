@@ -11,12 +11,12 @@ set(DT "0.001")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "2000.")
-set(COURANT "0.5")
+set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
+set(N1 "140")
 set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -31,10 +31,10 @@ set(N2 "128")
 #             OpenCL specification is a different amount for different 
 #             machines.
 #             NEED TO PUT A CHECK FOR THIS.
-set(TILE_SIZE_X1 "8")
-set(TILE_SIZE_X2 "8")
+set(TILE_SIZE_X1 "14")
+set(TILE_SIZE_X2 "16")
 
-set(USE_OPENMP   "YES")
+set(USE_OPENMP   "OFF")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
@@ -80,7 +80,7 @@ set(R_INNER_EDGE            "6.")
 set(ADIABAT                 "1e-3")
 set(PLASMA_BETA             "1e2")
 set(PERTURBATIONS_AMPLITUDE "4e-2")
-set(NB_MAGNETIC_LOOPS       "1")
+set(NB_MAGNETIC_LOOPS       "2")
 
 # Floor values
 set(RHO_FLOOR         "1e-3")

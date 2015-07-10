@@ -51,7 +51,13 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
   REAL csSqr = (ADIABATIC_INDEX)*(ADIABATIC_INDEX-1)*elem->primVars[UU]
               /(elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU]);
 
-  REAL cmSqr = csSqr + cAlvenSqr - csSqr*cAlvenSqr;
+  REAL cVisSqr = 0.;
+  #if (VISCOSITY)
+    REAL beta = elem->tauVis/(2.*elem->eta);
+    cVisSqr = 2./3./(elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU])/beta;
+  #endif
+  
+  REAL cmSqr = csSqr + cAlvenSqr - csSqr*cAlvenSqr + cVisSqr;
   
   REAL ACov[NDIM], ACon[NDIM];
   REAL BCov[NDIM], BCon[NDIM];

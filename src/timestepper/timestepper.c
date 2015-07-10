@@ -528,6 +528,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
     int UseCustomLineSearch = 1;
     REAL mLambda[Npoints];
     int mConverged[Npoints];
+    double InitialResidualLocal,FinalResidualLocal;
 
     if(UseCustomLineSearch==1)
       {
@@ -655,10 +656,8 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 				       &LambdaresidualLocal);
 		DiagOldRes = sqrt(DiagOldRes);
 		DiagNewRes = sqrt(DiagNewRes);
-		if(itlam==0)
-		  PetscPrintf(PETSC_COMM_WORLD, "Step %i - Initial residual = %e \n",it,DiagOldRes);
-		PetscPrintf(PETSC_COMM_WORLD, "New residual = %e. ",DiagNewRes);
-		PetscPrintf(PETSC_COMM_WORLD, "%i of %i points have not converged.\n",NptsNotConv,Npoints);
+		if(itlam==0 && it==0)
+		  InitialResidualLocal = DiagOldRes*DiagOldRes;
 		errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	      }
 	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
@@ -841,12 +840,7 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 				       &LambdaresidualLocal);
 		DiagOldRes = sqrt(DiagOldRes);
 		DiagNewRes = sqrt(DiagNewRes);
-		if(itlam==0 && it==0)
-		  PetscPrintf(PETSC_COMM_WORLD, "Initial residual = %e\n",DiagOldRes);
-		if(itlam==0)
-		  PetscPrintf(PETSC_COMM_WORLD, "Step %i \n",it);
-		PetscPrintf(PETSC_COMM_WORLD, "New residual = %e. ",DiagNewRes);
-		PetscPrintf(PETSC_COMM_WORLD, "%i of %i points have not converged.\n",NptsNotConv,Npoints);
+		FinalResidualLocal = DiagNewRes*DiagNewRes;		  
 		errCode = computeResidual(ts->snes,ts->primPetscVecLambda,ts->LambdaresidualPetscVec,ts);
 	      }
 	    DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
@@ -912,10 +906,68 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		}
 	  }
       }
-    PetscPrintf(PETSC_COMM_WORLD, "Distribution of residuals : ");
-    for(int i=0;i<16;i++)
-      PetscPrintf(PETSC_COMM_WORLD, "%i ;", NptsResMag[i]);
-    PetscPrintf(PETSC_COMM_WORLD, "\n");
+
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    if (world_rank == 0) 
+      {
+        int temp[16]; 
+	for(int i=1;i<world_size;i++)
+	  {
+	    MPI_Recv(&temp[0], 16, MPI_INT, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	    for(int j=0;j<16;j++)
+	      NptsResMag[j]+=temp[j];
+	  }
+      }
+    else
+      {
+        MPI_Send(&NptsResMag[0], 16, MPI_INT, 0, world_rank, MPI_COMM_WORLD);
+      }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double InitialResidual=InitialResidualLocal,FinalResidual=FinalResidualLocal;
+    if (world_rank == 0)
+      {
+	double temp;
+	for(int i=1;i<world_size;i++)
+	  {
+            MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            InitialResidual+=temp;
+          }
+      }
+    else
+      {
+	MPI_Send(&InitialResidualLocal,1,MPI_DOUBLE,0,world_rank,MPI_COMM_WORLD);
+      }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (world_rank == 0)
+      {
+        double temp;
+	for(int i=1;i<world_size;i++)
+	  {
+            MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            FinalResidual+=temp;
+          }
+      } 
+    else
+      { 
+	MPI_Send(&FinalResidualLocal,1,MPI_DOUBLE,0,world_rank,MPI_COMM_WORLD);
+      } 
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(world_rank==0)
+      {
+	printf("Initial Residual = %e \n",sqrt(InitialResidual));
+	printf("Final Residual = %e \n",sqrt(FinalResidual));
+        printf("Distribution of final residuals : ");
+	for(int i=0;i<16;i++)
+	  printf("%i ;", NptsResMag[i]);
+	printf("\n");
+      }
+
+
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones,
 			   ts->primPetscVec,
 			   &primVecLocal);

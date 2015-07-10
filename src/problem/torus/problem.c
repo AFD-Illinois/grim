@@ -25,17 +25,17 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
   REAL phiCeil = Rho * pow(cs, 3.);
 
   REAL tauDynamical = pow(r, 3./2.);
-  REAL lambda       = 0.1;
+  REAL lambda       = 0.01;
   //REAL y            = elem->primVars[PHI]/phiCeil;
   //REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
 
   REAL y = fabs(elem->primVars[PHI])/fabs(phiCeil);
   y = (y-1)/lambda;
-  REAL fermiDirac = exp(-y)/(exp(-y) + 1.)+1.e-10;
+  REAL fermiDirac = exp(-y)/(exp(-y) + 1.)+1.e-05;
     
   REAL tau    = tauDynamical*fermiDirac;
-  elem->kappa = 10.*cs*cs*tau*elem->primVars[RHO];
-  elem->tau   = tau + 0.01; 
+  elem->kappa = cs*cs*tau*elem->primVars[RHO];
+  elem->tau   = tau; 
 
 //  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
 //  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
@@ -64,9 +64,9 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     REAL T   = P/Rho;
     if(T<1.e-12)
       T=1.e-12;
-    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                    / (Rho+U)
-                   );
+    REAL cs  = sqrt(  ADIABATIC_INDEX*P
+                  / (Rho + (ADIABATIC_INDEX*U))
+                 );
     
     //Closure for firehose instability
     REAL b2 = getbSqr(elem, geom);
@@ -190,7 +190,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 
   REAL randNum;
   PetscRandom randNumGen;
-  PetscRandomCreate(PETSC_COMM_SELF, &randNumGen);
+  PetscRandomCreate(PETSC_COMM_WORLD, &randNumGen);
   PetscRandomSetType(randNumGen, PETSCRAND48);
 
   ARRAY(primOldGlobal);
