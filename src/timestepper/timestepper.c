@@ -324,13 +324,10 @@ void initConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
   DMCreateGlobalVector(ts->graduConDM, &ts->graduConPetscVec);
   DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
                        &ts->graduConHigherOrderTerm1PetscVec);
-  DMCreateGlobalVector(ts->graduConHigherOrderTermsDM, 
-                       &ts->graduConHigherOrderTerm2PetscVec);
 
   VecSet(ts->gradTPetscVec, 0.);
   VecSet(ts->graduConPetscVec, 0.);
   VecSet(ts->graduConHigherOrderTerm1PetscVec, 0.);
-  VecSet(ts->graduConHigherOrderTerm2PetscVec, 0.);
 }
 
 void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
@@ -338,7 +335,6 @@ void destroyConductionDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
   VecDestroy(&ts->gradTPetscVec);
   VecDestroy(&ts->graduConPetscVec);
   VecDestroy(&ts->graduConHigherOrderTerm1PetscVec);
-  VecDestroy(&ts->graduConHigherOrderTerm2PetscVec);
 
   DMDestroy(&ts->gradTDM);
   DMDestroy(&ts->graduConDM);
@@ -378,19 +374,15 @@ void initViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
   DMCreateGlobalVector(ts->graduConVisDM, &ts->graduConVisPetscVec);
   DMCreateGlobalVector(ts->graduConHigherOrderTermsVisDM, 
                        &ts->graduConHigherOrderTerm1VisPetscVec);
-  DMCreateGlobalVector(ts->graduConHigherOrderTermsVisDM, 
-                       &ts->graduConHigherOrderTerm2VisPetscVec);
 
   VecSet(ts->graduConVisPetscVec, 0.);
   VecSet(ts->graduConHigherOrderTerm1VisPetscVec, 0.);
-  VecSet(ts->graduConHigherOrderTerm2VisPetscVec, 0.);
 }
 
 void destroyViscosityDataStructures(struct timeStepper ts[ARRAY_ARGS 1])
 {
   VecDestroy(&ts->graduConVisPetscVec);
   VecDestroy(&ts->graduConHigherOrderTerm1VisPetscVec);
-  VecDestroy(&ts->graduConHigherOrderTerm2VisPetscVec);
 
   DMDestroy(&ts->graduConVisDM);
   DMDestroy(&ts->graduConHigherOrderTermsVisDM);

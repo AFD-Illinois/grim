@@ -7,7 +7,6 @@ void addConductionSourceTermsToResidual
   ARRAY(connectionGlobal),
   ARRAY(gradTGlobal), ARRAY(graduConGlobal), 
   ARRAY(graduConHigherOrderTerm1Global),
-  ARRAY(graduConHigherOrderTerm2Global),
   REAL dt,
   int computeOldSourceTermsAndOldDivOfFluxes,
   int computeDivOfFluxAtTimeN,
@@ -37,7 +36,6 @@ void addConductionSourceTermsToResidual
       REAL gradT[COMPUTE_DIM];
       REAL graduCon[COMPUTE_DIM*NDIM];
       REAL graduConHigherOrderTerm1[COMPUTE_DIM];
-      REAL graduConHigherOrderTerm2[COMPUTE_DIM];
       computeConductionSpatialGradientTerms
         (primTile, 
          iTile, jTile, 
@@ -45,8 +43,7 @@ void addConductionSourceTermsToResidual
          X1Start, X2Start,
          X1Size, X2Size, 
          gradT, graduCon, 
-         graduConHigherOrderTerm1,
-         graduConHigherOrderTerm2
+         graduConHigherOrderTerm1
         );
       
       INDEX_PETSC(gradTGlobal, &zoneCenter, 0) = gradT[0];
@@ -59,9 +56,6 @@ void addConductionSourceTermsToResidual
       INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 0) = 
         graduConHigherOrderTerm1[0];
 
-      INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 0) = 
-        graduConHigherOrderTerm2[0];
-
       #if (COMPUTE_DIM==2)
         INDEX_PETSC(gradTGlobal, &zoneCenter, 1) = gradT[1];
         
@@ -73,8 +67,6 @@ void addConductionSourceTermsToResidual
         INDEX_PETSC(graduConHigherOrderTerm1Global, &zoneCenter, 1) = 
           graduConHigherOrderTerm1[1];
 
-        INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 1) = 
-          graduConHigherOrderTerm2[1];
       #endif
     } 
     else
@@ -83,7 +75,6 @@ void addConductionSourceTermsToResidual
         REAL gradT[COMPUTE_DIM];
         REAL graduCon[COMPUTE_DIM*NDIM];
         REAL graduConHigherOrderTerm1[COMPUTE_DIM];
-        REAL graduConHigherOrderTerm2[COMPUTE_DIM];
         computeConductionSpatialGradientTerms
           (primTile, 
            iTile, jTile, 
@@ -91,8 +82,7 @@ void addConductionSourceTermsToResidual
            X1Start, X2Start,
            X1Size, X2Size, 
            gradT, graduCon,
-           graduConHigherOrderTerm1,
-           graduConHigherOrderTerm2
+           graduConHigherOrderTerm1
           );
       #endif
 
@@ -186,8 +176,26 @@ void addConductionSourceTermsToResidual
 
       #endif /* TIME_STEPPING options for computing dT */
 
+
+      //Compute beta at Center
+      //where beta = tau/kappa/T
+      #if (HIGHORDERTERMS_CONDUCTION)
+        #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
+          REAL betaCenter = elemCenter.tau/(elemCenter.kappa*TCenter);
+        #elif (TIME_STEPPING == IMPLICIT)
+          REAL betaCenter = 0.5*(  (elem.tau/(elem.kappa*T) )
+				 + (elemOld.tau/(elem.kappa*Told) )
+				 );
+        #endif
+      #endif
+
+
       /* Higher order term 1 
        * phi*(g*u^\mu)_{,\mu} */
+      REAL divUCoeff = 1.;
+      #if (HIGHORDERTERMS_CONDUCTION)
+        divUCoeff = .5;
+      #endif
 
       REAL dHigherOrderTerm1[NDIM];
       
@@ -243,89 +251,10 @@ void addConductionSourceTermsToResidual
 
       #endif /* TIME_STEPPING options for higherOrderTerm1 */
 
-      /* Higher order term 2 
-       * (phi*T)/(2*beta) * (beta*g*u^\mu/T)_{,\mu}
-       * where beta = tau/kappa */
-
-      REAL dHigherOrderTerm2[NDIM];
-      
-      REAL beta       = elem.tau/(elem.kappa*T);
-      REAL betaOld    = elemOld.tau/(elem.kappa*TOld);
-      #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
-
-        REAL betaCenter = elemCenter.tau/(elemCenter.kappa*TCenter);
-
-      #elif (TIME_STEPPING == IMPLICIT)
-
-        REAL betaCenter = 0.5*(  (elem.tau/(elem.kappa*T) )
-                               + (elemOld.tau/(elemOld.kappa*TOld) )
-                              );  
-      #endif
-
-      #if (TIME_STEPPING == EXPLICIT || TIME_STEPPING == IMEX)
-
-        dHigherOrderTerm2[0] = 
-          (elemCenter.primVars[PHI] * TCenter)
-        / (2.*betaCenter) 
-        * sqrt(-geomCenter.gDet) 
-        * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-      
-        dHigherOrderTerm2[1] = 
-          (elemCenter.primVars[PHI] * TCenter)
-        / (2.*betaCenter) 
-        * INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 0);
-
-        dHigherOrderTerm2[2] = 0.; dHigherOrderTerm2[3] = 0.;
-
-        #if (COMPUTE_DIM==2)
-          dHigherOrderTerm2[2] = 
-            (elemCenter.primVars[PHI] * TCenter)
-          / (2.*betaCenter) 
-          * INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 1);
-        #endif
-
-      #elif (TIME_STEPPING == IMPLICIT)
-
-        dHigherOrderTerm2[0] = 
-          0.5*(  (elem.primVars[PHI] * T/(2.*beta) )
-               + (elemOld.primVars[PHI] * TOld/(2.*betaOld) )
-              )
-        * sqrt(-geomCenter.gDet) 
-        * ((beta*elem.uCon[0]/T) - (betaOld*elemOld.uCon[0]/TOld))/dt;
-
-
-        dHigherOrderTerm2[1] = 
-          0.5*(  (  elemOld.primVars[PHI] * TOld/(2.*betaOld) 
-                  * INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 0)
-                 )
-               + 
-                 (  elem.primVars[PHI] * T/(2.*beta)
-                  * graduConHigherOrderTerm2[0]
-                 )
-              );
-
-        dHigherOrderTerm2[2] = 0.; dHigherOrderTerm2[3] = 0.;
-
-        #if (COMPUTE_DIM==2)
-          dHigherOrderTerm2[2] = 
-            0.5*(  (  elemOld.primVars[PHI] * TOld/(2.*betaOld) 
-                    * INDEX_PETSC(graduConHigherOrderTerm2Global, &zoneCenter, 1)
-                   )
-                + 
-                   (  elem.primVars[PHI] * T/(2.*beta)
-                    * graduConHigherOrderTerm2[1]
-                   )
-                );
-        #endif
-
-      #endif
-
       REAL higherOrderTerm1 = 0.;
-      REAL higherOrderTerm2 = 0.;
       for (int mu=0; mu<NDIM; mu++)
       {
-        higherOrderTerm1 += dHigherOrderTerm1[mu];
-        higherOrderTerm2 += dHigherOrderTerm2[mu];
+        higherOrderTerm1 += dHigherOrderTerm1[mu]*divUCoeff;
       }
 
       REAL aCon[NDIM];
@@ -423,60 +352,42 @@ void addConductionSourceTermsToResidual
       {
         bDotq += bCov[mu]*qConEckart[mu]/sqrt(bSqr);
       }
-    
-      
-//      REAL P   = (ADIABATIC_INDEX-1.)*elemCenter.primVars[UU];
-//      REAL cs  =  sqrt((ADIABATIC_INDEX-1.)*P
-//                 /(elemCenter.primVars[RHO] + elemCenter.primVars[UU]));
-//      REAL phiCeil = 0.1 * elemCenter.primVars[RHO] * pow(cs, 3.);
-//
-//      if (abs(bDotq) > phiCeil)
-//      {
-//        bDotq = copysign(phiCeil, bDotq);
-//      }
-//
 
+      //Now transform from q to Phi = q * sqrt(beta/T) 
+      #if (HIGHORDERTERMS_CONDUCTION)
+        bDotq*=sqrt(betaCenter/TCenter);
+      #endif
+      
       REAL g = sqrt(-geomCenter.gDet);
       REAL norm = g;
       #if (TIME_STEPPING == EXPLICIT)
 
-//        INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
-//          (- higherOrderTerm1 + 0.*higherOrderTerm2
-//           + g*( elemCenter.primVars[PHI]
-//                 - bDotq
-//               )/elemCenter.tau
-//          )/norm;
-        
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) *= elemCenter.tau;
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) +=
-              (    (- higherOrderTerm1 + 0.*higherOrderTerm2)*elemCenter.tau
+              (   - higherOrderTerm1 * elemCenter.tau
                + g*( elemCenter.primVars[PHI] - bDotq
                    )
               )/norm;
       #elif (TIME_STEPPING == IMEX || TIME_STEPPING == IMPLICIT)
   
-//        INDEX_PETSC(residualGlobal, &zoneCenter, PHI) += 
-//          (- higherOrderTerm1 + higherOrderTerm2
-//           + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI])
-//                - bDotq
-//               )/elemCenter.tau
-//          )/norm;
-
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) *= elemCenter.tau;
 
         INDEX_PETSC(residualGlobal, &zoneCenter, PHI) +=
-              (    (- higherOrderTerm1 + higherOrderTerm2)*elemCenter.tau
+	  (    - higherOrderTerm1 * elemCenter.tau
                + g*( 0.5*(elem.primVars[PHI] + elemOld.primVars[PHI])
                     - bDotq
                    )
               )/norm;
-
       #endif
 
+      //Renormalize residual, so that it scales like q
+      #if (HIGHORDERTERMS_CONDUCTION)
+	INDEX_PETSC(residualGlobal, &zoneCenter, PHI)*=sqrt(TCenter/betaCenter);
+      #endif
     }
   }
-#endif /* CONDUCTION */
+  #endif /* CONDUCTION */
 }
 
 void computeConductionSpatialGradientTerms
@@ -488,8 +399,7 @@ void computeConductionSpatialGradientTerms
   const int X1Size, const int X2Size,
   REAL gradT[COMPUTE_DIM],
   REAL graduCon[COMPUTE_DIM*NDIM],
-  REAL graduConHigherOrderTerm1[COMPUTE_DIM],
-  REAL graduConHigherOrderTerm2[COMPUTE_DIM]
+  REAL graduConHigherOrderTerm1[COMPUTE_DIM]
 )
 {
 #if (CONDUCTION)
@@ -499,7 +409,6 @@ void computeConductionSpatialGradientTerms
   struct fluidElement elem;
   REAL uConLeft[NDIM], uConCenter[NDIM], uConRight[NDIM];
   REAL gLeft, gCenter, gRight;
-  REAL betaLeft, betaCenter, betaRight; /* Israel-Stewart's Beta = tau/(kappa*T) */
 
   setGridZone(iTile, jTile,
               iInTile, jInTile,
@@ -541,7 +450,6 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zoneCenter, CENTER, XCoords);
   setGeometry(XCoords, &geom); gCenter = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zoneCenter, 0)], &geom, &elem);
-  betaCenter = elem.tau/(elem.kappa*TCenter);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConCenter[mu] = elem.uCon[mu];
@@ -556,7 +464,6 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaLeft = elem.tau/(elem.kappa*TLeftX1);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConLeft[mu] = elem.uCon[mu];
@@ -571,7 +478,6 @@ void computeConductionSpatialGradientTerms
   getXCoords(&zone, CENTER, XCoords);
   setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
   setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-  betaRight = elem.tau/(elem.kappa*TRightX1);
   for (int mu=0; mu<NDIM; mu++)
   {
     uConRight[mu] = elem.uCon[mu];
@@ -590,13 +496,6 @@ void computeConductionSpatialGradientTerms
                            gCenter*uConCenter[1],
                            gRight*uConRight[1])/zoneCenter.dX1;
 
-  graduConHigherOrderTerm2[0] = 
-    slopeLimitedDerivative
-      (betaLeft*gLeft*uConLeft[1]/TLeftX1,
-       betaCenter*gCenter*uConCenter[1]/TCenter,
-       betaRight*gRight*uConRight[1]/TRightX1
-      )/zoneCenter.dX1;
-
   #if (COMPUTE_DIM==2)
     /* uConLeft */
     setGridZone(iTile, jTile,
@@ -607,7 +506,6 @@ void computeConductionSpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gLeft = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaLeft = elem.tau/(elem.kappa*TLeftX2);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConLeft[mu] = elem.uCon[mu];
@@ -622,7 +520,6 @@ void computeConductionSpatialGradientTerms
     getXCoords(&zone, CENTER, XCoords);
     setGeometry(XCoords, &geom); gRight = sqrt(-geom.gDet);
     setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
-    betaRight = elem.tau/(elem.kappa*TRightX2);
     for (int mu=0; mu<NDIM; mu++)
     {
       uConRight[mu] = elem.uCon[mu];
@@ -640,14 +537,6 @@ void computeConductionSpatialGradientTerms
       slopeLimitedDerivative(gLeft*uConLeft[2],
                              gCenter*uConCenter[2],
                              gRight*uConRight[2])/zoneCenter.dX2;
-
-    graduConHigherOrderTerm2[1] = 
-      slopeLimitedDerivative
-        (betaLeft*gLeft*uConLeft[2]/TLeftX2,
-         betaCenter*gCenter*uConCenter[2]/TCenter,
-         betaRight*gRight*uConRight[2]/TRightX2
-        )/zoneCenter.dX2;
-
   #endif
 
 #endif /* CONDUCTION */

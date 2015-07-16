@@ -48,7 +48,6 @@ PetscErrorCode computeResidual(SNES snes,
     ARRAY(gradTGlobal);
     ARRAY(graduConGlobal);
     ARRAY(graduConHigherOrderTerm1Global);
-    ARRAY(graduConHigherOrderTerm2Global);
 
     DMDAVecGetArrayDOF(ts->gradTDM, ts->gradTPetscVec, &gradTGlobal);
     DMDAVecGetArrayDOF(ts->graduConDM, ts->graduConPetscVec, 
@@ -56,24 +55,17 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsDM, 
                        ts->graduConHigherOrderTerm1PetscVec,
                        &graduConHigherOrderTerm1Global);
-    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsDM, 
-                       ts->graduConHigherOrderTerm2PetscVec,
-                       &graduConHigherOrderTerm2Global);
   #endif
 
   #if (VISCOSITY)
     ARRAY(graduConVisGlobal);
     ARRAY(graduConHigherOrderTerm1VisGlobal);
-    ARRAY(graduConHigherOrderTerm2VisGlobal);
 
     DMDAVecGetArrayDOF(ts->graduConVisDM, ts->graduConVisPetscVec, 
                        &graduConVisGlobal);
     DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsVisDM, 
                        ts->graduConHigherOrderTerm1VisPetscVec,
                        &graduConHigherOrderTerm1VisGlobal);
-    DMDAVecGetArrayDOF(ts->graduConHigherOrderTermsVisDM, 
-                       ts->graduConHigherOrderTerm2VisPetscVec,
-                       &graduConHigherOrderTerm2VisGlobal);
 
   #endif
 
@@ -269,7 +261,6 @@ PetscErrorCode computeResidual(SNES snes,
            connectionGlobal, 
            gradTGlobal, graduConGlobal, 
            graduConHigherOrderTerm1Global,
-           graduConHigherOrderTerm2Global,
            ts->dt,
            ts->computeOldSourceTermsAndOldDivOfFluxes,
            ts->computeDivOfFluxAtTimeN,
@@ -500,7 +491,6 @@ PetscErrorCode computeResidual(SNES snes,
          connectionGlobal,
          gradTGlobal, graduConGlobal, 
          graduConHigherOrderTerm1Global,
-         graduConHigherOrderTerm2Global,
          ts->dt,
          ts->computeOldSourceTermsAndOldDivOfFluxes,
          ts->computeDivOfFluxAtTimeN,
@@ -591,13 +581,20 @@ PetscErrorCode computeResidual(SNES snes,
 	}
       PetscPrintf(PETSC_COMM_WORLD, "Max residual = %e (%i %i : %i %i); var = %i\n",
 	     resmax,iTmax,jTmax,imax,jmax,vmax);
+      PetscPrintf(PETSC_COMM_WORLD, "Rho = %e; U = %e; gamma = %e; bSqr = %e\n",
+	      elemmax.primVars[RHO],
+	      elemmax.primVars[UU],
+	      elemmax.gamma,
+	      bmax
+	      );
       #if (VISCOSITY)
-      PetscPrintf(PETSC_COMM_WORLD, "Rho = %e; U = %e; gamma = %e; bSqr = %e; psi = %e\n",
-	     elemmax.primVars[RHO],
-	     elemmax.primVars[UU],
-	     elemmax.gamma,
-	     bmax,
+      PetscPrintf(PETSC_COMM_WORLD, "psi = %e\n",
 	     elemmax.primVars[PSI]
+	     );
+      #endif
+      #if (CONDUCTION)
+      PetscPrintf(PETSC_COMM_WORLD, "phi = %e\n",
+	     elemmax.primVars[PHI]
 	     );
       #endif
     }
@@ -635,9 +632,6 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsDM, 
                            ts->graduConHigherOrderTerm1PetscVec,
                            &graduConHigherOrderTerm1Global);
-    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsDM, 
-                           ts->graduConHigherOrderTerm2PetscVec,
-                           &graduConHigherOrderTerm2Global);
   #endif
   #if (VISCOSITY)
     DMDAVecRestoreArrayDOF(ts->graduConVisDM, ts->graduConVisPetscVec, 
@@ -645,9 +639,6 @@ PetscErrorCode computeResidual(SNES snes,
     DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsVisDM, 
                            ts->graduConHigherOrderTerm1VisPetscVec,
                            &graduConHigherOrderTerm1VisGlobal);
-    DMDAVecRestoreArrayDOF(ts->graduConHigherOrderTermsVisDM, 
-                           ts->graduConHigherOrderTerm2VisPetscVec,
-                           &graduConHigherOrderTerm2VisGlobal);
   #endif
   return(0);
 }

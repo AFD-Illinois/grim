@@ -2,6 +2,8 @@
 #include "torus.h"
 
 #if (CONDUCTION)
+  REAL ClosureFactorCon = CONDUCTION_CLOSURE_COEFF;
+
 void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                              struct fluidElement elem[ARRAY_ARGS 1])
 {
@@ -18,34 +20,40 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
      U = UU_FLOOR_MIN;
 
   REAL P   = (ADIABATIC_INDEX-1.)*U;
+  REAL T   = P/Rho;
+  if(T<1.e-12)
+    T=1.e-12;
+  
   REAL cs  = sqrt(  ADIABATIC_INDEX*P
                   / (Rho + (ADIABATIC_INDEX*U))
                  );
 
-  REAL phiCeil = Rho * pow(cs, 3.);
+  REAL phiCeil = ClosureFactorCon * Rho * pow(cs, 3.);
+
+  REAL ConductionCoeff = CONDUCTION_ALPHA;
+  REAL beta = 1./(Rho*cs*cs*ConductionCoeff*T);
+  //Transform from q_max to Phi_max                                                                                                                                      
+  #if (HIGHORDERTERMS_CONDUCTION)
+    phiCeil*=sqrt(beta/T);
+  #endif
+  
 
   REAL tauDynamical = pow(r, 3./2.);
   REAL lambda       = 0.01;
-  //REAL y            = elem->primVars[PHI]/phiCeil;
-  //REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
-
   REAL y = fabs(elem->primVars[PHI])/fabs(phiCeil);
   y = (y-1)/lambda;
   REAL fermiDirac = exp(-y)/(exp(-y) + 1.)+1.e-05;
     
   REAL tau    = tauDynamical*fermiDirac;
-  elem->kappa = cs*cs*tau*elem->primVars[RHO];
+  elem->kappa = tau/beta/T;
   elem->tau   = tau; 
-
-//  elem->kappa = 0.2 * pow(r, 0.5) * fabs(elem->primVars[RHO]);
-//  elem->tau   = 1.2 * fabs(elem->kappa/elem->primVars[RHO]/ T) + 0.1;  
 }
 #endif
 
 #if (VISCOSITY)
   REAL etaProblem=0.1;
   REAL tauVisProblem=.1; 
-  REAL ClosureFactor= VISCOSITY_CLOSURE_COEFF;
+  REAL ClosureFactorVis = VISCOSITY_CLOSURE_COEFF;
 
   void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
@@ -70,12 +78,12 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     
     //Closure for firehose instability
     REAL b2 = getbSqr(elem, geom);
-    REAL psiCeil = ClosureFactor*b2;
+    REAL psiCeil = ClosureFactorVis*b2;
     //Closure for mirror / ion cyclotron instability
     if(elem->primVars[PSI]>0.)
       {
 	psiCeil *= 0.5;
-	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45)*ClosureFactor;
+	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45)*ClosureFactorVis;
 	//if(ionCeil<psiCeil)
 	//  psiCeil=ionCeil;
       }
@@ -814,20 +822,6 @@ void applyFloor(const int iTile, const int jTile,
       rho = rhoFloor;
     }
 
-#if VISCOSITY
-    //if(rho < 10.*rhoFloor)
-    //  primTile[INDEX_TILE(&zone, PSI)] = 0.;
-#endif
-
-    /*if(r<0.9*R_INNER_EDGE)
-      {
-	//Get uFloor from minimum entropy = 1.1*s_0
-	//when in the funnel (s_0<0.)
-	//NOTE: this should be computed from ADIABAT, but the
-	//renormalization of u and rho modifies the adiabat...
-	REAL smin = -15.0;//log(ADIABAT/(ADIABATIC_INDEX-1.))/(ADIABATIC_INDEX-1.)*1.1;
-	uFloor=pow(rho,ADIABATIC_INDEX)*exp((ADIABATIC_INDEX-1.)*smin);
-	}*/
     if (u < uFloor)
       {
 	primTile[INDEX_TILE(&zone, UU)] = uFloor;
@@ -850,35 +844,63 @@ void applyFloor(const int iTile, const int jTile,
       primTile[INDEX_TILE(&zone, U2)] *= factor;
       primTile[INDEX_TILE(&zone, U3)] *= factor;
     }
-    
-#if VISCOSITY
-    REAL psi = primTile[INDEX_TILE(&zone, PSI)];
     REAL bSqr = getbSqr(&elem, &geom);
     REAL P = (ADIABATIC_INDEX-1.)*u;
     REAL T = P/rho;
     if(T<1.e-12)
       T=1.e-12;
-    REAL psimax = 1.07*bSqr*ClosureFactor;
+
+    if(bSqr>10.*rho)
+      {
+	rho = 0.1*bSqr;
+	P = rho*T;
+	u = P/(ADIABATIC_INDEX-1.);
+	primTile[INDEX_TILE(&zone, RHO)] = rho;
+	primTile[INDEX_TILE(&zone, UU)] = u;
+      }
+    
+#if VISCOSITY
+    REAL psi = primTile[INDEX_TILE(&zone, PSI)];
+    REAL psimax = 1.07*bSqr*ClosureFactorVis;
     if(primTile[INDEX_TILE(&zone, PSI)]>0.)
       {
 	psimax*=0.5;
-	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45)*ClosureFactor;
+	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45)*ClosureFactorVis;
 	//if(ionCeil*1.07<psimax)
 	//  psimax = 1.07*ionCeil;
       }
     //transform from dP_max to psi_max
     #if (HIGHORDERTERMS_VISCOSITY)
-      REAL beta = 0.5*elem.tauVis/elem.eta;
-      psimax *= sqrt(beta/T);
+      REAL betaV = 0.5*elem.tauVis/elem.eta;
+      psimax *= sqrt(betaV/T);
     #endif
-    REAL dr=0.;//0.5*sqrt(log(ClosureFactor));
-    if(r-dr<3.)
-      psimax *= exp(-pow((3.+dr-r)/0.5,2.));
+    if(r<3.)
+      psimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(psi)>psimax)
       if(psi>0.)
 	primTile[INDEX_TILE(&zone, PSI)] = psimax;
       else
 	primTile[INDEX_TILE(&zone, PSI)] = -psimax;
+#endif
+
+#if CONDUCTION
+    REAL phi = primTile[INDEX_TILE(&zone, PHI)];
+    REAL cs = sqrt(  ADIABATIC_INDEX*P
+      / (rho + (ADIABATIC_INDEX*u))
+      );
+    REAL phimax = 1.07*rho*cs*cs*cs*ClosureFactorCon;
+    //transform from q_max to Phi_max
+    #if (HIGHORDERTERMS_CONDUCTION)
+      REAL betaC = elem.tau/elem.kappa/T;
+      phimax *= sqrt(betaC/T);
+    #endif
+    if(r<3.)
+      phimax *= exp(-pow((3.-r)/0.5,2.));
+    if(fabs(phi)>phimax)
+      if(phi>0.)
+	primTile[INDEX_TILE(&zone, PHI)] = phimax;
+      else
+	primTile[INDEX_TILE(&zone, PHI)] = -phimax;
 #endif
   }
 }
@@ -1087,7 +1109,7 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     }
   }
 
-  #if (HIGHORDERTERMS_VISCOSITY)
+  #if (HIGHORDERTERMS_VISCOSITY || HIGHORDERTERMS_CONDUCTION)
     Vec primPetscVecLocal;
     DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
     DMGlobalToLocalBegin(ts->dmdaWithGhostZones,
@@ -1220,7 +1242,7 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
   }
 
-  #if (HIGHORDERTERMS_VISCOSITY)
+  #if (HIGHORDERTERMS_VISCOSITY || HIGHORDERTERMS_CONDUCTION)
     Vec primPetscVecLocal;
     DMGetLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
     ARRAY(primLocal);
@@ -1334,7 +1356,8 @@ void inflowCheck(const struct gridZone zone[ARRAY_ARGS 1],
     }
 
     if (fabs(vSqr) < 1e-13) vSqr = 1e-13;
-    if (vSqr >= 1.) vSqr = 1. - 1./(GAMMA_MAX*GAMMA_MAX);
+    if (vSqr >= 1. - 1./(GAMMA_MAX*GAMMA_MAX)) 
+      vSqr = 1. - 1./(GAMMA_MAX*GAMMA_MAX);
 
     REAL gamma = 1./sqrt(1. - vSqr);
 

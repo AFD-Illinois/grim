@@ -16,8 +16,8 @@ set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "140")
-set(N2 "128")
+set(N1 "280")
+set(N2 "256")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -40,10 +40,14 @@ set(USE_OPENMP   "OFF")
 set(ADIABATIC_INDEX "4./3")
 set(CONDUCTION "ON")
 set(VISCOSITY  "ON")
-set(HIGHORDERTERMS_VISCOSITY "OFF")
+set(HIGHORDERTERMS_CONDUCTION "ON")
+set(HIGHORDERTERMS_VISCOSITY "ON")
 
 set(VISCOSITY_CLOSURE_COEFF "1.")
 set(VISCOSITY_ALPHA "1.")
+
+set(CONDUCTION_CLOSURE_COEFF "1.")
+set(CONDUCTION_ALPHA "1.")
 
 # Geometry
 set(METRIC  "KERRSCHILD")

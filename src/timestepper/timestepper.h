@@ -47,7 +47,6 @@ struct timeStepper
     Vec gradTPetscVec;
     Vec graduConPetscVec;
     Vec graduConHigherOrderTerm1PetscVec;
-    Vec graduConHigherOrderTerm2PetscVec;
   #endif
  
   #if (VISCOSITY)
@@ -55,7 +54,6 @@ struct timeStepper
     DM  graduConHigherOrderTermsVisDM;
     Vec graduConVisPetscVec;
     Vec graduConHigherOrderTerm1VisPetscVec;
-    Vec graduConHigherOrderTerm2VisPetscVec;
   #endif
 
   struct problemData *problemSpecificData;

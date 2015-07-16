@@ -83,16 +83,28 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   //Recover dP from psi (which is either dP of dP * (beta/T)^(1/2)
   //depending on whether we use higher order terms in the evolution
   //equation for dP.
+  REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+  if(T<1.e-12)
+    T=1.e-12;
   #if  (VISCOSITY)
     REAL dP = elem->primVars[PSI];
     #if (HIGHORDERTERMS_VISCOSITY)
-      REAL beta = elem->tauVis*0.5/elem->eta;
-      REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
-      if(T<1.e-12)
-        T=1.e-12;
-      dP *= sqrt(T/beta);
+      REAL betaV = elem->tauVis*0.5/elem->eta;
+      dP *= sqrt(T/betaV);
     #endif
   #endif
+
+  //Same recovering q from PHI, which is either q or q*(beta/T)^(1/2)
+  #if (CONDUCTION)
+    REAL q = elem->primVars[PHI];
+    #if (HIGHORDERTERMS_CONDUCTION)  
+      REAL betaC = elem->tau/elem->kappa/T;
+      q *= sqrt(T/betaC);
+    #endif
+  #endif
+
+  //dP=0.;
+  //q=0.;
 
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -109,7 +121,7 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
                         - elem->bCon[mu]*bCov[nu]
       #if (CONDUCTION) 
-        + elem->primVars[PHI]/sqrt(bSqr)
+        + q/sqrt(bSqr)
         * (elem->uCon[mu]*bCov[nu] + elem->bCon[mu]*uCov[nu])
       #endif 
       #if  (VISCOSITY)
