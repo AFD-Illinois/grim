@@ -38,10 +38,10 @@ set(USE_OPENMP   "OFF")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
-set(CONDUCTION "ON")
-set(VISCOSITY  "ON")
-set(HIGHORDERTERMS_CONDUCTION "ON")
-set(HIGHORDERTERMS_VISCOSITY "ON")
+set(CONDUCTION "OFF")
+set(VISCOSITY  "OFF")
+set(HIGHORDERTERMS_CONDUCTION "OFF")
+set(HIGHORDERTERMS_VISCOSITY "OFF")
 
 set(VISCOSITY_CLOSURE_COEFF "1.")
 set(VISCOSITY_ALPHA "1.")
@@ -84,7 +84,7 @@ set(R_INNER_EDGE            "6.")
 set(ADIABAT                 "1e-3")
 set(PLASMA_BETA             "1e2")
 set(PERTURBATIONS_AMPLITUDE "4e-2")
-set(NB_MAGNETIC_LOOPS       "2")
+set(NB_MAGNETIC_LOOPS       "1")
 
 # Floor values
 set(RHO_FLOOR         "1e-3")
@@ -94,6 +94,7 @@ set(UU_FLOOR_FALLOFF  "-2.5")
 set(RHO_FLOOR_MIN     "1e-15")
 set(UU_FLOOR_MIN      "1e-15")
 set(GAMMA_MAX         "10.")
+set(ADD_WIND_SOURCE   "ON")
 
 message("")
 message("#########################")

@@ -78,7 +78,8 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
-                        const REAL christoffel[ARRAY_ARGS 64],
+			const struct gridZone zone[ARRAY_ARGS 1],
+			const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF]);
 
 #if (CONDUCTION)

@@ -170,6 +170,7 @@ void computeFluxes(const struct fluidElement elem[ARRAY_ARGS 1],
 
 void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
                         const struct geometry geom[ARRAY_ARGS 1],
+			const struct gridZone zone[ARRAY_ARGS 1],
                         const REAL christoffel[ARRAY_ARGS 64],
                         REAL sourceTerms[ARRAY_ARGS DOF])
 {
@@ -193,6 +194,22 @@ void computeSourceTerms(const struct fluidElement elem[ARRAY_ARGS 1],
         }
       }
     }
+
+
+  #if (ADD_WIND_SOURCE)
+    //Add wind source
+    REAL XCoords[NDIM];
+    getXCoords(zone, CENTER, XCoords);
+    REAL xCoords[NDIM];
+    XTox(geom->XCoords, xCoords);
+    REAL r = xCoords[1];
+    REAL cth = cos(xCoords[2]);
+    REAL drhodt = 1.e-6*cth*cth*cth*cth/(1.+r*r)/(1+r*r);
+    REAL Twind = 10.;
+    sourceTerms[RHO]+=drhodt*g/geom->alpha;
+    sourceTerms[UU]-=drhodt*g*Twind/(ADIABATIC_INDEX-1.);
+  #endif
+
   #endif
 }
 

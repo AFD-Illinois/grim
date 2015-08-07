@@ -896,6 +896,15 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		  NptsResMag[i]++;
 		  break;
 		}
+	    if(res>0.)
+	      {
+	    REAL XCoords[NDIM];
+	    getXCoords(&zone, CENTER, XCoords);
+	    REAL xCoords[NDIM];
+	    XTox(XCoords, xCoords);
+	    printf("Res = %e at r=%e; th=%e\n",
+		  res,xCoords[1],xCoords[2]*180./M_PI);
+	      }
 	  }
       }
 

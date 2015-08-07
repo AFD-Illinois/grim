@@ -1,8 +1,12 @@
 #include "grim.h"
 
+#include <fenv.h> 
+
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
+
+  //feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW);
   
   struct timeStepper ts;
   timeStepperInit(&ts);

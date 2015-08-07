@@ -5,6 +5,9 @@ PetscErrorCode computeResidual(SNES snes,
                                Vec residualPetscVec,
                                void *ptr)
 {
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
   struct timeStepper *ts = (struct timeStepper*)ptr;
 
   int X1Start, X2Start, X3Start;
@@ -226,7 +229,7 @@ PetscErrorCode computeResidual(SNES snes,
 
         if (ts->computeSourceTermsAtTimeN)
         {
-          computeSourceTerms(&elem, &geom,
+          computeSourceTerms(&elem, &geom,&zone,
                              &INDEX_PETSC(connectionGlobal, &zone, 0),
                              sourceTerms);
 
@@ -241,7 +244,7 @@ PetscErrorCode computeResidual(SNES snes,
           setFluidElement(&INDEX_PETSC(primHalfStepLocal, &zone, 0),
                           &geom, &elem);
 
-          computeSourceTerms(&elem, &geom,
+          computeSourceTerms(&elem, &geom,&zone,
                              &INDEX_PETSC(connectionGlobal, &zone, 0),
                              sourceTerms);
 
@@ -393,7 +396,7 @@ PetscErrorCode computeResidual(SNES snes,
 
       #if (TIME_STEPPING==IMEX || TIME_STEPPING==IMPLICIT)
         REAL sourceTerms[DOF];
-        computeSourceTerms(&elem, &geom,
+        computeSourceTerms(&elem, &geom,&zone,
                            &INDEX_PETSC(connectionGlobal, &zone, 0),
                            sourceTerms);
       #endif
@@ -427,10 +430,9 @@ PetscErrorCode computeResidual(SNES snes,
 
 	  //if(elem.primVars[RHO]<1.e-15 || elem.primVars[UU]<1.e-15 || elem.gamma>10.)
 	  //INDEX_PETSC(residualGlobal, &zone, var) /= (elem.gamma*elem.gamma);
-    #if (VISCOSITY)
 	  if(0)
 	    {
-	      if(iTile == 0 && jTile == 3 && iInTile == 0 && jInTile == 6 && var == 4)
+	      if(iTile == 2 && jTile == 0 && iInTile == 2 && jInTile == 0 && var == 2)
 		{
 		  REAL xCoords[NDIM];
 		  XTox(geom.XCoords, xCoords);
@@ -439,7 +441,7 @@ PetscErrorCode computeResidual(SNES snes,
 		  conToCov(elem.uCon, &geom, uCov);
 		  conToCov(elem.bCon, &geom, bCov);
 		  
-		  PetscPrintf(PETSC_COMM_WORLD, "Vars = %e; %e; %e,%e,%e; %e,%e,%e; %e\n",
+		  PetscPrintf(PETSC_COMM_WORLD, "Vars = %e; %e; %e,%e,%e; %e,%e,%e;\n",
 			 elem.primVars[RHO],
 			 elem.primVars[UU],
 			 elem.primVars[U1],
@@ -447,15 +449,13 @@ PetscErrorCode computeResidual(SNES snes,
 			 elem.primVars[U3],
 			 elem.primVars[B1],
 			 elem.primVars[B2],
-			 elem.primVars[B3],
-			 elem.primVars[PSI]);
+			 elem.primVars[B3]);
 		  PetscPrintf(PETSC_COMM_WORLD, "Gamma = %e; uCon[0] = %e; uCov[1]=%e; bSqr = %e\n",
 			 elem.gamma,elem.uCon[0],uCov[1],bSqr);
 		  PetscPrintf(PETSC_COMM_WORLD, "Residual = %e; R = %e\n",
-			 INDEX_PETSC(residualGlobal, &zone, var),xCoords[0]);
+			 INDEX_PETSC(residualGlobal, &zone, var),xCoords[1]);
 		}
 	    }
-    #endif
         #elif (TIME_STEPPING==IMPLICIT)
 		
           INDEX_PETSC(residualGlobal, &zone, var) = 
@@ -547,6 +547,7 @@ PetscErrorCode computeResidual(SNES snes,
       REAL resmax=0.,bmax;
       int iTmax,jTmax,imax,jmax,vmax;
       struct fluidElement elemmax;
+      REAL rmax,thmax;
       LOOP_OVER_TILES(X1Size, X2Size)
 	{
 	  LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
@@ -562,6 +563,8 @@ PetscErrorCode computeResidual(SNES snes,
 	      struct geometry geom; setGeometry(XCoords, &geom);
 	      struct fluidElement elem;
 	      setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elem);
+	      REAL xCoords[NDIM];
+	      XTox(XCoords, xCoords);
 	      for (int var=0; var<DOF; var++)
 		{
 		  REAL res = INDEX_PETSC(residualGlobal, &zone, var);
@@ -575,12 +578,14 @@ PetscErrorCode computeResidual(SNES snes,
 		      vmax  = var;
 		      setFluidElement(&INDEX_PETSC(primGlobal, &zone, 0), &geom, &elemmax);
 		      bmax  = getbSqr(&elemmax,&geom);
+		      rmax = xCoords[1];
+		      thmax = xCoords[2];
 		    }
 		}
 	    }
 	}
-      PetscPrintf(PETSC_COMM_WORLD, "Max residual = %e (%i %i : %i %i); var = %i\n",
-	     resmax,iTmax,jTmax,imax,jmax,vmax);
+      PetscPrintf(PETSC_COMM_WORLD, "Max residual = %e (%i %i : %i %i); (%e,%e) var = %i\n",
+	resmax,iTmax,jTmax,imax,jmax,rmax,thmax,vmax);
       PetscPrintf(PETSC_COMM_WORLD, "Rho = %e; U = %e; gamma = %e; bSqr = %e\n",
 	      elemmax.primVars[RHO],
 	      elemmax.primVars[UU],

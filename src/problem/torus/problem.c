@@ -694,7 +694,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       setFluidElement(&primTile[INDEX_TILE(&zone, 0)], &geom, &elem);
 
       REAL sourceTerms[DOF];
-      computeSourceTerms(&elem, &geom,
+      computeSourceTerms(&elem, &geom,&zone,
                          &INDEX_PETSC(connectionGlobal, &zone, 0),
                          sourceTerms);
 
@@ -800,7 +800,7 @@ void applyFloor(const int iTile, const int jTile,
     XTox(XCoords, xCoords);
 
     REAL r = xCoords[1];
-
+    
     REAL rhoFloor = RHO_FLOOR*pow(r, RHO_FLOOR_FALLOFF);
     REAL uFloor = UU_FLOOR*pow(r, UU_FLOOR_FALLOFF);
 
@@ -856,6 +856,13 @@ void applyFloor(const int iTile, const int jTile,
 	P = rho*T;
 	u = P/(ADIABATIC_INDEX-1.);
 	primTile[INDEX_TILE(&zone, RHO)] = rho;
+	primTile[INDEX_TILE(&zone, UU)] = u;
+      }
+    if(bSqr>500.*u)
+      {
+	u = 0.002*bSqr;
+	P = (ADIABATIC_INDEX-1.)*u;
+	T = P/rho;
 	primTile[INDEX_TILE(&zone, UU)] = u;
       }
     

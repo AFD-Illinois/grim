@@ -86,6 +86,7 @@
 #cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
 #cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
 #cmakedefine    GAMMA_MAX               (${GAMMA_MAX})
+#cmakedefine01  ADD_WIND_SOURCE
 
 /* Number of ghost zones */
 #if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
