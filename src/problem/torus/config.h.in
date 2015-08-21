@@ -35,6 +35,7 @@
 #cmakedefine01  HIGHORDERTERMS_CONDUCTION
 #cmakedefine01  VISCOSITY
 #cmakedefine01  HIGHORDERTERMS_VISCOSITY
+#cmakedefine01  FAKE_EMHD
 
 
 /* Viscosity Model */
@@ -42,8 +43,8 @@
 #cmakedefine    VISCOSITY_ALPHA           (${VISCOSITY_ALPHA})
 
 /* Conduction Model */
-#cmakedefine    CONDUCTION_CLOSURE_COEFF   (${VISCOSITY_CLOSURE_COEFF})
-#cmakedefine    CONDUCTION_ALPHA           (${VISCOSITY_ALPHA})
+#cmakedefine    CONDUCTION_CLOSURE_COEFF   (${CONDUCTION_CLOSURE_COEFF})
+#cmakedefine    CONDUCTION_ALPHA           (${CONDUCTION_ALPHA})
 
 /* Initial condition parameters */
 #cmakedefine    R_PRESSURE_MAX            (${R_PRESSURE_MAX})

@@ -103,9 +103,21 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
     #endif
   #endif
 
-  //dP=0.;
-  //q=0.;
-
+  REAL FakeEMHDCoeff = 0.;
+  #if (FAKE_EMHD)
+    REAL EMHD_Threshold = 1.5;
+    REAL Rho = elem->primVars[RHO];
+    if(Rho<RHO_FLOOR_MIN)
+      Rho=RHO_FLOOR_MIN;
+    REAL U = elem->primVars[UU];
+    if(U<UU_FLOOR_MIN)
+      U = UU_FLOOR_MIN;
+    REAL P   = (ADIABATIC_INDEX-1.)*U;
+    REAL csSqr  = ADIABATIC_INDEX*P
+      / (Rho + (ADIABATIC_INDEX*U));
+    REAL y = bSqr/Rho/csSqr;
+    FakeEMHDCoeff = 1./(1.+exp((y-EMHD_Threshold)/0.1));
+  #endif
   for (int mu=0; mu<NDIM; mu++)
   {
     elem->moments[N_UP(mu)] = elem->primVars[RHO]*elem->uCon[mu];
@@ -130,6 +142,8 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 	+dP/3.
 	*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
       #endif
+	-FakeEMHDCoeff*elem->bCon[mu]*bCov[nu]/2.
+	+FakeEMHDCoeff*bSqr/6.*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
                         ;
 
     }

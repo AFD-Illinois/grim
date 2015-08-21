@@ -31,6 +31,12 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
   REAL phiCeil = ClosureFactorCon * Rho * pow(cs, 3.);
 
   REAL ConductionCoeff = CONDUCTION_ALPHA;
+  //Stability condition!
+  if(ConductionCoeff*pow(cs,4.)>1.)
+    ConductionCoeff = 1./pow(cs,4.);
+  //Condition for approximate char speed < 1
+  if(pow(cs,2.)*(1.+ConductionCoeff*(ADIABATIC_INDEX-1.))>0.9)
+    ConductionCoeff = (0.9/pow(cs,2.)-1.)/(ADIABATIC_INDEX-1.);
   REAL beta = 1./(Rho*cs*cs*ConductionCoeff*T);
   //Transform from q_max to Phi_max                                                                                                                                      
   #if (HIGHORDERTERMS_CONDUCTION)
@@ -103,6 +109,24 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     REAL tau     = tauDynamical*fermiDirac;
     elem->eta    = 0.5*tau/beta;
     elem->tauVis = tau;
+
+#if (CONDUCTION)
+    //If we have both conduction and viscosity, we match the damping timescales...
+    //NOTE: THIS ASSUMES THAT WE COMPUTE THE CONDUCTION COEFFICIENTS BEFORE THE
+    // VISCOSITY COEFFICIENTS!!!
+    if(elem->tauVis > elem->tau)
+      {
+	elem->tauVis = elem->tau;
+	elem->eta = 0.5*elem->tau/beta;
+      }
+    if(elem->tau > elem->tauVis)
+      {
+	elem->kappa *= (elem->tauVis/elem->tau);
+	elem->tau = elem->tauVis;
+      }
+
+#endif 
+
   }
 #endif
 
@@ -881,8 +905,8 @@ void applyFloor(const int iTile, const int jTile,
       REAL betaV = 0.5*elem.tauVis/elem.eta;
       psimax *= sqrt(betaV/T);
     #endif
-    if(r<3.)
-      psimax *= exp(-pow((3.-r)/0.5,2.));
+      //if(r<3.)
+      //	psimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(psi)>psimax)
       if(psi>0.)
 	primTile[INDEX_TILE(&zone, PSI)] = psimax;
@@ -901,8 +925,8 @@ void applyFloor(const int iTile, const int jTile,
       REAL betaC = elem.tau/elem.kappa/T;
       phimax *= sqrt(betaC/T);
     #endif
-    if(r<3.)
-      phimax *= exp(-pow((3.-r)/0.5,2.));
+      //if(r<3.)
+      //	phimax *= exp(-pow((3.-r)/0.5,2.));
     if(fabs(phi)>phimax)
       if(phi>0.)
 	primTile[INDEX_TILE(&zone, PHI)] = phimax;

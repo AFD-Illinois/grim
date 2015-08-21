@@ -51,6 +51,25 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
   REAL csSqr = (ADIABATIC_INDEX)*(ADIABATIC_INDEX-1)*elem->primVars[UU]
               /(elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU]);
 
+  //Correction to characteristic speeds in fake EMHD model
+  #if (FAKE_EMHD)
+    REAL y = bSqr/elem->primVars[RHO]/csSqr;
+    REAL EMHD_Threshold = 1.5;
+    REAL FakeEMHDCoeff = 1./(1.+exp((y-EMHD_Threshold)/0.1));
+    if(FakeEMHDCoeff>1.e-4)
+      {
+	REAL cAlvenSqrF = 9.*bSqr/(7.*bSqr+6.*(elem->primVars[RHO]+ ADIABATIC_INDEX*elem->primVars[UU]));
+	REAL csSqrF = (ADIABATIC_INDEX-1)*(ADIABATIC_INDEX*elem->primVars[UU]-bSqr/3.)/(elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU]-bSqr/3.);
+	cAlvenSqr  = FakeEMHDCoeff*cAlvenSqrF + (1.-FakeEMHDCoeff)*cAlvenSqr;
+	csSqr = FakeEMHDCoeff*csSqrF + (1.-FakeEMHDCoeff)*csSqr;
+	if(cAlvenSqr>1.)
+	  cAlvenSqr=1.;
+	if(csSqr>1.)
+	  csSqr=1.;
+      }
+  #endif
+
+
   REAL cVisSqr = 0.;
   #if (VISCOSITY)
     REAL beta = elem->tauVis/(2.*elem->eta);
@@ -63,6 +82,13 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
   #endif
     
   REAL cmSqr = csSqr + cAlvenSqr - csSqr*cAlvenSqr + cVisSqr + cConSqr;
+  if(cmSqr>1.)
+    {
+      //printf("cSqr = %e; csSqr=%e; cAlvenSqr=%e; cVisSqr=%e; cConSqr=%e\n",
+      // 	     cmSqr,csSqr,cAlvenSqr,cVisSqr,cConSqr);
+      //exit(1);
+      cmSqr=1.;
+    }
   
   REAL ACov[NDIM], ACon[NDIM];
   REAL BCov[NDIM], BCon[NDIM];
