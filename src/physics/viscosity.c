@@ -76,7 +76,7 @@ void addViscositySourceTermsToResidual
            X1Start, X2Start,
            X1Size, X2Size, 
            graduConVis,
-           graduConHigherOrderTerm1Vis,
+           graduConHigherOrderTerm1Vis
           );
       #endif
 

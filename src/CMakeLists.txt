@@ -15,12 +15,12 @@ project(grim)
 
 
 # ------------------------------USER OPTIONS----------------------------------#
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -DDEBUG")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -g")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c100 -Wall -DDEBUG")
 
 # Set custom install folders here
 #set(PETSC_DIR "/Users/ffoucart/Work/petsc")
-set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+set(PETSC_DIR "/home/astro/Downloads/petsc_installation")
 #set(PETSC_ARCH "arch-darwin-c-opt")
 
 # Double or float precision?
@@ -45,7 +45,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

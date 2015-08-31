@@ -568,20 +568,24 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		  {
 		    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
 		      {
-			int idx = iTile*ts->X2Size*TILE_SIZE_X1
-			  +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
-			  iInTile*TILE_SIZE_X2+jInTile;
-			if(itlam==0)
-			  {
-			    mLambda[idx]=1.;
-			    mConverged[idx]=0;
-			  }
 			struct gridZone zone;
 			setGridZone(iTile, jTile,
 				    iInTile, jInTile,
 				    ts->X1Start, ts->X2Start,
 				    ts->X1Size, ts->X2Size,
 				    &zone);
+            #if (COMPUTE_DIM==2)
+			int idx = iTile*ts->X2Size*TILE_SIZE_X1
+			  +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
+			  iInTile*TILE_SIZE_X2+jInTile;
+            #elif (COMPUTE_DIM==1)
+              int idx = zone.i;
+            #endif
+			if(itlam==0)
+			  {
+			    mLambda[idx]=1.;
+			    mConverged[idx]=0;
+			  }
 			REAL Oldres = 0.;
 			REAL Lambdares = 0.;
 			REAL Firstres = 0.;
@@ -752,20 +756,24 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		  {
 		    LOOP_INSIDE_TILE(0, TILE_SIZE_X1, 0, TILE_SIZE_X2)
 		      {
-			int idx = iTile*ts->X2Size*TILE_SIZE_X1
-			  +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
-			  iInTile*TILE_SIZE_X2+jInTile;
-			if(itlam==0)
-			  {
-			    mLambda[idx]=1.;
-			    mConverged[idx]=0;
-			  }
 			struct gridZone zone;
 			setGridZone(iTile, jTile,
 				    iInTile, jInTile,
 				    ts->X1Start, ts->X2Start,
 				    ts->X1Size, ts->X2Size,
 				    &zone);
+            #if (COMPUTE_DIM==2)
+			int idx = iTile*ts->X2Size*TILE_SIZE_X1
+			  +jTile*TILE_SIZE_X1*TILE_SIZE_X2+
+			  iInTile*TILE_SIZE_X2+jInTile;
+            #elif (COMPUTE_DIM==1)
+              int idx = zone.i;
+            #endif
+			if(itlam==0)
+			  {
+			    mLambda[idx]=1.;
+			    mConverged[idx]=0;
+			  }
 			REAL Oldres = 0.;
 			REAL Lambdares = 0.;
 			REAL Firstres = 0.;
