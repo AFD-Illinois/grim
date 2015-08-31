@@ -15,6 +15,7 @@
 #cmakedefine    DT_DUMP         (${DT_DUMP})
 #cmakedefine    START_TIME      (${START_TIME})
 #cmakedefine    FINAL_TIME      (${FINAL_TIME})
+#cmakedefine    START_DUMP_COUNTER  (${START_DUMP_COUNTER})
 #cmakedefine    COURANT         (${COURANT})
 #cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}

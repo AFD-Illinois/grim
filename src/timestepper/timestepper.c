@@ -123,7 +123,11 @@ void timeStepperInit(struct timeStepper ts[ARRAY_ARGS 1])
   ts->tDump = START_TIME;
 
   ts->timeStepCounter = 0;
-  ts->dumpCounter = 0;
+  #if (RESTART)
+    ts->dumpCounter = START_DUMP_COUNTER;
+  #else
+    ts->dumpCounter = 0;
+  #endif
 
   ts->computeOldSourceTermsAndOldDivOfFluxes = 0;
   ts->computeDivOfFluxAtTimeN = 0;

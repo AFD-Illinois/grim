@@ -11,6 +11,7 @@ set(DT "0.001")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "2000.")
+set(START_DUMP_COUNTER "0")
 set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
