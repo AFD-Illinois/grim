@@ -3,6 +3,7 @@ set(OUTPUT_DIR "\"/Users/francoisfoucart/Work/grim/Runs/linear_modes/viscosit/\"
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
+set(RESIDUALS_DUMP_FILE_PREFIX "\"residual\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
@@ -11,6 +12,7 @@ set(DT "0.01")
 set(DT_DUMP ".05")
 set(START_TIME "0.")
 set(FINAL_TIME "2.")
+set(START_DUMP_COUNTER "0")
 set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
@@ -66,7 +68,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # 7) ALFVEN_2D
 # 8) FIREHOSE
 set(AMPLITUDE "1e-5")
-set(MODE      "VISCOSITY_1D")
+set(MODE      "CONDUCTION_STABLE_1D")
 
 # Physics options set automatically by the choice of the mode being tested
 if (${MODE} STREQUAL "ENTROPY_WAVE_1D")

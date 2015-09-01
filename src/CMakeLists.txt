@@ -45,7 +45,7 @@ set(ARRAY_ARGS "const restrict static")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
