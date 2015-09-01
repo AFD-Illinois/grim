@@ -121,13 +121,13 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     PetscViewerDestroy(&viewer);
 
     /* Get the residual at the last iteration of the SNES solver */
-    Vec residual;
-    SNESGetFunction(ts->snes, &residual, NULL, NULL);
+    Vec residualPetscVec;
+    SNESGetFunction(ts->snes, &residualPetscVec, NULL, NULL);
 
     PetscViewerHDF5Open(PETSC_COMM_WORLD, residualsFileName,
                         FILE_MODE_WRITE, &viewer);
-    PetscObjectSetName((PetscObject) residual, "residuals");
-    VecView(ts->primPetscVec, viewer);
+    PetscObjectSetName((PetscObject) residualPetscVec, "residuals");
+    VecView(residualPetscVec, viewer);
     PetscViewerDestroy(&viewer);
 
     PetscPrintf(PETSC_COMM_WORLD,
