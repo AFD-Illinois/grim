@@ -3,6 +3,7 @@ set(OUTPUT_DIR "\"/Users/francoisfoucart/Work/grim/build\"")
 set(RESTART "OFF")
 set(RESTART_FILE "\"restartfile.h5\"")
 set(DUMP_FILE_PREFIX "\"data\"")
+set(RESIDUALS_DUMP_FILE_PREFIX "\"residual\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT

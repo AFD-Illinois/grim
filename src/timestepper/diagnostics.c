@@ -107,8 +107,11 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
                         || fabs(ts->t - FINAL_TIME) < 1e-10 
      )
   {
-    char primVarsFileName[50];
+    char primVarsFileName[50], residualsFileName[50];
     sprintf(primVarsFileName, "%s%06d.h5", DUMP_FILE_PREFIX, ts->dumpCounter);
+    sprintf(residualsFileName, "%s%06d.h5", RESIDUALS_DUMP_FILE_PREFIX,
+            ts->dumpCounter
+           );
 
     PetscViewer viewer;
     PetscViewerHDF5Open(PETSC_COMM_WORLD, primVarsFileName,
@@ -117,9 +120,19 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     VecView(ts->primPetscVec, viewer);
     PetscViewerDestroy(&viewer);
 
+    /* Get the residual at the last iteration of the SNES solver */
+    Vec residual;
+    SNESGetFunction(ts->snes, &residual, NULL, NULL);
+
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, residualsFileName,
+                        FILE_MODE_WRITE, &viewer);
+    PetscObjectSetName((PetscObject) residual, "residuals");
+    VecView(ts->primPetscVec, viewer);
+    PetscViewerDestroy(&viewer);
+
     PetscPrintf(PETSC_COMM_WORLD,
-                "\nDumped primitive variables at t = %f in %s\n\n",
-                ts->t, primVarsFileName);
+                "\nDumped %s and %s at t = %f\n\n",
+                ts->t, primVarsFileName, residualsFileName);
     
     ts->tDump += DT_DUMP;
     ts->dumpCounter++;
