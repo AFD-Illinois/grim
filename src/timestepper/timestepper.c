@@ -908,15 +908,21 @@ void timeStep(struct timeStepper ts[ARRAY_ARGS 1])
 		  NptsResMag[i]++;
 		  break;
 		}
-	    if(res>0.)
+	    if(res>0. || (!(res>-20.)))
 	      {
 	    REAL XCoords[NDIM];
 	    getXCoords(&zone, CENTER, XCoords);
 	    REAL xCoords[NDIM];
 	    XTox(XCoords, xCoords);
-	    printf("Res = %e at r=%e; th=%e\n",
-		  res,xCoords[1],xCoords[2]*180./M_PI);
-	      }
+	    struct geometry geom; setGeometry(XCoords, &geom);
+	    struct fluidElement elem;
+	    setFluidElement(&INDEX_PETSC(primVecLocal,&zone,0),&geom,&elem);
+	    REAL bSqr = getbSqr(&elem,&geom);
+	    REAL gamma = elem.gamma;
+	    printf("Res = %e at r=%e; th=%e; Rho=%e, u=%e, bSqr=%e, W=%e\n",
+                   pow(10.,res),xCoords[1],xCoords[2]*180./M_PI,
+		   elem.primVars[RHO],elem.primVars[UU],bSqr,gamma);
+             }
 	  }
       }
 

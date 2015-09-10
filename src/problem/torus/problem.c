@@ -84,17 +84,28 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
     
     //Closure for firehose instability
     REAL b2 = getbSqr(elem, geom);
+    REAL ViscousCoeff = VISCOSITY_ALPHA;
+    REAL beta = 0.5/(ViscousCoeff*cs*cs*Rho);
+    REAL dP = elem->primVars[PSI];
+    
+    #if (HIGHORDERTERMS_VISCOSITY)
+      dP*=sqrt(T/beta);
+    #endif
+    
     REAL psiCeil = ClosureFactorVis*b2;
     //Closure for mirror / ion cyclotron instability
     if(elem->primVars[PSI]>0.)
       {
-	psiCeil *= 0.5;
-	REAL ionCeil = 0.35*P*pow(b2/2./P,0.45)*ClosureFactorVis;
-	//if(ionCeil<psiCeil)
-	//  psiCeil=ionCeil;
+        if(P-2./3.*dP>0.)
+	  psiCeil = ClosureFactorVis*b2/2.*(P-2./3.*dP)/(P+dP/3.);
+	else
+	  psiCeil = 0.01*dP; //effectively zero... 
       }
-    REAL ViscousCoeff = VISCOSITY_ALPHA;
-    REAL beta = 0.5/(ViscousCoeff*cs*cs*Rho);
+    else
+      {
+	if(dP<-2.99*P/1.07)
+	  psiCeil = 2.99*P/1.07;
+      }
     //Transform from dP_max to Psi_max
     #if (HIGHORDERTERMS_VISCOSITY)
       psiCeil*=sqrt(beta/T);
@@ -893,16 +904,28 @@ void applyFloor(const int iTile, const int jTile,
 #if VISCOSITY
     REAL psi = primTile[INDEX_TILE(&zone, PSI)];
     REAL psimax = 1.07*bSqr*ClosureFactorVis;
+    REAL betaV = 0.5*elem.tauVis/elem.eta;
+    REAL dP = psi;
+
+    #if (HIGHORDERTERMS_VISCOSITY)
+      dP*=sqrt(T/betaV);
+    #endif
+
     if(primTile[INDEX_TILE(&zone, PSI)]>0.)
       {
-	psimax*=0.5;
-	REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45)*ClosureFactorVis;
-	//if(ionCeil*1.07<psimax)
-	//  psimax = 1.07*ionCeil;
+        if(P-2./3.*dP>0.)
+	  psimax*=0.5*(P-2./3.*dP)/(P+dP/3.);
+	else
+	  psimax=0.0;
+	//REAL ionCeil = 0.35*P*pow(bSqr/2./P,0.45)*ClosureFactorVis;
+      }
+    else
+      {
+	if(dP<-2.99*P)
+	  psimax=2.99*P;
       }
     //transform from dP_max to psi_max
     #if (HIGHORDERTERMS_VISCOSITY)
-      REAL betaV = 0.5*elem.tauVis/elem.eta;
       psimax *= sqrt(betaV/T);
     #endif
       //if(r<3.)

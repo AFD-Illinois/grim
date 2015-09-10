@@ -593,8 +593,21 @@ PetscErrorCode computeResidual(SNES snes,
 	      bmax
 	      );
       #if (VISCOSITY)
-      PetscPrintf(PETSC_COMM_WORLD, "psi = %e\n",
-	     elemmax.primVars[PSI]
+      REAL beta = elemmax.tauVis*0.5/elemmax.eta;
+      REAL Rho = elemmax.primVars[RHO];
+      if(Rho<RHO_FLOOR_MIN)
+	Rho=RHO_FLOOR_MIN;
+      REAL U = elemmax.primVars[UU];
+      if(U<UU_FLOOR_MIN)
+	U = UU_FLOOR_MIN;
+      REAL P   = (ADIABATIC_INDEX-1.)*U;
+      REAL T   = P/Rho;
+      REAL dP = elemmax.primVars[PSI];
+      #if (HIGHORDERTERMS_VISCOSITY)
+        dP*=sqrt(T/beta);
+      #endif
+      PetscPrintf(PETSC_COMM_WORLD, "dP = %e; P = %e; tauVis = %e\n",
+		  dP,P,elemmax.tauVis
 	     );
       #endif
       #if (CONDUCTION)

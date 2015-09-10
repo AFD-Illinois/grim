@@ -53,20 +53,22 @@ void waveSpeeds(const struct fluidElement elem[ARRAY_ARGS 1],
 
   //Correction to characteristic speeds in fake EMHD model
   #if (FAKE_EMHD)
-    REAL y = bSqr/elem->primVars[RHO]/csSqr;
-    REAL EMHD_Threshold = 1.5;
-    REAL FakeEMHDCoeff = 1./(1.+exp((y-EMHD_Threshold)/0.1));
-    if(FakeEMHDCoeff>1.e-4)
-      {
-	REAL cAlvenSqrF = 9.*bSqr/(7.*bSqr+6.*(elem->primVars[RHO]+ ADIABATIC_INDEX*elem->primVars[UU]));
-	REAL csSqrF = (ADIABATIC_INDEX-1)*(ADIABATIC_INDEX*elem->primVars[UU]-bSqr/3.)/(elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU]-bSqr/3.);
-	cAlvenSqr  = FakeEMHDCoeff*cAlvenSqrF + (1.-FakeEMHDCoeff)*cAlvenSqr;
-	csSqr = FakeEMHDCoeff*csSqrF + (1.-FakeEMHDCoeff)*csSqr;
-	if(cAlvenSqr>1.)
-	  cAlvenSqr=1.;
-	if(csSqr>1.)
-	  csSqr=1.;
-      }
+    REAL y = 2.*(ADIABATIC_INDEX-1)*elem->primVars[UU]/(bSqr+1.e-16);
+    REAL FakeEMHDCoeff = 0.5*(-3.*y-2.+sqrt((3.*y+2)*(3.*y+2)+12*y)); 
+    //Speed from Balbusaur, assuming dP = FakeEMHDCoeff*b^2/2
+    //with the coefficient chose for the mirror saturation condition
+    csSqr  = 3.*(ADIABATIC_INDEX)*(ADIABATIC_INDEX-1)*elem->primVars[UU]
+      -FakeEMHDCoeff*bSqr*(ADIABATIC_INDEX-1);
+    csSqr = csSqr/
+      (3.*elem->primVars[RHO] + 3.*ADIABATIC_INDEX*elem->primVars[UU]-FakeEMHDCoeff*bSqr);
+    if(csSqr>1.)
+      csSqr=1.;
+    
+    cAlvenSqr = bSqr*(6.+3.*FakeEMHDCoeff)/
+      (6.*elem->primVars[RHO]+6.*ADIABATIC_INDEX*elem->primVars[UU]
+    +(6.+FakeEMHDCoeff)*bSqr);
+    if(cAlvenSqr>1.)
+      cAlvenSqr=1.;
   #endif
 
 

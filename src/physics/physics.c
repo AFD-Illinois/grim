@@ -76,6 +76,8 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   REAL bCov[NDIM], bSqr, uCov[NDIM];
   
   bSqr = getbSqr(elem, geom);
+  if(bSqr<1.e-16)
+    bSqr=1.e-16;
 
   conToCov(elem->uCon, geom, uCov);
   conToCov(elem->bCon, geom, bCov);
@@ -83,7 +85,13 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
   //Recover dP from psi (which is either dP of dP * (beta/T)^(1/2)
   //depending on whether we use higher order terms in the evolution
   //equation for dP.
-  REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
+  REAL Rho = elem->primVars[RHO];
+  if(Rho<RHO_FLOOR_MIN)
+    Rho=RHO_FLOOR_MIN;
+  REAL U = elem->primVars[UU];
+  if(U<UU_FLOOR_MIN)
+    U = UU_FLOOR_MIN;
+  REAL T = (ADIABATIC_INDEX-1.)*U/Rho;
   if(T<1.e-12)
     T=1.e-12;
   #if  (VISCOSITY)
@@ -105,18 +113,9 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
   REAL FakeEMHDCoeff = 0.;
   #if (FAKE_EMHD)
-    REAL EMHD_Threshold = 1.5;
-    REAL Rho = elem->primVars[RHO];
-    if(Rho<RHO_FLOOR_MIN)
-      Rho=RHO_FLOOR_MIN;
-    REAL U = elem->primVars[UU];
-    if(U<UU_FLOOR_MIN)
-      U = UU_FLOOR_MIN;
     REAL P   = (ADIABATIC_INDEX-1.)*U;
-    REAL csSqr  = ADIABATIC_INDEX*P
-      / (Rho + (ADIABATIC_INDEX*U));
-    REAL y = bSqr/Rho/csSqr;
-    FakeEMHDCoeff = 1./(1.+exp((y-EMHD_Threshold)/0.1));
+    REAL y = 2.*P/(bSqr+1.e-16);
+    FakeEMHDCoeff = 0.5*(-3.*y-2.+sqrt((3.*y+2)*(3.*y+2)+12*y));
   #endif
   for (int mu=0; mu<NDIM; mu++)
   {
