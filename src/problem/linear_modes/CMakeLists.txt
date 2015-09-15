@@ -130,6 +130,8 @@ endif(${MODE} STREQUAL "FIREHOSE")
 # Floor values
 set(RHO_FLOOR "1e-5")
 set(UU_FLOOR "1e-7")
+set(RHO_FLOOR_MIN     "1e-15")
+set(UU_FLOOR_MIN      "1e-15")
 
 message("")
 message("#########################")

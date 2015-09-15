@@ -71,6 +71,8 @@
 /* Floor values */
 #cmakedefine    RHO_FLOOR (${RHO_FLOOR})
 #cmakedefine    UU_FLOOR  (${UU_FLOOR})
+#cmakedefine    RHO_FLOOR_MIN           (${RHO_FLOOR_MIN})
+#cmakedefine    UU_FLOOR_MIN            (${UU_FLOOR_MIN})
 
 /* Number of ghost zones */
 #if (RECONSTRUCTION==MONOTONIZED_CENTRAL || RECONSTRUCTION==MIN_MOD)
