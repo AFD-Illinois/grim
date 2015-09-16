@@ -50,13 +50,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
         {
           for (int nu=0; nu<NDIM; nu++)
           {
-            #if (COMPUTE_DIM==1)
-              gCovGlobal[zone.i][nu + NDIM*mu] = geom.gCov[mu][nu];
-              gConGlobal[zone.i][nu + NDIM*mu] = geom.gCon[mu][nu];
-            #elif (COMPUTE_DIM==2)
-              gCovGlobal[zone.j][zone.i][nu + NDIM*mu] = geom.gCov[mu][nu];
-              gConGlobal[zone.j][zone.i][nu + NDIM*mu] = geom.gCon[mu][nu];
-            #endif
+            INDEX_PETSC(gConGlobal, &zone, nu + NDIM*mu) = geom.gCov[mu][nu];
           }
         }
 
@@ -66,22 +60,22 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     DMDAVecRestoreArrayDOF(metricDMDA, gCovPetscVec, &gCovGlobal);
     DMDAVecRestoreArrayDOF(metricDMDA, gConPetscVec, &gConGlobal);
 
-    char parametersFilename[50];
-    sprintf(parametersFilename, "parameters.h5");
+    char gridFilename[50];
+    sprintf(gridFilename, "grid.h5");
 
-    PetscViewer parametersViewer;
+    PetscViewer viewer;
     
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, parametersFilename,
-                        FILE_MODE_WRITE, &parametersViewer);
+    PetscViewerHDF5Open(PETSC_COMM_WORLD, gridFilename,
+                        FILE_MODE_WRITE, &viewer);
 
     PetscObjectSetName((PetscObject) gCovPetscVec, "gCov");
     PetscObjectSetName((PetscObject) gConPetscVec, "gCon");
     PetscObjectSetName((PetscObject) ts->connectionPetscVec,
                        "gammaUpdowndown");
 
-    VecView(gCovPetscVec, parametersViewer);
-    VecView(gConPetscVec, parametersViewer);
-    VecView(ts->connectionPetscVec, parametersViewer);
+    VecView(gCovPetscVec, viewer);
+    VecView(gConPetscVec, viewer);
+    VecView(ts->connectionPetscVec, viewer);
 
     /* Output parameters */
     /* Available data types:
@@ -106,25 +100,25 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
      * /gammaUpdowndown because I can't figure out how to make Petsc create a
      * new dataset, or a group, or anything I can set attributes on. */
 
-    PetscViewerHDF5PushGroup(parametersViewer, "/gammaUpdowndown");
-    WRITE_PARAM_INT(COMPUTE_DIM);
-    WRITE_PARAM_INT(N1);
-    WRITE_PARAM_INT(N2);
-    WRITE_PARAM_DOUBLE(DT);
-    WRITE_PARAM_DOUBLE(START_TIME);
-    WRITE_PARAM_DOUBLE(FINAL_TIME);
-    WRITE_PARAM_INT(RHO);
-    WRITE_PARAM_INT(UU);
-    WRITE_PARAM_INT(U1);
-    WRITE_PARAM_INT(U2);
-    WRITE_PARAM_INT(U3);
-    WRITE_PARAM_INT(B1);
-    WRITE_PARAM_INT(B2);
-    WRITE_PARAM_INT(B3);
-    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
-    PetscViewerHDF5PopGroup(parametersViewer);
+    PetscViewerHDF5PushGroup(viewer, "/gammaUpdowndown");
+    WRITE_PARAM_INT(COMPUTE_DIM, viewer);
+    WRITE_PARAM_INT(N1, viewer);
+    WRITE_PARAM_INT(N2, viewer);
+    WRITE_PARAM_DOUBLE(DT, viewer);
+    WRITE_PARAM_DOUBLE(START_TIME, viewer);
+    WRITE_PARAM_DOUBLE(FINAL_TIME, viewer);
+    WRITE_PARAM_INT(RHO, viewer);
+    WRITE_PARAM_INT(UU, viewer);
+    WRITE_PARAM_INT(U1, viewer);
+    WRITE_PARAM_INT(U2, viewer);
+    WRITE_PARAM_INT(U3, viewer);
+    WRITE_PARAM_INT(B1, viewer);
+    WRITE_PARAM_INT(B2, viewer);
+    WRITE_PARAM_INT(B3, viewer);
+    writeProblemSpecificData(viewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(viewer);
 
-    PetscViewerDestroy(&parametersViewer);
+    PetscViewerDestroy(&viewer);
 
     VecDestroy(&gCovPetscVec);
     VecDestroy(&gConPetscVec);
@@ -144,37 +138,33 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
             ts->dumpCounter
            );
 
-    PetscViewer parametersViewer;
+    PetscViewer viewer;
     PetscViewerHDF5Open(PETSC_COMM_WORLD, primVarsFileName,
-                        FILE_MODE_WRITE, &parametersViewer);
+                        FILE_MODE_WRITE, &viewer);
     PetscObjectSetName((PetscObject) ts->primPetscVec, "primVars");
-    VecView(ts->primPetscVec, parametersViewer);
+    VecView(ts->primPetscVec, viewer);
 
-    PetscViewerHDF5PushGroup(parametersViewer, "/primVars");
-    WRITE_PARAM_INT(COMPUTE_DIM);
-    WRITE_PARAM_INT(N1);
-    WRITE_PARAM_INT(N2);
-    WRITE_PARAM_DOUBLE(DT);
-    WRITE_PARAM_DOUBLE(START_TIME);
-    WRITE_PARAM_DOUBLE(FINAL_TIME);
-    WRITE_PARAM_INT(RHO);
-    WRITE_PARAM_INT(UU);
-    WRITE_PARAM_INT(U1);
-    WRITE_PARAM_INT(U2);
-    WRITE_PARAM_INT(U3);
-    WRITE_PARAM_INT(B1);
-    WRITE_PARAM_INT(B2);
-    WRITE_PARAM_INT(B3);
-    writeProblemSpecificData(parametersViewer, ts->problemSpecificData);
-    PetscViewerHDF5PopGroup(parametersViewer);
-    PetscViewerDestroy(&parametersViewer);
+    PetscViewerHDF5PushGroup(viewer, "/primVars");
+    WRITE_PARAM_INT(COMPUTE_DIM, viewer);
+    WRITE_PARAM_INT(N1, viewer);
+    WRITE_PARAM_INT(N2, viewer);
+    WRITE_PARAM_DOUBLE(DT, viewer);
+    WRITE_PARAM_DOUBLE(START_TIME, viewer);
+    WRITE_PARAM_DOUBLE(FINAL_TIME, viewer);
+    WRITE_PARAM_INT(RHO, viewer);
+    WRITE_PARAM_INT(UU, viewer);
+    WRITE_PARAM_INT(U1, viewer);
+    WRITE_PARAM_INT(U2, viewer);
+    WRITE_PARAM_INT(U3, viewer);
+    WRITE_PARAM_INT(B1, viewer);
+    WRITE_PARAM_INT(B2, viewer);
+    WRITE_PARAM_INT(B3, viewer);
+    writeProblemSpecificData(viewer, ts->problemSpecificData);
+    PetscViewerHDF5PopGroup(viewer);
 
     /* Get the residual at the last iteration of the SNES solver */
     Vec residualPetscVec;
     SNESGetFunction(ts->snes, &residualPetscVec, NULL, NULL);
-
-    PetscViewerHDF5Open(PETSC_COMM_WORLD, residualsFileName,
-                        FILE_MODE_WRITE, &viewer);
     PetscObjectSetName((PetscObject) residualPetscVec, "residuals");
     VecView(residualPetscVec, viewer);
     PetscViewerDestroy(&viewer);

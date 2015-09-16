@@ -46,7 +46,7 @@ void halfStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
 void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1]);
 
-void writeProblemSpecificData(PetscViewer parametersViewer,
+void writeProblemSpecificData(PetscViewer viewer,
     const struct problemData problemSpecificData[ARRAY_ARGS 1]);
 
 #if (CONDUCTION)
@@ -58,161 +58,82 @@ void writeProblemSpecificData(PetscViewer parametersViewer,
                                struct fluidElement elem[ARRAY_ARGS 1]);
 #endif
 
-#define WRITE_PARAM_INT(NAME) \
+#define WRITE_PARAM_INT(NAME, viewer) \
         do { \
         int __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_INT, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_DOUBLE(NAME) \
+#define WRITE_PARAM_DOUBLE(NAME, viewer) \
         do { \
         double __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_DOUBLE, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_COMPLEX(NAME) \
+#define WRITE_PARAM_COMPLEX(NAME, viewer) \
         do { \
         complex __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_COMPLEX, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_LONG(NAME) \
+#define WRITE_PARAM_LONG(NAME, viewer) \
         do { \
         long __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_LONG, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_SHORT(NAME) \
+#define WRITE_PARAM_SHORT(NAME, viewer) \
         do { \
         short __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_SHORT, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_FLOAT(NAME) \
+#define WRITE_PARAM_FLOAT(NAME, viewer) \
         do { \
         float __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_FLOAT, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_CHAR(NAME) \
+#define WRITE_PARAM_CHAR(NAME, viewer) \
         do { \
         char __NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_CHAR, &__NAME); \
         } while(0)
 
 
-#define WRITE_PARAM_STRING(NAME) \
+#define WRITE_PARAM_STRING(NAME, viewer) \
         do { \
         char *__NAME = NAME; \
         const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_STRING, &__NAME); \
-        } while(0)
-
-#define WRITE_PARAM_INT(NAME) \
-        do { \
-        int __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_INT, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_DOUBLE(NAME) \
-        do { \
-        double __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_DOUBLE, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_COMPLEX(NAME) \
-        do { \
-        complex __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_COMPLEX, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_LONG(NAME) \
-        do { \
-        long __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_LONG, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_SHORT(NAME) \
-        do { \
-        short __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_SHORT, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_FLOAT(NAME) \
-        do { \
-        float __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_FLOAT, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_CHAR(NAME) \
-        do { \
-        char __NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
-        __NAME_GROUP, #NAME, PETSC_CHAR, &__NAME); \
-        } while(0)
-
-
-#define WRITE_PARAM_STRING(NAME) \
-        do { \
-        char *__NAME = NAME; \
-        const char* __NAME_GROUP; \
-        PetscViewerHDF5GetGroup(parametersViewer, &__NAME_GROUP); \
-        PetscViewerHDF5WriteAttribute(parametersViewer, \
+        PetscViewerHDF5GetGroup(viewer, &__NAME_GROUP); \
+        PetscViewerHDF5WriteAttribute(viewer, \
         __NAME_GROUP, #NAME, PETSC_STRING, &__NAME); \
         } while(0)
 
