@@ -43,7 +43,11 @@
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
 #cmakedefine01  CONDUCTION
+#cmakedefine01  HIGHORDERTERMS_CONDUCTION
 #cmakedefine01  VISCOSITY
+#cmakedefine01  HIGHORDERTERMS_VISCOSITY
+#cmakedefine01  FAKE_EMHD
+#cmakedefine01  ADD_WIND_SOURCE
 
 /* Initial condition parameters */
 #cmakedefine    AMPLITUDE           (${AMPLITUDE})
