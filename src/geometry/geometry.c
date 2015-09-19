@@ -35,6 +35,32 @@ void XTox(const REAL X[ARRAY_ARGS NDIM],
 #endif
 }
 
+void XToCartesian(const REAL X[ARRAY_ARGS NDIM],
+                  REAL cartesian[ARRAY_ARGS NDIM]
+                 )
+{
+  REAL x[NDIM];
+  XTox(X, x);
+
+  #if (METRIC==MINKOWSKI)
+
+    for (int mu=0; mu<NDIM; mu++)
+    {
+      cartesian[mu] = x[mu];
+    }
+
+  #elif (METRIC==KERRSCHILD)
+    REAL r = x[1], theta = x[2];
+    REAL x = r * sin(theta), y = r * cos(theta);
+    REAL z = 0.;
+
+    cartesian[0] = 0.;
+    cartesian[1] = x;
+    cartesian[2] = y;
+    cartesian[3] = z;
+  #endif
+}
+
 /* Function that sets the following quantities in X^mu coordinates in a zone:
  * 1) geom->gCov
  * 2) geom->gDet

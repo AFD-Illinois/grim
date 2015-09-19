@@ -59,6 +59,10 @@ REAL gammaDownDownDown(const int eta,
 void XTox(const REAL X[ARRAY_ARGS NDIM], 
           REAL x[ARRAY_ARGS NDIM]);
 
+void XToCartesian(const REAL X[ARRAY_ARGS NDIM],
+                  REAL cartesian[ARRAY_ARGS NDIM]
+                 );
+
 /* Functions called by internally inside the geometry module */
 void gCovFunc(const REAL X[ARRAY_ARGS NDIM],
               REAL gCov[ARRAY_ARGS NDIM][NDIM]);
