@@ -17,7 +17,5 @@ author:
   name:           'Mani Chandra'
   url:            http://mchandra.github.io/
 
-paginate:         5
-
 # Custom vars
-github:           http://github.com/afd-illinois/grim
+repo:             http://github.com/afd-illinois/grim

@@ -2,7 +2,7 @@
   <div class="container">
 
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
+      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{%endif%}" href="{{ site.baseurl }}">{{ site.title }}</a>
 
       {% comment %}
 
@@ -20,7 +20,7 @@
         {% endif %}
       {% endfor %}
 
-      <a class="sidebar-nav-item" href="{{ site.github.repo }}">Download</a>
+      <a class="sidebar-nav-item" href="https://github.com/afd-illinois/grim">Download</a>
     </nav>
 
   </div>
