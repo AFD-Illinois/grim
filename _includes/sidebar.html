@@ -2,14 +2,14 @@
   <div class="container">
 
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">{{ page.title }}</a>
-
       {% comment %}
+
+      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
+
 
         The code below dynamically generates a sidebar nav of pages with
         `layout: page` in the front-matter. See readme for usage.
 
-      {% endcomment %}
 
       {% assign pages_list = site.pages %}
       {% for node in pages_list %}
@@ -20,8 +20,13 @@
         {% endif %}
       {% endfor %}
 
-
+      {% endcomment %}
+      
+      <a class="sidebar-nav-item" href="/">About</a>
+      <a class="sidebar-nav-item" href="{{ site.baseurl }}/tests">Tests</a>
       <a class="sidebar-nav-item" href="https://github.com/afd-illinois/grim">Download</a>
+      <a class="sidebar-nav-item" href="{{ site.baseurl }}/compile">Compile</a>
+      <a class="sidebar-nav-item" href="{{ site.baseurl }}/authors">Authors</a>
     </nav>
 
   </div>
