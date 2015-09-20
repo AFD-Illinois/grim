@@ -11,7 +11,7 @@ title:            grim
 tagline:          'General Relativistic Implicit Magnetohydrodynamics'
 description:      ''
 url:              http://afd-illinois.github.io/grim/
-baseurl:          /
+baseurl:          http://afd-illinois.github.io/grim/
 
 author:
   name:           'Mani Chandra'
