@@ -31,9 +31,12 @@
  * Update the foundational and global aspects of the page.
  */
 
+
 html {
   font-family: "PT Sans", Helvetica, Arial, sans-serif;
 }
+
+
 @media (min-width: 48em) {
   html {
     font-size: 16px;
@@ -61,7 +64,7 @@ html {
     left: 0;
     bottom: 0;
     width: 10rem;
-    text-align: center;
+    text-align: right;
   }
 }
 
