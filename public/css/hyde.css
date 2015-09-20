@@ -53,7 +53,7 @@ html {
 
 .sidebar {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 1rem 0rem;
   color: rgba(255,255,255,.5);
   background-color: #202020;
 }
@@ -63,7 +63,7 @@ html {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 10rem;
+    width: 7rem;
     text-align: right;
   }
 }
