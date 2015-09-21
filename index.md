@@ -1,11 +1,40 @@
 ---
 layout: default
-title: About
+title: grim
 ---
 
-{:center: style="text-align: center"}
 ![cover_image](EMHD_560x512_t_1400M_zoom1.png){: style="max-width: 1000px; height: auto;"}
 
-$$\mathtt{grim}$$ is a new code
+#### What is $$\mathtt{grim}$$ ?
+---
+$$\mathtt{grim}$$ is a conservative, shock-capturing code designed to solve a
+broad range of physical models that describe plasmas in general relativity away
+from local thermodynamic equilibirum. It is currently being used to study
+accretion flows around Kerr blackholes in order to make predictions on the
+emissions and spectra from
+[SgrA\*](https://en.wikipedia.org/wiki/Sagittarius_A*), the supermassive
+blackhole at the center of the Milky Way whose horizon scale will be resolved by
+the [Event Horizon Telescope](http://www.eventhorizontelescope.org/).
 
-{:center}
+## Authors
+---
+**Mani Chandra**<br>
+Illinois Distinguished Fellow   
+Department of Astronomy  
+University of Illinois, Urbana-Champaign<br>
+<manic@illinois.edu>
+
+
+**Francois Foucart**<br>
+Einstein Fellow  
+Lawrence Berkeley National Laboratory<br>
+<fvfoucart@lbl.gov><br>
+[Webpage](https://sites.google.com/site/francoisfoucart/home)
+
+**Charles F. Gammie**<br>
+Professor  
+Department of Astronomy  
+Department of Physics  
+University of Illinois, Urbana-Champaign<br> 
+<gammie@illinois.edu><br>
+[Webpage](http://rainman.astro.illinois.edu/gammie/)
