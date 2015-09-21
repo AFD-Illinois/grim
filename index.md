@@ -33,7 +33,7 @@ Lawrence Berkeley National Laboratory<br>
 
 **Charles F. Gammie**<br>
 Professor  
-Department of Astronomy  
+Department of Astronomy, _and_ 
 Department of Physics  
 University of Illinois, Urbana-Champaign<br> 
 <gammie@illinois.edu><br>
