@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Models implemented
+title: Algorithms
 ---
 
 

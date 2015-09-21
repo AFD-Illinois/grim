@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Compile
+title: Acknowledgements
 ---
 
 <p class="message">
