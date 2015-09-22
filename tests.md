@@ -73,6 +73,9 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^2$$       |25.02       |49.          | 
 |$$B^3$$       |0.          |0.           | 
 
+![fast_shock_rho](../Komissarov_fast_shock_rho.png){: style="max-width: 600px; height: auto;"}
+![fast_shock_ux](../Komissarov_fast_shock_ux.png){: style="max-width: 600px; height: auto;"}
+
 ###### Slow shock
 
 | Variable     | Left state | Right state |
@@ -85,6 +88,9 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^1$$       |10.         |10.          | 
 |$$B^2$$       |18.28       |14.49        | 
 |$$B^3$$       |0.          |0.           | 
+
+![slow_shock_rho](../Komissarov_slow_shock_rho.png){: style="max-width: 600px; height: auto;"}
+![slow_shock_ux](../Komissarov_slow_shock_ux.png){: style="max-width: 600px; height: auto;"}
 
 ###### Switch on slow
 
@@ -99,6 +105,8 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^2$$       |1.022       |0.           | 
 |$$B^3$$       |0.          |0.           | 
 
+![switch_on_rho](../Komissarov_switch_on_rho.png){: style="max-width: 600px; height: auto;"}
+![switch_on_ux](../Komissarov_switch_on_ux.png){: style="max-width: 600px; height: auto;"}
 
 ###### Switch off fast
 
@@ -113,6 +121,8 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^2$$       |0.          |4.71         | 
 |$$B^3$$       |0.          |0.           | 
 
+![switch_off_rho](../Komissarov_switch_off_rho.png){: style="max-width: 600px; height: auto;"}
+![switch_off_ux](../Komissarov_switch_off_ux.png){: style="max-width: 600px; height: auto;"}
 
 ###### Alfven wave
 
@@ -140,6 +150,9 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^2$$       |0.          |0.           | 
 |$$B^3$$       |0.          |0.           | 
 
+![shock_tube_1_rho](../Komissarov_shock_tube_1_rho.png){: style="max-width: 600px; height: auto;"}
+![shock_tube_1_ux](../Komissarov_shock_tube_1_ux.png){: style="max-width: 600px; height: auto;"}
+
 ###### Shock tube 2
 
 | Variable     | Left state | Right state |
@@ -152,6 +165,10 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^1$$       |0.          |0.           | 
 |$$B^2$$       |20.         |0.           | 
 |$$B^3$$       |0.          |0.           | 
+
+![shock_tube_2_rho](../Komissarov_shock_tube_2_rho.png){: style="max-width: 600px; height: auto;"}
+![shock_tube_2_ux](../Komissarov_shock_tube_2_ux.png){: style="max-width: 600px; height: auto;"}
+
 
 ###### Collision
 
@@ -166,4 +183,23 @@ well as in special relativistic, and general relativistic regimes.
 |$$B^2$$       |10.         |-10.         | 
 |$$B^3$$       |0.          |0.           | 
 
+![collision_rho](../Komissarov_collision_rho.png){: style="max-width: 600px; height: auto;"}
+![collision_ux](../Komissarov_collision_ux.png){: style="max-width: 600px; height: auto;"}
+
 #### Orzag-Tang
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/h3bwc7i0iib9s4sm3ljzb2h3nhucwuk2?view=&sort=&direction=ASC&theme=light"></iframe>
+
+#### Komissarov Magnetized Cylindrical Explosion
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/yonoxdr9wrrw48cm88tc4owy5vrgf9xt?view=&sort=&direction=ASC&theme=light"></iframe>
+
+## Extended MHD
+
+#### Anisotropic Conduction _Snake_ Test
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/wzz038mcelmflq8xvu8g?view=&sort=&direction=ASC&theme=light"></iframe>
+
+#### Magneto Thermal Instability
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>

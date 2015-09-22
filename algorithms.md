@@ -4,6 +4,7 @@ title: Algorithms
 ---
 
 $$\mathtt{grim}$$ uses a second order finite volume method to solve 
+
 ## Spatial Discretization
 
 #### Grid generation
