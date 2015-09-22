@@ -5,6 +5,20 @@ title: Tests
 $$\mathtt{grim}$$ has been tested extensively in both linear and nonlinear as
 well as in special relativistic, and general relativistic regimes.
 
+## Extended MHD
+
+#### Linear modes
+
+![linear_modes_1d_slice](../linear_modes_1d_slice.png){: style="max-width: 450px; height: auto;"}
+
+#### Anisotropic Conduction _Snake_ Test
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/wzz038mcelmflq8xvu8g?view=&sort=&direction=ASC&theme=light"></iframe>
+
+#### Magneto Thermal Instability
+
+<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>
+
 ## Ideal MHD tests
 
 #### Sound modes
@@ -194,12 +208,3 @@ well as in special relativistic, and general relativistic regimes.
 
 <iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/yonoxdr9wrrw48cm88tc4owy5vrgf9xt?view=&sort=&direction=ASC&theme=light"></iframe>
 
-## Extended MHD
-
-#### Anisotropic Conduction _Snake_ Test
-
-<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/wzz038mcelmflq8xvu8g?view=&sort=&direction=ASC&theme=light"></iframe>
-
-#### Magneto Thermal Instability
-
-<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>
