@@ -3,6 +3,7 @@ layout: page
 title: Algorithms
 ---
 
+$$\mathtt{grim}$$ uses a second order finite volume method to solve 
 ## Spatial Discretization
 
 #### Grid generation
@@ -24,6 +25,8 @@ title: Algorithms
 
 #### Explicit time stepping
 ---
+
+#### _IMEX_ Implicit-Explicit time stepping
 
 #### Implicit time stepping
 ---
