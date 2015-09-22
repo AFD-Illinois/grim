@@ -13,6 +13,7 @@
 #define VISCOSITY_1D          (5)
 #define ALFVEN_2D             (6)
 #define FIREHOSE              (7) 
+#define FULL_EMHD_2D          (8)
 
 /* End of immutable constants */
   

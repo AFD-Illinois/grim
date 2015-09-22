@@ -9,6 +9,31 @@
   {
     elem->kappa = kappaProblem;
     elem->tau   = tauProblem;
+
+  #if (MODE==FULL_EMHD_2D)
+  REAL Rho = elem->primVars[RHO];
+  if(Rho<RHO_FLOOR_MIN)
+     Rho=RHO_FLOOR_MIN;
+  REAL U = elem->primVars[UU];
+  if(U<UU_FLOOR_MIN)
+     U = UU_FLOOR_MIN;
+
+  REAL P   = (ADIABATIC_INDEX-1.)*U;
+  REAL T   = P/Rho;
+  if(T<1.e-12)
+    T=1.e-12;
+  
+  REAL cs  = sqrt(  ADIABATIC_INDEX*P
+                  / (Rho + (ADIABATIC_INDEX*U))
+                 );
+
+  REAL beta = 1./(Rho* 1 * cs*cs*T);
+    
+  REAL tau    = 1.;
+  elem->kappa = tau/beta/T;
+  elem->tau   = tau; 
+
+  #endif
   }
 #endif
 
@@ -21,6 +46,29 @@
   {
     elem->eta     = etaProblem;
     elem->tauVis  = tauVisProblem;
+
+  #if (MODE==FULL_EMHD_2D)
+    REAL Rho = elem->primVars[RHO];
+    if(Rho<RHO_FLOOR_MIN)
+      Rho=RHO_FLOOR_MIN;
+    REAL U   = elem->primVars[UU];
+    if(U<UU_FLOOR_MIN)
+      U = UU_FLOOR_MIN;
+    REAL P   = (ADIABATIC_INDEX-1.)*U;
+    REAL T   = P/Rho;
+    if(T<1.e-12)
+      T=1.e-12;
+    REAL cs  = sqrt(  ADIABATIC_INDEX*P
+                  / (Rho + (ADIABATIC_INDEX*U))
+                 );
+    
+    REAL beta = 0.5/(1 * cs*cs*Rho);
+
+    REAL tau     = 1.;
+    elem->eta    = 0.5*tau/beta;
+    elem->tauVis = tau;
+
+  #endif
   }
 #endif
 
@@ -50,8 +98,58 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
       REAL XCoords[NDIM];
       getXCoords(&zone, CENTER, XCoords);
 
+      #if (MODE==FULL_EMHD_2D) 
+      /* Eigenvalue = -0.5533585207638141 - 3.6262571286888425*I
+       *
+       * kappa = rho * 1 * cs**2 * tau
+       * eta   = rho * 1 * cs**2 * tau
+       * tau   = 1
+       * Gamma = 4/3
+       * k1 = 2*pi
+       * k2 = 4*pi
+       *
+       * For this problem, the values of kappa and eta are set directly in
+       * setConductionParameters() and setViscosityParameters()
+       * */
+        
+        REAL primVars0[DOF];
+        REAL complex deltaPrimVars[DOF];
 
-      #if (MODE==HYDRO_SOUND_MODE_1D) /* Eigenvalue = 3.09362659024*I */
+        primVars0[RHO] = 1.;
+        primVars0[UU]  = 2.;
+        primVars0[U1]  = 0.;
+        primVars0[U2]  = 0.;
+        primVars0[U3]  = 0.;
+        primVars0[B1]  = 0.1;
+        primVars0[B2]  = 0.3;
+        primVars0[B3]  = 0.;
+        primVars0[PHI] = 0.;
+        primVars0[PSI] = 0.;
+
+        deltaPrimVars[RHO] = -0.518522524082246 - 0.1792647678001878*I;
+        deltaPrimVars[UU]  = 0.5516170736393813;
+        deltaPrimVars[U1]  = 0.008463122479547856 + 0.011862022608466367*I;
+        deltaPrimVars[U2]  = -0.16175466371870734 - 0.034828080823603294*I;
+        deltaPrimVars[U3]  = 0.;
+        deltaPrimVars[B1]  = -0.05973794979640743 - 0.03351707506150924*I;
+        deltaPrimVars[B2]  = 0.02986897489820372 + 0.016758537530754618*I;
+        deltaPrimVars[B3]  = 0.;
+        deltaPrimVars[PHI] = -0.05973794979640743 - 0.03351707506150924*I;
+        deltaPrimVars[PSI] = -0.2909106062057657 - 0.02159452055336572*I;
+
+        REAL k1 = 2*M_PI;
+        REAL k2 = 4*M_PI;
+
+        REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
+
+        for (int var=0; var<DOF; var++)
+        {
+          INDEX_PETSC(primOldGlobal, &zone, var) =  
+            primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+        }
+
+
+      #elif (MODE==HYDRO_SOUND_MODE_1D) /* Eigenvalue = 3.09362659024*I */
         REAL primVars0[DOF];
         REAL complex deltaPrimVars[DOF];
 
@@ -173,7 +271,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
         primVars0[B1]  = 0.01;
-        primVars0[B2]  = 0.;
+        primVars0[B2]  = 0.02;
         primVars0[B3]  = 0.;
         primVars0[PHI] = 0.;
 
