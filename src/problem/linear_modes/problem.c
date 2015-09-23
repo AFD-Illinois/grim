@@ -12,16 +12,16 @@
 
   #if (MODE==FULL_EMHD_2D)
   REAL Rho = elem->primVars[RHO];
-  if(Rho<RHO_FLOOR_MIN)
-     Rho=RHO_FLOOR_MIN;
+//  if(Rho<RHO_FLOOR_MIN)
+//     Rho=RHO_FLOOR_MIN;
   REAL U = elem->primVars[UU];
-  if(U<UU_FLOOR_MIN)
-     U = UU_FLOOR_MIN;
-
+//  if(U<UU_FLOOR_MIN)
+//     U = UU_FLOOR_MIN;
+//
   REAL P   = (ADIABATIC_INDEX-1.)*U;
   REAL T   = P/Rho;
-  if(T<1.e-12)
-    T=1.e-12;
+//  if(T<1.e-12)
+//    T=1.e-12;
   
   REAL cs  = sqrt(  ADIABATIC_INDEX*P
                   / (Rho + (ADIABATIC_INDEX*U))
@@ -31,6 +31,7 @@
     
   REAL tau    = 1.;
   elem->kappa = tau/beta/T;
+  //elem->kappa = 0.1;
   elem->tau   = tau; 
 
   #endif
@@ -49,15 +50,15 @@
 
   #if (MODE==FULL_EMHD_2D)
     REAL Rho = elem->primVars[RHO];
-    if(Rho<RHO_FLOOR_MIN)
-      Rho=RHO_FLOOR_MIN;
+//    if(Rho<RHO_FLOOR_MIN)
+//      Rho=RHO_FLOOR_MIN;
     REAL U   = elem->primVars[UU];
-    if(U<UU_FLOOR_MIN)
-      U = UU_FLOOR_MIN;
+//    if(U<UU_FLOOR_MIN)
+//      U = UU_FLOOR_MIN;
     REAL P   = (ADIABATIC_INDEX-1.)*U;
     REAL T   = P/Rho;
-    if(T<1.e-12)
-      T=1.e-12;
+//    if(T<1.e-12)
+//      T=1.e-12;
     REAL cs  = sqrt(  ADIABATIC_INDEX*P
                   / (Rho + (ADIABATIC_INDEX*U))
                  );
@@ -66,6 +67,7 @@
 
     REAL tau     = 1.;
     elem->eta    = 0.5*tau/beta;
+    //elem->eta    = 0.1;
     elem->tauVis = tau;
 
   #endif
@@ -110,6 +112,20 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
        *
        * For this problem, the values of kappa and eta are set directly in
        * setConductionParameters() and setViscosityParameters()
+       *
+       *('Eigenvalue   = ', -0.5533585207638108 - 3.626257128688849*I)
+
+        (delta_rho, ' = ', -0.5185225240822464 - 0.1792647678001874*I)
+        (delta_u, ' = ', 0.551617073639382)
+        (delta_u1, ' = ', 0.008463122479547853 + 0.011862022608466373*I)
+        (delta_u2, ' = ', -0.16175466371870748 - 0.034828080823603495*I)
+        (delta_u3, ' = ', 1.1150888301102058e-17 + 2.3900040672376563e-17*I)
+        (delta_B1, ' = ', -0.059737949796407556 - 0.0335170750615094*I)
+        (delta_B2, ' = ', 0.029868974898203757 + 0.01675853753075467*I)
+        (delta_B3, ' = ', -1.317599308756542e-17 - 3.254129323467699e-17*I)
+        (delta_q, ' = ', 0.5233486841539429 + 0.04767672501939605*I)
+        (delta_dp, ' = ', -0.2909106062057659 - 0.021594520553365606*I)
+       *
        * */
         
         REAL primVars0[DOF];
@@ -134,8 +150,20 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         deltaPrimVars[B1]  = -0.05973794979640743 - 0.03351707506150924*I;
         deltaPrimVars[B2]  = 0.02986897489820372 + 0.016758537530754618*I;
         deltaPrimVars[B3]  = 0.;
-        deltaPrimVars[PHI] = -0.05973794979640743 - 0.03351707506150924*I;
-        deltaPrimVars[PSI] = -0.2909106062057657 - 0.02159452055336572*I;
+        deltaPrimVars[PHI] = 0.5233486841539436 + 0.04767672501939603*I;
+        /* IMPORTANT NOTE: Balbusaur outputs deltaP, but psi = -deltaP */
+        deltaPrimVars[PSI] = 0.2909106062057657 + 0.02159452055336572*I;
+
+//        deltaPrimVars[RHO] =  0.8245277155993238;
+//        deltaPrimVars[UU]  = -0.2655263062409864 + 0.11295573948161661*I;
+//        deltaPrimVars[U1]  =  0.01870577997997143 - 0.07463791562430622*I;
+//        deltaPrimVars[U2]  =  0.13548478237175182 + 0.0029582968057185223*I;
+//        deltaPrimVars[U3]  =  0.;
+//        deltaPrimVars[B1]  =  0.013767510382234251 + 0.13241920582661107*I;
+//        deltaPrimVars[B2]  = -0.006883755191117101 - 0.06620960291330555*I;
+//        deltaPrimVars[B3]  =  0.;
+//        deltaPrimVars[PHI] = -0.38685433587246587 + 0.11071197829033866*I;
+//        deltaPrimVars[PSI] =  -0.1599729569151908 + 0.054267588035646866*I;
 
         REAL k1 = 2*M_PI;
         REAL k2 = 4*M_PI;

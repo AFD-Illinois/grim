@@ -202,6 +202,7 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
     #if (VISCOSITY)
       WRITE_PARAM_INT(PSI,          viewer);
     #endif
+    WRITE_PARAM_INT(DOF,            viewer);
 
     writeProblemSpecificData(viewer, ts->problemSpecificData);
     PetscViewerHDF5PopGroup(viewer);

@@ -11,14 +11,14 @@ set(TIME_STEPPING "IMEX")
 set(DT "0.01")
 set(DT_DUMP ".1")
 set(START_TIME "0.")
-set(FINAL_TIME "2.")
+set(FINAL_TIME ".5")
 set(START_DUMP_COUNTER "0")
 set(COURANT ".9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
-set(N1 "64")
-set(N2 "64")
+set(N1 "512")
+set(N2 "512")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -68,7 +68,7 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # 7) ALFVEN_2D
 # 8) FIREHOSE
 # 9) FULL_EMHD_2D
-set(AMPLITUDE "1e-5")
+set(AMPLITUDE "1e-8")
 set(MODE      "FULL_EMHD_2D")
 
 # Physics options set automatically by the choice of the mode being tested
