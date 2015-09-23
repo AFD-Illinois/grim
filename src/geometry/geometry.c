@@ -35,22 +35,22 @@ void XTox(const REAL X[ARRAY_ARGS NDIM],
 #endif
 }
 
-void XToCartesian(const REAL X[ARRAY_ARGS NDIM],
+void XToCartesian(const REAL XCoords[ARRAY_ARGS NDIM],
                   REAL cartesian[ARRAY_ARGS NDIM]
                  )
 {
-  REAL x[NDIM];
-  XTox(X, x);
+  REAL xCoords[NDIM];
+  XTox(XCoords, xCoords);
 
   #if (METRIC==MINKOWSKI)
 
     for (int mu=0; mu<NDIM; mu++)
     {
-      cartesian[mu] = x[mu];
+      cartesian[mu] = xCoords[mu];
     }
 
   #elif (METRIC==KERRSCHILD)
-    REAL r = x[1], theta = x[2];
+    REAL r = xCoords[1], theta = xCoords[2];
     REAL x = r * sin(theta), y = r * cos(theta);
     REAL z = 0.;
 

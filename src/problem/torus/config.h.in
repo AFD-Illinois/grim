@@ -38,6 +38,7 @@
 #cmakedefine01  VISCOSITY
 #cmakedefine01  HIGHORDERTERMS_VISCOSITY
 #cmakedefine01  FAKE_EMHD
+#cmakedefine01  BACKREACTION
 
 
 /* Viscosity Model */

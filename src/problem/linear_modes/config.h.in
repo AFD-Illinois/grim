@@ -49,6 +49,7 @@
 #cmakedefine01  HIGHORDERTERMS_VISCOSITY
 #cmakedefine01  FAKE_EMHD
 #cmakedefine01  ADD_WIND_SOURCE
+#cmakedefine01  BACKREACTION
 
 /* Initial condition parameters */
 #cmakedefine    AMPLITUDE           (${AMPLITUDE})

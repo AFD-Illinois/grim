@@ -130,14 +130,19 @@ void computeMoments(const struct geometry geom[ARRAY_ARGS 1],
 
                         - elem->bCon[mu]*bCov[nu]
       #if (CONDUCTION) 
+        #if (BACKREACTION) /* If BACKREACTION == off, then evolve q 
+                              but don't backreact on the flow */
         + q/sqrt(bSqr)
         * (elem->uCon[mu]*bCov[nu] + elem->bCon[mu]*uCov[nu])
+        #endif
       #endif 
       #if  (VISCOSITY)
+        #if (BACKREACTION)
 	//Add -dP*(b^mu b^nu b^{-2} - 1/3 h^{mu nu})
 	-dP/bSqr*elem->bCon[mu]*bCov[nu]
 	+dP/3.
 	*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
+        #endif
       #endif
 	-FakeEMHDCoeff*elem->bCon[mu]*bCov[nu]/2.
 	+FakeEMHDCoeff*bSqr/6.*(DELTA(mu, nu)+elem->uCon[mu]*uCov[nu])
