@@ -9,7 +9,7 @@ well as in special relativistic, and general relativistic regimes.
 
 #### Linear modes
 
-![linear_modes_1d_slice](../linear_modes_1d_slice.png){: style="max-width: 450px; height: auto;"}
+![linear_modes_convergence](../linear_modes_convergence_full_emhd.png){:style="max-width: 500px; height: auto;"}
 
 #### Anisotropic Conduction _Snake_ Test
 
