@@ -19,6 +19,8 @@ well as in special relativistic, and general relativistic regimes.
 
 <iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>
 
+![radial_mag_field_growth](../MTI_growth_radial_magnetic_energy.png){:style="max-width: 500px; height: auto;"}
+
 ## Ideal MHD tests
 
 #### Sound modes
