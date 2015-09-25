@@ -11,6 +11,21 @@ well as in special relativistic, and general relativistic regimes.
 
 ![linear_modes_convergence](../linear_modes_convergence_full_emhd.png){:style="max-width: 500px; height: auto;"}
 
+#### EMHD Shock solutions
+
+![rho_viscosity](../stationary_shock_rho_viscosity.png){:style="max-width:600px; height: auto;"}
+![dP_viscosity](../stationary_shock_psi_viscosity.png){:style="max-width:600px; height: auto;"}
+
+#### Hydrostatic Conducting Atmosphere
+
+![atmosphere_heat_flux](../atmosphere_test_heat_flux.png){:style="max-width:600px; height: auto;"}
+![convergence_atmosphere](../convergence_test_atmosphere.png){:style="max-width:600px; height: auto;"}
+
+#### Bondi Inflow without backreaction
+
+![bondi_heat_flux](../bondi_heat_flux.png){:style="max-width:600px; height: auto;"}
+![bondi_pressure_anisotropy](../bondi_inflow_viscosity_soln.png){:style="max-width:550px; height: auto;"}
+
 #### Anisotropic Conduction _Snake_ Test
 
 <iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/wzz038mcelmflq8xvu8g?view=&sort=&direction=ASC&theme=light"></iframe>
