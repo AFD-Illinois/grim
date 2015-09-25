@@ -3,9 +3,14 @@ layout: page
 title: Algorithms
 ---
 
-$$\mathtt{grim}$$ uses a second order finite volume method to solve 
+$$\mathtt{grim}$$ uses a second order finite volume method to solve equations in the following conservative form
+\begin{align}
+\frac{\partial U}{\partial t} + \nabla\cdot F & = S
+\end{align}
+in a spatial volume $$d$$ with the boundary $$\partial d$$.
 
 ## Spatial Discretization
+The spatial volume $$d$$ is discretized by transforming into a set of chosen computational coordinates $$X^\mu$$, in which the coordinate axes are aligned to the transformed boundary $$\partial D$$. The domain in these coordinates is then discretized using a structured uniform hexahedral mesh.
 
 #### Grid generation
 ---

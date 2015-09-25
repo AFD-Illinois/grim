@@ -46,7 +46,8 @@ using the _Newton-Krylov_ algorithm, which iteratively solves for
 $$R(P^{n+1})\lt tol$$, where $$tol$$ is a chosen error tolerance. The algorithm
 numerically assembles the Jacobian during the iteration process using only the
 residuals $$R(P^{n+1})$$ as inputs. This automatic Jacobian assembly enables the
-inclusion of any physical model. $$\mathtt{grim}$$ is built on top of the
+inclusion of any physical model, including those in which have the source terms have spatio-temporal derivatives. 
+$$\mathtt{grim}$$ is built on top of the
 $$\mathtt{PETSc}$$[^PETSc_webpage] framework and uses the Newton-Krylov implementation in the
 $$\mathtt{snes}$$ module. The spatio-temporal discretizations are performed over
 a structured grid constructed using the $$\mathtt{DMDA}$$ module. Using the
