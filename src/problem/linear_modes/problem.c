@@ -124,7 +124,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         (delta_B2, ' = ', 0.029868974898203757 + 0.01675853753075467*I)
         (delta_B3, ' = ', -1.317599308756542e-17 - 3.254129323467699e-17*I)
         (delta_q, ' = ', 0.5233486841539429 + 0.04767672501939605*I)
-        (delta_dp, ' = ', -0.2909106062057659 - 0.021594520553365606*I)
+        (delta_dp, ' = ', 0.2909106062057659 + 0.021594520553365606*I)
        *
        * */
         
@@ -151,7 +151,6 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         deltaPrimVars[B2]  = 0.02986897489820372 + 0.016758537530754618*I;
         deltaPrimVars[B3]  = 0.;
         deltaPrimVars[PHI] = 0.5233486841539436 + 0.04767672501939603*I;
-        /* IMPORTANT NOTE: Balbusaur outputs deltaP, but psi = -deltaP */
         deltaPrimVars[PSI] = 0.2909106062057657 + 0.02159452055336572*I;
 
 //        deltaPrimVars[RHO] =  0.8245277155993238;
