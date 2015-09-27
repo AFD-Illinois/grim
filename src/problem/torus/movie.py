@@ -1,5 +1,11 @@
 # Parallel movie rendering code:
 # $ mpirun -np 8 python movie.py
+#
+# Code will spit out .png images. To make a movie do:
+#
+# ffmpeg -f image2 -i rho%04d.png -vcodec mpeg4 -mbd rd -trellis 2 -cmp 2 -g 300 -pass 1 -r 25 -b 18000000 movie.mp4
+#
+# [Replace ffmpeg by avconv wherever available]
 
 
 import h5py
