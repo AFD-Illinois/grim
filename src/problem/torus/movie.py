@@ -169,6 +169,21 @@ def returnMagneticVectorPotential(elem):
             
     return vectorPotential
 
+XMin = 0
+XMax = 25
+YMin = -25
+YMax = 25
+
+R_grid, THETA_grid = np.meshgrid(R[NG:-NG], THETA[NG:-NG])
+X = R_grid*np.sin(THETA_grid)
+Y = R_grid*np.cos(THETA_grid)
+alpha = np.sqrt(-gCon[:,:,0,0])**(-1)
+PolGamma = 4./3
+
+minorLocatorX   = pl.FixedLocator(np.linspace(0,60,13))
+minorLocatorY   = pl.FixedLocator(np.linspace(-20,20,9))
+majorLocatorX   = pl.FixedLocator(np.linspace(0,60,7))
+majorLocatorY   = pl.FixedLocator(np.linspace(-20,20,5))
 
 for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
 
@@ -176,32 +191,12 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     frame_index = file_number
 
     data_file = h5py.File(dump_file, "r")
-    primVars  = data_file['primVars'][:]
-    data_file.close()
+    primVars  = data_file['primVars']
 
-    #t = step*10+800
-    
     elem = returnFluidElement(primVars)
     A_plot = returnMagneticVectorPotential(elem)
     N_start = 1
             
-    XMin = 0
-    XMax = 25
-    YMin = -25
-    YMax = 25
-
-    R_grid, THETA_grid = np.meshgrid(R[NG:-NG], THETA[NG:-NG])
-    X = R_grid*np.sin(THETA_grid)
-    Y = R_grid*np.cos(THETA_grid)
-    alpha = np.sqrt(-gCon[:,:,0,0])**(-1)
-    PolGamma = 4./3
-
-    minorLocatorX   = pl.FixedLocator(np.linspace(0,60,13))
-    minorLocatorY   = pl.FixedLocator(np.linspace(-20,20,9))
-    majorLocatorX   = pl.FixedLocator(np.linspace(0,60,7))
-    majorLocatorY   = pl.FixedLocator(np.linspace(-20,20,5))
-
-    pl.clf()
     fig, axes = pl.subplots(nrows=1, ncols=3)
         
     fig.set_size_inches((24, 12))
@@ -298,4 +293,6 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     
     pl.tight_layout()
     pl.savefig(frames_folder_path + '/' + file_prefix + '%04d'%frame_index + '.png')
-    pl.clf()
+    pl.close()
+
+    data_file.close()
