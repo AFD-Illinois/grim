@@ -29,8 +29,10 @@ pl.rcParams['axes.linewidth']  = 1.5
 pl.rcParams['axes.titlesize']  = 'medium'
 pl.rcParams['axes.labelsize']  = 'medium'
 
-pl.rcParams['xtick.major.size'] = 8    
+pl.rcParams['xtick.major.size'] = 8
+pl.rcParams['xtick.major.width'] = 2
 pl.rcParams['xtick.minor.size'] = 4    
+pl.rcParams['xtick.minor.width'] = 2
 pl.rcParams['xtick.major.pad']  = 8    
 pl.rcParams['xtick.minor.pad']  = 8    
 pl.rcParams['xtick.color']      = 'k'    
@@ -38,7 +40,9 @@ pl.rcParams['xtick.labelsize']  = 'medium'
 pl.rcParams['xtick.direction']  = 'in'   
 
 pl.rcParams['ytick.major.size'] = 8    
+pl.rcParams['ytick.major.width'] = 2
 pl.rcParams['ytick.minor.size'] = 4    
+pl.rcParams['ytick.minor.width'] = 2
 pl.rcParams['ytick.major.pad']  = 8    
 pl.rcParams['ytick.minor.pad']  = 8    
 pl.rcParams['ytick.color']      = 'k'    
@@ -216,14 +220,10 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     ax.xaxis.set_major_locator(majorLocatorX)
     ax.xaxis.set_minor_locator(minorLocatorX)
     ax.xaxis.set_ticklabels([0,10,20,30,40,50],fontsize=fontsize_ticks)
-    ax.xaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.xaxis.set_tick_params(which='major', width=3,length=10)
     ax.yaxis.set_major_locator(majorLocatorY)
     ax.yaxis.set_minor_locator(minorLocatorY)
     ax.yaxis.set_ticklabels([-20,-10,0,10,20],fontsize=fontsize_ticks)
-    ax.yaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.yaxis.set_tick_params(which='major', width=3,length=10)
-    pl.title('$\\log_{10}(\\rho)$',fontsize=30)
+    pl.title('$\\log_{10}(\\rho)$')
 
     pl.axis([XMin, XMax, YMin, YMax])
     ax.set_aspect('equal')
@@ -241,25 +241,24 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     ax.xaxis.set_major_locator(majorLocatorX)
     ax.xaxis.set_minor_locator(minorLocatorX)
     ax.xaxis.set_ticklabels([0,10,20,30,40,50],fontsize=fontsize_ticks)
-    ax.xaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.xaxis.set_tick_params(which='major', width=3,length=10)
     ax.yaxis.set_major_locator(majorLocatorY)
     ax.yaxis.set_minor_locator(minorLocatorY)
     ax.yaxis.set_ticklabels([-20,-10,0,10,20],fontsize=fontsize_ticks)
-    ax.yaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.yaxis.set_tick_params(which='major', width=3,length=10)
-    pl.title('$\\log_{10}(q/\\rho c_s^3)$',fontsize=30)
+    pl.title('$\\log_{10}(q/\\rho c_s^3)$')
     
     pl.axis([XMin, XMax, YMin, YMax])
     ax.set_aspect('equal')
     
-    colouraxis = np.linspace(-4, 0.1, 100)
-    im=pl.contourf(X, Y, np.log10(abs(elem['q']/elem['rho']/elem['cs']**3.)), colouraxis, extend='min', cmap='Reds')
+    colouraxis = np.linspace(-3, 0., 100)
+    im=pl.contourf(X, Y, np.log10(abs(elem['q']/elem['rho']/elem['cs']**3.)), \
+                   colouraxis, extend='min', cmap='gist_stern_r')
 
+    vectorPotentialContourLines = np.linspace(-.22, .13, 100)
     pl.contour(X[N_start:-N_start, N_start:-N_start],
         Y[N_start:-N_start, N_start:-N_start],
         A_plot[N_start:-N_start, N_start:-N_start],
-        100, colors='black', linestyles='solid', alpha=0.25)
+        vectorPotentialContourLines, colors='black', linestyles='solid',
+        alpha=0.25)
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -273,14 +272,10 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     ax.xaxis.set_major_locator(majorLocatorX)
     ax.xaxis.set_minor_locator(minorLocatorX)
     ax.xaxis.set_ticklabels([0,10,20,30,40,50],fontsize=fontsize_ticks)
-    ax.xaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.xaxis.set_tick_params(which='major', width=3,length=10)
     ax.yaxis.set_major_locator(majorLocatorY)
     ax.yaxis.set_minor_locator(minorLocatorY)
     ax.yaxis.set_ticklabels([-20,-10,0,10,20],fontsize=fontsize_ticks)
-    ax.yaxis.set_tick_params(which='minor', length=5, width=2)
-    ax.yaxis.set_tick_params(which='major', width=3,length=10)
-    pl.title('$\\Delta P/b^2$',fontsize=30)
+    pl.title('$\\Delta P/b^2$')
     
     pl.axis([XMin, XMax, YMin, YMax])
     ax.set_aspect('equal')
@@ -291,14 +286,16 @@ for file_number, dump_file in yt.parallel_objects(enumerate(data_files)):
     pl.contour(X[N_start:-N_start, N_start:-N_start],
         Y[N_start:-N_start, N_start:-N_start],
         A_plot[N_start:-N_start, N_start:-N_start],
-        100, colors='black', linestyles='solid', alpha=0.25)
+        vectorPotentialContourLines, colors='black', linestyles='solid',
+        alpha=0.25)
     
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
     cbar = fig.colorbar(im,ticks=[-1,-0.5,0,0.5], cax=cax)
     
     pl.tight_layout()
-    pl.savefig(frames_folder_path + '/' + file_prefix + '%04d'%frame_index + '.png')
+    pl.savefig(frames_folder_path + '/' + file_prefix + '%04d'%frame_index + \
+            '.png')
     pl.close()
 
     data_file.close()
