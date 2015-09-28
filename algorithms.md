@@ -8,11 +8,11 @@ differential equations in the following conservative form
 \begin{align}
 \frac{\partial U}{\partial t} + \nabla\cdot F & = S
 \end{align}
-in a spatial volume $$d$$ with the boundary $$\partial d$$, where the conserved
-variables $$U \equiv U(P)$$, the fluxes $$F \equiv F(P)$$, and the sources $$S
-\equiv S(P)$$ are all functions of the primitive variables to be solved for,
-$$P$$. The formulation starts by discretizing the domain $$d$$, and is
-described below.
+in a spatial volume $$d$$ with the boundary $$\partial d$$, where the
+_conserved_ variables $$U \equiv U(P)$$, the _fluxes_ $$F \equiv F(P)$$, and the
+_sources_ $$S \equiv S(P)$$ are all functions of the primitive variables to be
+solved for, $$P$$. The formulation starts by discretizing the domain $$d$$, and
+is described below.
 
 #### Grid Generation
 ---
@@ -59,48 +59,63 @@ shown.<br>
 
 #### Temporal discretization
 ---
-Multiplying by $$dt$$, and performing the
-integral over a discrete time interval $$\Delta t$$, $$\int dt \partial_t(.)
-\rightarrow (.)_{n+1} - (.)_{n}$$, to get
+Multiplying further by $$dt$$, and performing the temporal integral $$\int dt
+\partial_t \bar{U}$$ over a discrete time interval $$\Delta t$$ gives
 $$\begin{align}
 \bar{U}_{n+1} - \bar{U}_n + \frac{\int dt \bar{F}^1_{right} - \int
 dt\bar{F}^1_{left}}{\Delta X^1} + \frac{\int dt\bar{F}^2_{top} - \int
 dt\bar{F}^2_{bottom}}{\Delta X^2} = \int dt \bar{S}
 \end{align}$$
 where the indices $$n$$, and $$n+1$$ indicate the discrete time levels. The
-volume and surface integrals are evaluated using a second order numerical
-quadrature, and thus $$\int dX^1 (.) \rightarrow \Delta X^1 (.)_{i+1/2}$$, and
-$$\int dX^2 (.) \rightarrow \Delta X^2 (.)_{j+1/2}$$. For the temporal integral
-$$\int dt (.)$$, $$\mathtt{grim}$$ can use either of the following three schemes:<br>
+volume integrals in $$\bar{U}$$, $$\bar{F}$$ and the surface integrals in
+$$\bar{F}^{1,2}$$ are evaluated using a second order numerical quadrature, and
+thus $$\int dX^1 (.) \rightarrow \Delta X^1 (.)_{i+1/2}$$, and $$\int dX^2 (.)
+\rightarrow \Delta X^2 (.)_{j+1/2}$$. For the temporal integrals $$\int dt
+\bar{F}^{1,2}$$ and $$\int dt \bar{S}$$, $$\mathtt{grim}$$ can use any of the
+following three schemes:<br>
 
 #### (1) Explicit time stepping:
 
- * $$\int dt(.) \rightarrow \Delta t (.)_{n+1/2}$$, where the temporal
-   half index $$n+1/2$$ indicates a half time step. This leads to the following
-   discrete equations<br>
+   
+  * Fluxes : $$\int dt\bar{F}^{1,2} \rightarrow \Delta t\bar{F}^{1,2}_{n+1/2}$$
+  * Sources : $$\int dt\bar{S} \rightarrow \Delta t\bar{S}_{n+1/2}$$
+  
+  The temporal half index $$n+1/2$$ indicates a half time step. This leads to
+  the following discrete equations<br>
    $$\begin{align} \frac{U_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} - U_{n, i+\frac{1}{2}, j+\frac{1}{2}}}{\Delta t} & \\ \nonumber + \frac{F^1_{n+\frac{1}{2}, i+1, j+\frac{1}{2}} - F^1_{n+\frac{1}{2}, i, j+\frac{1}{2}}}{\Delta X^1} + \frac{F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j+1} - F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j}}{\Delta     X^2} & = S_{n+\frac{1}{2}, i+\frac{1}{2}, j+\frac{1}{2}} \end{align}$$
+
+   A complete time step for this scheme is performed in two stages. A _half
+   step_ $$n \rightarrow n+1/2$$, to solve for the primitive variables at the
+   half step $$P_{n+1/2}$$, which are then used to compute
+   $$\bar{F}^{1,2}_{n+1/2}$$ and $$\bar{S}_{n+1/2}$$.  These are then used to
+   perform a full step $$n\rightarrow n+1$$, thus completing the time
+   integration over $$\Delta t$$.
    
 #### (2) _IMEX_ Implicit-Explicit time stepping
 
-  * $$\int dt(.) \rightarrow \Delta t (.)_{n+1/2}$$ for the integrals involves
-    spatial fluxes $$\int dt \bar{F}^1$$, $$\int dt \bar{F}^2$$, but the source
-    terms $$\int dt\bar{S}$$ are treated _implicitly_ as $$\int dt(.)
-    \rightarrow 0.5\Delta t\left((.)_n + (.)_{n+1} \right)$$. Thus we get<br>
+  * Fluxes (explicit) : $$\int dt\bar{F}^{1,2} \rightarrow \Delta t\bar{F}^{1,2}_{n+1/2}$$
+  * Sources (implicit) : $$\int dt\bar{S} \rightarrow 0.5\Delta t(\bar{S}_{n+1} +
+    \bar{S}_n)$$
+
+  This scheme is designed to handle the presence of stiff sources, by treating
+  them implicitly, while treating the flux terms explicitly. It leads to the
+  following discrete equations<br>
    $$\begin{align} \frac{U_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} - U_{n, i+\frac{1}{2}, j+\frac{1}{2}}}{\Delta t} & \\ \nonumber + \frac{F^1_{n+\frac{1}{2}, i+1, j+\frac{1}{2}} - F^1_{n+\frac{1}{2}, i, j+\frac{1}{2}}}{\Delta X^1} + \frac{F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j+1} - F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j}}{\Delta     X^2} & = 0.5\left(S_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} + S_{n, i+\frac{1}{2}, j+\frac{1}{2}}\right) \end{align}$$
    
 #### (3) Implicit time stepping:
   
-  * $$\int dt(.) \rightarrow 0.5\Delta t\left((.)_n + (.)_{n+1} \right)$$.
-    All the terms are treating implicitly, to get
+  * Fluxes : $$\int dt\bar{F}^{1,2} \rightarrow 0.5\Delta t(\bar{F}^{1,2}_{n+1}  + \bar{F}^{1,2}_n)$$.
+  * Sources : $$\int dt\bar{S} \rightarrow 0.5\Delta t(\bar{S}_{n+1} +
+    \bar{S}_n)$$
+
+    This scheme is much more expensive than the explicit and imex schemes as
+    will be described in the solver section.  However, a fully implicit scheme has
+    no Courant limits and is useful for testing new physics when the
+    characteristics are not known accurately. The discrete equations are<br>
     $$\begin{align} \label{eq:fvm_implicit_time_stepping}\frac{U_{n+1,
     i+\frac{1}{2}, j+\frac{1}{2}} - U_{n, i+\frac{1}{2}, j+\frac{1}{2}}}{\Delta
     t} & \\ \nonumber+ 0.5\left(\frac{F^1_{n+1, i+1, j+\frac{1}{2}} - F^1_{n+1, i,j+\frac{1}{2}}}{\Delta X^1} + \frac{F^2_{n+1, i+\frac{1}{2}, j+1} - F^2_{n+1,i+\frac{1}{2}, j}}{\Delta X^2}\right) \\ \nonumber + 0.5\left(\frac{F^1_{n, i+1,j+\frac{1}{2}} - F^1_{n, i, j+\frac{1}{2}}}{\Delta X^1} + \frac{F^2_{n,i+\frac{1}{2}, j+1} - F^2_{n, i+\frac{1}{2}, j}}{\Delta X^2}\right) & = 0.5\left(S_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} + S_{n, i+\frac{1}{2}, j+\frac{1}{2}}\right)\end{align}$$
 
-    The implicit time stepping option when turned on leads to the assembly of
-    globally coupled matrices and is thus more expensive than the explicit and
-    imex options. However, the implicit option is useful for testing in
-    sitations when one is dealing with new physics and the characteristic speeds
-    are not known.
 
 #### Spatio-temporal derivatives in the source terms
 ---
@@ -111,16 +126,30 @@ temporal derivatives in the source terms are approximated as $$\partial_t(.)
 approximated using _slope limited_ derivatives. The derivative of a quantity in
 the $$i$$ zone is computed from the values at the neighbouring points using
 $$\partial_{x}(.)\approx limiter\left[(.)_{i-1}, (.)_i, (.)_{i+1}\right] +
-O(\Delta x^2)$$. The spatial derivatives of the required quantities are computed
-using the primitive variables at the $$n+1/2$$ half-step for the explicit and
-imex schemes, whereas it is a combination of the $$n$$ and $$n+1$$ steps for the
-implicit scheme.
+error$$, where $$error \sim O(\Delta x^2)$$ in smooth flows and $$O(\Delta x)$$
+in the presence of discontinuities. The spatial derivatives of the required
+quantities are computed using the primitive variables at the $$n+1/2$$ half-step
+for the explicit and imex schemes, whereas it is a combination of the $$n$$ and
+$$n+1$$ steps for the implicit scheme.
 
 #### Reconstruction
 ---
-The finite volume method involves solving for the zone-averaged $$\bar{P}^{n+1}$$,
-which are obtained from the time evolved zone-averaged conserved variables
-$$\bar{U}^{n+1} \equiv U(\bar{P}^{n+1})$$. The fluxes at the face centers $$F^1_{}$$
+The finite volume method evolves the zone-averaged conserved variables
+$$\bar{U}_n \rightarrow \bar{U}_{n+1}$$, where $$\bar{U}_{n,n+1} \approx U_{n,
+n+1, i+1/2, j+1/2} \equiv U(P_{n, n+1, i+1/2, j+1/2})$$. Therefore, the
+conserved variables $$U$$ and the primitive variables $$U$$ are located at zone
+centers $$(i+1/2, j+1/2)$$, whereas the fluxes $$F(P)$$ need to be computed at
+the $$right$$, $$left$$, $$top$$ and $$bottom$$ face centers . Thus, the need to
+_reconstruct_ the values of the primitive variables $$P_{i+1/2, j+1/2}$$ to the
+zone faces. This is performed using a reconstruction operator $$R$$ which takes
+in primitive variables within a certain radius and constructs a polynomial
+interpolant from which the edge states can be computed. To achieve an error of
+$$O(\Delta x^2)$$, a linear interpolant is sufficient, for which the
+reconstruction operator has a stencil width of three grid zones. The operator
+can act in two directions depending on input order, $$R^+_{i+1/2} \equiv
+R(P_{i-1/2}, P_{i+1/2}, P_{i+3/2})$$ whose output is the $$right$$ state
+$$P_{i+1}$$, and $$R^-_{i+1/2} \equiv R(P_{i-1}, P_i, P_{i+1})$$, whose output
+is the $$left$$ state $$P_{i}$$.
 
 
 ![reconstruction](../reconstruction.png){: style="max-width: 500px; height: auto;"}
