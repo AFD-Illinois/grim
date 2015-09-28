@@ -11,7 +11,7 @@ differential equations in the following conservative form
 in a spatial volume $$d$$ with the boundary $$\partial d$$, where the conserved
 variables $$U \equiv U(P)$$, the fluxes $$F \equiv F(P)$$, and the sources $$S
 \equiv S(P)$$ are all functions of the primitive variables to be solved for,
-$$P$$. The formulation starts by discretizaing the domain $$d$$, and is
+$$P$$. The formulation starts by discretizing the domain $$d$$, and is
 described below.
 
 #### Grid Generation
