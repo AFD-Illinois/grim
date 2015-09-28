@@ -45,9 +45,9 @@ divergence theorem leads to,<br>
 $$\begin{align}
 \partial_t \bar{U} + \frac{\bar{F}^1_{right} - \bar{F}^1_{left}}{\Delta X^1} + \frac{\bar{F}^2_{top} - \bar{F}^2_{bottom}}{\Delta X^2} = \bar{S}
 \end{align}$$<br>
-where $$\bar{U} = \int U \Delta v/\int \Delta v$$, $$\bar{S} = \int S \Delta v/\int
-\Delta v$$ and $$\bar{F}^1 = \int F^1 dX^2/\int dX^2$$, $$\bar{F}^2 = \int F^2
-dX^1/\int dX^1$$. The locations $$right$$, $$left$$, $$top$$ and $$bottom$$ are
+where $$\bar{U} = (\int U \Delta v)/\int \Delta v$$, $$\bar{S} = (\int S \Delta
+v)/\int \Delta v$$, $$\bar{F}^1 = (\int F^1 dX^2)/\int dX^2$$, and $$\bar{F}^2 =
+(\int F^2 dX^1)/\int dX^1$$. The locations $$right$$, $$left$$, $$top$$ and $$bottom$$ are
 illustrated below for an individual grid zone. In $$\mathtt{grim}$$, we denote
 centers of the grid zones by half indices and faces by integer indices as
 shown.<br>
@@ -67,7 +67,14 @@ dt\bar{F}^2_{bottom}}{\Delta X^2} = \int dt \bar{S}
 where the indices $$n$$, and $$n+1$$ indicate the discrete time levels.  We
 evaluate the volume and surface integrals using a second order numerical
 quadrature, and thus $$\int dX^1 (.) \rightarrow \Delta X^1 (.)_{i+1/2}$$, and
-$$\int dX^2 (.) \rightarrow \Delta X^2 (.)_{j+1/2}$$. For the temporal integral
+$$\int dX^2 (.) \rightarrow \Delta X^2 (.)_{j+1/2}$$.
+The volume averaged source
+terms may contain spatio-temporal derivatives $$\bar{S} \equiv
+\bar{S}(\partial_t, \partial_i)$$. Whenever present, the temporal derivatives in
+the source terms are approximated as $$\partial_t(.) \approx ((.)_{n+1} -
+(.)_n)/\Delta t$$, and the spatial derivatives are approximated using 
+
+For the temporal integral
 $$\int dt (.)$$, we use three schemes:<br>
 
 #### (1) Explicit time stepping:
@@ -96,9 +103,6 @@ $$\begin{align} \label{eq:fvm_implicit_time_stepping}
  & = 0.5\left(S_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} + S_{n, i+\frac{1}{2}, j+\frac{1}{2}}\right)
 \end{align}$$
 
-The volume averaged source
-terms may contain spatio-temporal derivatives $$\bar{S} \equiv
-\bar{S}(\partial_t, \partial_i)$$. All the temporal derivatives 
 
 #### Reconstruction
 ---
