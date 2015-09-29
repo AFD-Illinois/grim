@@ -65,7 +65,7 @@ $$\begin{align}
 \bar{U}_{n+1} - \bar{U}_n + \frac{\int dt \bar{F}^1_{right} - \int
 dt\bar{F}^1_{left}}{\Delta X^1} + \frac{\int dt\bar{F}^2_{top} - \int
 dt\bar{F}^2_{bottom}}{\Delta X^2} = \int dt \bar{S}
-\end{align}$$
+\end{align}$$<br>
 where the indices $$n$$, and $$n+1$$ indicate the discrete time levels. The
 volume integrals in $$\bar{U}$$, $$\bar{F}$$ and the surface integrals in
 $$\bar{F}^{1,2}$$ are evaluated using a second order numerical quadrature, and
@@ -87,9 +87,10 @@ following three schemes:<br>
    A complete time step for this scheme is performed in two stages. A _half
    step_ $$n \rightarrow n+1/2$$, to solve for the primitive variables at the
    half step $$P_{n+1/2}$$, which are then used to compute
-   $$\bar{F}^{1,2}_{n+1/2}$$ and $$\bar{S}_{n+1/2}$$.  These are then used to
-   perform a full step $$n\rightarrow n+1$$, thus completing the time
-   integration over $$\Delta t$$.
+   $$\bar{F}^{1,2}_{n+1/2} \equiv \bar{F}^{1,2}(P_{n+1/2})$$ and
+   $$\bar{S}_{n+1/2} \equiv \bar{S}(P_{n+1/2})$$.  These are then used to perform a
+   full step $$n\rightarrow n+1$$, thus completing the time integration over
+   $$\Delta t$$.
    
 #### (2) _IMEX_ Implicit-Explicit time stepping
 
@@ -101,6 +102,9 @@ following three schemes:<br>
   them implicitly, while treating the flux terms explicitly. It leads to the
   following discrete equations<br>
    $$\begin{align} \frac{U_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} - U_{n, i+\frac{1}{2}, j+\frac{1}{2}}}{\Delta t} & \\ \nonumber + \frac{F^1_{n+\frac{1}{2}, i+1, j+\frac{1}{2}} - F^1_{n+\frac{1}{2}, i, j+\frac{1}{2}}}{\Delta X^1} + \frac{F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j+1} - F^2_{n+\frac{1}{2}, i+\frac{1}{2}, j}}{\Delta     X^2} & = 0.5\left(S_{n+1, i+\frac{1}{2}, j+\frac{1}{2}} + S_{n, i+\frac{1}{2}, j+\frac{1}{2}}\right) \end{align}$$
+
+   The computation of the fluxes at the half step is the same as in the explicit
+   scheme.
    
 #### (3) Implicit time stepping:
   
@@ -137,7 +141,7 @@ $$n+1$$ steps for the implicit scheme.
 The finite volume method evolves the zone-averaged conserved variables
 $$\bar{U}_n \rightarrow \bar{U}_{n+1}$$, where $$\bar{U}_{n,n+1} \approx U_{n,
 n+1, i+1/2, j+1/2} \equiv U(P_{n, n+1, i+1/2, j+1/2})$$. Therefore, the
-conserved variables $$U$$ and the primitive variables $$U$$ are located at zone
+conserved variables $$U$$ and the primitive variables $$P$$ are located at zone
 centers $$(i+1/2, j+1/2)$$, whereas the fluxes $$F(P)$$ need to be computed at
 the $$right$$, $$left$$, $$top$$ and $$bottom$$ face centers . Thus, the need to
 _reconstruct_ the values of the primitive variables $$P_{i+1/2, j+1/2}$$ to the
@@ -148,15 +152,50 @@ $$O(\Delta x^2)$$, a linear interpolant is sufficient, for which the
 reconstruction operator has a stencil width of three grid zones. The operator
 can act in two directions depending on input order, $$R^+_{i+1/2} \equiv
 R(P_{i-1/2}, P_{i+1/2}, P_{i+3/2})$$ whose output is the $$right$$ state
-$$P_{i+1}$$, and $$R^-_{i+1/2} \equiv R(P_{i-1}, P_i, P_{i+1})$$, whose output
-is the $$left$$ state $$P_{i}$$.
+$$P_{i+1}$$, and $$R^-_{i+1/2} \equiv R(P_{i+3/2}, P_{i+1/2}, P_{i-1/2})$$,
+whose output is the $$left$$ state $$P_{i}$$.
 
+Illustrated below are the sequence of steps needed to compute $$F^1_{left}$$ and
+$$F^1_{right}$$.
 
-![reconstruction](../reconstruction.png){: style="max-width: 500px; height: auto;"}
+![reconstruction](../reconstruction.png){: style="max-width: 550px; height: auto;"}
+
+  * (a) Apply the operator $$R^+_{i-1/2} \equiv R(P_{i-3/2}, P_{i-1/2},
+      P_{i+1/2})$$ to compute the primitive variables $$P^-_{i}$$ at the left
+      side of the $$left$$ face (index = $$i$$).
+
+  * (b) $$R^-_{i+1/2} \equiv R(P_{i+3/2}, P_{i+1/2},
+      P_{i-1/2})$$ to compute the primitive variables $$P^+_{i}$$ at the right
+      side of the $$left$$ face (index = $$i$$).
+
+    $$R^+_{i+1/2} \equiv R(P_{i-1/2}, P_{i+1/2}, P_{i+3/2})$$ to compute the
+    primitive variables $$P^-_{i+1}$$ at the left side of the $$right$$ face
+    (index = $$i+1$$).
+
+  * (c) $$R^-_{i+3/2} \equiv R(P_{i+5/2}, P_{i+3/2},
+      P_{i+1/2})$$ to compute the primitive variables $$P^+_{i+1}$$ at the right
+      side of the $$right$$ face (index = $$i+1$$).
+
+After the reconstruction procedure described in the above sequence of steps, we
+have the primitive variables at the left $$P^-_i$$ and the right $$P^+_i$$ sides
+of the $$left$$ face and at the left $$P^-_{i+1}$$ and the right $$P^+_{i+1}$$
+sides of the $$right$$ face. The fluxes at each face are then a function of the
+primitive variables at either side of the face, $$F^1_{left} \equiv
+F^1(P^-_i, P^+_i)$$ and $$F^1_{right} \equiv F^1(P^-_{i+1}, P^+_{i+1})$$. These
+are then computed using the _Riemann solver_.
 
 #### Riemann solver
 ---
 
+Given the left and right states on either side of a face, it is the job of the
+Riemann solver to compute the flux at the face. Shown below are the primitive
+variables after reconstruction.
+
+![riemann_problem](../riemann_problem.png){: style="max-width: 300px; height: auto;"}
+
+$$\mathtt{grim}$$ uses the Lax-Friedrichs approximate Riemann solver, which
+requires as an input the maximum characteristic speed of the physical model
+being solved.
 
 
 ## Newton-Krylov algorithm
