@@ -31,22 +31,17 @@ the sophistication of the model.
 In $$\mathtt{grim}$$, the governing equations of a particular model are written
 down in their conserved form and recast as a massive coupled nonlinear root
 finding problem. Writing down the equations of the model explicitly in terms of
-primitive variables to be solved for, $$P^{n+1}$$ and the known variables at the
-current discrete time step $$P^{n}$$, we have
+primitive variables to be solved for, $$P^{n+1}$$,
 \begin{align}
-R(P^{n+1}) = \left(\frac{\partial U}{\partial t}\right)\left(P^{n+1},
-P^{n}\right) + \left(\nabla\cdot F\right)\left(P^{n+1}, P^{n}\right) -
-S\left(P^{n+1}, P^{n}\right)
+R(P^{n+1}) = \frac{\partial U}{\partial t} + \nabla\cdot F - S
 \end{align}
-where $$R(P^{n+1})$$ are the _residuals_ and the exact forms of $$(\partial
-U/\partial t)(P^{n+1}, P^{n})$$, $$ (\nabla\cdot F) (P^{n+1}, P^{n})$$ and
-$$S(P^{n+1}, P^{n})$$ depend on the chosen spatio-temporal discretization
-scheme. We wish to find those $$P^{n+1}$$ for which $$R(P^{n+1}) = 0$$. We do so
-using the _Newton-Krylov_ algorithm, which iteratively solves for
-$$R(P^{n+1})\lt tol$$, where $$tol$$ is a chosen error tolerance. The algorithm
-numerically assembles the Jacobian during the iteration process using only the
-residuals $$R(P^{n+1})$$ as inputs. This automatic Jacobian assembly enables the
-inclusion of any physical model, including those in which the source terms have spatio-temporal derivatives. 
+where $$R(P^{n+1})$$ are the _residuals_. We wish to find those $$P^{n+1}$$ for
+which $$R(P^{n+1}) = 0$$. We do so using the _Newton-Krylov_ algorithm, which
+iteratively solves for $$R(P^{n+1})\lt tol$$, where $$tol$$ is a chosen error
+tolerance. The algorithm numerically assembles the Jacobian during the iteration
+process using only the residuals $$R(P^{n+1})$$ as inputs. This automatic
+Jacobian assembly enables the inclusion of any physical model, including those
+in which the source terms have spatio-temporal derivatives. 
 $$\mathtt{grim}$$ is built on top of the
 $$\mathtt{PETSc}$$[^PETSc_webpage] framework and uses the Newton-Krylov implementation in the
 $$\mathtt{snes}$$ module. The spatio-temporal discretizations are performed over
@@ -58,6 +53,7 @@ $$\mathtt{PETSc}$$ can use graph coloring and efficiently assemble the Jacobian.
 This allows us to use both _explicit_ $$\nabla\cdot F \equiv (\nabla\cdot F)
 (P^{n})$$, as well as _implicit_ $$\nabla \cdot F \equiv (\nabla \cdot
 F)(P^{n+1}, P^{n})$$ time stepping, and merge the code needed to do both into a
-single residual assembly routine.
+single residual assembly routine. For details, see the
+[algorithms](../algorithms) page.
 
 [^PETSc_webpage]: [Portable, Extensible Toolkit for Scientific Computation](http://www.mcs.anl.gov/petsc/)

@@ -11,8 +11,30 @@ differential equations in the following conservative form
 in a spatial volume $$d$$ with the boundary $$\partial d$$, where the
 _conserved_ variables $$U \equiv U(P)$$, the _fluxes_ $$F \equiv F(P)$$, and the
 _sources_ $$S \equiv S(P)$$ are all functions of the primitive variables to be
-solved for, $$P$$. The formulation starts by discretizing the domain $$d$$, and
-is described below.
+solved for, $$P$$. 
+
+#### PDE evolution as a _root finding_ problem
+---
+In $$\mathtt{grim}$$, the time evolution of the above PDE is cast as a massive
+nonlinear root finding problem, by re-writing it as<br>
+$$\begin{align}
+\mathbf{R}(P^{n+1}) = \frac{\partial U}{\partial t} + \nabla\cdot F - S
+\end{align}$$<br>
+where $$P^{n+1}$$ are the primitive variables that need to be solved for, and
+$$\mathbf{R}(P^{n+1})$$ is a vector of the $$residuals$$ at every spatial
+location in the discrete domain. The time evolution of the PDE then is a
+question of what the _roots_ $$P^{n+1}$$ of the above set of equations are. The
+exact form of $$\partial_t U \equiv (\partial_t U)(P^{n+1}, P^n)$$, $$
+\nabla\cdot F \equiv (\nabla \cdot F)(P^{n+1}, P^{n})$$ and $$S \equiv
+S(P^{n+1}, P^{n})$$ depend on the chosen temporal discretization scheme,
+and are described in the temporal discretization section. The roots are obtained
+by the _Newton-Krylov_ algorithm, which only requires the residuals $$R$$ as
+inputs. The Jacobian of the system needed for the nonlinear root finding is
+assembled automatically with the input residuals.
+
+The residuals $$\mathbf{R}$$ are assembled by discretizing the above
+conservative equations using the finite volume formulation, where all the
+individual steps are detailed in later sections.
 
 #### Grid Generation
 ---
@@ -184,19 +206,23 @@ primitive variables at either side of the face, $$F^1_{left} \equiv
 F^1(P^-_i, P^+_i)$$ and $$F^1_{right} \equiv F^1(P^-_{i+1}, P^+_{i+1})$$. These
 are then computed using the _Riemann solver_.
 
+The above procedure outlines the reconstruction in one-dimension. Since
+$$\mathtt{grim}$$ uses a structured mesh, the same one-dimension reconstruction
+operator along with the accompanying sequence of steps are followed to compute
+the edge states for the $$top$$ and $$bottom$$ faces.
+
 #### Riemann solver
 ---
 
-Given the left and right states on either side of a face, it is the job of the
-Riemann solver to compute the flux at the face. Shown below are the primitive
+Given the left and right states on either side of a face, an approximate Riemann
+solver is used to compute the flux at the face. Shown below are the primitive
 variables after reconstruction.
 
 ![riemann_problem](../riemann_problem.png){: style="max-width: 300px; height: auto;"}
 
-$$\mathtt{grim}$$ uses the Lax-Friedrichs approximate Riemann solver, which
-requires as an input the maximum characteristic speed of the physical model
-being solved.
-
-
-## Newton-Krylov algorithm
-
+$$\mathtt{grim}$$ uses the Lax-Friedrichs flux for its approximate Riemann
+solver, which requires as an input the maximum characteristic speed $$c_{max}$$
+of the physical model being solved. The Lax-Friedrichs flux is given by,<br>
+$$\begin{align}
+F^1_i = \frac{1}{2} (F^1(P^+_i) + F^1(P^-_i)) - c_{max}(U(P^+_i) - U(P^-_i))
+\end{align}$$
