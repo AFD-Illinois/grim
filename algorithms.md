@@ -18,10 +18,10 @@ solved for, $$P$$.
 In $$\mathtt{grim}$$, the time evolution of the above PDE is cast as a massive
 nonlinear root finding problem, by re-writing it as<br>
 $$\begin{align}
-\mathbf{R}(P^{n+1}) = \frac{\partial U}{\partial t} + \nabla\cdot F - S
+R(P^{n+1}) = \frac{\partial U}{\partial t} + \nabla\cdot F - S
 \end{align}$$<br>
 where $$P^{n+1}$$ are the primitive variables that need to be solved for, and
-$$\mathbf{R}(P^{n+1})$$ is a vector of the $$residuals$$ at every spatial
+$$R(P^{n+1})$$ is a vector of the $$residuals$$ at every spatial
 location in the discrete domain. The time evolution of the PDE then is a
 question of what the _roots_ $$P^{n+1}$$ of the above set of equations are. The
 exact form of $$\partial_t U \equiv (\partial_t U)(P^{n+1}, P^n)$$, $$
@@ -32,9 +32,52 @@ by the _Newton-Krylov_ algorithm, which only requires the residuals $$R$$ as
 inputs. The Jacobian of the system needed for the nonlinear root finding is
 assembled automatically with the input residuals.
 
-The residuals $$\mathbf{R}$$ are assembled by discretizing the above
-conservative equations using the finite volume formulation, where all the
-individual steps are detailed in later sections.
+The Newton-Krylov algorithm is summarized here. We want to solve 
+$$\begin{align}
+R(P^{n+1}) = \frac{\partial U}{\partial t} + \nabla\cdot F - S = 0
+\end{align}$$<br>
+The unknowns $$P^{n+1}$$ are solved for by<br>
+$$\begin{align}
+P^{n+1}_{k+1} = P^{n+1}_k + \delta P^{n+1}_k
+\end{align}$$<br>
+where $$k=0,1,2...$$ is the nonlinear Newton iteration index. The correction
+$$\delta
+P^{n+1}_k$$ is obtained by solving<br>
+$$\begin{align}
+\mathbf{J}(P^{n+1}_k) \delta P^{n+1}_k = - R(P^{n+1}_k)
+\end{align}$$<br>
+where $$\mathbf{J}(P^{n+1}_k)$$ is the Jacobian of the system, whose sparsity
+depends on the spatio-temporal scheme being used.  The above linear system is
+again solved iteratively using a preconditioned _Krylov_ subspace method, namely
+the _Generalized Minimal RESidual method_ (GMRES). Thus, the procedure is a
+nested iterative algorithm with the nonlinear Newton iteration at the other
+level, and an inner Krylov iteration to solve for the correction $$\delta
+P^{n+1}_k$$. The Newton iteration is continued till $$|R|<tol$$, where $$|.|$$
+is a chosen norm and $$tol$$ is the required tolerance.
+
+The Newton-Krylov algorithm allows for flexibility with respect to the
+underlying physical models because the sparse Jacobian is assembled efficiently
+by finite differencing of the residuals,<br>
+$$\begin{align}
+\mathbf{J}(P) \delta P \approx \frac{R(P + \epsilon \delta P) - R(P)}{\epsilon}
+\end{align}$$<br>
+where $$\epsilon$$ is a small parameter. $$\mathtt{grim}$$ uses the
+Newton-Krylov implementation in the $$\mathtt{snes}$$ module of the
+$$\mathtt{PETSC}$$ library[^PETSc_manual]. The $$\mathtt{PETSc}$$ library detects the
+connectivity between the elements based on our input discretization scheme and
+estimates the sparsity of the Jacobian through graph coloring[^graph_coloring], allowing for an
+efficient assembly for both _explicit_ and _implicit_ time stepping schemes.
+
+
+[^PETSc_manual]: [$$\mathtt{PETSc}$$ manual](http://www.mcs.anl.gov/petsc/petsc-current/docs/manual.pdf)
+
+[^graph_coloring]: [_What Color is Your Jacobian? Graph Coloring for Computing Derivatives_, Gebremedhin, Manne, Pothen, (2005)](http://www.ii.uib.no/~fredrikm/fredrik/papers/sirev2005.pdf)
+
+With the only inputs to the algoritm being the residuals, we now focus on the
+schemes involved in the residual assembly. The residuals $$R$$ are
+assembled by discretizing the above conservative equations using the finite
+volume formulation, where all the individual steps are detailed in later
+sections.
 
 #### Grid Generation
 ---
