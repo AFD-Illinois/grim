@@ -15,11 +15,18 @@ project(grim)
 
 
 # ------------------------------USER OPTIONS----------------------------------#
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
+# Options for icc:
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
+# Options for gcc:
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/manic/petsc_optimized")
+set(PETSC_DIR "/home/astro/Downloads/petsc_with_viennacl")
 #set(PETSC_ARCH "arch-darwin-c-opt")
+set(OpenCL_INCPATH "/opt/AMDAPPSDK-3.0/include")
+set(OpenCL_LIBPATH "/opt/AMDAPPSDK-3.0/lib")
+#set(OPENCL_INCLUDE_DIRS "/opt/AMDAPPSDK-3.0/include")
 
 # Double or float precision?
 set(REAL "double")
@@ -64,30 +71,34 @@ find_library(MATH_LIBRARIES m REQUIRED)
 # External packages
 find_package(PETSc REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(OpenCL REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-include_directories(${PETSC_INCLUDES} ${GSL_INCLUDE_DIRS})
+include_directories(${PETSC_INCLUDES} ${GSL_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
 
-add_subdirectory(geometry)
-add_subdirectory(physics)
-add_subdirectory(reconstruct)
-add_subdirectory(boundary)
-add_subdirectory(grid)
-add_subdirectory(timestepper)
+#add_subdirectory(geometry)
+#add_subdirectory(physics)
+#add_subdirectory(reconstruct)
+#add_subdirectory(boundary)
+#add_subdirectory(grid)
+#add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 include(${PROBLEM_DIR}/CMakeLists.txt)
 configure_file(${PROBLEM_DIR}/config.h.in ${CMAKE_SOURCE_DIR}/inputs.h)
-add_subdirectory(problem)
+#add_subdirectory(problem)
 
-add_executable(grim grim.c grim.h)
+add_executable(grim grim.cpp grim.h)
 
-target_link_libraries(grim geometry physics reconstruct boundary grid
-                      timestepper
-                      ${MATH_LIBRARIES}
-                      ${PETSC_LIBRARIES})
+#target_link_libraries(grim geometry physics reconstruct boundary grid
+#                      timestepper
+#                      ${MATH_LIBRARIES}
+#                      ${PETSC_LIBRARIES})
+
+target_link_libraries(grim ${MATH_LIBRARIES} ${PETSC_LIBRARIES}
+                      ${OPENCL_LIBRARIES})
 
 message("")
 message("#################")

@@ -1,85 +1,88 @@
-# Taken from https://gitorious.org/findopencl
+# - Find the OpenCL headers and library
 #
-# - Try to find OpenCL
-# This module tries to find an OpenCL implementation on your system. It supports
-# AMD / ATI, Apple and NVIDIA implementations, but should work, too.
+# Defines the following if found:
+#  OPENCL_FOUND        : TRUE if found, FALSE otherwise
+#  OPENCL_INCLUDE_DIRS : Include directories for OpenCL
+#  OPENCL_LIBRARIES    : The libraries to link against
 #
-# To set manually the paths, define these environment variables:
-# OpenCL_INCPATH    - Include path (e.g. OpenCL_INCPATH=/opt/cuda/4.0/cuda/include)
-# OpenCL_LIBPATH    - Library path (e.h. OpenCL_LIBPATH=/usr/lib64/nvidia)
-#
-# Once done this will define
-#  OPENCL_FOUND        - system has OpenCL
-#  OPENCL_INCLUDE_DIRS  - the OpenCL include directory
-#  OPENCL_LIBRARIES    - link these to use OpenCL
-#
-# WIN32 should work, but is untested
+# The user can set the OPENCLROOT environment variable to help finding OpenCL
+# if it is installed in a non-standard place.
 
-FIND_PACKAGE(PackageHandleStandardArgs)
+set(ENV_ATISTREAMSDKROOT "$ENV{ATISTREAMSDKROOT}")
+if(ENV_ATISTREAMSDKROOT)
+ set(ENV_OPENCLROOT "$ENV{ATISTREAMSDKROOT}")
+endif(ENV_ATISTREAMSDKROOT)
 
-SET (OPENCL_VERSION_STRING "0.1.0")
-SET (OPENCL_VERSION_MAJOR 0)
-SET (OPENCL_VERSION_MINOR 1)
-SET (OPENCL_VERSION_PATCH 0)
+set(ENV_AMDAPPSDKROOT "$ENV{AMDAPPSDKROOT}")
+if(ENV_AMDAPPSDKROOT)
+ set(ENV_OPENCLROOT "$ENV{AMDAPPSDKROOT}")
+endif(ENV_AMDAPPSDKROOT)
 
-IF (APPLE)
+set(ENV_INTELOCLSDKROOT "$ENV{INTELOCLSDKROOT}")
+if(ENV_INTELOCLSDKROOT)
+ set(ENV_OPENCLROOT "$ENV{INTELOCLSDKROOT}")
+endif(ENV_INTELOCLSDKROOT)
 
-	FIND_LIBRARY(OPENCL_LIBRARIES OpenCL DOC "OpenCL lib for OSX")
-	FIND_PATH(OPENCL_INCLUDE_DIRS OpenCL/cl.h DOC "Include for OpenCL on OSX")
-	FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS OpenCL/cl.hpp DOC "Include for OpenCL CPP bindings on OSX")
+set(ENV_OPENCLROOT2 "$ENV{OPENCLROOT}")
+if(ENV_OPENCLROOT2)
+ set(ENV_OPENCLROOT "$ENV{OPENCLROOT}")
+endif(ENV_OPENCLROOT2)
 
-ELSE (APPLE)
+if(ENV_OPENCLROOT)
+  find_path(
+    OPENCL_INCLUDE_DIR
+    NAMES CL/cl.h OpenCL/cl.h
+    PATHS "${ENV_OPENCLROOT}/include"
+    #NO_DEFAULT_PATH  #uncomment this is you wish to surpress the use of default paths for OpenCL
+    )
 
-	IF (WIN32)
+  if (("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows"))
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      set(OPENCL_LIB_SEARCH_PATH
+          "${OPENCL_LIB_SEARCH_PATH}"
+          "${ENV_OPENCLROOT}/lib/x86")
+    else(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      set(OPENCL_LIB_SEARCH_PATH
+          "${OPENCL_LIB_SEARCH_PATH}"
+          "${ENV_OPENCLROOT}/lib/x86_64")
+    endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  endif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows"))
+  find_library(
+    OPENCL_LIBRARY
+    NAMES OpenCL
+    PATHS "${OPENCL_LIB_SEARCH_PATH}"
+    #NO_DEFAULT_PATH  #uncomment this is you wish to surpress the use of default paths for OpenCL
+    )
+else(ENV_OPENCLROOT)
+  find_path(
+    OPENCL_INCLUDE_DIR
+    NAMES CL/cl.h OpenCL/cl.h
+    PATHS "${PROJECT_SOURCE_DIR}"      #use the CL/ include folder provided with ViennaCL
+    )
 
-		FIND_PATH(OPENCL_INCLUDE_DIRS CL/cl.h)
-		FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS CL/cl.hpp)
+  find_library(
+    OPENCL_LIBRARY
+    NAMES OpenCL
+    )
+endif(ENV_OPENCLROOT)
 
-		# The AMD SDK currently installs both x86 and x86_64 libraries
-		# This is only a hack to find out architecture
-		IF( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "AMD64" )
-			SET(OPENCL_LIB_DIR "$ENV{ATISTREAMSDKROOT}/lib/x86_64")
-		ELSE (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "AMD64")
-			SET(OPENCL_LIB_DIR "$ENV{ATISTREAMSDKROOT}/lib/x86")
-		ENDIF( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "AMD64" )
-		FIND_LIBRARY(OPENCL_LIBRARIES OpenCL.lib PATHS ${OPENCL_LIB_DIR} ENV OpenCL_LIBPATH)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  OPENCL
+  DEFAULT_MSG
+  OPENCL_LIBRARY OPENCL_INCLUDE_DIR
+  )
 
-		GET_FILENAME_COMPONENT(_OPENCL_INC_CAND ${OPENCL_LIB_DIR}/../../include ABSOLUTE)
+if(OPENCL_FOUND)
+  set(OPENCL_INCLUDE_DIRS "${OPENCL_INCLUDE_DIR}")
+  set(OPENCL_LIBRARIES "${OPENCL_LIBRARY}")
+else(OPENCL_FOUND)
+  set(OPENCL_INCLUDE_DIRS)
+  set(OPENCL_LIBRARIES)
+endif(OPENCL_FOUND)
 
-		# On Win32 search relative to the library
-		FIND_PATH(OPENCL_INCLUDE_DIRS CL/cl.h PATHS "${_OPENCL_INC_CAND}" ENV OpenCL_INCPATH)
-		FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS CL/cl.hpp PATHS "${_OPENCL_INC_CAND}" ENV OpenCL_INCPATH)
-
-	ELSE (WIN32)
-
-		# Unix style platforms
-		FIND_LIBRARY(OPENCL_LIBRARIES OpenCL
-			PATHS ENV LD_LIBRARY_PATH ENV OpenCL_LIBPATH
-		)
-
-		GET_FILENAME_COMPONENT(OPENCL_LIB_DIR ${OPENCL_LIBRARIES} PATH)
-		GET_FILENAME_COMPONENT(_OPENCL_INC_CAND ${OPENCL_LIB_DIR}/../../include ABSOLUTE)
-
-		# The AMD SDK currently does not place its headers
-		# in /usr/include, therefore also search relative
-		# to the library
-		FIND_PATH(OPENCL_INCLUDE_DIRS CL/cl.h PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
-		FIND_PATH(_OPENCL_CPP_INCLUDE_DIRS CL/cl.hpp PATHS ${_OPENCL_INC_CAND} "/usr/local/cuda/include" "/opt/AMDAPP/include" ENV OpenCL_INCPATH)
-
-	ENDIF (WIN32)
-
-ENDIF (APPLE)
-
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS)
-
-IF(_OPENCL_CPP_INCLUDE_DIRS)
-	SET( OPENCL_HAS_CPP_BINDINGS TRUE )
-	LIST( APPEND OPENCL_INCLUDE_DIRS ${_OPENCL_CPP_INCLUDE_DIRS} )
-	# This is often the same, so clean up
-	LIST( REMOVE_DUPLICATES OPENCL_INCLUDE_DIRS )
-ENDIF(_OPENCL_CPP_INCLUDE_DIRS)
-
-MARK_AS_ADVANCED(
-  OPENCL_INCLUDE_DIRS
-)
+mark_as_advanced(
+  OPENCL_INCLUDE_DIR
+  OPENCL_LIBRARY
+  )
 
