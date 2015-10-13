@@ -3,7 +3,7 @@
 #include <CL/cl.hpp>
 #include <yaml-cpp/yaml.h>
 
-#define STRINGIZE_SOURCE(...) #__VA_ARGS__
+#include <boost/preprocessor/stringize.hpp>
 
 int main(int argc, char **argv)
 { 
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
   }
 
 static const char *my_compute_program =
-STRINGIZE_SOURCE(
+BOOST_PP_STRINGIZE(
   __kernel void elementwise_prod(__global const float * vec1,
                                  __global const float * vec2,
                                  __global float * result,

@@ -22,9 +22,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/astro/Downloads/petsc_with_viennacl")
+set(PETSC_DIR "/home1/03669/tg829690/petsc_with_viennacl")
 #set(PETSC_ARCH "arch-darwin-c-opt")
-#set(YAML_ROOT_DIR "")
+set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build/")
+set(BOOST_ROOT "/opt/apps/intel15/boost/1.55.0/x86_64/")
 #set(OPENCLROOT "")
 
 # Double or float precision?
@@ -71,10 +72,12 @@ find_library(MATH_LIBRARIES m REQUIRED)
 find_package(PETSc REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(YAML REQUIRED)
+find_package(Boost REQUIRED)
 
 include_directories(${PETSC_INCLUDES} 
                     ${YAML_INCLUDES}
                     ${OPENCL_INCLUDE_DIRS}
+		    ${Boost_INCLUDE_DIRS}
                    )
 
 #add_subdirectory(geometry)
