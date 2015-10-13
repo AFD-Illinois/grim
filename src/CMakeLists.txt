@@ -24,9 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 # Set custom install folders here
 set(PETSC_DIR "/home/astro/Downloads/petsc_with_viennacl")
 #set(PETSC_ARCH "arch-darwin-c-opt")
-set(OpenCL_INCPATH "/opt/AMDAPPSDK-3.0/include")
-set(OpenCL_LIBPATH "/opt/AMDAPPSDK-3.0/lib")
-#set(OPENCL_INCLUDE_DIRS "/opt/AMDAPPSDK-3.0/include")
+#set(YAML_ROOT_DIR "")
+#set(OPENCLROOT "")
 
 # Double or float precision?
 set(REAL "double")
@@ -70,13 +69,13 @@ find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
 find_package(PETSc REQUIRED)
-find_package(OpenMP REQUIRED)
 find_package(OpenCL REQUIRED)
+find_package(YAML REQUIRED)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-
-include_directories(${PETSC_INCLUDES} ${GSL_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
+include_directories(${PETSC_INCLUDES} 
+                    ${YAML_INCLUDES}
+                    ${OPENCL_INCLUDE_DIRS}
+                   )
 
 #add_subdirectory(geometry)
 #add_subdirectory(physics)
@@ -97,8 +96,12 @@ add_executable(grim grim.cpp grim.h)
 #                      ${MATH_LIBRARIES}
 #                      ${PETSC_LIBRARIES})
 
-target_link_libraries(grim ${MATH_LIBRARIES} ${PETSC_LIBRARIES}
-                      ${OPENCL_LIBRARIES})
+target_link_libraries(grim 
+                      ${MATH_LIBRARIES} 
+                      ${PETSC_LIBRARIES}
+                      ${OPENCL_LIBRARIES}
+                      ${YAML_LIBRARIES}
+                     )
 
 message("")
 message("#################")

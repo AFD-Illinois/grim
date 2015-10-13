@@ -1,15 +1,16 @@
 #include "grim.h"
 #include <petscviennacl.h>
-#include <boost/preprocessor/stringize.hpp>
-//#include "inputs.h"
-#define VEX_STRINGIZE_SOURCE(...) #__VA_ARGS__
+#include <CL/cl.hpp>
+#include <yaml-cpp/yaml.h>
+
+#define STRINGIZE_SOURCE(...) #__VA_ARGS__
 
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
   int rank, size;
   MPI_Comm_size(PETSC_COMM_WORLD, &size);
-  MPI_Comm_size(PETSC_COMM_WORLD, &rank);
+  MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 
   typedef std::vector< viennacl::ocl::platform > platforms_type;
   platforms_type platforms = viennacl::ocl::get_platforms();
@@ -104,6 +105,46 @@ int main(int argc, char **argv)
                &dm
               );
 
+
+  if (rank==0)
+  {
+    YAML::Node input = YAML::LoadFile("input.yaml");
+
+    printf("N1 = %d, N2 = %d\n", 
+           input["domain"]["N1"].as<int>(),
+           input["domain"]["N2"].as<int>()
+          );
+
+    printf("left = %s, right = %s\n",
+           input["domain"]["boundaries"]["left"].as<std::string>().c_str(),
+           input["domain"]["boundaries"]["right"].as<std::string>().c_str()
+          );
+
+  }
+
+static const char *my_compute_program =
+STRINGIZE_SOURCE(
+  __kernel void elementwise_prod(__global const float * vec1,
+                                 __global const float * vec2,
+                                 __global float * result,
+                                 unsigned int size
+                                )
+  {
+    for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))
+      result[i] = vec1[i] * vec2[i];
+  };
+);
+
+   viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(my_compute_program, "my_compute_program");
+
+  viennacl::ocl::kernel & my_kernel_mul = my_prog.get_kernel("elementwise_prod");
+
+  viennacl::vector<double> vec1(numX1);
+  viennacl::vector<double> vec2(numX1);
+  viennacl::vector<double> result_mul(numX1);
+
+  cl::Context context;
+   viennacl::ocl::enqueue(my_kernel_mul(vec1, vec2, result_mul, static_cast<cl_uint>(vec1.size())));
 
   PetscFinalize();  
   return(0);

@@ -1,3 +1,4 @@
+# Taken from ViennaCL dev version
 # - Find the OpenCL headers and library
 #
 # Defines the following if found:
