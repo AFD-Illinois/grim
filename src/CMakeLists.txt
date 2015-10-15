@@ -22,10 +22,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Set custom install folders here
-set(PETSC_DIR "/home1/03669/tg829690/petsc_with_viennacl")
+set(PETSC_DIR "/global/home/users/manic/petsc_installation")
 #set(PETSC_ARCH "arch-darwin-c-opt")
-set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build/")
-set(BOOST_ROOT "/opt/apps/intel15/boost/1.55.0/x86_64/")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(BOOST_ROOT "/global/software/sl-6.x86_64/modules/intel/2015.0.090/boost/1.56.0-intel/")
+set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.2/share/ArrayFire/cmake")
 #set(OPENCLROOT "")
 
 # Double or float precision?
@@ -70,14 +71,26 @@ find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
 find_package(PETSc REQUIRED)
-find_package(OpenCL REQUIRED)
 find_package(YAML REQUIRED)
 find_package(Boost REQUIRED)
+find_package(ArrayFire REQUIRED)
+if (ArrayFire_CPU_FOUND)
+  message("-- ArrayFire CPU backend activated")
+  message("ArrayFire_CPU_LIBRARIES: " ${ArrayFire_CPU_LIBRARIES})
+endif()
+if (ArrayFire_CUDA_FOUND)
+  message("-- ArrayFire CUDA backend activated")
+  message("ArrayFire_CUDA_LIBRARIES: " ${ArrayFire_CUDA_LIBRARIES})
+endif()
+if (ArrayFire_OpenCL_FOUND)
+  message("-- ArrayFire OpenCL backend activated")
+  message("ArrayFire_OpenCL_LIBRARIES: " ${ArrayFire_OpenCL_LIBRARIES})
+endif()
 
 include_directories(${PETSC_INCLUDES} 
                     ${YAML_INCLUDES}
-                    ${OPENCL_INCLUDE_DIRS}
-		    ${Boost_INCLUDE_DIRS}
+		                ${Boost_INCLUDE_DIRS}
+                    ${ArrayFire_INCLUDE_DIRS}
                    )
 
 #add_subdirectory(geometry)
@@ -102,8 +115,8 @@ add_executable(grim grim.cpp grim.h)
 target_link_libraries(grim 
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
-                      ${OPENCL_LIBRARIES}
                       ${YAML_LIBRARIES}
+                      ${ArrayFire_OpenCL_LIBRARIES}
                      )
 
 message("")
