@@ -8,30 +8,36 @@ well as in special relativistic, and general relativistic regimes.
 ## Extended MHD
 
 #### Linear modes
-This test checks whether $$\mathtt{grim}$$ can correctly reproduce the linear
-modes of the EMHD model, while converging at the expected order.
+It is important to check that any numerical implementation of the EMHD model can
+reproduce the corresponding linear theory with an error which falls off at the
+expected order of spatio-temporal discretization. In order to perform this
+test, one needs to first derive the linear theory of the EMHD model.
 
-The governing equations of the extended MHD model are considerably more complex
-than those of ideal MHD. In particular, the forms of anisotropic dissipation
-which are sourced by spatio-temporal derivatives projected along the magnetic
-field lines make it challenging to derive the linear theory of this model for
-arbitrary inclinations of the wave vectors with the magnetic field. Even in
-special cases where the wave vector is parallel or perpendicular to the magnetic
-field, the derivation is prone to errors if done manually. To address
-this issue, we have written a general linear analysis package
-$$\mathtt{balbusaur}$$ on top of the $$\mathtt{sagemath}$$ computer algebra
-system. $$\mathtt{balbusaur}$$ takes as input the governing equations of any
-model, and generates the characteristic matrix of the corresponding linear
-theory. The eigenvectors of this matrix are then used as initial conditions in
-$$\mathtt{grim}$$, and their numerical evolutions checked against the
-corresponding analytic solutions.
+The governing equations of the EMHD model are considerably more complex than
+those of ideal MHD. In particular, the inclusion of both anisotropic pressure
+and conduction, both of which are sourced by spatio-temporal derivatives
+projected along the magnetic field lines make it challenging to derive the
+linear theory of this model, especially for arbitrary inclinations of the wave
+vectors $$\mathbf{k}$$ with the magnetic field. Even in special cases where
+$$\mathbf{k}\parallel\mathbf{B}$$ and $$\mathbf{k} \perpendicular \mathbf{B}$$,
+the derivation is prone to errors if done manually. To address this issue, we
+have written a general linear analysis package $$\mathtt{balbusaur}$$, built on
+top of the $$\mathtt{sagemath}$$ computer algebra system, which takes as input
+the governing equations of any model, and generates the characteristic matrix of
+the corresponding linear theory. The eigenvectors of this matrix are then used
+as initial conditions in $$\mathtt{grim}$$, and their numerical evolutions
+checked against the corresponding analytic solutions.
 
-In order to fully test the implementation, we choose a mode which excites the
-variables $$\{\rho, u, u^1, u^2, B^1, B^2, q, \Delta P\}$$, with a wave vector
-$$k_x = 2\pi, k_y = 4 \pi$$, which is misaligned with the background magnetic
-field $$B_{x0} = 0.1, B_{y0} = 0.3$$. Evidently, both the wave propagation vector
-$$\mathbf{k}$$ and the background magnetic field $$\mathbf{B}_0$$ are misaligned
-with the numerical grid.
+With $$\mathtt{balbusaur}$$, we have been able to compute the linear modes of
+the EMHD model for a relativistically hot configuration $$\rho \sim u$$,
+including both anisotropic pressure and conduction, and for any
+inclinations of the wave vector $$\mathbf{k}$$ with the magnetic field
+$$\mathbf{B}$$.  To fully test the numerical implementation, we choose a mode
+which excites the variables $$\{\rho, u, u^1, u^2, B^1, B^2, q, \Delta P\}$$,
+with a wave vector $$k_x = 2\pi, k_y = 4 \pi$$, which is misaligned with the
+background magnetic field $$B_{x0} = 0.1, B_{y0} = 0.3$$. Evidently, both the
+wave propagation vector $$\mathbf{k}$$ and the background magnetic field
+$$\mathbf{B}_0$$ are misaligned with the numerical grid.
 
 To run this test  
   * Open `src/CMakeLists.txt`  
@@ -39,6 +45,8 @@ To run this test
   * Open `src/problem/linear_modes/CMakeLists.txt`  
   * Set this mode using `set(PROBLEM "FULL_EMHD_2D")`  
 
+The plot shows that all evolved variables in $$\mathtt{grim}$$ converge to their
+respective analytic solutions at the expected second order.
 ![linear_modes_convergence](../linear_modes_convergence_full_emhd.png){:style="max-width: 500px; height: auto;"}
 
 #### EMHD Shock solutions
