@@ -2,42 +2,62 @@
 layout: page
 title: Tests
 ---
-$$\mathtt{grim}$$ has been tested extensively in both linear and nonlinear as
-well as in special relativistic, and general relativistic regimes.
+$$\mathtt{grim}$$ has been tested extensively in linear, nonlinear, special
+and general relativistic regimes. The tests below are grouped according to the
+physical model being solved, with subsections describing individual tests.
 
 ## Extended MHD
 
 #### Linear modes
 It is important to check that any numerical implementation of the EMHD model can
-reproduce the corresponding linear theory with an error which falls off at the
+reproduce the corresponding linear theory with an error that falls off at the
 expected order of spatio-temporal discretization. In order to perform this
 test, one needs to first derive the linear theory of the EMHD model.
 
 The governing equations of the EMHD model are considerably more complex than
 those of ideal MHD. In particular, the inclusion of both anisotropic pressure
-and conduction, both of which are sourced by spatio-temporal derivatives
-projected along the magnetic field lines make it challenging to derive the
-linear theory of this model, especially for arbitrary inclinations of the wave
-vectors $$\mathbf{k}$$ with the magnetic field. Even in special cases where
-$$\mathbf{k}\parallel\mathbf{B}$$ and $$\mathbf{k} \perpendicular \mathbf{B}$$,
-the derivation is prone to errors if done manually. To address this issue, we
-have written a general linear analysis package $$\mathtt{balbusaur}$$, built on
-top of the $$\mathtt{sagemath}$$ computer algebra system, which takes as input
-the governing equations of any model, and generates the characteristic matrix of
-the corresponding linear theory. The eigenvectors of this matrix are then used
-as initial conditions in $$\mathtt{grim}$$, and their numerical evolutions
-checked against the corresponding analytic solutions.
+and conduction, which are sourced by spatio-temporal derivatives projected along
+the magnetic field lines make it challenging to derive the linear theory of this
+model. This is especially so for arbitrary inclinations of the wave vectors
+$$\mathbf{k}$$ with the magnetic field $$\mathbf{B}$$. Even in special cases
+where $$\mathbf{k}\parallel\mathbf{B}$$ and $$\mathbf{k} \perp \mathbf{B}$$, the
+derivation is prone to errors if done manually. To address this issue, we have
+written a general linear analysis package $$\mathtt{balbusaur}$$[^balbusaur],
+built on top of the $$\mathtt{sagemath}$$ computer algebra system, which takes
+as input the governing equations of any model, and generates the characteristic
+matrix of the corresponding linear theory. The eigenvectors of this matrix are
+then used as initial conditions in $$\mathtt{grim}$$, and their numerical
+evolutions checked against the corresponding analytic solutions.
 
-With $$\mathtt{balbusaur}$$, we have been able to compute the linear modes of
-the EMHD model for a relativistically hot configuration $$\rho \sim u$$,
-including both anisotropic pressure and conduction, and for any
-inclinations of the wave vector $$\mathbf{k}$$ with the magnetic field
-$$\mathbf{B}$$.  To fully test the numerical implementation, we choose a mode
-which excites the variables $$\{\rho, u, u^1, u^2, B^1, B^2, q, \Delta P\}$$,
-with a wave vector $$k_x = 2\pi, k_y = 4 \pi$$, which is misaligned with the
-background magnetic field $$B_{x0} = 0.1, B_{y0} = 0.3$$. Evidently, both the
-wave propagation vector $$\mathbf{k}$$ and the background magnetic field
+With $$\mathtt{balbusaur}$$, we are able to compute the linear modes of the
+EMHD model for a relativistically hot configuration where rest mass energy
+density  $$\rho$$ is comparable to the internal energy density $$u$$, including
+both anisotropic pressure and conduction, and for any inclinations of the wave
+vector $$\mathbf{k}$$ with the magnetic field $$\mathbf{B}$$.  
+
+To thoroughly test the numerical implementation, we choose a mode which excites
+the variables $$\{\rho, u, u^1, u^2, B^1, B^2, q, \Delta P\}$$, with a wave
+vector $$k_x = 2\pi, k_y = 4 \pi$$, which is misaligned with the background
+magnetic field $$B_{x0} = 0.1, B_{y0} = 0.3$$. Evidently, both the wave
+propagation vector $$\mathbf{k}$$ and the background magnetic field
 $$\mathbf{B}_0$$ are misaligned with the numerical grid.
+
+The initial conditions are set with the following eigenmode
+
+| Variable     | Background state | Perturbed value                                  |
+|:------------:|:----------------:|:--------------------------------------------------------------------:|
+|$$\rho$$      |1.                |-0.518522524082246 - 0.1792647678001878*$$i$$     | 
+|$$u$$         |1.                |0.5516170736393813| 
+|$$u^1$$       |0.                |0.008463122479547856 + 0.011862022608466367*$$i$$ | 
+|$$u^2$$       |0.                |-0.16175466371870734 - 0.034828080823603294*$$i$$ | 
+|$$u^3$$       |0.                |0.                                                | 
+|$$B^1$$       |0.1               | -0.05973794979640743 - 0.03351707506150924*$$i$$ | 
+|$$B^2$$       |0.3               |0.02986897489820372 + 0.016758537530754618*$$i$$  | 
+|$$B^3$$       |0.                |0.                                                | 
+|$$q$$         |0.                |0.5233486841539429 + 0.04767672501939605*$$i$$    | 
+|$$\Delta P$$  |0.                |0.2909106062057659 + 0.021594520553365606*$$i$$   | 
+
+All the variables are 
 
 To run this test  
   * Open `src/CMakeLists.txt`  
@@ -45,9 +65,11 @@ To run this test
   * Open `src/problem/linear_modes/CMakeLists.txt`  
   * Set this mode using `set(PROBLEM "FULL_EMHD_2D")`  
 
-The plot shows that all evolved variables in $$\mathtt{grim}$$ converge to their
+The plot below shows that all evolved variables in $$\mathtt{grim}$$ converge to their
 respective analytic solutions at the expected second order.
 ![linear_modes_convergence](../linear_modes_convergence_full_emhd.png){:style="max-width: 500px; height: auto;"}
+
+[^balbusaur]: [$$\mathtt{balbusaur}$$](https://cloud.sagemath.com/projects/4aac3c0b-be00-496a-a5c9-9b6079c8ab02/files/grim/src/problem/linear_modes/Balbusaur.sagews): A framework for automated linear analysis. Hosted on [SageMathCloud](http://www.sagemath.com)
 
 #### EMHD Shock solutions
 
