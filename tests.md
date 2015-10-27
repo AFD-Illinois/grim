@@ -23,7 +23,7 @@ $$\mathbf{k}$$ with the magnetic field $$\mathbf{B}$$. Even in special cases
 where $$\mathbf{k}\parallel\mathbf{B}$$ and $$\mathbf{k} \perp \mathbf{B}$$, the
 derivation is prone to errors if done manually. To address this issue, we have
 written a general linear analysis package $$\mathtt{balbusaur}$$[^balbusaur],
-built on top of the $$\mathtt{sagemath}$$ computer algebra system, which takes
+built on top of the $$\mathtt{sagemath}$$[^sagemath] computer algebra system, which takes
 as input the governing equations of any model, and generates the characteristic
 matrix of the corresponding linear theory. The eigenvectors of this matrix are
 then used as initial conditions in $$\mathtt{grim}$$, and their numerical
@@ -37,27 +37,27 @@ vector $$\mathbf{k}$$ with the magnetic field $$\mathbf{B}$$.
 
 To thoroughly test the numerical implementation, we choose a mode which excites
 the variables $$\{\rho, u, u^1, u^2, B^1, B^2, q, \Delta P\}$$, with a wave
-vector $$k_x = 2\pi, k_y = 4 \pi$$, which is misaligned with the background
+vector $$k_x = 2\pi, k_y = 4 \pi$$, that is misaligned with the background
 magnetic field $$B_{x0} = 0.1, B_{y0} = 0.3$$. Evidently, both the wave
 propagation vector $$\mathbf{k}$$ and the background magnetic field
 $$\mathbf{B}_0$$ are misaligned with the numerical grid.
 
-The initial conditions are set with the following eigenmode
+The initial conditions are set with the following eigenmode having eigenvalue $$\omega$$ = -0.5533585207638108 - 3.626257128688849$$i$$.
 
 | Variable     | Background state | Perturbed value                                  |
-|:------------:|:----------------:|:--------------------------------------------------------------------:|
-|$$\rho$$      |1.                |-0.518522524082246 - 0.1792647678001878*$$i$$     | 
-|$$u$$         |1.                |0.5516170736393813| 
-|$$u^1$$       |0.                |0.008463122479547856 + 0.011862022608466367*$$i$$ | 
-|$$u^2$$       |0.                |-0.16175466371870734 - 0.034828080823603294*$$i$$ | 
+|:------------:|:----------------:|:------------------------------------------------:|
+|$$\rho$$      |1.                |-0.518522524082246-0.1792647678001878$$i$$     | 
+|$$u$$         |1.                |0.5516170736393813                                | 
+|$$u^1$$       |0.                |0.008463122479547856+0.011862022608466367$$i$$ | 
+|$$u^2$$       |0.                |-0.16175466371870734-0.034828080823603294$$i$$ | 
 |$$u^3$$       |0.                |0.                                                | 
-|$$B^1$$       |0.1               | -0.05973794979640743 - 0.03351707506150924*$$i$$ | 
-|$$B^2$$       |0.3               |0.02986897489820372 + 0.016758537530754618*$$i$$  | 
+|$$B^1$$       |0.1               | -0.05973794979640743-0.03351707506150924$$i$$ | 
+|$$B^2$$       |0.3               |0.02986897489820372+0.016758537530754618$$i$$  | 
 |$$B^3$$       |0.                |0.                                                | 
-|$$q$$         |0.                |0.5233486841539429 + 0.04767672501939605*$$i$$    | 
-|$$\Delta P$$  |0.                |0.2909106062057659 + 0.021594520553365606*$$i$$   | 
+|$$q$$         |0.                |0.5233486841539429+0.04767672501939605$$i$$    | 
+|$$\Delta P$$  |0.                |0.2909106062057659+0.021594520553365606$$i$$   | 
 
-All the variables are 
+All the variables are initialized as $$x = x_0 + A\delta x$$, where $$x$$ is the variable, $$x_0$$ is the background state, $$\delta x$$ is the perturbation and $$A$$ is the amplitude.
 
 To run this test  
   * Open `src/CMakeLists.txt`  
@@ -65,11 +65,62 @@ To run this test
   * Open `src/problem/linear_modes/CMakeLists.txt`  
   * Set this mode using `set(PROBLEM "FULL_EMHD_2D")`  
 
+The test has been run with the following options in `src/problem/linear_modes/CMakeLists.txt`
+
+    # Time stepping options: EXPLICIT, IMEX or IMPLICIT
+    set(TIME_STEPPING "IMEX")
+    set(DT "0.01")
+    set(DT_DUMP ".1")
+    set(START_TIME "0.")
+    set(FINAL_TIME ".5")
+    set(START_DUMP_COUNTER "0")
+    set(COURANT ".9")
+    set(MAX_DT_INCREMENT "1.3")
+
+    # Domain size. If the problem is 1D then N2 is ignored.
+    set(N1 "512")
+    set(N2 "512")
+
+    # Geometry
+    set(METRIC "MINKOWSKI")
+    set(EPS    "1e-5")
+
+    # Domain
+    set(X1_A  "0.")
+    set(X1_B  "1.")
+    set(X2_A  "0.")
+    set(X2_B  "1.")
+
+    # Boundary conditions
+    set(PHYSICAL_BOUNDARY_LEFT_EDGE   "PERIODIC")
+    set(PHYSICAL_BOUNDARY_RIGHT_EDGE  "PERIODIC")
+    set(PHYSICAL_BOUNDARY_TOP_EDGE    "PERIODIC")
+    set(PHYSICAL_BOUNDARY_BOTTOM_EDGE "PERIODIC")
+
+    # Reconstrution options
+    # MP5, MONOTONIZED_CENTRAL or MIN_MOD
+    set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
+
+    # Initial condition parameters 
+    # Mode options: 
+    # 1) ENTROPY_WAVE_1D
+    # 2) HYDRO_SOUND_MODE_1D
+    # 3) CONDUCTION_STABLE_1D
+    # 4) CONDUCTION_STABLE_2D
+    # 5) VISCOSITY_2D
+    # 6) VISCOSITY_1D
+    # 7) ALFVEN_2D
+    # 8) FIREHOSE
+    # 9) FULL_EMHD_2D
+    set(AMPLITUDE "1e-8")
+    set(MODE      "FULL_EMHD_2D")
+
 The plot below shows that all evolved variables in $$\mathtt{grim}$$ converge to their
 respective analytic solutions at the expected second order.
 ![linear_modes_convergence](../linear_modes_convergence_full_emhd.png){:style="max-width: 500px; height: auto;"}
 
 [^balbusaur]: [$$\mathtt{balbusaur}$$](https://cloud.sagemath.com/projects/4aac3c0b-be00-496a-a5c9-9b6079c8ab02/files/grim/src/problem/linear_modes/Balbusaur.sagews): A framework for automated linear analysis. Hosted on [SageMathCloud](http://www.sagemath.com)
+[^sagemath]: Sage Mathematics Software Version 6.7
 
 #### EMHD Shock solutions
 
