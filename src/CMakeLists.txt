@@ -19,14 +19,13 @@ project(grim)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
 
 # Set custom install folders here
-set(PETSC_DIR "/home/manic/petsc_optimized")
-#set(PETSC_ARCH "arch-darwin-c-opt")
-set(YAML_ROOT_DIR "/home/manic/yaml-cpp/build")
+set(PETSC_DIR "/global/home/users/manic/petsc_installation")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 #set(BOOST_ROOT "/global/software/sl-6.x86_64/modules/intel/2015.0.090/boost/1.56.0-intel/")
-set(ArrayFire_DIR "/home/manic/arrayfire-no-gl-3.1.2/share/ArrayFire/cmake")
+set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.2/share/ArrayFire/cmake")
 #set(OPENCLROOT "")
 
 # Double or float precision?
