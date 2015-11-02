@@ -128,6 +128,11 @@ respective analytic solutions at the expected second order.
 ![dP_viscosity](../stationary_shock_psi_viscosity.png){:style="max-width:600px; height: auto;"}
 
 #### Hydrostatic Conducting Atmosphere
+Relativisitic conduction in curved space-time contains qualitatively new
+features when compared to non-relativistic conduction because the heat flux is
+driven by _red-shifted_ temperature gradients $$\nabla_\mu T + T a_\mu$$ where
+$$a_\mu = u^\nu \nabla_\mu u_\nu$$ is the four-acceleration. We test this effect
+with a hydrostatic fluid configuration in a Schwarzschild metric.
 
 ![atmosphere_heat_flux](../atmosphere_test_heat_flux.png){:style="max-width:600px; height: auto;"}
 ![convergence_atmosphere](../convergence_test_atmosphere.png){:style="max-width:600px; height: auto;"}
