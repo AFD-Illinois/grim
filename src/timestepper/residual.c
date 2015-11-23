@@ -618,10 +618,9 @@ PetscErrorCode computeResidual(SNES snes,
     }
 
   #if (TIME_STEPPING==IMPLICIT)
-    DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
-
     DMDAVecRestoreArrayDOF(ts->dmdaWithGhostZones, primPetscVecLocal,
                            &primLocal);
+    DMRestoreLocalVector(ts->dmdaWithGhostZones, &primPetscVecLocal);
   #endif
 
   DMDAVecRestoreArrayDOF(ts->dmdaWithoutGhostZones, primPetscVec,

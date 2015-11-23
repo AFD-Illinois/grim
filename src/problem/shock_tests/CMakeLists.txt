@@ -6,12 +6,13 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMEX")
+set(TIME_STEPPING "IMPLICIT")
 set(DT "1e-5")
 set(DT_DUMP "1.")
 set(START_TIME "0.")
 set(FINAL_TIME "100.")
-set(COURANT "0.5")
+set(START_DUMP_COUNTER "0")
+set(COURANT "10.")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
@@ -45,8 +46,8 @@ set(METRIC "MINKOWSKI")
 set(EPS    "1e-5")
 
 # Domain
-set(X1_A  "-4.")
-set(X1_B  "4.")
+set(X1_A  "-1.")
+set(X1_B  "1.")
 set(X2_A  "0.")
 set(X2_B  "1.")
 
@@ -73,6 +74,11 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # COLLISION
 # STATIONARY_SHOCK
 set(SHOCK_TEST  "STATIONARY_SHOCK")
+set(HIGHORDERTERMS_CONDUCTION "OFF")
+set(HIGHORDERTERMS_VISCOSITY "OFF")
+set(ADD_WIND_SOURCE   "OFF")
+set(FAKE_EMHD "OFF")
+set(BACKREACTION "ON")
 
 # Floor values
 set(RHO_FLOOR         "1e-7")
