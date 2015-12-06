@@ -25,7 +25,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
 set(PETSC_DIR "/global/home/users/manic/petsc_installation")
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 #set(BOOST_ROOT "/global/software/sl-6.x86_64/modules/intel/2015.0.090/boost/1.56.0-intel/")
-set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.2/share/ArrayFire/cmake")
+set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.3/share/ArrayFire/cmake")
 #set(OPENCLROOT "")
 
 # Double or float precision?
@@ -115,7 +115,7 @@ target_link_libraries(grim
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}
-                      ${ArrayFire_OpenCL_LIBRARIES}
+                      ${ArrayFire_CPU_LIBRARIES}
                      )
 
 message("")

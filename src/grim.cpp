@@ -147,7 +147,7 @@ class geometry
     void XCoordsToxCoords(const array XCoords[NDIM], array xCoords[NDIM]);
     void setgCovInXCoords(const array xCoords[NDIM], array gCov[NDIM][NDIM]);
     void setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
-                                array gDet, array gCon[NDIM][NDIM]
+                                array &gDet, array gCon[NDIM][NDIM]
                                );
 
   public:
@@ -242,17 +242,12 @@ geometry::geometry(int numGhost)
   gConGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM, numGhost);
   connectionGrid  = new grid(NDIM*NDIM*NDIM,             numGhost);
 
-  grid indices(3, 0);
-
   /* Indices go from [-numGhost, N + numGhost) in each direction */
-  indices.vars[directions::X1] = 
-    af::range(af::dim4(gridParams::N1Local + 2*numGhost)) - numGhost;
-
-  indices.vars[directions::X2] =
-    af::range(af::dim4(gridParams::N2Local + 2*numGhost)) - numGhost;
-
-  indices.vars[directions::X3] =
-    af::range(af::dim4(gridParams::N3Local + 2*numGhost)) - numGhost;
+  array indices = 
+    af::range(af::dim4(gridParams::N1Local + 2*numGhost,
+                       gridParams::N2Local + 2*numGhost,
+                       gridParams::N3Local + 2*numGhost)
+             ) - numGhost;
 
   XCoordsGrid->vars[0 + NDIM*locations::CENTER] = 0.;
   XCoordsGrid->vars[0 + NDIM*locations::RIGHT]  = 0.;
@@ -264,13 +259,13 @@ geometry::geometry(int numGhost)
 
   /* X1 coordinate at all the locations */
   XCoordsGrid->vars[1 + NDIM*locations::CENTER] = 
-    params::X1Start + (indices.vars[directions::X1] + 0.5)*gridParams::dX1;
+    params::X1Start + (indices + 0.5)*gridParams::dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::LEFT]   = 
-    params::X1Start + (indices.vars[directions::X1]      )*gridParams::dX1;
+    params::X1Start + (indices      )*gridParams::dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::RIGHT]  = 
-    params::X1Start + (indices.vars[directions::X1] + 1. )*gridParams::dX1;
+    params::X1Start + (indices + 1. )*gridParams::dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::BOTTOM] = 
     XCoordsGrid->vars[1 + NDIM*locations::CENTER];
@@ -286,13 +281,13 @@ geometry::geometry(int numGhost)
 
   /* X2 coordinate at all the locations */
   XCoordsGrid->vars[2 + NDIM*locations::CENTER] = 
-    params::X2Start + (indices.vars[directions::X2] + 0.5)*gridParams::dX2;
+    params::X2Start + (indices + 0.5)*gridParams::dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::BOTTOM] = 
-    params::X2Start + (indices.vars[directions::X2]      )*gridParams::dX2;
+    params::X2Start + (indices      )*gridParams::dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::TOP]    = 
-    params::X2Start + (indices.vars[directions::X2] + 1. )*gridParams::dX2;
+    params::X2Start + (indices + 1. )*gridParams::dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[2 + NDIM*locations::CENTER];
@@ -308,13 +303,13 @@ geometry::geometry(int numGhost)
 
   /* X3 coordinate at all the locations */
   XCoordsGrid->vars[3 + NDIM*locations::CENTER] = 
-    params::X3Start + (indices.vars[directions::X3] + 0.5)*gridParams::dX3;
+    params::X3Start + (indices + 0.5)*gridParams::dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::BACK]   = 
-    params::X3Start + (indices.vars[directions::X3]      )*gridParams::dX3;
+    params::X3Start + (indices      )*gridParams::dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::FRONT]  = 
-    params::X3Start + (indices.vars[directions::X3] + 1. )*gridParams::dX3;
+    params::X3Start + (indices + 1. )*gridParams::dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[3 + NDIM*locations::CENTER];
@@ -344,12 +339,7 @@ geometry::geometry(int numGhost)
   }
 
   /* Use the following array to allocate other arrays */
-  zero = af::constant(0., 
-                      XCoords[locations::CENTER][0].dims(1),
-                      XCoords[locations::CENTER][0].dims(2), 
-                      XCoords[locations::CENTER][0].dims(3)
-                     );
-
+  zero = 0.*XCoords[locations::CENTER][0];
 
   for (int loc : axiSymmetricLocations)
   {
@@ -388,7 +378,7 @@ geometry::geometry(int numGhost)
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
-                                      array gDet,
+                                      array &gDet,
                                       array gCon[NDIM][NDIM]
                                      )
 {
@@ -791,7 +781,6 @@ timeStepper::~timeStepper()
 //
 //}
 
-
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
@@ -834,41 +823,270 @@ int main(int argc, char **argv)
   {
     //timeStepper ts;
     
-    grid prim(10, 0);
-    grid flux(10, 0);
     geometry geom(0);
+    geometry geomGhosted(params::numGhost);
+    grid primOldGhosted(vars::dof, params::numGhost);
+    grid consOld(vars::dof, 0);
+    grid consNew(vars::dof, 0);
+    grid fluxesX1OldGhosted(vars::dof, params::numGhost);
+    grid fluxesX2OldGhosted(vars::dof, params::numGhost);
+    grid fluxesX3OldGhosted(vars::dof, params::numGhost);
+
+    riemannSolver riemann(geomGhosted);
+
+    /* Initial conditions */
+    primOldGhosted.vars[vars::RHO] = 
+      1. + af::sin(2*M_PI*geomGhosted.xCoords[locations::CENTER][1]);
+    primOldGhosted.vars[vars::U]   = 1.;
+    primOldGhosted.vars[vars::U1]  = 0.;
+
+    riemann.solve(primOldGhosted, geomGhosted, directions::X1,
+                  fluxesX1OldGhosted);
+    riemann.solve(primOldGhosted, geomGhosted, directions::X2,
+                  fluxesX2OldGhosted);
+    riemann.solve(primOldGhosted, geomGhosted, directions::X3,
+                  fluxesX3OldGhosted);
+
     for (int var=0; var<vars::dof; var++)
     {
-      prim.vars[var] = af::randu(params::N1,
-                                 params::N2,
-                                 params::N3
+      double filter1D[] = {1, -1, 0};
+      
+      array filterX1 = array(3, 1, 1, 1, filter1D)/gridParams::dX1;
+      array filterX2 = array(1, 3, 1, 1, filter1D)/gridParams::dX2;
+      array filterX3 = array(1, 1, 3, 1, filter1D)/gridParams::dX3;
+
+      array dFluxX1_dX1 = convolve(fluxesX1OldGhosted.vars[var], filterX1);
+      array dFluxX2_dX2 = convolve(fluxesX2OldGhosted.vars[var], filterX2);
+      array dFluxX3_dX3 = convolve(fluxesX3OldGhosted.vars[var], filterX3);
+
+      consNew.vars[var] =  consOld.vars[var]
+                         + dFluxX1_dX1 + dFluxX2_dX2 + dFluxX3_dX3;
+    }
+  
+
+    grid prim(vars::dof, 0);
+    grid cons(vars::dof, 0);
+    //geometry geom(0);
+    for (int var=0; var<vars::dof; var++)
+    {
+      prim.vars[var] = af::randu(gridParams::N1Local,
+                                 gridParams::N2Local,
+                                 gridParams::N3Local, f64
                                 );
     }
 
-
     fluidElement elem(prim, geom, locations::CENTER);
-    elem.computeFluxes(geom, 0, flux);
+    elem.computeFluxes(geom, 0, cons);
 
-    grid jacobian(10*10, 0);
-    for (int column=0; column<vars::dof; column++)
+    grid primGuess(vars::dof, 0);
+    grid primGuessTrial(vars::dof, 0);
+    grid consGuess(vars::dof, 0);
+
+    grid residual(vars::dof, 0);
+
+    grid primGuessPlusEps(vars::dof, 0);
+    grid consGuessPlusEps(vars::dof, 0);
+
+    grid primGuessMinusEps(vars::dof, 0);
+    grid consGuessMinusEps(vars::dof, 0);
+
+    double epsilon = 4e-8;
+    array jacobianSoA = af::constant(0, 
+                                     gridParams::N1Local,
+                                     gridParams::N2Local,
+                                     gridParams::N3Local,
+                                     vars::dof * vars::dof, f64
+                                    );
+    array bSoA = af::constant(0., 
+                              gridParams::N1Local,
+                              gridParams::N2Local,
+                              gridParams::N3Local,
+                              vars::dof, f64
+                             );
+    array deltaPrimAoS = af::constant(0., 
+                                      vars::dof,
+                                      gridParams::N1Local,
+                                      gridParams::N2Local,
+                                      gridParams::N3Local, f64
+                                     );
+
+    array stepLengths = af::constant(1.,
+                                     gridParams::N1Local,
+                                     gridParams::N2Local,
+                                     gridParams::N3Local, f64
+                                    );
+
+    array residualSoA = af::constant(0.,
+                                     gridParams::N1Local,
+                                     gridParams::N2Local,
+                                     gridParams::N3Local,
+                                     vars::dof, f64
+                                    );
+
+    array fPrime0 = af::constant(0.,
+                                     gridParams::N1Local,
+                                     gridParams::N2Local,
+                                     gridParams::N3Local,
+                                     vars::dof, f64
+                                    );
+
+    for (int var=0; var<vars::dof; var++)
     {
-      primPlusEpsilon.vars[column] = prim.vars[column] + epsilon;
-      
-      elem.set(primPlusEpsilon, geom, locations::CENTER);
-
-      for (int row=0; row<vars::dof; row++)
-      {
-        jacobian.vars[row + vars::dof*column]
-          = conservedVars
-      }
+      primGuess.vars[var] = 
+        prim.vars[var] +  af::randu(gridParams::N1Local,
+                                         gridParams::N2Local,
+                                         gridParams::N3Local, f64
+                                        );
     }
 
+    for (int iter=0; iter < 10; iter++)
+    {
+      elem.set(primGuess, geom, locations::CENTER);
+      elem.computeFluxes(geom, 0, consGuess);
+
+      for (int var=0; var < vars::dof; var++)
+      {
+        residual.vars[var] = consGuess.vars[var] - cons.vars[var];
+        residualSoA(span, span, span, var) = residual.vars[var];
+
+        primGuessPlusEps.vars[var]  = primGuess.vars[var];
+      }
+
+      double globalL2Norm =  af::norm(af::flat(residualSoA));
+      printf("Nonliner iter = %d, error = %.15f\n", iter, globalL2Norm);
+
+      for (int row=0; row < vars::dof; row++)
+      {
+        primGuessPlusEps.vars[row]  = (1. + epsilon)*primGuess.vars[row]; 
+
+        elem.set(primGuessPlusEps, geom, locations::CENTER);
+        elem.computeFluxes(geom, 0, consGuessPlusEps);
+
+        for (int column=0; column < vars::dof; column++)
+        {
+          array residualPlusEps  = consGuessPlusEps.vars[column];
+          array residual         = consGuess.vars[column];
+
+          jacobianSoA(span, span, span, column + vars::dof*row)
+            = (residualPlusEps - residual)/(epsilon*primGuess.vars[row]);
+        }
+
+        /* reset */
+        primGuessPlusEps.vars[row]  = primGuess.vars[row]; 
+      }
+
+      /* Solve A x = b */
+      for (int var=0; var < vars::dof; var++)
+      {
+        bSoA(span, span, span, var) = -residual.vars[var];
+      }
+
+      array jacobianAoS = af::reorder(jacobianSoA, 3, 0, 1, 2);
+      array bAoS        = af::reorder(bSoA, 3, 0, 1, 2);
+
+      for (int k=0; k<gridParams::N3Local; k++)
+      {
+        for (int j=0; j<gridParams::N2Local; j++)
+        {
+          for (int i=0; i<gridParams::N1Local; i++)
+          {
+            array A = af::moddims(jacobianAoS(span, i, j, k), 
+                                  vars::dof, vars::dof
+                                 );
+
+            deltaPrimAoS(span, i, j, k) = af::solve(A, bAoS(span, i, j, k));
+          }
+        }
+      }
+
+      array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
+
+//      /* Quartic backtracking :
+//       * funcToMinimize \equiv 0.5 * normsL2 * normsL2
+//       */
+//      array f0      = 0.5 * af::sum(af::pow(residualSoA, 2.), 3);
+//      array fPrime0 = -2.*f0;
+//      
+//      array residualAoS = af::reorder(residualSoA, 3, 0, 1, 2);
+//
+//      for (int k=0; k<gridParams::N3Local; k++)
+//      {
+//        for (int j=0; j<gridParams::N2Local; j++)
+//        {
+//          for (int i=0; i<gridParams::N1Local; i++)
+//          {
+//            array jac = af::moddims(jacobianAoS(span, i, j, k),
+//                                    vars::dof, vars::dof
+//                                   );
+//            array y = deltaPrimAoS(span, i, j, k);
+//            array f = residualAoS(span, i, j, k);
+//            af_print(jac);
+//            af_print(f);
+//            array w = af::matmul(jac, f);
+//            
+//            //fPrime0(i, j, k, span) = af::sum(f * w, 3);
+//          }
+//        }
+//      }
+//
+//
+//
+//      af_print(fPrime0, 10);
+//      /* Start with a full step */
+//      stepLengths = 1.;
+//      for (int lineSearchIter=0; lineSearchIter < 3; lineSearchIter++)
+//      {
+//        /* 1) First take the full step */
+//        for (int var=0; var<vars::dof; var++)
+//        {
+//          primGuessTrial.vars[var] =  
+//            primGuess.vars[var] + stepLengths*deltaPrimSoA(span, span, span, var);
+//        } 
+//
+//        /* ...and then compute the norm */
+//        elem.set(primGuessTrial, geom, locations::CENTER);
+//        elem.computeFluxes(geom, 0, consGuess);
+//        for (int var=0; var<vars::dof; var++)
+//        {
+//          residual.vars[var] = consGuess.vars[var] - cons.vars[var];
+//          residualSoA(span, span, span, var) = residual.vars[var];
+//        }
+//        array f1 = 0.5 * af::sum(af::pow(residualSoA, 2.), 3);
+//
+//        /* We have 3 pieces of information:
+//         * a) f(0)
+//         * b) f'(0) 
+//         * c) f(1) 
+//         */
+//      
+//        double alpha    = 1e-4;
+//        array condition = f1 > f0 + alpha*fPrime0;
+//        array lamda     = -fPrime0/(2.*(f1 - f0 - fPrime0));
+//        stepLengths     = 1. - condition + condition*lamda;
+//
+//        array conditionIndices = where(condition > 0);
+////        if (conditionIndices.elements() == 0)
+////        {
+////          break;
+////        }
+//      }
+
+      /* stepLengths has now been set */
+      stepLengths = 1.;
+      for (int var=0; var<vars::dof; var++)
+      {
+        primGuess.vars[var] = 
+          primGuess.vars[var] + stepLengths*deltaPrimSoA(span, span, span, var);
+      }
+    }
 
   }
 
   PetscFinalize();  
   return(0);
 }
+
+
 
 grid::grid(int numVars, int numGhost)
 {
@@ -967,6 +1185,8 @@ grid::grid(int numVars, int numGhost)
 
   DMCreateGlobalVector(dm, &globalVec);
   DMCreateLocalVector(dmGhost, &localVec);
+  VecSet(globalVec, 0);
+  VecSet(localVec, 0);
 
   if (!gridParams::haveGridParamsBeenSet)
   {
@@ -989,7 +1209,9 @@ grid::grid(int numVars, int numGhost)
     gridParams::dX3 = (params::X3End - params::X3Start)/params::N3;
   }
 
+  vars = new array[numVars];
   array varsCopiedFromVec;
+
   if (numGhost > 0)
   {
     DMGlobalToLocalBegin(dmGhost, globalVec, INSERT_VALUES, localVec);
@@ -1008,6 +1230,7 @@ grid::grid(int numVars, int numGhost)
                 gridParams::N3Local,
                 pointerToLocalVec
                );
+
         break;
 
       case 2:
@@ -1018,6 +1241,7 @@ grid::grid(int numVars, int numGhost)
                 gridParams::N3Local,
                 pointerToLocalVec
                );
+
         break;
 
       case 3:
@@ -1028,6 +1252,7 @@ grid::grid(int numVars, int numGhost)
                 gridParams::N3Local + 2*numGhost,
                 pointerToLocalVec
                );
+
         break;
       }
 
@@ -1047,13 +1272,17 @@ grid::grid(int numVars, int numGhost)
     VecRestoreArray(globalVec, &pointerToGlobalVec);
   }
 
-  vars = new array[numVars];
+  array varsSoA = af::reorder(varsCopiedFromVec, 1, 2, 3, 0);
   for (int var=0; var<numVars; var++)
   {
-    vars[var] = varsCopiedFromVec(var, span, span, span);
+    vars[var] = varsSoA(span, span, span, var);
   }
-
 }
+
+//void grid::setVecWithVars(array vars[])
+//{
+//
+//}
 
 void grid::setVarsWithVec(Vec vec)
 {
@@ -1090,10 +1319,12 @@ void grid::setVarsWithVec(Vec vec)
     VecRestoreArray(vec, &pointerToGlobalVec);
   }
 
-  for (int var=0; var<vars::dof; var++)
+  array varsSoA = af::reorder(varsCopiedFromVec, 1, 2, 3, 0);
+  for (int var=0; var<numVars; var++)
   {
-    vars[var] = varsCopiedFromVec(var, span, span, span);
+    vars[var] = varsSoA(span, span, span, var);
   }
+
 }
 
 grid::~grid()
@@ -1126,7 +1357,18 @@ void fluidElement::set(const grid &prim,
                        const int location
                       )
 {
-  loc = location;
+  /* Set locations along axisymmetric direction to that of the center of the
+   * grid zone */
+  if (location==locations::FRONT || 
+      location==locations::BACK
+     )
+  {
+    loc = locations::CENTER;
+  }
+  else
+  {
+    loc = location;
+  }
 
   rho = prim.vars[vars::RHO] + params::rhoFloorInFluidElement;
   u   = prim.vars[vars::U  ] + params::uFloorInFluidElement;
@@ -1171,7 +1413,7 @@ void fluidElement::set(const grid &prim,
     }
   }
 
-  gammaLorentzFactor = 
+  gammaLorentzFactor =
     af::sqrt(1 + geom.gCov[loc][1][1] * u1 * u1
                + geom.gCov[loc][2][2] * u2 * u2
                + geom.gCov[loc][3][3] * u3 * u3
@@ -1181,7 +1423,7 @@ void fluidElement::set(const grid &prim,
                   + geom.gCov[loc][2][3] * u2 * u3
                  )
             );
-  
+
   uCon[0] = gamma/geom.alpha[loc];
   uCon[1] = u1 - gamma*geom.gCon[loc][0][1]*geom.alpha[loc];
   uCon[2] = u2 - gamma*geom.gCon[loc][0][2]*geom.alpha[loc];
@@ -1271,6 +1513,7 @@ void fluidElement::computeFluxes(const geometry &geom,
   {
     flux.vars[vars::DP] = g*(uCon[dir] * deltaPTilde);
   }
+
 }
 
 void fluidElement::computeSources(const geometry &geom,
@@ -1349,13 +1592,13 @@ void riemannSolver::solve(const grid &prim,
   reconstruct(prim, dir, *primLeft, *primRight);
 
   elemLeft->set(*primRight, geom, location);
-  elemRight->set(*primLeft, geom, location);
-
-  elemLeft->computeFluxes(geom, dir, *fluxLeft);
-  elemLeft->computeFluxes(geom, 0,   *consLeft);
-
-  elemRight->computeFluxes(geom, dir, *fluxRight);
-  elemRight->computeFluxes(geom, 0,   *consRight);
+//  elemRight->set(*primLeft, geom, location);
+//
+//  elemLeft->computeFluxes(geom, dir, *fluxLeft);
+//  elemLeft->computeFluxes(geom, 0,   *consLeft);
+//
+//  elemRight->computeFluxes(geom, dir, *fluxRight);
+//  elemRight->computeFluxes(geom, 0,   *consRight);
 
   double cLaxFriedrichs = 1.;
 
@@ -1385,22 +1628,22 @@ void riemannSolver::reconstruct(const grid &prim,
                                 grid &primRight
                                )
 {
-  float filter1D[]  = {1,-1, 0, /* Forward difference */
-                       0, 1,-1  /* Backward difference */
-                      };
+  double filter1D[]  = {1,-1, 0, /* Forward difference */
+                        0, 1,-1  /* Backward difference */
+                       };
   array filter;
   switch (dir)
   {
     case directions::X1:
-      filter =  array(3, 1, 1, 2, filter1D);
+      filter =  array(3, 1, 1, 2, filter1D)/gridParams::dX1;
       break;
 
     case directions::X2:
-      filter =  array(1, 3, 1, 2, filter1D);
+      filter =  array(1, 3, 1, 2, filter1D)/gridParams::dX2;
       break;
 
     case directions::X3:
-      filter =  array(1, 1, 3, 2, filter1D);
+      filter =  array(1, 1, 3, 2, filter1D)/gridParams::dX3;
       break;
   }
 
