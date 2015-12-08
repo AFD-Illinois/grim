@@ -1,22 +1,16 @@
 #include "../problem.h"
 
 #if (CONDUCTION)
-  REAL kappaProblem=0.1;
-  REAL tauProblem=.1; 
-
   void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
-//    elem->kappa = kappaProblem;
-//    elem->tau   = tauProblem;
-  
     REAL xCoords[NDIM];
     XTox(geom->XCoords, xCoords);
 
     REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
     REAL T   = P/elem->primVars[RHO];
-    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                    / (elem->primVars[RHO] + elem->primVars[UU])
+    REAL cs  = sqrt(  (ADIABATIC_INDEX)*P
+                    / (elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU])
                    );
 
     REAL phiCeil = elem->primVars[RHO] * pow(cs, 3.);
@@ -26,26 +20,23 @@
     REAL y            = elem->primVars[PHI]/phiCeil;
     REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
     
-    REAL tau    = tauDynamical*fermiDirac;
-    elem->kappa = cs*cs*tau*elem->primVars[RHO];
+    // Disable kinetic instabilities based relaxation timescale control for the
+    // shock tests. Just fix tau:
+    //REAL tau     = tauDynamical*fermiDirac;
+    REAL tau     = 0.1;
+    elem->kappa = 5.*cs*cs*tau*elem->primVars[RHO];
     elem->tau   = tau; 
   }
 #endif
 
 #if (VISCOSITY)
-  REAL etaProblem=0.1;
-  REAL tauVisProblem=.1; 
-
   void setViscosityParameters(const struct geometry geom[ARRAY_ARGS 1],
                                struct fluidElement elem[ARRAY_ARGS 1])
   {
-//    elem->eta     = etaProblem;
-//    elem->tauVis  = tauVisProblem;
-
     REAL P   = (ADIABATIC_INDEX-1.)*elem->primVars[UU];
     REAL T   = P/elem->primVars[RHO];
-    REAL cs  = sqrt(  (ADIABATIC_INDEX-1.)*P
-                    / (elem->primVars[RHO] + elem->primVars[UU])
+    REAL cs  = sqrt(  (ADIABATIC_INDEX)*P
+                    / (elem->primVars[RHO] + ADIABATIC_INDEX*elem->primVars[UU])
                    );
 
     REAL bSqr    = getbSqr(elem, geom);
@@ -57,8 +48,11 @@
     REAL y            = fabs(elem->primVars[PSI])/fabs(psiCeil);
     REAL fermiDirac   = 1./(exp((y-1.)/lambda) + 1.) + 1e-10;
     
-    REAL tau     = tauDynamical*fermiDirac;
-    elem->eta    = cs*cs*tau*elem->primVars[RHO];
+    // Disable kinetic instabilities based relaxation timescale control for the
+    // shock tests. Just fix tau:
+    //REAL tau     = tauDynamical*fermiDirac;
+    REAL tau     = 0.1;
+    elem->eta    = 3.*cs*cs*tau*elem->primVars[RHO];
     elem->tauVis = tau;
   }
 #endif
@@ -237,6 +231,47 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
           INDEX_PETSC(primOldGlobal, &zone, PSI)  = psiRight;
         #endif
       }
+
+      #if (SMOOTH_INITIAL_CONDITIONS)
+
+      REAL uLeft  = pressureLeft/(ADIABATIC_INDEX-1.);
+      REAL uRight = pressureRight/(ADIABATIC_INDEX-1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, RHO) =
+        rhoLeft + 0.5*(rhoRight - rhoLeft)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, UU) =
+        uLeft + 0.5*(uRight - uLeft)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, U1) =
+        u1Left + 0.5*(u1Right - u1Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, U2) =
+        u2Left + 0.5*(u2Right - u2Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, U3) =
+        u3Left + 0.5*(u3Right - u3Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, B1) =
+        B1Left + 0.5*(B1Right - B1Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, B2) =
+        B2Left + 0.5*(B2Right - B2Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+      INDEX_PETSC(primOldGlobal, &zone, B3) =
+        B3Left + 0.5*(B3Right - B3Left)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+
+        #if (CONDUCTION)
+          INDEX_PETSC(primOldGlobal, &zone, PHI) =
+          phiLeft + 0.5*(phiRight - phiLeft)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+        #endif
+
+        #if (VISCOSITY)
+          INDEX_PETSC(primOldGlobal, &zone, PSI) =
+          psiLeft + 0.5*(psiRight - psiLeft)*(tanh((XCoords[1])*SHARPNESS) + 1.);
+        #endif
+
+      #endif
 
     }
   }

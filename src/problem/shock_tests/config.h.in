@@ -45,19 +45,20 @@
 #cmakedefine01  CONDUCTION
 #cmakedefine01  VISCOSITY
 #cmakedefine01  HIGHORDERTERMS_CONDUCTION
-#cmakedefine01  VISCOSITY
 #cmakedefine01  HIGHORDERTERMS_VISCOSITY
 #cmakedefine01  FAKE_EMHD
 #cmakedefine01  ADD_WIND_SOURCE
 #cmakedefine01  BACKREACTION
+#cmakedefine01  SMOOTH_INITIAL_CONDITIONS
+#cmakedefine    SHARPNESS        (${SHARPNESS})
 
 
 /* Initial condition parameters */
 #cmakedefine    SHOCK_TEST      (${SHOCK_TEST})
 
 /* Geometry */
-#cmakedefine    METRIC              (${METRIC})
-#cmakedefine    EPS                 (${EPS})
+#cmakedefine    METRIC          (${METRIC})
+#cmakedefine    EPS             (${EPS})
 
 /* Domain */
 #cmakedefine    X1_A  (${X1_A})

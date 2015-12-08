@@ -6,18 +6,18 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "IMPLICIT")
+set(TIME_STEPPING "IMEX")
 set(DT "1e-5")
-set(DT_DUMP "1.")
+set(DT_DUMP "10.")
 set(START_TIME "0.")
-set(FINAL_TIME "100.")
+set(FINAL_TIME "10.")
 set(START_DUMP_COUNTER "0")
-set(COURANT "10.")
+set(COURANT "0.5")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "1")
-set(N1 "512")
+set(N1 "256")
 set(N2 "128")
 
 # The entire global domain is divided into tiles that are small enough to fit
@@ -38,7 +38,7 @@ set(USE_OPENMP   "NO")
 
 # Physics variables
 set(ADIABATIC_INDEX "4./3")
-set(CONDUCTION "OFF")
+set(CONDUCTION "ON")
 set(VISCOSITY  "ON")
 
 # Geometry
@@ -74,6 +74,8 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 # COLLISION
 # STATIONARY_SHOCK
 set(SHOCK_TEST  "STATIONARY_SHOCK")
+set(SMOOTH_INITIAL_CONDITIONS "OFF")
+set(SHARPNESS "10.") # Only gets used if smooth initial conditions is set
 set(HIGHORDERTERMS_CONDUCTION "OFF")
 set(HIGHORDERTERMS_VISCOSITY "OFF")
 set(ADD_WIND_SOURCE   "OFF")
