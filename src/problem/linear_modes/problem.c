@@ -443,45 +443,56 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
         REAL primVars0[DOF];
         REAL complex deltaPrimVars[DOF];
 
-        primVars0[RHO] = 1.;
+	primVars0[RHO] = 1.;
         primVars0[UU]  = 2.;
         primVars0[U1]  = 0.;
         primVars0[U2]  = 0.;
         primVars0[U3]  = 0.;
-        primVars0[B1]  = .001;
+        primVars0[B1]  = .1;
         primVars0[B2]  = 0.;
         primVars0[B3]  = 0.;
-	primVars0[PSI]  = 0.;
 	
-        deltaPrimVars[RHO] = 0.345907557128 + 2.08166817117e-17*I;
-        deltaPrimVars[UU]  = 0.922420152341;
-        deltaPrimVars[U1]  = -0.171584412179 - 4.06388721081e-05*I;
-        deltaPrimVars[U2]  = 0.;
+	deltaPrimVars[RHO] = 0.;
+	deltaPrimVars[UU]  = 0.;
+        deltaPrimVars[U1]  = 0.;
         deltaPrimVars[U3]  = 0.;
-        deltaPrimVars[B1]  = 0.;
-        deltaPrimVars[B2]  = 0.;
+	deltaPrimVars[B1]  = 0.;
         deltaPrimVars[B3]  = 0.;
-	deltaPrimVars[PSI]  = -0.00691108899638 - 0.000221744119852*I;
+        deltaPrimVars[PSI]  = 0.;
+
+        //Stable mode:
+	// Eigenvalue: 0.103664485011*I
+	primVars0[PSI]  = -0.009*sqrt(7.5e6);
+        deltaPrimVars[U2]  = 0.162786442451;
+        deltaPrimVars[B2]  = 0.986661326978;
+
+	//Unstable mode:
+	// Predicted growth rate: 0.103673892378
+	// Follows the linear growth rate up to ~5M
+	// then high-frequency noise becomes important (for N=128),
+	// as theoretically expected
+	primVars0[PSI]  = -0.011*sqrt(7.5e6);
+        deltaPrimVars[U2]  = -0.162800823514*I;
+        deltaPrimVars[B2]  = 0.98665895418;
 
 	etaProblem    = .1;
-        tauVisProblem = 10.;
+        tauVisProblem = 1.e6;
 
-	REAL FireSeed = 1.e-8;
-
-        REAL k1 = 2*M_PI;
+        REAL k1 = 2.*M_PI;
         REAL k2 = 0.;
 
         REAL complex mode = cexp(I*(k1*XCoords[1] + k2*XCoords[2]) );
 
         for (int var=0; var<DOF; var++)
         {
-	  if(var!=U2 && var!=B2)
-	    INDEX_PETSC(primOldGlobal, &zone, var) =  
-	      primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
+	  //if(var!=U2 && var!=B2)
+	  INDEX_PETSC(primOldGlobal, &zone, var) =  
+	    primVars0[var] + AMPLITUDE*creal(deltaPrimVars[var]*mode);
         }
-	mode = cexp(I*(k1*XCoords[1]*20 + k2*XCoords[2]) );
-	INDEX_PETSC(primOldGlobal, &zone, U2) = creal(FireSeed*mode);
-	INDEX_PETSC(primOldGlobal, &zone, B2) = -creal(FireSeed*mode*sqrt(11./3));
+	//REAL FireSeed = 1.e-8;
+	//mode = cexp(I*(k1*XCoords[1]*20 + k2*XCoords[2]) );
+	//INDEX_PETSC(primOldGlobal, &zone, U2) = creal(FireSeed*mode);
+	//INDEX_PETSC(primOldGlobal, &zone, B2) = -creal(FireSeed*mode*sqrt(11./3));
 	//PetscRandomGetValue(randNumGen, &randNum);
 	//INDEX_PETSC(primOldGlobal, &zone, U2) = FireSeed*randNum;
 	//PetscRandomGetValue(randNumGen, &randNum);
