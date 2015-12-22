@@ -24,9 +24,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
 # Set custom install folders here
 set(PETSC_DIR "/global/home/users/manic/petsc_installation")
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(BOOST_ROOT "/global/software/sl-6.x86_64/modules/intel/2015.0.090/boost/1.56.0-intel/")
 set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.3/share/ArrayFire/cmake")
-#set(OPENCLROOT "")
 
 # Double or float precision?
 set(REAL "double")
@@ -71,7 +69,6 @@ find_library(MATH_LIBRARIES m REQUIRED)
 # External packages
 find_package(PETSc REQUIRED)
 find_package(YAML REQUIRED)
-find_package(Boost REQUIRED)
 find_package(ArrayFire REQUIRED)
 if (ArrayFire_CPU_FOUND)
   message("-- ArrayFire CPU backend activated")
@@ -92,26 +89,26 @@ include_directories(${PETSC_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                    )
 
-#add_subdirectory(geometry)
-#add_subdirectory(physics)
+add_subdirectory(geometry)
+add_subdirectory(physics)
 #add_subdirectory(reconstruct)
 #add_subdirectory(boundary)
-#add_subdirectory(grid)
-#add_subdirectory(timestepper)
+add_subdirectory(grid)
+add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 include(${PROBLEM_DIR}/CMakeLists.txt)
 configure_file(${PROBLEM_DIR}/config.h.in ${CMAKE_SOURCE_DIR}/inputs.h)
 #add_subdirectory(problem)
 
-add_executable(grim grim.cpp grim.h)
+add_executable(grim grim.cpp grim.hpp params.hpp)
 
 #target_link_libraries(grim geometry physics reconstruct boundary grid
 #                      timestepper
 #                      ${MATH_LIBRARIES}
 #                      ${PETSC_LIBRARIES})
 
-target_link_libraries(grim 
+target_link_libraries(grim geometry physics grid timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

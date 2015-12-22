@@ -1,1 +1,1 @@
-add_library(grid grid.c grid.h)
+add_library(grid grid.cpp grid.hpp)

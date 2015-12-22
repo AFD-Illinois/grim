@@ -1,1 +1,1 @@
-add_library(geometry geometry.c geometry.h)
+add_library(geometry geometry.cpp geometry.hpp)
