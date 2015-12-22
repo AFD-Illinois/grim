@@ -28,6 +28,7 @@ namespace params
   int numGhost = 2;
 
   int timeStepper = timeStepping::EXPLICIT;
+  double dt = 0.01;
   int metric = metrics::MINKOWSKI;
   double hSlope = 0.3;
   double blackHoleSpin = 0.9375;
@@ -107,6 +108,28 @@ int main(int argc, char **argv)
     riemann.solve(primOldGhosted, geomGhosted, directions::X3,
                   fluxesX3OldGhosted);
 
+    for (int var=0; var<vars::dof; var++)
+    {
+      double filter1D[] = {1, -1, 0};
+      
+      array filterX1 = array(3, 1, 1, 1, filter1D)/gridParams::dX1;
+      array filterX2 = array(1, 3, 1, 1, filter1D)/gridParams::dX2;
+      array filterX3 = array(1, 1, 3, 1, filter1D)/gridParams::dX3;
+
+      array dFluxX1_dX1 = convolve(fluxesX1OldGhosted.vars[var], filterX1);
+      array dFluxX2_dX2 = convolve(fluxesX2OldGhosted.vars[var], filterX2);
+      array dFluxX3_dX3 = convolve(fluxesX3OldGhosted.vars[var], filterX3);
+
+      af::seq domainX1(params::numGhost, params::N1 + params::numGhost - 1);
+      af::seq domainX2(params::numGhost, params::N2 + params::numGhost - 1);
+      af::seq domainX3(params::numGhost, params::N3 + params::numGhost - 1);
+
+      consNew.vars[var] =  consOld.vars[var] 
+                         + params::dt*(  dFluxX1_dX1(domainX1, domainX2, domainX3)
+                                       + dFluxX2_dX2(domainX1, domainX2, domainX3)
+                                       + dFluxX3_dX3(domainX1, domainX2, domainX3)
+                                      );;
+    }
 
   }
 

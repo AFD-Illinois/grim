@@ -77,6 +77,7 @@ namespace params
   extern int numGhost;
 
   extern int timeStepper;
+  extern double dt;
   extern int metric;
   extern double hSlope;
   extern double blackHoleSpin;
