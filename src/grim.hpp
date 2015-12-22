@@ -4,6 +4,8 @@
 //#include <yaml-cpp/yaml.h>
 #include "params.hpp"
 #include "grid/grid.hpp"
+#include "geometry/geometry.hpp"
+#include "physics/physics.hpp"
 
 static const char help[] = 
     "GRIM -- General Relativistic Implicit Magnetohydrodynamics";

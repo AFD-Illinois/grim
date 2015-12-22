@@ -1,3 +1,4 @@
+#pragma once
 #ifndef GRIM_PARAMS_H_
 #define GRIM_PARAMS_H_
 
@@ -7,16 +8,12 @@ const int AXISYM_LOCATIONS = 5;
 
 namespace vars
 {
-  int RHO = 0;
-  int U   = 1;
-  int U1  = 2;
-  int U2  = 3;
-  int U3  = 4;
-  int B1  = 5;
-  int B2  = 6;
-  int B3  = 7;
-  int Q, DP;
-  int dof;
+  enum
+  {
+    RHO, U, U1, U2, U3, B1, B2, B3
+  };
+  extern int Q, DP;
+  extern int dof;
 };
 
 namespace locations
@@ -38,12 +35,12 @@ namespace directions
 
 namespace gridParams
 {
-  bool haveGridParamsBeenSet = 0;
-  int N1Local, N2Local, N3Local;
-  int iLocalStart, jLocalStart, kLocalStart;
-  int iLocalEnd,   jLocalEnd,   kLocalEnd;
+  extern bool haveGridParamsBeenSet;
+  extern int N1Local, N2Local, N3Local;
+  extern int iLocalStart, jLocalStart, kLocalStart;
+  extern int iLocalEnd,   jLocalEnd,   kLocalEnd;
 
-  double dX1, dX2, dX3;
+  extern double dX1, dX2, dX3;
 };
 
 namespace boundaries
@@ -73,42 +70,42 @@ namespace timeStepping
 
 namespace params
 {
-  int N1 = 8;
-  int N2 = 8;
-  int N3 = 8;
-  int dim = 3;
-  int numGhost = 2;
+  extern int N1;
+  extern int N2;
+  extern int N3;
+  extern int dim;
+  extern int numGhost;
 
-  int timeStepper = timeStepping::EXPLICIT;
-  int metric = metrics::MINKOWSKI;
-  double hSlope = 0.3;
-  double blackHoleSpin = 0.9375;
+  extern int timeStepper;
+  extern int metric;
+  extern double hSlope;
+  extern double blackHoleSpin;
 
-  double X1Start = 0., X1End = 1.;
-  double X2Start = 0., X2End = 1.;
-  double X3Start = 0., X3End = 1.;
+  extern double X1Start, X1End;
+  extern double X2Start, X2End;
+  extern double X3Start, X3End;
 
-  int boundaryLeft   = boundaries::PERIODIC;
-  int boundaryRight  = boundaries::PERIODIC;
+  extern int boundaryLeft;
+  extern int boundaryRight;
 
-  int boundaryTop    = boundaries::PERIODIC;
-  int boundaryBottom = boundaries::PERIODIC;
+  extern int boundaryTop;
+  extern int boundaryBottom;
 
-  int boundaryFront  = boundaries::PERIODIC;
-  int boundaryBack   = boundaries::PERIODIC;
+  extern int boundaryFront;
+  extern int boundaryBack;
 
-  double rhoFloorInFluidElement         = 1e-20;
-  double uFloorInFluidElement           = 1e-20;
-  double bSqrFloorInFluidElement        = 1e-20;
-  double temperatureFloorInFluidElement = 1e-20;
+  extern double rhoFloorInFluidElement;
+  extern double uFloorInFluidElement;
+  extern double bSqrFloorInFluidElement;
+  extern double temperatureFloorInFluidElement;
 
-  int conduction = 0;
-  int viscosity  = 0;
-  int highOrderTermsConduction = 1;
-  int highOrderTermsViscosity = 1;
-  double adiabaticIndex = 4./3;
+  extern int conduction;
+  extern int viscosity;
+  extern int highOrderTermsConduction;
+  extern int highOrderTermsViscosity;
+  extern double adiabaticIndex;
 
-  double slopeLimTheta = 2;
+  extern double slopeLimTheta;
 
 };
 

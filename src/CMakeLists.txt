@@ -29,10 +29,6 @@ set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.3/share/ArrayFir
 # Double or float precision?
 set(REAL "double")
 
-# Use as ARRAY_ARGS ARRAY_SIZE while declaring arrays in functions arguments
-# Must use -std=c99 if using the "restrict" keyword while compiling 
-set(ARRAY_ARGS "const restrict static")
-
 # Choose the problem to be solved:
 #
 # 1) linear_modes
@@ -98,15 +94,9 @@ add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 include(${PROBLEM_DIR}/CMakeLists.txt)
-configure_file(${PROBLEM_DIR}/config.h.in ${CMAKE_SOURCE_DIR}/inputs.h)
 #add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
-
-#target_link_libraries(grim geometry physics reconstruct boundary grid
-#                      timestepper
-#                      ${MATH_LIBRARIES}
-#                      ${PETSC_LIBRARIES})
 
 target_link_libraries(grim geometry physics grid timestepper
                       ${MATH_LIBRARIES} 
