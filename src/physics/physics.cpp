@@ -134,9 +134,9 @@ void fluidElement::set(const grid &prim,
 
       if (params::viscosity==1)
       {
-        TUpDown[mu][nu] += - deltaP       
+        TUpDown[mu][nu] += (- deltaP)       
                            * (  bCon[mu] * bCov[nu]/bSqr
-                              + (1./3.)*(DELTA(mu, nu) + uCon[mu]*uCov[nu])
+                              - (1./3.)*(DELTA(mu, nu) + uCon[mu]*uCov[nu])
                              );
       }
     }

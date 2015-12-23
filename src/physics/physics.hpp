@@ -71,7 +71,10 @@ class riemannSolver
                      grid &primRight
                     );
 
-    void solve(const grid &prim,
+  array slopeMM(const int dir,
+	       const array& in);
+
+  void solve(const grid &prim,
                const geometry &geom,
                const int dir,
                grid &fluxes

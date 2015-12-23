@@ -83,11 +83,7 @@ array minmod(array &x, array &y, array &z)
   return 0.25 * abs(signx + signy ) * (signx + signz ) * minOfAll;
 }
 
-void riemannSolver::reconstruct(const grid &prim,
-                                const int dir,
-                                grid &primLeft,
-                                grid &primRight
-                               )
+array riemannSolver::slopeMM(const int dir, const array& in)
 {
   double filter1D[]  = {1,-1, 0, /* Forward difference */
                         0, 1,-1  /* Backward difference */
@@ -108,19 +104,28 @@ void riemannSolver::reconstruct(const grid &prim,
       break;
   }
 
+  array dvar_dX = convolve(in, filter);
+
+  array forwardDiff  = dvar_dX(span, span, span, 0);
+  array backwardDiff = dvar_dX(span, span, span, 1);
+  array centralDiff  = backwardDiff + forwardDiff;
+
+  array left   = params::slopeLimTheta * backwardDiff;
+  array center = 0.5 * centralDiff;
+  array right  = params::slopeLimTheta * forwardDiff;
+
+  return  minmod(left, center, right);
+}
+
+void riemannSolver::reconstruct(const grid &prim,
+                                const int dir,
+                                grid &primLeft,
+                                grid &primRight
+                               )
+{
   for(int var=0; var<vars::dof; var++)
   {
-    array dvar_dX = convolve(prim.vars[var], filter);
-
-    array forwardDiff  = dvar_dX(span, span, span, 0);
-    array backwardDiff = dvar_dX(span, span, span, 1);
-    array centralDiff  = backwardDiff + forwardDiff;
-
-    array left   = params::slopeLimTheta * backwardDiff;
-    array center = 0.5 * centralDiff;
-    array right  = params::slopeLimTheta * forwardDiff;
-
-    array slope  =  minmod(left, center, right);
+    array slope = slopeMM(dir,prim.vars[var]);
 
     primLeft.vars[var]  = prim.vars[var] - 0.5*slope;
     primRight.vars[var] = prim.vars[var] + 0.5*slope;
