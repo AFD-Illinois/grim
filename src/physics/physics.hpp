@@ -48,7 +48,17 @@ class fluidElement
                        const int direction,
                        grid &flux
                       );
+  // Source terms. We use elemOld to compute time derivatives,
+  // and elemForSpatialDeriv to compute spatial derivatives.
+  // The timestepper is responsible for providing the correct
+  // elements for each operation, and the dt to use for time derivatives.
+  // NOTE: We assume that the current element doesn't have ghost zones,
+  // but that both elemOld and elemForSpatialDeriv do!!
     void computeSources(const geometry &geom,
+			const fluidElement &elemOld,
+			const fluidElement &elemForSpatialDeriv,
+			const double dt,
+			const int UseImplicitSources,
                         grid &sources
                        );
 };

@@ -180,6 +180,10 @@ void fluidElement::computeFluxes(const geometry &geom,
 }
 
 void fluidElement::computeSources(const geometry &geom,
+				  const fluidElement &elemOld,
+				  const fluidElement &elemForSpatialDeriv,
+				  const double dt,
+				  const int UseImplicitSources,
                                   grid &sources
                                  )
 {
@@ -205,4 +209,214 @@ void fluidElement::computeSources(const geometry &geom,
     }
   }
 
+  if (params::conduction || params::viscosity)
+    {
+      //Indexing used to go from ghosted -> non-ghosted elements
+      af::seq domainX1(params::numGhost, params::N1 + params::numGhost - 1);
+      af::seq domainX2(params::numGhost, params::N2 + params::numGhost - 1);
+      af::seq domainX3(params::numGhost, params::N3 + params::numGhost - 1);
+      //Riemann solver to get access to derivatives
+      geometry geomGhosted(params::numGhost);
+      riemannSolver riemann(geomGhosted);
+
+      // Non-ideal pieces
+      // First, compute part of the source terms
+      // shared by conduction and viscosity, i.e. 
+      // u_{\mu;\nu} and u^{\mu}_{;\mu}
+      array graduCov[NDIM][NDIM];     
+      array divuCov = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+      // Use this if the source terms are treated implicitly (we then
+      // compute them at the beginning and end of the step)
+      array graduCovOld[NDIM][NDIM];     
+      array divuCovOld = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+      for(int mu=0;mu<NDIM;mu++)
+	{
+	  for(int nu=0;nu<NDIM;nu++)
+	    {
+	      graduCov[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	      graduCovOld[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	    }
+	  // 1) Time derivatives. Note that the old element is ghosted.
+	  graduCov[0][mu] += (uCov[mu]-elemOld.uCov[mu](domainX1, domainX2, domainX3))/dt;
+	  // 2) Spatial derivatives.
+	  array du = riemann.slopeMM(directions::X1,elemForSpatialDeriv.uCov[mu]);
+	  graduCov[1][mu] += du(domainX1, domainX2, domainX3);
+	  du =  riemann.slopeMM(directions::X2,elemForSpatialDeriv.uCov[mu]);
+          graduCov[2][mu] += du(domainX1, domainX2, domainX3);
+	  du =  riemann.slopeMM(directions::X3,elemForSpatialDeriv.uCov[mu]);
+          graduCov[3][mu] += du(domainX1, domainX2, domainX3);
+	  // 3) Connection terms
+	  if(UseImplicitSources)
+	    {
+	      for(int nu=0;nu<NDIM;nu++)
+		for(int mu=0;mu<NDIM;mu++)
+		  {
+		    graduCovOld[nu][mu]=graduCov[nu][mu];
+		    for(int lambda=0;lambda<NDIM;lambda++)
+		      {
+			graduCov[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
+			graduCovOld[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*
+			  elemOld.uCov[lambda](domainX1, domainX2, domainX3);
+		      }
+		  }
+	    }
+	  else
+	    {
+	      for(int nu=0;nu<NDIM;nu++)
+                for(int lambda=0;lambda<NDIM;lambda++)
+                  graduCov[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*
+		    elemForSpatialDeriv.uCov[lambda](domainX1, domainX2, domainX3);
+	    }
+	}
+      // 4) Compute divergence. We could compute it from the derivatives of uCon,
+      //    but we already have u_{\mu;\nu}, so let's make use of it
+      for(int mu=0;mu<NDIM;mu++)
+	for(int nu=0;nu<NDIM;nu++)
+	  {
+	    divuCov += geom.gCon[mu][nu]*graduCov[mu][nu];
+	    if(UseImplicitSources)
+	      divuCovOld += geom.gCon[mu][nu]*graduCovOld[mu][nu];
+	  }
+      
+      // -------------------------------------
+      // Now, look at viscosity-specific terms
+      if(params::viscosity)
+	{
+	  // Compute target deltaP
+	  array deltaP0 = -divuCov*rho*nu;
+	  if(UseImplicitSources)
+	    {
+	      deltaP0 = 0.5*(deltaP0 -divuCovOld*elemOld.rho(domainX1, domainX2, domainX3)
+			     *elemOld.nu(domainX1, domainX2, domainX3));
+	      for(int mu=0;mu<NDIM;mu++)
+		for(int nu=0;nu<NDIM;nu++)
+		  deltaP0 += 0.5*(3.*rho*nu*bCon[mu]*bCon[nu]/bSqr*graduCov[mu][nu]+
+				  3.*elemOld.rho(domainX1, domainX2, domainX3)
+				  *elemOld.nu(domainX1, domainX2, domainX3)
+				  *elemOld.bCon[mu](domainX1, domainX2, domainX3)
+				  *elemOld.bCon[nu](domainX1, domainX2, domainX3)
+				  /elemOld.bSqr(domainX1, domainX2, domainX3)
+				  *graduCovOld[mu][nu]);
+	    }
+	  else
+	    for(int mu=0;mu<NDIM;mu++)
+	      for(int nu=0;nu<NDIM;nu++)
+		deltaP0 += 3.*elemForSpatialDeriv.rho(domainX1, domainX2, domainX3)
+		  *elemForSpatialDeriv.nu(domainX1, domainX2, domainX3)
+		  *elemForSpatialDeriv.bCon[mu](domainX1, domainX2, domainX3)
+		  *elemForSpatialDeriv.bCon[nu](domainX1, domainX2, domainX3)
+		  /elemForSpatialDeriv.bSqr(domainX1, domainX2, domainX3)
+		  *graduCov[mu][nu];
+	  
+	  if (params::highOrderTermsViscosity == 1)
+	    deltaP0 *= sqrt(elemForSpatialDeriv.tau(domainX1, domainX2, domainX3)
+			    /elemForSpatialDeriv.nu(domainX1, domainX2, domainX3)
+			    /elemForSpatialDeriv.rho(domainX1, domainX2, domainX3)
+			    /elemForSpatialDeriv.temperature(domainX1, domainX2, domainX3));
+	  
+	  
+	  if(UseImplicitSources)
+	    {
+	      sources.vars[vars::DP] += (deltaP0 - 0.5*deltaPTilde 
+					 - 0.5*elemOld.deltaPTilde(domainX1, domainX2, domainX3))
+		/elemForSpatialDeriv.tau(domainX1, domainX2, domainX3);
+	      if (params::highOrderTermsViscosity == 1)
+		sources.vars[vars::DP] += 0.25*divuCov*deltaPTilde
+		  +0.25*divuCovOld*elemOld.deltaPTilde(domainX1, domainX2, domainX3);
+	    }
+	  else
+	    {
+	      sources.vars[vars::DP] += (deltaP0 - elemForSpatialDeriv.deltaPTilde(domainX1, domainX2, domainX3))
+		/elemForSpatialDeriv.tau(domainX1, domainX2, domainX3);
+	      if (params::highOrderTermsViscosity == 1)
+		sources.vars[vars::DP] +=0.5*divuCov*elemForSpatialDeriv.deltaPTilde(domainX1, domainX2, domainX3);
+	    }
+	}
+
+      // -------------------------------------
+      // Finally, look at conduction-specific terms
+      if(params::conduction)
+	{
+	  array gradT[NDIM];
+	  for(int mu=0;mu<NDIM;mu++)
+	    gradT[mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	  gradT[0] = (temperature - elemOld.temperature(domainX1, domainX2, domainX3))/dt;
+	  array dT = riemann.slopeMM(directions::X1,elemForSpatialDeriv.temperature);
+	  gradT[1] = dT;
+	  dT = riemann.slopeMM(directions::X2,elemForSpatialDeriv.temperature);
+          gradT[2] = dT;
+	  dT = riemann.slopeMM(directions::X3,elemForSpatialDeriv.temperature);
+          gradT[3] = dT;
+	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	  if(UseImplicitSources)
+	    {
+	      array bnorm = sqrt(bSqr);
+	      array bnormOld = sqrt(elemOld.bSqr);
+	      for(int mu=0;mu<NDIM;mu++)
+		{
+		  q0 -= 0.5*(rho*chi*bCon[mu]/bnorm
+			     +elemOld.rho(domainX1, domainX2, domainX3)
+			     *elemOld.chi(domainX1, domainX2, domainX3)
+			     *elemOld.bCon[mu](domainX1, domainX2, domainX3)
+			     /bnormOld(domainX1, domainX2, domainX3))
+		    *gradT[mu];
+		  for(int nu=0;nu<NDIM;nu++)
+		    {
+		      q0 -= 0.5*(rho*chi*temperature*bCon[mu]/bnorm*uCon[nu]*graduCov[mu][nu]
+				 +elemOld.rho(domainX1, domainX2, domainX3)
+				 *elemOld.chi(domainX1, domainX2, domainX3)
+				 *elemOld.temperature(domainX1, domainX2, domainX3)
+				 *elemOld.bCon[mu](domainX1, domainX2, domainX3)
+				 /bnormOld(domainX1, domainX2, domainX3)
+				 *elemOld.uCon[nu](domainX1, domainX2, domainX3)
+				 *graduCovOld[mu][nu]);
+		    }
+		}
+	    }
+	  else
+	    {
+	      array bnorm = sqrt(elemForSpatialDeriv.bSqr);
+	      for(int mu=0;mu<NDIM;mu++)
+		{
+		  q0 -= elemForSpatialDeriv.rho(domainX1, domainX2, domainX3)
+		    *elemForSpatialDeriv.chi(domainX1, domainX2, domainX3)
+		    *elemForSpatialDeriv.bCon[mu](domainX1, domainX2, domainX3)
+		    /bnorm(domainX1, domainX2, domainX3)
+		    *gradT[mu];
+		  for(int nu=0;nu<NDIM;nu++)
+		    q0 -= elemForSpatialDeriv.rho(domainX1, domainX2, domainX3)
+		      *elemForSpatialDeriv.chi(domainX1, domainX2, domainX3)
+		      *elemForSpatialDeriv.temperature(domainX1, domainX2, domainX3)
+		      *elemForSpatialDeriv.bCon[mu](domainX1, domainX2, domainX3)
+		      /bnorm(domainX1, domainX2, domainX3)
+		      *elemForSpatialDeriv.uCon[nu](domainX1, domainX2, domainX3)
+		      *graduCov[mu][nu];
+		}
+	    }
+	  if (params::highOrderTermsConduction == 1)
+	    q0 *= sqrt(elemForSpatialDeriv.tau(domainX1, domainX2, domainX3)
+		       /elemForSpatialDeriv.chi(domainX1, domainX2, domainX3)
+		       /elemForSpatialDeriv.rho(domainX1, domainX2, domainX3))
+	      /elemForSpatialDeriv.temperature(domainX1, domainX2, domainX3);
+	  
+	  
+	  if(UseImplicitSources)
+	    {
+	      sources.vars[vars::Q] += (q0 - 0.5*qTilde 
+					 - 0.5*elemOld.qTilde(domainX1, domainX2, domainX3))
+		/elemForSpatialDeriv.tau(domainX1, domainX2, domainX3);
+	      if (params::highOrderTermsConduction == 1)
+		sources.vars[vars::Q] += 0.25*divuCov*qTilde
+		  +0.25*divuCovOld*elemOld.qTilde(domainX1, domainX2, domainX3);
+	    }
+	  else
+	    {
+	      sources.vars[vars::Q] += (q0 - elemForSpatialDeriv.qTilde(domainX1, domainX2, domainX3))
+		/elemForSpatialDeriv.tau(domainX1, domainX2, domainX3);
+	      if (params::highOrderTermsConduction == 1)
+		sources.vars[vars::Q] +=0.5*divuCov*elemForSpatialDeriv.qTilde(domainX1, domainX2, domainX3);
+	    }
+
+	}
+    }
 }

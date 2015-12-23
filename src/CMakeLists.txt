@@ -22,9 +22,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
 
 # Set custom install folders here
-set(PETSC_DIR "/global/home/users/manic/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_DIR "/global/home/users/manic/arrayfire-no-gl-3.1.3/share/ArrayFire/cmake")
+set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/share/ArrayFire/cmake")
 
 # Double or float precision?
 set(REAL "double")
@@ -64,7 +64,7 @@ find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
 find_package(PETSc REQUIRED)
-find_package(YAML REQUIRED)
+#find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 if (ArrayFire_CPU_FOUND)
   message("-- ArrayFire CPU backend activated")
@@ -80,7 +80,7 @@ if (ArrayFire_OpenCL_FOUND)
 endif()
 
 include_directories(${PETSC_INCLUDES} 
-                    ${YAML_INCLUDES}
+#                    ${YAML_INCLUDES}
 		                ${Boost_INCLUDE_DIRS}
                     ${ArrayFire_INCLUDE_DIRS}
                    )
@@ -101,7 +101,7 @@ add_executable(grim grim.cpp grim.hpp params.hpp)
 target_link_libraries(grim geometry physics grid timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
-                      ${YAML_LIBRARIES}
+#                      ${YAML_LIBRARIES}
                       ${ArrayFire_CPU_LIBRARIES}
                      )
 
