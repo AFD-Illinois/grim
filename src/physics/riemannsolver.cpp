@@ -75,7 +75,12 @@ array minmod(array &x, array &y, array &z)
                            af::abs(z)
                           );
 
-  return 0.25 * abs(sign(x) + sign(y) ) * (sign(x) + sign(z) ) * minOfAll;
+  //Stupid convention in ArrayFire: sign(x)=1 for x<0 and sign(x)=0 for x>0
+  array signx = 1.-2.*sign(x);
+  array signy = 1.-2.*sign(y);
+  array signz = 1.-2.*sign(z);
+
+  return 0.25 * abs(signx + signy ) * (signx + signz ) * minOfAll;
 }
 
 void riemannSolver::reconstruct(const grid &prim,
