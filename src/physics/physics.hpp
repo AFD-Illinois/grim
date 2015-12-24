@@ -84,6 +84,12 @@ class riemannSolver
   array slopeMM(const int dir,
 	       const array& in);
 
+  void reconstructWENO5(const grid &prim,
+                     const int dir,
+                     grid &primLeft,
+                     grid &primRight
+                    );
+
   void solve(const grid &prim,
                const geometry &geom,
                const int dir,
