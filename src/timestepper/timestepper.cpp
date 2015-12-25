@@ -1,39 +1,40 @@
 #include "timestepper.hpp"
 
-timeStepper::timeStepper(const geometry &geom)
+timeStepper::timeStepper()
 {
+  geom                  = new geometry(0);
+  geomGhosted           = new geometry(params::numGhost);
 
-  prim        = new grid(vars::dof, params::numGhost);
-  primOld     = new grid(vars::dof, params::numGhost);
+  prim                  = new grid(vars::dof, 0);                /* n+1   */
+  primGhosted           = new grid(vars::dof, params::numGhost); /* n+1   */
+  primHalfStepGhosted   = new grid(vars::dof, params::numGhost); /* n+1/2 */
+  primOldGhosted        = new grid(vars::dof, params::numGhost); /* n     */
 
-  cons        = new grid(vars::dof, 0);
-  consOld     = new grid(vars::dof, 0);
+  cons                  = new grid(vars::dof, 0); /* n+1 */
+  consOld               = new grid(vars::dof, 0); /* n   */
 
-  sourcesOld  = new grid(vars::dof, 0);
-  residual    = new grid(vars::dof, 0);
+  sources               = new grid(vars::dof, 0); /* n     */
+  sourcesHalfStep       = new grid(vars::dof, 0); /* n+1/2 */
+  sourcesOld            = new grid(vars::dof, 0); /* n     */
 
-  switch (params::dim)
-  {
-    case 1:
-      fluxesX1 = new grid(vars::dof, 1);
-      break;
+  /* Fluxes at n or n+1/2 time step. Depends on context used */
+  fluxesX1Ghosted       = new grid(vars::dof, params::numGhost); 
+  fluxesX2Ghosted       = new grid(vars::dof, params::numGhost); 
+  fluxesX3Ghosted       = new grid(vars::dof, params::numGhost); 
 
-    case 2:
-      fluxesX1 = new grid(vars::dof, 1);
-      fluxesX2 = new grid(vars::dof, 1);
-      break;
+  divFluxes               = new grid(vars::dof, 0);
 
-    case 3:
-      fluxesX1 = new grid(vars::dof, 1);
-      fluxesX2 = new grid(vars::dof, 1);
-      fluxesX3 = new grid(vars::dof, 1);
-      break;
-  }
+  elem                  = new fluidElement(*prim, geom, locations::CENTER); /* n+1 */
+  elemOldGhosted        = new fluidElement(*primOldGhosted, geomGhosted,    /* n   */
+                                           locations::CENTER
+                                          );
+  elemHalfStepGhosted   = new fluidElement(*primHalfStepGhosted, geomGhosted, 
+                                           locations::CENTER                /* n+1/2*/
+                                          );
 
-  elem    = new fluidElement(*prim, geom, locations::CENTER);
-  elemOld = new fluidElement(*primOld, geom, locations::CENTER);
+  riemann = new riemannSolver(geomGhosted);
 
-  riemann = new riemannSolver(geom);
+  nonLinSolver = new nonLinearSolver(computeResidual);
 
   SNES snes;
   if (   params::timeStepper==timeStepping::EXPLICIT
@@ -48,52 +49,33 @@ timeStepper::timeStepper(const geometry &geom)
   }
 
 //  SNESSetFunction(snes, residual->globalVec, computeResidual, this);
-
+  
+  public:
+    void timeStep(double dt);
 }
 
 timeStepper::~timeStepper()
 {
   SNESDestroy(&snes);
-  
-  delete elem, elemOld;
-  delete prim, primOld;
+
+  delete geom, geomGhosted;
+  delete prim, primGhosted, primHalfStepGhosted, primOldGhosted;
   delete cons, consOld;
-  delete sourcesOld;
+  delete sources, sourcesHalfStep, sourcesOld;
   delete residual;
-
-  switch (params::dim)
-  {
-    case 1:
-      delete fluxesX1;
-      break;
-
-    case 2:
-      delete fluxesX1, fluxesX2;
-      break;
-
-    case 3:
-      delete fluxesX1, fluxesX2, fluxesX3;
-      break;
-  }
+  delete fluxesX1Ghosted,    fluxesX2Ghosted,    fluxesX3Ghosted;
+  delete fluxesX1OldGhosted, fluxesX2OldGhosted, fluxesX3OldGhosted;
+  delete fluxesX1HalfStepGhosted;
+  delete fluxesX2HalfStepGhosted;
+  delete fluxesX3HalfStepGhosted;
+  delete elem, elemOldGhosted, elemHalfStepGhosted;
+  delete riemann;
+  delete nonLinSolver;
 }
-//void timeStepper::timeStep()
-//{
-//  elemOld->set(primOld, geom, locations::CENTER);
-//
-//  elemOld->computeFluxes(geom, 0, consOld->vars);
-//  elemOld->computeSources(geom, sourcesOld->vars);
-////  
-////  reconstruct(primOld->vars, 
-////              primLeft->vars, primRight->vars,
-////              directions::X1
-////             );
-////
-//  riemann.solve(primRight->vars, primLeft->vars,
-//                geom, directions::X1,
-//                fluxesX1->vars
-//               );
-//
-//}
+
+
+
+
 
 //PetscErrorCode computeResidual(SNES snes,
 //                               Vec primVec,
@@ -104,4 +86,5 @@ timeStepper::~timeStepper()
 //  timeStepper *ts = (class timeStepper*)ptr;
 //
 //}
+
 

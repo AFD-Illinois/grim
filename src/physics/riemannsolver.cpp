@@ -70,8 +70,7 @@ void riemannSolver::solve(const grid &prim,
 
 array minmod(array &x, array &y, array &z)
 {
-  array minOfAll = af::min(
-                           af::min(af::abs(x), af::abs(y)), 
+  array minOfAll = af::min(af::min(af::abs(x), af::abs(y)), 
                            af::abs(z)
                           );
 
