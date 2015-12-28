@@ -131,8 +131,9 @@ void timeStepper::solve(grid &primGuess)
        */
     
       double alpha    = 1e-4;
-      array condition = f1 > f0 - alpha*fPrime0*stepLength;
-      array nextStepLength = -fPrime0*stepLength*stepLength/(f1-f0-fPrime0*stepLength)/2.;
+      array condition = f1 > f0*(1. - alpha*stepLength);
+      array denom     = (f1-f0-fPrime0*stepLength) * condition + (1.-condition);
+      array nextStepLength = -fPrime0*stepLength*stepLength/denom/2.;
       stepLength      = stepLength*(1. - condition) + condition*nextStepLength;
 
 //      array conditionIndices = where(condition > 0);
