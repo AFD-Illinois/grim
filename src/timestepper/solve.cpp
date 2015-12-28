@@ -1,12 +1,12 @@
-#include "nonlinearsolver.hpp"
+#include "timestepper.hpp"
 
-void nonLinearSolver::solve(grid &primGuess)
+void timeStepper::solve(grid &primGuess)
 {
   for (int nonLinearIter=0;
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
   {
-    computeResidual(primGuess, *residual, dataPtr);
+    computeResidual(primGuess, *residual);
 
     for (int var=0; var < vars::dof; var++)
     {
@@ -32,7 +32,7 @@ void nonLinearSolver::solve(grid &primGuess)
 
       primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]; 
 
-      computeResidual(*primGuessPlusEps, *residualPlusEps, dataPtr);
+      computeResidual(*primGuessPlusEps, *residualPlusEps);
 
       for (int column=0; column < vars::dof; column++)
       {

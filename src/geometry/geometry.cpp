@@ -14,12 +14,28 @@ geometry::geometry()
   connectionGrid  = new grid(NDIM*NDIM*NDIM);
 
   /* Indices go from [-numGhost, N + numGhost) in each direction */
-  array indices = 
-    af::range(af::dim4(xCoordsGrid->N1Local + 2*numGhost,
-                       xCoordsGrid->N2Local + 2*numGhost,
-                       xCoordsGrid->N3Local + 2*numGhost)
+  array indicesX1 = 
+    af::range(xCoordsGrid->vars[0].dims(0),
+              xCoordsGrid->vars[0].dims(1),
+              xCoordsGrid->vars[0].dims(2),
+              xCoordsGrid->vars[0].dims(3), 0
              ) - numGhost;
 
+  array indicesX2 = 
+    af::range(xCoordsGrid->vars[0].dims(0),
+              xCoordsGrid->vars[0].dims(1),
+              xCoordsGrid->vars[0].dims(2),
+              xCoordsGrid->vars[0].dims(3), 1
+             ) - numGhost;
+
+  array indicesX3 = 
+    af::range(xCoordsGrid->vars[0].dims(0),
+              xCoordsGrid->vars[0].dims(1),
+              xCoordsGrid->vars[0].dims(2),
+              xCoordsGrid->vars[0].dims(3), 2
+             ) - numGhost;
+
+  /* Temporal coordinate. Just set to zero */
   XCoordsGrid->vars[0 + NDIM*locations::CENTER] = 0.;
   XCoordsGrid->vars[0 + NDIM*locations::RIGHT]  = 0.;
   XCoordsGrid->vars[0 + NDIM*locations::LEFT]   = 0.;
@@ -30,13 +46,13 @@ geometry::geometry()
 
   /* X1 coordinate at all the locations */
   XCoordsGrid->vars[1 + NDIM*locations::CENTER] = 
-    params::X1Start + (indices + 0.5)*gridParams::dX1;
+    params::X1Start + (indicesX1 + 0.5)*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::LEFT]   = 
-    params::X1Start + (indices      )*gridParams::dX1;
+    params::X1Start + (indicesX1      )*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::RIGHT]  = 
-    params::X1Start + (indices + 1. )*gridParams::dX1;
+    params::X1Start + (indicesX1 + 1. )*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::BOTTOM] = 
     XCoordsGrid->vars[1 + NDIM*locations::CENTER];
@@ -52,13 +68,13 @@ geometry::geometry()
 
   /* X2 coordinate at all the locations */
   XCoordsGrid->vars[2 + NDIM*locations::CENTER] = 
-    params::X2Start + (indices + 0.5)*gridParams::dX2;
+    params::X2Start + (indicesX2 + 0.5)*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::BOTTOM] = 
-    params::X2Start + (indices      )*gridParams::dX2;
+    params::X2Start + (indicesX2      )*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::TOP]    = 
-    params::X2Start + (indices + 1. )*gridParams::dX2;
+    params::X2Start + (indicesX2 + 1. )*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[2 + NDIM*locations::CENTER];
@@ -74,13 +90,13 @@ geometry::geometry()
 
   /* X3 coordinate at all the locations */
   XCoordsGrid->vars[3 + NDIM*locations::CENTER] = 
-    params::X3Start + (indices + 0.5)*gridParams::dX3;
+    params::X3Start + (indicesX3 + 0.5)*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::BACK]   = 
-    params::X3Start + (indices      )*gridParams::dX3;
+    params::X3Start + (indicesX3      )*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::FRONT]  = 
-    params::X3Start + (indices + 1. )*gridParams::dX3;
+    params::X3Start + (indicesX3 + 1. )*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[3 + NDIM*locations::CENTER];

@@ -89,7 +89,6 @@ add_subdirectory(physics)
 #add_subdirectory(reconstruct)
 #add_subdirectory(boundary)
 add_subdirectory(timestepper)
-add_subdirectory(nonlinearsolver)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 include(${PROBLEM_DIR}/CMakeLists.txt)
@@ -97,7 +96,7 @@ include(${PROBLEM_DIR}/CMakeLists.txt)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid geometry physics timestepper nonlinearsolver
+target_link_libraries(grim grid geometry physics timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
 #                      ${YAML_LIBRARIES}

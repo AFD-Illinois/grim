@@ -40,7 +40,7 @@ void timeStepper::timeStep(double dt)
   }
 
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
-  nonLinSolver->solve(*prim);
+  solve(*prim);
 
   /* Copy solution to primHalfStepGhosted. WARNING: Right now
    * primHalfStep->vars[var] points to prim->vars[var]. Might need to do a deep
@@ -60,7 +60,7 @@ void timeStepper::timeStep(double dt)
 
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
    * primHalfStep as a guess */
-  nonLinSolver->solve(*prim);
+  solve(*prim);
 
   /* Copy solution to primOldGhosted */
   for (int var=0; var<vars::dof; var++)
@@ -74,48 +74,47 @@ void timeStepper::timeStep(double dt)
 
 }
 
-void computeResidual(const grid &prim, grid &residual, void *dataPtr)
+void timeStepper::computeResidual(const grid &prim, grid &residual)
 {
-  timeStepper *ts = static_cast<timeStepper *>(dataPtr);
 
-  ts->elem->set(*ts->prim, *ts->geom, locations::CENTER);
-  ts->elem->computeFluxes(*ts->geom, 0, *ts->cons);
+  elem->set(prim, *geom, locations::CENTER);
+  elem->computeFluxes(*geom, 0, *cons);
 
-  if (ts->currentStep == timeStepperSwitches::HALF_STEP)
+  if (currentStep == timeStepperSwitches::HALF_STEP)
   {
     int useImplicitSources = 0;
-    ts->elem->computeSources(*ts->geom, 
-                             *ts->elemOld, *ts->elemOld,
-                             params::dt/2., useImplicitSources,
-                             *ts->sourcesOld
-                            );
+    elem->computeSources(*geom, 
+                         *elemOld, *elemOld,
+                         params::dt/2., useImplicitSources,
+                         *sourcesOld
+                        );
 
     for (int var=0; var<vars::dof; var++)
     {
-      residual.vars[var] = (  ts->cons->vars[var] 
-                            - ts->consOld->vars[var]
+      residual.vars[var] = (  cons->vars[var] 
+                            - consOld->vars[var]
                            )/(params::dt/2.)
-                          + ts->divFluxes->vars[var]
-                          + ts->sourcesOld->vars[var];
+                          + divFluxes->vars[var]
+                          + sourcesOld->vars[var];
     }
 
   }
-  else if (ts->currentStep == timeStepperSwitches::FULL_STEP)
+  else if (currentStep == timeStepperSwitches::FULL_STEP)
   {
     int useImplicitSources = 0;
-    ts->elem->computeSources(*ts->geom, 
-                             *ts->elemOld, *ts->elemHalfStep, 
-                             params::dt, useImplicitSources,
-                             *ts->sourcesOld
-                            );
+    elem->computeSources(*geom, 
+                         *elemOld, *elemHalfStep, 
+                         params::dt, useImplicitSources,
+                         *sourcesOld
+                        );
 
     for (int var=0; var<vars::dof; var++)
     {
-      residual.vars[var] = (  ts->cons->vars[var] 
-                            - ts->consOld->vars[var]
+      residual.vars[var] = (  cons->vars[var] 
+                            - consOld->vars[var]
                            )/params::dt
-                          + ts->divFluxes->vars[var]
-                          + ts->sourcesOld->vars[var];
+                          + divFluxes->vars[var]
+                          + sourcesOld->vars[var];
     }
   }
 

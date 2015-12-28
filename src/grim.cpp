@@ -24,7 +24,7 @@ namespace params
   int N1 = 8;
   int N2 = 8;
   int N3 = 8;
-  int dim = 1;
+  int dim = 3;
   int numGhost = 2;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -93,6 +93,8 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B1]  = 0.;
     ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
+
+    ts.timeStep(0.1);
 
   }
 

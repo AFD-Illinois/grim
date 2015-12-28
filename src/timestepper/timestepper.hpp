@@ -6,7 +6,6 @@
 #include "../physics/physics.hpp"
 #include "../geometry/geometry.hpp"
 #include "../boundary/boundary.hpp"
-#include "../nonlinearsolver/nonlinearsolver.hpp"
 
 namespace timeStepperSwitches
 {
@@ -18,6 +17,20 @@ namespace timeStepperSwitches
 
 class timeStepper
 {
+  grid *primGuessLineSearchTrial;
+  grid *primGuessPlusEps;
+  grid *residual;
+  grid *residualPlusEps;
+
+  array residualSoA;
+  array jacobianSoA;
+  array bSoA;
+  array deltaPrimAoS;
+  array stepLength;
+
+  void solve(grid &primGuess);
+  void computeResidual(const grid &prim, grid &residual);
+
   public:
     geometry *geom;
 
@@ -30,7 +43,6 @@ class timeStepper
     fluidElement *elem, *elemOld, *elemHalfStep;
 
     riemannSolver *riemann;
-    nonLinearSolver *nonLinSolver;
 
     void computeDivOfFluxes(const grid &primGhosted);
 
@@ -41,7 +53,5 @@ class timeStepper
 
     void timeStep(double dt);
 };
-
-void computeResidual(const grid &prim, grid &residual, void *dataPtr);
 
 #endif /* GRIM_TIMESTEPPER_H_ */
