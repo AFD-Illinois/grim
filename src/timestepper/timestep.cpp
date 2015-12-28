@@ -118,5 +118,6 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
     }
   }
 
-
+  //This is one way to guarantee that ghost zones are synced...
+  residual.communicate();
 }
