@@ -30,7 +30,9 @@ void timeStepper::solve(grid &primGuess)
        * machine precision */
       double epsilon = 4e-8;
 
-      primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]; 
+      array smallPrim = abs(primGuess.vars[row])<2.*epsilon;
+      primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
+	+smallPrim*epsilon; 
 
       computeResidual(*primGuessPlusEps, *residualPlusEps);
 
@@ -40,7 +42,7 @@ void timeStepper::solve(grid &primGuess)
           = (  residualPlusEps->vars[column] 
              - residual->vars[column]
             )
-            /(epsilon*primGuess.vars[row]);
+            /(primGuessPlusEps->vars[row]-primGuess.vars[row]);
       }
 
       /* reset */
@@ -135,12 +137,12 @@ void timeStepper::solve(grid &primGuess)
       array denom     = (f1-f0-fPrime0*stepLength) * condition + (1.-condition);
       array nextStepLength = -fPrime0*stepLength*stepLength/denom/2.;
       stepLength      = stepLength*(1. - condition) + condition*nextStepLength;
-
-//      array conditionIndices = where(condition > 0);
-//      if (conditionIndices.elements() == 0)
-//      {
-//        break;
-//      }
+      
+      array conditionIndices = where(condition > 0);
+      if (conditionIndices.elements() == 0)
+      {
+        break;
+      }
     }
 
     /* stepLength has now been set */
