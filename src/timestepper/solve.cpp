@@ -87,7 +87,16 @@ void timeStepper::solve(grid &primGuess)
     array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
 
     /* Quartic backtracking :
-     * funcToMinimize \equiv 0.5 * normsL2 * normsL2
+     We minimize f(u+stepLength*du) = 0.5*sqr(residual[u+stepLength*du]).
+     We use
+       f0 = f(u)
+       fPrime0 = df/d(stepLength)(u) = -2*f0
+       [because stepLength=1 is the solution of the linearized problem...]
+       f1 = f(u+stepLength0*du)
+     to reconstruct
+       f = (f1-f0-fPrime0*stepLength0)*(stepLength/stepLength0)^2 + fPrime0*stepLength + f0
+     which has a minimum at the new value of stepLength,
+       stepLength = -fPrime0*stepLength0^2 / (f1-f0-fPrime0*stepLength0)/2
      */
     array f0      = 0.5 * af::sum(af::pow(residualSoA, 2.), 3);
     array fPrime0 = -2.*f0;
@@ -100,7 +109,7 @@ void timeStepper::solve(grid &primGuess)
          lineSearchIter < params::maxLineSearchIters; lineSearchIter++
         )
     {
-      /* 1) First take the full step */
+      /* 1) First take current step stepLength */
       for (int var=0; var<vars::dof; var++)
       {
         primGuessLineSearchTrial->vars[var] =  
@@ -108,7 +117,7 @@ void timeStepper::solve(grid &primGuess)
       } 
 
       /* ...and then compute the norm */
-      //computeResidual(primGuessTrial, residual);
+      computeResidual(*primGuessLineSearchTrial, *residual);
       for (int var=0; var<vars::dof; var++)
       {
         residualSoA(span, span, span, var) = residual->vars[var];
@@ -121,11 +130,10 @@ void timeStepper::solve(grid &primGuess)
        * c) f(1) 
        */
     
-      /* NOT COMPLETE!!! */
       double alpha    = 1e-4;
-      array condition = f1 > f0 + alpha*fPrime0;
-      array lamda     = -fPrime0/(2.*(f1 - f0 - fPrime0));
-      stepLength      = 1. - condition + condition*lamda;
+      array condition = f1 > f0 - alpha*fPrime0*stepLength;
+      array nextStepLength = -fPrime0*stepLength*stepLength/(f1-f0-fPrime0*stepLength)/2.;
+      stepLength      = stepLength*(1. - condition) + condition*nextStepLength;
 
 //      array conditionIndices = where(condition > 0);
 //      if (conditionIndices.elements() == 0)
