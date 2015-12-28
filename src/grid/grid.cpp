@@ -163,6 +163,11 @@ void grid::copyLocalVecToVars()
 void grid::communicate()
 {
   /* Get data into Array of Structs format as needed by Petsc */
+  for (int var=0; var < numVars; var++)
+  {
+    varsSoA(span, span, span, var) = vars[var];
+  }
+
   array varsAoS = af::reorder(varsSoA, 3, 0, 1, 2);
 
   /* Copy part of varsAoS contained in [0, N1) x [0, N2) x [0, N3) to global vec */
@@ -182,6 +187,7 @@ void grid::communicate()
         for (int var=0; var<numVars; var++)
         {
           int index = var + numVars*(i + N1Local*(j + N2Local*(k) ) );
+
           pointerToGlobalVec[index] = pointerToLocalVec[index];
         }
       }
