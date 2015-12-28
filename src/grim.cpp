@@ -24,7 +24,7 @@ namespace params
   int N1 = 8;
   int N2 = 8;
   int N3 = 8;
-  int dim = 3;
+  int dim = 1;
   int numGhost = 2;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -59,6 +59,9 @@ namespace params
 
   double slopeLimTheta = 2;
 
+  int maxNonLinearIter = 10;
+  int maxLineSearchIters = 10;
+
 };
 int main(int argc, char **argv)
 { 
@@ -78,19 +81,24 @@ int main(int argc, char **argv)
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
   {
-    
-    timeStepper ts();
+    grid prim(10);
 
-    /* Initial conditions */
-    ts.primOldGhosted.vars[vars::RHO] = 
-      1. + 0.1*af::sin(2*M_PI*geomGhosted.xCoords[locations::CENTER][1]);
-    ts.primOldGhosted.vars[vars::U]   = 1.;
-    ts.primOldGhosted.vars[vars::U1]  = .1;
-    ts.primOldGhosted.vars[vars::U2]  = 0.;
-    ts.primOldGhosted.vars[vars::U3]  = 0.;
-    ts.primOldGhosted.vars[vars::B1]  = 0.;
-    ts.primOldGhosted.vars[vars::B2]  = 0.;
-    ts.primOldGhosted.vars[vars::B3]  = 0.;
+    prim.communicate();
+
+    af_print(prim.vars[0]);
+    
+//    timeStepper ts;
+//
+//    /* Initial conditions */
+//    ts.primOldGhosted->vars[vars::RHO] = 
+//      1. + 0.1*af::sin(2*M_PI*ts.geomGhosted->xCoords[locations::CENTER][1]);
+//    ts.primOldGhosted->vars[vars::U]   = 1.;
+//    ts.primOldGhosted->vars[vars::U1]  = .1;
+//    ts.primOldGhosted->vars[vars::U2]  = 0.;
+//    ts.primOldGhosted->vars[vars::U3]  = 0.;
+//    ts.primOldGhosted->vars[vars::B1]  = 0.;
+//    ts.primOldGhosted->vars[vars::B2]  = 0.;
+//    ts.primOldGhosted->vars[vars::B3]  = 0.;
 
   }
 

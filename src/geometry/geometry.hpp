@@ -15,6 +15,8 @@ class geometry
                                );
 
   public:
+    int numGhost;
+
     std::vector<int> axiSymmetricLocations
       = {locations::CENTER, 
          locations::LEFT, locations::RIGHT,
@@ -48,7 +50,7 @@ class geometry
     /* Connection coefficients only needed at CENTER */
     array gammaUpDownDown[NDIM][NDIM][NDIM];
 
-    geometry(int numGhost);
+    geometry();
     ~geometry();
 };
 

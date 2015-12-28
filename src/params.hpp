@@ -1,4 +1,3 @@
-#pragma once
 #ifndef GRIM_PARAMS_H_
 #define GRIM_PARAMS_H_
 
@@ -107,6 +106,9 @@ namespace params
   extern double adiabaticIndex;
 
   extern double slopeLimTheta;
+
+  extern int maxNonLinearIter;
+  extern int maxLineSearchIters;
 
 };
 

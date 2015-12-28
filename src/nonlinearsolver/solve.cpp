@@ -1,21 +1,21 @@
-#include "timestepper.hpp"
+#include "nonlinearsolver.hpp"
 
 void nonLinearSolver::solve(grid &primGuess)
 {
-  for (int nonLineariter=0;
-       nonLineariter < params::maxNonLinearIter; nonLinearIter++
+  for (int nonLinearIter=0;
+       nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
   {
-    computeResidual(primGuess, residual)
+    computeResidual(primGuess, *residual, dataPtr);
 
     for (int var=0; var < vars::dof; var++)
     {
       /* Need residualSoA to compute norms */
-      residualSoA(span, span, span, var) = residual.vars[var];
+      residualSoA(span, span, span, var) = residual->vars[var];
 
       /* Initialize primGuessPlusEps. Needed to numerically assemble the
        * Jacobian */
-      primGuessPlusEps.vars[var]         = primGuess.vars[var];
+      primGuessPlusEps->vars[var]        = primGuess.vars[var];
     }
 
     /* Still yet to put in code to compute global norm over mpi procs */
@@ -30,21 +30,21 @@ void nonLinearSolver::solve(grid &primGuess)
        * machine precision */
       double epsilon = 4e-8;
 
-      primGuessPlusEps.vars[row]  = (1. + epsilon)*primGuess.vars[row]; 
+      primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]; 
 
-      computeResidual(primGuessPlusEps, residualPlusEps)
+      computeResidual(*primGuessPlusEps, *residualPlusEps, dataPtr);
 
       for (int column=0; column < vars::dof; column++)
       {
         jacobianSoA(span, span, span, column + vars::dof*row)
-          = (  residualPlusEps.vars[column] 
-             - residual.vars[column]
+          = (  residualPlusEps->vars[column] 
+             - residual->vars[column]
             )
             /(epsilon*primGuess.vars[row]);
       }
 
       /* reset */
-      primGuessPlusEps.vars[row]  = primGuess.vars[row]; 
+      primGuessPlusEps->vars[row]  = primGuess.vars[row]; 
     }
     /* Jacobian assembly complete */
 
@@ -54,7 +54,7 @@ void nonLinearSolver::solve(grid &primGuess)
     /* First assemble b. Need to reorder from SoA -> AoS. */
     for (int var=0; var < vars::dof; var++)
     {
-      bSoA(span, span, span, var) = -residual.vars[var];
+      bSoA(span, span, span, var) = -residual->vars[var];
     }
 
     array jacobianAoS = af::reorder(jacobianSoA, 3, 0, 1, 2);
@@ -68,11 +68,11 @@ void nonLinearSolver::solve(grid &primGuess)
      * Currently inverting locally by looping over individual zones. Need to
      * call the batch function magma_dgesv_batched() from the MAGMA library
      * for optimal use on NVIDIA cards */
-    for (int k=0; k<gridParams::N3Local; k++)
+    for (int k=0; k<residual->N3Local + params::numGhost; k++)
     {
-      for (int j=0; j<gridParams::N2Local; j++)
+      for (int j=0; j<residual->N2Local + params::numGhost; j++)
       {
-        for (int i=0; i<gridParams::N1Local; i++)
+        for (int i=0; i<residual->N1Local + params::numGhost; i++)
         {
           array A = af::moddims(jacobianAoS(span, i, j, k), 
                                 vars::dof, vars::dof
@@ -103,15 +103,15 @@ void nonLinearSolver::solve(grid &primGuess)
       /* 1) First take the full step */
       for (int var=0; var<vars::dof; var++)
       {
-        primGuessTrial.vars[var] =  
+        primGuessLineSearchTrial->vars[var] =  
           primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
       } 
 
       /* ...and then compute the norm */
-      computeResidual(primGuessTrial, residual);
+      //computeResidual(primGuessTrial, residual);
       for (int var=0; var<vars::dof; var++)
       {
-        residualSoA(span, span, span, var) = residual.vars[var];
+        residualSoA(span, span, span, var) = residual->vars[var];
       }
       array f1 = 0.5 * af::sum(af::pow(residualSoA, 2.), 3);
 

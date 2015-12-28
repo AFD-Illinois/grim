@@ -6,27 +6,42 @@
 #include "../physics/physics.hpp"
 #include "../geometry/geometry.hpp"
 #include "../boundary/boundary.hpp"
+#include "../nonlinearsolver/nonlinearsolver.hpp"
+
+namespace timeStepperSwitches
+{
+  enum
+  {
+    HALF_STEP, FULL_STEP
+  };
+};
 
 class timeStepper
 {
   public:
-    SNES snes;
-    grid *prim, *primOld;
+    geometry *geom;
+
+    grid *prim, *primHalfStep, *primOld;
     grid *cons, *consOld;
-    grid *sourcesOld;
-    grid *residual;
-
+    grid *sources, *sourcesHalfStep, *sourcesOld;
     grid *fluxesX1, *fluxesX2, *fluxesX3;
+    grid *divFluxes;
 
-    fluidElement *elem, *elemOld;
+    fluidElement *elem, *elemOld, *elemHalfStep;
+
     riemannSolver *riemann;
+    nonLinearSolver *nonLinSolver;
 
-    timeStepper(const geometry &geom);
+    void computeDivOfFluxes(const grid &primGhosted);
+
+    int currentStep;
+
+    timeStepper();
     ~timeStepper();
 
-    void timeStep();
+    void timeStep(double dt);
 };
 
-void consToPrim(grid &cons, geometry &geom, grid &primGuess);
+void computeResidual(const grid &prim, grid &residual, void *dataPtr);
 
 #endif /* GRIM_TIMESTEPPER_H_ */

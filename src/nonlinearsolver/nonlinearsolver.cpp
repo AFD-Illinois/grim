@@ -1,17 +1,18 @@
 #include "nonlinearsolver.hpp"
 
 nonLinearSolver::nonLinearSolver(void (*computeResidual)(const grid &primGuess, 
-                                                         grid &residual
+                                                         grid &residual,
+                                                         void *dataPtr
                                                         )
                                 )
 {
   this->computeResidual = computeResidual;
 
-  primGuessLineSearchTrial  = new grid(vars::dof, 0);
-  primGuessPlusEps          = new grid(vars::dof, 0);
+  primGuessLineSearchTrial  = new grid(vars::dof);
+  primGuessPlusEps          = new grid(vars::dof);
   
-  residual                  = new grid(vars::dof, 0);
-  residualPlusEps           = new grid(vars::dof, 0);
+  residual                  = new grid(vars::dof);
+  residualPlusEps           = new grid(vars::dof);
 
   /* The grid data structure arranges data in Struct of Arrays format. Need to
    * rearrange to Array of Structs format in order to solve the linear system Ax
@@ -49,7 +50,7 @@ nonLinearSolver::nonLinearSolver(void (*computeResidual)(const grid &primGuess,
                                           );
 
   /* Steplength lambda in P_{k+1} = P_k + lambda*dP_k */ 
-  steplength                = af::constant(1., 
+  stepLength                = af::constant(1., 
                                            gridParams::N1Local,
                                            gridParams::N2Local,
                                            gridParams::N3Local,

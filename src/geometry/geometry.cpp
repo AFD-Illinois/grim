@@ -1,21 +1,23 @@
 #include "geometry.hpp"
 
-geometry::geometry(int numGhost)
+geometry::geometry()
 {
-  xCoordsGrid     = new grid(LOCATIONS*NDIM,      numGhost);
-  XCoordsGrid     = new grid(LOCATIONS*NDIM,      numGhost);
+  numGhost  = params::numGhost;
 
-  alphaGrid       = new grid(AXISYM_LOCATIONS,           numGhost);
-  gGrid           = new grid(AXISYM_LOCATIONS,           numGhost);
-  gCovGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM, numGhost);
-  gConGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM, numGhost);
-  connectionGrid  = new grid(NDIM*NDIM*NDIM,             numGhost);
+  xCoordsGrid     = new grid(LOCATIONS*NDIM);
+  XCoordsGrid     = new grid(LOCATIONS*NDIM);
+
+  alphaGrid       = new grid(AXISYM_LOCATIONS);
+  gGrid           = new grid(AXISYM_LOCATIONS);
+  gCovGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM);
+  gConGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM);
+  connectionGrid  = new grid(NDIM*NDIM*NDIM);
 
   /* Indices go from [-numGhost, N + numGhost) in each direction */
   array indices = 
-    af::range(af::dim4(gridParams::N1Local + 2*numGhost,
-                       gridParams::N2Local + 2*numGhost,
-                       gridParams::N3Local + 2*numGhost)
+    af::range(af::dim4(xCoordsGrid->N1Local + 2*numGhost,
+                       xCoordsGrid->N2Local + 2*numGhost,
+                       xCoordsGrid->N3Local + 2*numGhost)
              ) - numGhost;
 
   XCoordsGrid->vars[0 + NDIM*locations::CENTER] = 0.;

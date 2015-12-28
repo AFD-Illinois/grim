@@ -7,12 +7,13 @@
 
 using af::array;
 using af::span;
-using af::where;
 
 class grid
 {
+  void copyLocalVecToVars();
+
   public:
-    DM dm, dmGhost;
+    DM dm;
     Vec globalVec, localVec;
 
     int numVars, numGhost;
@@ -21,12 +22,20 @@ class grid
     DMBoundaryType boundaryTop,   boundaryBottom;
     DMBoundaryType boundaryFront, boundaryBack;
 
-    array *vars;
+    int iLocalStart, jLocalStart, kLocalStart;
+    int iLocalEnd,   jLocalEnd,   kLocalEnd;
+    int N1Local,     N2Local,     N3Local;
 
-    grid(int numVars, int numGhost);
+    af::seq *domainX1, *domainX2, *domainX3;
+
+    double dX1, dX2, dX3;
+
+    array *vars, varsSoA;
+
+    grid(int numVars);
     ~grid();
 
-    void setVarsWithVec(Vec vec);
+    void communicate();
 };
 
 #endif /* GRIM_GRID_H_ */

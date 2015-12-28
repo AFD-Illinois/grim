@@ -13,7 +13,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(grim)
 
-
 # ------------------------------USER OPTIONS----------------------------------#
 # Options for icc:
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
@@ -64,33 +63,33 @@ find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
 find_package(PETSc REQUIRED)
+find_package(Cython REQUIRED)
+include(UseCython)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 if (ArrayFire_CPU_FOUND)
-  message("-- ArrayFire CPU backend activated")
   message("ArrayFire_CPU_LIBRARIES: " ${ArrayFire_CPU_LIBRARIES})
 endif()
 if (ArrayFire_CUDA_FOUND)
-  message("-- ArrayFire CUDA backend activated")
   message("ArrayFire_CUDA_LIBRARIES: " ${ArrayFire_CUDA_LIBRARIES})
 endif()
 if (ArrayFire_OpenCL_FOUND)
-  message("-- ArrayFire OpenCL backend activated")
   message("ArrayFire_OpenCL_LIBRARIES: " ${ArrayFire_OpenCL_LIBRARIES})
 endif()
 
 include_directories(${PETSC_INCLUDES} 
 #                    ${YAML_INCLUDES}
-		                ${Boost_INCLUDE_DIRS}
                     ${ArrayFire_INCLUDE_DIRS}
+                    grid
                    )
 
+add_subdirectory(grid)
 add_subdirectory(geometry)
 add_subdirectory(physics)
 #add_subdirectory(reconstruct)
 #add_subdirectory(boundary)
-add_subdirectory(grid)
 add_subdirectory(timestepper)
+add_subdirectory(nonlinearsolver)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 include(${PROBLEM_DIR}/CMakeLists.txt)
@@ -98,12 +97,13 @@ include(${PROBLEM_DIR}/CMakeLists.txt)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim geometry physics grid timestepper
+target_link_libraries(grim grid geometry physics timestepper nonlinearsolver
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
 #                      ${YAML_LIBRARIES}
                       ${ArrayFire_CPU_LIBRARIES}
                      )
+
 
 message("")
 message("#################")

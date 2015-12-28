@@ -2,17 +2,17 @@
 
 riemannSolver::riemannSolver(const geometry &geom)
 {
-  primLeft  = new grid(vars::dof, params::numGhost);
-  primRight = new grid(vars::dof, params::numGhost);
+  primLeft  = new grid(vars::dof);
+  primRight = new grid(vars::dof);
 
   elemLeft  = new fluidElement(*primLeft, geom, locations::LEFT);
   elemRight = new fluidElement(*primRight, geom, locations::LEFT);
 
-  fluxLeft  = new grid(vars::dof, 0);
-  fluxRight = new grid(vars::dof, 0);
+  fluxLeft  = new grid(vars::dof);
+  fluxRight = new grid(vars::dof);
 
-  consLeft  = new grid(vars::dof, 0);
-  consRight = new grid(vars::dof, 0);
+  consLeft  = new grid(vars::dof);
+  consRight = new grid(vars::dof);
 }
 
 riemannSolver::~riemannSolver()
@@ -30,18 +30,28 @@ void riemannSolver::solve(const grid &prim,
                          )
 {
   int location;
+  int shiftX1, shiftX2, shiftX3;
   switch (dir)
   {
     case directions::X1:
       location = locations::LEFT;
+      shiftX1  = -1;
+      shiftX2  = 0;
+      shiftX3  = 0;
       break;
 
     case directions::X2:
       location = locations::BOTTOM;
+      shiftX1  = 0;
+      shiftX2  = -1;
+      shiftX3  = 0;
       break;
 
     case directions::X3:
       location = locations::BACK;
+      shiftX1  = 0;
+      shiftX2  = 0;
+      shiftX3  = -1;
       break;
   }
 
@@ -60,9 +70,12 @@ void riemannSolver::solve(const grid &prim,
 
   for (int var=0; var<vars::dof; var++)
   {
-    flux.vars[var] = 0.5*(  fluxLeft->vars[var] + fluxRight->vars[var]
+    flux.vars[var] = 0.5*(  fluxLeft->vars[var] 
+                          + af::shift(fluxRight->vars[var], shiftX1, shiftX2, shiftX3)
                           - cLaxFriedrichs 
-                          * (consRight->vars[var] - consLeft->vars[var])
+                          * (  af::shift(consRight->vars[var], shiftX1, shiftX2, shiftX3)
+                             - consLeft->vars[var]
+                            )
                          );
   }
             

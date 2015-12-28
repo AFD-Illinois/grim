@@ -14,15 +14,18 @@ class nonLinearSolver
   array residualSoA;
   array jacobianSoA;
   array bSoA;
-  array deltaPrimSoA;
+  array deltaPrimAoS;
   array stepLength;
 
-  void (*computeResidual)(const grid &primGuess, grid &residual);
+  void *dataPtr;
+
+  void (*computeResidual)(const grid &primGuess, grid &residual, void *dataPtr);
 
   public:
 
     nonLinearSolver(void (*computeResidual)(const grid &primGuess, 
-                                            grid &residual
+                                            grid &residual,
+                                            void *dataPtr
                                            )
                    );
     ~nonLinearSolver();
