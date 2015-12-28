@@ -104,15 +104,15 @@ array riemannSolver::slopeMM(const int dir, const array& in)
   switch (dir)
   {
     case directions::X1:
-      filter =  array(3, 1, 1, 2, filter1D)/gridParams::dX1;
+      filter =  array(3, 1, 1, 2, filter1D)/primLeft->dX1;
       break;
 
     case directions::X2:
-      filter =  array(1, 3, 1, 2, filter1D)/gridParams::dX2;
+      filter =  array(1, 3, 1, 2, filter1D)/primLeft->dX2;
       break;
 
     case directions::X3:
-      filter =  array(1, 1, 3, 2, filter1D)/gridParams::dX3;
+      filter =  array(1, 1, 3, 2, filter1D)/primLeft->dX3;
       break;
   }
 

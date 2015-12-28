@@ -39,6 +39,7 @@ void timeStepper::timeStep(double dt)
     prim->vars[var] = primOld->vars[var];
   }
 
+
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
   solve(*prim);
 
@@ -76,7 +77,6 @@ void timeStepper::timeStep(double dt)
 
 void timeStepper::computeResidual(const grid &prim, grid &residual)
 {
-
   elem->set(prim, *geom, locations::CENTER);
   elem->computeFluxes(*geom, 0, *cons);
 
