@@ -81,24 +81,18 @@ int main(int argc, char **argv)
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
   {
-    grid prim(10);
+    timeStepper ts;
 
-    prim.communicate();
-
-    af_print(prim.vars[0]);
-    
-//    timeStepper ts;
-//
-//    /* Initial conditions */
-//    ts.primOldGhosted->vars[vars::RHO] = 
-//      1. + 0.1*af::sin(2*M_PI*ts.geomGhosted->xCoords[locations::CENTER][1]);
-//    ts.primOldGhosted->vars[vars::U]   = 1.;
-//    ts.primOldGhosted->vars[vars::U1]  = .1;
-//    ts.primOldGhosted->vars[vars::U2]  = 0.;
-//    ts.primOldGhosted->vars[vars::U3]  = 0.;
-//    ts.primOldGhosted->vars[vars::B1]  = 0.;
-//    ts.primOldGhosted->vars[vars::B2]  = 0.;
-//    ts.primOldGhosted->vars[vars::B3]  = 0.;
+    /* Initial conditions */
+    ts.primOld->vars[vars::RHO] =
+      1. + 0.1*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    ts.primOld->vars[vars::U]   = 1.;
+    ts.primOld->vars[vars::U1]  = .1;
+    ts.primOld->vars[vars::U2]  = 0.;
+    ts.primOld->vars[vars::U3]  = 0.;
+    ts.primOld->vars[vars::B1]  = 0.;
+    ts.primOld->vars[vars::B2]  = 0.;
+    ts.primOld->vars[vars::B3]  = 0.;
 
   }
 

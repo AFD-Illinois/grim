@@ -68,11 +68,11 @@ void nonLinearSolver::solve(grid &primGuess)
      * Currently inverting locally by looping over individual zones. Need to
      * call the batch function magma_dgesv_batched() from the MAGMA library
      * for optimal use on NVIDIA cards */
-    for (int k=0; k<residual->N3Local + params::numGhost; k++)
+    for (int k=0; k<residual->vars[0].dims(2); k++)
     {
-      for (int j=0; j<residual->N2Local + params::numGhost; j++)
+      for (int j=0; j<residual->vars[0].dims(1); j++)
       {
-        for (int i=0; i<residual->N1Local + params::numGhost; i++)
+        for (int i=0; i<residual->vars[0].dims(0); i++)
         {
           array A = af::moddims(jacobianAoS(span, i, j, k), 
                                 vars::dof, vars::dof
