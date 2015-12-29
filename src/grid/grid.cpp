@@ -186,9 +186,15 @@ void grid::communicate()
       {
         for (int var=0; var<numVars; var++)
         {
-          int index = var + numVars*(i + N1Local*(j + N2Local*(k) ) );
-
-          pointerToGlobalVec[index] = pointerToLocalVec[index];
+	  //Note on indices: Petsc use non-ghosted vectors for the global vector,
+	  // but ghosted indices for the local vector!
+          const int globalindex = var + numVars*(i + N1Local*(j + N2Local*(k) ) );
+	  const int GZ = params::numGhost;
+	  const int N1 = N1Local + 2*GZ;
+	  const int N2 = N2Local + 2*GZ;
+	  const int N3 = N3Local + 2*GZ;
+          const int localindex = var + numVars*(i+GZ + N1*(j+GZ + N2*(k+GZ) ) );
+          pointerToGlobalVec[globalindex] = pointerToLocalVec[localindex];
         }
       }
     }
