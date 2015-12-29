@@ -60,10 +60,10 @@ void riemannSolver::solve(const grid &prim,
   elemLeft->set(*primRight, geom, location);
   elemRight->set(*primLeft, geom, location);
 
-  elemLeft->computeFluxes(geom, dir, *fluxLeft);
+  elemLeft->computeFluxes(geom, dir+1, *fluxLeft);
   elemLeft->computeFluxes(geom, 0,   *consLeft);
 
-  elemRight->computeFluxes(geom, dir, *fluxRight);
+  elemRight->computeFluxes(geom, dir+1, *fluxRight);
   elemRight->computeFluxes(geom, 0,   *consRight);
 
   double cLaxFriedrichs = 1.;

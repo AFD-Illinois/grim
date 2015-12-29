@@ -21,9 +21,9 @@ namespace gridParams
 
 namespace params
 {
-  int N1 = 8;
-  int N2 = 8;
-  int N3 = 8;
+  int N1 = 40;
+  int N2 = 2;
+  int N3 = 2;
   int dim = 3;
   int numGhost = 2;
 
@@ -85,16 +85,16 @@ int main(int argc, char **argv)
 
     /* Initial conditions */
     ts.primOld->vars[vars::RHO] =
-      1. + 0.1*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
-    ts.primOld->vars[vars::U]   = 1.;
-    ts.primOld->vars[vars::U1]  = .1;
+      1. + 1.e-4*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    ts.primOld->vars[vars::U]   = 2.;
+    ts.primOld->vars[vars::U1]  = 0.;
     ts.primOld->vars[vars::U2]  = 0.;
     ts.primOld->vars[vars::U3]  = 0.;
     ts.primOld->vars[vars::B1]  = 0.;
     ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
 
-    ts.timeStep(0.1);
+    ts.timeStep(0.2/params::N1);
 
   }
 
