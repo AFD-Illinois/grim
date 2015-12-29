@@ -21,6 +21,8 @@ void timeStepper::solve(grid &primGuess)
     /* Still yet to put in code to compute global norm over mpi procs */
     double globalL2Norm =  af::norm(af::flat(residualSoA));
     printf("Nonliner iter = %d, error = %.15f\n", nonLinearIter, globalL2Norm);
+    if(globalL2Norm<1.e-10)
+      break;
 
     /* Assemble the Jacobian in Struct of Arrays format where the physics
      * operations are all vectorized */
@@ -132,8 +134,9 @@ void timeStepper::solve(grid &primGuess)
        * c) f(1) 
        */
     
-      double alpha    = 1e-4;
-      array condition = f1 > f0*(1. - alpha*stepLength);
+      const double alpha    = 1e-4;
+      const double EPS      = 1.e-24;
+      array condition = f1 > (f0*(1. - alpha*stepLength) +EPS);
       array denom     = (f1-f0-fPrime0*stepLength) * condition + (1.-condition);
       array nextStepLength = -fPrime0*stepLength*stepLength/denom/2.;
       stepLength      = stepLength*(1. - condition) + condition*nextStepLength;
