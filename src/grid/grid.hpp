@@ -25,6 +25,8 @@ class grid
     int iLocalStart, jLocalStart, kLocalStart;
     int iLocalEnd,   jLocalEnd,   kLocalEnd;
     int N1Local,     N2Local,     N3Local;
+    int N1Total,     N2Total,     N3Total;
+    int numGhostX1,  numGhostX2,  numGhostX3;
 
     af::seq *domainX1, *domainX2, *domainX3;
 

@@ -17,12 +17,6 @@ class geometry
   public:
     int numGhost;
 
-    std::vector<int> axiSymmetricLocations
-      = {locations::CENTER, 
-         locations::LEFT, locations::RIGHT,
-         locations::TOP,  locations::BOTTOM
-        };
-
     std::vector<int> allLocations
       = {locations::CENTER, 
          locations::LEFT,  locations::RIGHT,
@@ -42,10 +36,10 @@ class geometry
     array xCoords[LOCATIONS][NDIM];
     array XCoords[LOCATIONS][NDIM];
 
-    array alpha[AXISYM_LOCATIONS];
-    array g[AXISYM_LOCATIONS];
-    array gCov[AXISYM_LOCATIONS][NDIM][NDIM];
-    array gCon[AXISYM_LOCATIONS][NDIM][NDIM];
+    array alpha[LOCATIONS];
+    array g[LOCATIONS];
+    array gCov[LOCATIONS][NDIM][NDIM];
+    array gCon[LOCATIONS][NDIM][NDIM];
 
     /* Connection coefficients only needed at CENTER */
     array gammaUpDownDown[NDIM][NDIM][NDIM];

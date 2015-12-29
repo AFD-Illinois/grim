@@ -7,32 +7,36 @@ geometry::geometry()
   xCoordsGrid     = new grid(LOCATIONS*NDIM);
   XCoordsGrid     = new grid(LOCATIONS*NDIM);
 
-  alphaGrid       = new grid(AXISYM_LOCATIONS);
-  gGrid           = new grid(AXISYM_LOCATIONS);
-  gCovGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM);
-  gConGrid        = new grid(AXISYM_LOCATIONS*NDIM*NDIM);
+  alphaGrid       = new grid(LOCATIONS);
+  gGrid           = new grid(LOCATIONS);
+  gCovGrid        = new grid(LOCATIONS*NDIM*NDIM);
+  gConGrid        = new grid(LOCATIONS*NDIM*NDIM);
   connectionGrid  = new grid(NDIM*NDIM*NDIM);
 
   /* Indices go from [-numGhost, N + numGhost) in each direction */
   array indicesX1 = 
-    af::range(xCoordsGrid->vars[0].dims(0),
-              xCoordsGrid->vars[0].dims(1),
-              xCoordsGrid->vars[0].dims(2),
-              xCoordsGrid->vars[0].dims(3), 0
+    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
+              xCoordsGrid->N2Total, /* number of total zones in X2 */
+              xCoordsGrid->N3Total, /* number of total zones in X3 */
+              1,                    /* number of variables */
+              directions::X1        /* Vary indices in X1 direction */
              ) - numGhost;
 
+
   array indicesX2 = 
-    af::range(xCoordsGrid->vars[0].dims(0),
-              xCoordsGrid->vars[0].dims(1),
-              xCoordsGrid->vars[0].dims(2),
-              xCoordsGrid->vars[0].dims(3), 1
+    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
+              xCoordsGrid->N2Total, /* number of total zones in X2 */
+              xCoordsGrid->N3Total, /* number of total zones in X3 */
+              1,                    /* number of variables */
+              directions::X2        /* Vary indices in X2 direction */
              ) - numGhost;
 
   array indicesX3 = 
-    af::range(xCoordsGrid->vars[0].dims(0),
-              xCoordsGrid->vars[0].dims(1),
-              xCoordsGrid->vars[0].dims(2),
-              xCoordsGrid->vars[0].dims(3), 2
+    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
+              xCoordsGrid->N2Total, /* number of total zones in X2 */
+              xCoordsGrid->N3Total, /* number of total zones in X3 */
+              1,                    /* number of variables */
+              directions::X3        /* Vary indices in X3 direction */
              ) - numGhost;
 
   /* Temporal coordinate. Just set to zero */
@@ -128,7 +132,7 @@ geometry::geometry()
   /* Use the following array to allocate other arrays */
   zero = 0.*XCoords[locations::CENTER][0];
 
-  for (int loc : axiSymmetricLocations)
+  for (int loc : allLocations)
   {
     /* Allocate space */
     g[loc]     = zero;

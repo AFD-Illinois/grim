@@ -3,7 +3,6 @@
 
 const int NDIM = 4;
 const int LOCATIONS = 7;
-const int AXISYM_LOCATIONS = 5;
 
 namespace vars
 {

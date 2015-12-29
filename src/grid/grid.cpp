@@ -45,6 +45,14 @@ grid::grid(int numVars)
                    &dm
                   );
 
+      N1Total = params::N1 + 2*params::numGhost;
+      N2Total = 1;
+      N3Total = 1;
+
+      numGhostX1 = params::numGhost;
+      numGhostX2 = 0;
+      numGhostX3 = 0;
+
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(span);
       domainX3 = new af::seq(span);
@@ -62,6 +70,14 @@ grid::grid(int numVars)
                    &dm
                   );
 
+      N1Total = params::N1 + 2*params::numGhost;
+      N2Total = params::N2 + 2*params::numGhost;
+      N3Total = 1;
+
+      numGhostX1 = params::numGhost;
+      numGhostX2 = params::numGhost;
+      numGhostX3 = 0;
+
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX3 = new af::seq(span);
@@ -78,6 +94,15 @@ grid::grid(int numVars)
                    PETSC_NULL, PETSC_NULL, PETSC_NULL,
                    &dm
                   );
+
+      N1Total = params::N1 + 2*params::numGhost;
+      N2Total = params::N2 + 2*params::numGhost;
+      N3Total = params::N3 + 2*params::numGhost;
+
+      numGhostX1 = params::numGhost;
+      numGhostX2 = params::numGhost;
+      numGhostX3 = params::numGhost;
+
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX3 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
@@ -115,41 +140,11 @@ void grid::copyLocalVecToVars()
   double *pointerToLocalVec;
   VecGetArray(localVec, &pointerToLocalVec);
 
-  switch (params::dim)
-  {
-    case 1:
-      varsCopiedFromLocalVec = 
-        array(numVars,
-              N1Local + 2*numGhost, 
-              N2Local,
-              N3Local,
-              pointerToLocalVec
-             );
-
-      break;
-
-    case 2:
-      varsCopiedFromLocalVec = 
-        array(numVars,
-              N1Local + 2*numGhost, 
-              N2Local + 2*numGhost,
-              N3Local,
-              pointerToLocalVec
-             );
-
-      break;
-
-    case 3:
-      varsCopiedFromLocalVec = 
-        array(numVars,
-              N1Local + 2*numGhost, 
-              N2Local + 2*numGhost,
-              N3Local + 2*numGhost,
-              pointerToLocalVec
-             );
-
-      break;
-    }
+  varsCopiedFromLocalVec = 
+    array(numVars,
+          N1Total, N2Total, N3Total, 
+          pointerToLocalVec
+         );
 
   VecRestoreArray(localVec, &pointerToLocalVec);
 
@@ -186,14 +181,15 @@ void grid::communicate()
       {
         for (int var=0; var<numVars; var++)
         {
-	  //Note on indices: Petsc use non-ghosted vectors for the global vector,
-	  // but ghosted indices for the local vector!
+	        /* Note on indices: Petsc use non-ghosted vectors for the global vector,
+	        * but ghosted indices for the local vector! */
           const int globalindex = var + numVars*(i + N1Local*(j + N2Local*(k) ) );
-	  const int GZ = params::numGhost;
-	  const int N1 = N1Local + 2*GZ;
-	  const int N2 = N2Local + 2*GZ;
-	  const int N3 = N3Local + 2*GZ;
-          const int localindex = var + numVars*(i+GZ + N1*(j+GZ + N2*(k+GZ) ) );
+          const int localindex  = var + numVars*(i+numGhostX1 
+                                                   + N1Total*(j+numGhostX2
+                                                              + N2Total*(k+numGhostX3) 
+                                                             ) 
+                                                );
+
           pointerToGlobalVec[globalindex] = pointerToLocalVec[localindex];
         }
       }

@@ -31,10 +31,12 @@ void riemannSolver::solve(const grid &prim,
 {
   int location;
   int shiftX1, shiftX2, shiftX3;
+  int fluxDirection;
   switch (dir)
   {
     case directions::X1:
       location = locations::LEFT;
+      fluxDirection = 1;
       shiftX1  = -1;
       shiftX2  = 0;
       shiftX3  = 0;
@@ -42,6 +44,7 @@ void riemannSolver::solve(const grid &prim,
 
     case directions::X2:
       location = locations::BOTTOM;
+      fluxDirection = 2;
       shiftX1  = 0;
       shiftX2  = -1;
       shiftX3  = 0;
@@ -49,6 +52,7 @@ void riemannSolver::solve(const grid &prim,
 
     case directions::X3:
       location = locations::BACK;
+      fluxDirection = 3;
       shiftX1  = 0;
       shiftX2  = 0;
       shiftX3  = -1;
@@ -60,11 +64,11 @@ void riemannSolver::solve(const grid &prim,
   elemLeft->set(*primRight, geom, location);
   elemRight->set(*primLeft, geom, location);
 
-  elemLeft->computeFluxes(geom, dir+1, *fluxLeft);
-  elemLeft->computeFluxes(geom, 0,   *consLeft);
+  elemLeft->computeFluxes(geom, fluxDirection, *fluxLeft);
+  elemLeft->computeFluxes(geom, 0,             *consLeft);
 
-  elemRight->computeFluxes(geom, dir+1, *fluxRight);
-  elemRight->computeFluxes(geom, 0,   *consRight);
+  elemRight->computeFluxes(geom, fluxDirection, *fluxRight);
+  elemRight->computeFluxes(geom, 0,             *consRight);
 
   double cLaxFriedrichs = 1.;
 

@@ -12,6 +12,13 @@ fluidElement::fluidElement(const grid &prim,
                            const int location
                           )
 {
+  /* Use this to set various fluid parameters. For ex: tau = 0.1*one etc..*/
+  one = af::constant(1, 
+                     prim.vars[0].dims(directions::X1),
+                     prim.vars[0].dims(directions::X2),
+                     prim.vars[0].dims(directions::X3)
+                    );
+
   set(prim, geom, location);
 }
 
@@ -20,18 +27,7 @@ void fluidElement::set(const grid &prim,
                        const int location
                       )
 {
-  /* Set locations along axisymmetric direction to that of the center of the
-   * grid zone */
-  if (location==locations::FRONT || 
-      location==locations::BACK
-     )
-  {
-    loc = locations::CENTER;
-  }
-  else
-  {
-    loc = location;
-  }
+  loc = location;
 
   rho = prim.vars[vars::RHO] + params::rhoFloorInFluidElement;
   u   = prim.vars[vars::U  ] + params::uFloorInFluidElement;
@@ -45,7 +41,6 @@ void fluidElement::set(const grid &prim,
   pressure    = (params::adiabaticIndex - 1.)*u;
   temperature = pressure/rho + params::temperatureFloorInFluidElement;
 
-  one = af::constant(1, rho.dims(0), rho.dims(1), rho.dims(2));
   setFluidElementParameters(geom);
   
   if (params::conduction==1)
@@ -87,10 +82,10 @@ void fluidElement::set(const grid &prim,
                  )
             );
 
-  uCon[0] = gamma/geom.alpha[loc];
-  uCon[1] = u1 - gamma*geom.gCon[loc][0][1]*geom.alpha[loc];
-  uCon[2] = u2 - gamma*geom.gCon[loc][0][2]*geom.alpha[loc];
-  uCon[3] = u3 - gamma*geom.gCon[loc][0][3]*geom.alpha[loc];
+  uCon[0] = gammaLorentzFactor/geom.alpha[loc];
+  uCon[1] = u1 - gammaLorentzFactor*geom.gCon[loc][0][1]*geom.alpha[loc];
+  uCon[2] = u2 - gammaLorentzFactor*geom.gCon[loc][0][2]*geom.alpha[loc];
+  uCon[3] = u3 - gammaLorentzFactor*geom.gCon[loc][0][3]*geom.alpha[loc];
 
   for (int mu=0; mu < NDIM; mu++)
   {
