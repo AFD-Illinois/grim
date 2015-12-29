@@ -37,7 +37,7 @@ void riemannSolver::solve(const grid &prim,
     case directions::X1:
       location = locations::LEFT;
       fluxDirection = 1;
-      shiftX1  = -1;
+      shiftX1  = 1;
       shiftX2  = 0;
       shiftX3  = 0;
       break;
@@ -46,7 +46,7 @@ void riemannSolver::solve(const grid &prim,
       location = locations::BOTTOM;
       fluxDirection = 2;
       shiftX1  = 0;
-      shiftX2  = -1;
+      shiftX2  = 1;
       shiftX3  = 0;
       break;
 
@@ -55,7 +55,7 @@ void riemannSolver::solve(const grid &prim,
       fluxDirection = 3;
       shiftX1  = 0;
       shiftX2  = 0;
-      shiftX3  = -1;
+      shiftX3  = 1;
       break;
   }
 
@@ -74,11 +74,11 @@ void riemannSolver::solve(const grid &prim,
 
   for (int var=0; var<vars::dof; var++)
   {
-    flux.vars[var] = 0.5*(  fluxLeft->vars[var] 
-                          + af::shift(fluxRight->vars[var], shiftX1, shiftX2, shiftX3)
+    flux.vars[var] = 0.5*(  af::shift(fluxLeft->vars[var], shiftX1, shiftX2, shiftX3) 
+                          + fluxRight->vars[var]
                           - cLaxFriedrichs 
-                          * (  af::shift(consRight->vars[var], shiftX1, shiftX2, shiftX3)
-                             - consLeft->vars[var]
+                          * (  consRight->vars[var]
+			       - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
                             )
                          );
   }
@@ -166,11 +166,11 @@ void riemannSolver::reconstructWENO5(const grid &prim,
     {
       array dvar = convolve(prim.vars[var], filter);
       //Get stencil
-      array y0 = dvar(span,span,span,0);
-      array y1 = dvar(span,span,span,1);
+      array y0 = dvar(span,span,span,4);
+      array y1 = dvar(span,span,span,3);
       array y2 = dvar(span,span,span,2);
-      array y3 = dvar(span,span,span,3);
-      array y4 = dvar(span,span,span,4);
+      array y3 = dvar(span,span,span,1);
+      array y4 = dvar(span,span,span,0);
 
       //Compute smoothness operators
       array beta1 = (( 4.0/3.0)*y0*y0 - (19.0/3.0)*y0*y1 +
@@ -221,8 +221,22 @@ void riemannSolver::reconstruct(const grid &prim,
   {
     array slope = slopeMM(dir,prim.vars[var]);
 
-    primLeft.vars[var]  = prim.vars[var] - 0.5*slope;
-    primRight.vars[var] = prim.vars[var] + 0.5*slope;
+    double dX = 0.;
+    switch(dir)
+      {
+         case directions::X1:
+	   dX = prim.dX1;
+	   break;
+         case directions::X2:
+	   dX = prim.dX2;
+	   break;
+         case directions::X3:
+	   dX = prim.dX3;
+	   break;
+      }
+
+    primLeft.vars[var]  = prim.vars[var] - 0.5*slope*dX;
+    primRight.vars[var] = prim.vars[var] + 0.5*slope*dX;
   }
 
 }

@@ -28,7 +28,8 @@ namespace params
   int numGhost = 2;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = 0.01;
+  double dt = 0.2/N1;
+  double Time = 0.;
   int metric = metrics::MINKOWSKI;
   double hSlope = 0.3;
   double blackHoleSpin = 0.9375;
@@ -83,9 +84,9 @@ int main(int argc, char **argv)
   {
     timeStepper ts;
 
+    array rhoInit = 1. + 1.e-4*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
     /* Initial conditions */
-    ts.primOld->vars[vars::RHO] =
-      1. + 1.e-4*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    ts.primOld->vars[vars::RHO] = rhoInit;
     ts.primOld->vars[vars::U]   = 2.;
     ts.primOld->vars[vars::U1]  = 0.;
     ts.primOld->vars[vars::U2]  = 0.;
@@ -94,7 +95,14 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
 
-    ts.timeStep(0.2/params::N1);
+    while(params::Time<0.05)
+      {
+	ts.timeStep(params::dt);
+	params::Time+=params::dt;
+	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
+					  - rhoInit)));
+	//printf("Time = %e; dt = %e; Error = %e\n",params::Time,params::dt,error);
+      }
 
   }
 
