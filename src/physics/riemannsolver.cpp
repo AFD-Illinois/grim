@@ -96,7 +96,7 @@ array minmod(array &x, array &y, array &z)
   array signy = 1.-2.*sign(y);
   array signz = 1.-2.*sign(z);
 
-  return 0.25 * abs(signx + signy ) * (signx + signz ) * minOfAll;
+  return 0.25 * af::abs(signx + signy ) * (signx + signz ) * minOfAll;
 }
 
 array riemannSolver::slopeMM(const int dir, const array& in)
@@ -176,15 +176,15 @@ void riemannSolver::reconstructWENO5(const grid &prim,
       array beta1 = (( 4.0/3.0)*y0*y0 - (19.0/3.0)*y0*y1 +
 		     (25.0/3.0)*y1*y1 + (11.0/3.0)*y0*y2 -
 		     (31.0/3.0)*y1*y2 + (10.0/3.0)*y2*y2) +
-	eps2*(1.0 + abs(y0) + abs(y1) + abs(y2));
+	eps2*(1.0 + af::abs(y0) + af::abs(y1) + af::abs(y2));
       array beta2 = (( 4.0/3.0)*y1*y1 - (13.0/3.0)*y1*y2 +
 		     (13.0/3.0)*y2*y2 + ( 5.0/3.0)*y1*y3 -
 		     (13.0/3.0)*y2*y3 + ( 4.0/3.0)*y3*y3) +                                                                                                    
-        eps2*(1.0 + abs(y1) + abs(y2) + abs(y3));
+        eps2*(1.0 + af::abs(y1) + af::abs(y2) + af::abs(y3));
       array beta3 = ((10.0/3.0)*y2*y2 - (31.0/3.0)*y2*y3 +
 		      (25.0/3.0)*y3*y3 + (11.0/3.0)*y2*y4 -
 		      (19.0/3.0)*y3*y4 + ( 4.0/3.0)*y4*y4) + 
-        eps2*(1.0 + abs(y2) + abs(y3) + abs(y4));
+        eps2*(1.0 + af::abs(y2) + af::abs(y3) + af::abs(y4));
 
       //Compute weights
       array w1r = 1.0/(16.0*beta1*beta1);

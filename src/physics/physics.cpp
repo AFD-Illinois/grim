@@ -124,7 +124,7 @@ void fluidElement::set(const grid &prim,
 
       if (params::conduction==1)
       {
-        TUpDown[mu][nu] += q/sqrt(bSqr) * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
+        TUpDown[mu][nu] += q/af::sqrt(bSqr) * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
       }
 
       if (params::viscosity==1)
@@ -296,7 +296,7 @@ void fluidElement::computeSources(const geometry &geom,
 		  *graduCov[mu][nu];
 	  
 	  if (params::highOrderTermsViscosity == 1)
-	    deltaP0 *= sqrt(elemForSpatialDeriv.tau
+	    deltaP0 *= af::sqrt(elemForSpatialDeriv.tau
 			    /elemForSpatialDeriv.nu
 			    /elemForSpatialDeriv.rho
 			    /elemForSpatialDeriv.temperature);
@@ -337,8 +337,8 @@ void fluidElement::computeSources(const geometry &geom,
 	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
 	  if(useImplicitSources)
 	    {
-	      array bnorm = sqrt(bSqr);
-	      array bnormOld = sqrt(elemOld.bSqr);
+	      array bnorm = af::sqrt(bSqr);
+	      array bnormOld = af::sqrt(elemOld.bSqr);
 	      for(int mu=0;mu<NDIM;mu++)
 		{
 		  q0 -= 0.5*(rho*chi*bCon[mu]/bnorm
@@ -362,7 +362,7 @@ void fluidElement::computeSources(const geometry &geom,
 	    }
 	  else
 	    {
-	      array bnorm = sqrt(elemForSpatialDeriv.bSqr);
+	      array bnorm = af::sqrt(elemForSpatialDeriv.bSqr);
 	      for(int mu=0;mu<NDIM;mu++)
 		{
 		  q0 -= elemForSpatialDeriv.rho
@@ -381,7 +381,7 @@ void fluidElement::computeSources(const geometry &geom,
 		}
 	    }
 	  if (params::highOrderTermsConduction == 1)
-	    q0 *= sqrt(elemForSpatialDeriv.tau
+	    q0 *= af::sqrt(elemForSpatialDeriv.tau
 		       /elemForSpatialDeriv.chi
 		       /elemForSpatialDeriv.rho)
 	      /elemForSpatialDeriv.temperature;
