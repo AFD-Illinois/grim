@@ -84,24 +84,30 @@ int main(int argc, char **argv)
   {
     timeStepper ts;
 
-    array rhoInit = 1. + 1.e-4*af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    double Aw = 1.e-4;
+    array cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    array sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+
     /* Initial conditions */
-    ts.primOld->vars[vars::RHO] = rhoInit;
+    ts.primOld->vars[vars::RHO] = 1.;
     ts.primOld->vars[vars::U]   = 2.;
     ts.primOld->vars[vars::U1]  = 0.;
-    ts.primOld->vars[vars::U2]  = 0.;
+    ts.primOld->vars[vars::U2]  = Aw*0.462905090215*cphi;
     ts.primOld->vars[vars::U3]  = 0.;
-    ts.primOld->vars[vars::B1]  = 0.;
-    ts.primOld->vars[vars::B2]  = 0.;
+    ts.primOld->vars[vars::B1]  = 0.01;
+    ts.primOld->vars[vars::B2]  = Aw*0.886407850514*cphi;
     ts.primOld->vars[vars::B3]  = 0.;
 
     while(params::Time<0.05)
       {
 	ts.timeStep(params::dt);
 	params::Time+=params::dt;
-	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
-					  - rhoInit)));
-	//printf("Time = %e; dt = %e; Error = %e\n",params::Time,params::dt,error);
+	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+		       +0.0328124176673*params::Time);
+	array u2an = Aw*0.462905090215*cphi;
+	double error = af::norm(af::flat((ts.primOld->vars[vars::U2]
+					  - u2an)));
+	printf("Time = %e; dt = %e; Error = %e\n",params::Time,params::dt,error);
       }
 
   }
