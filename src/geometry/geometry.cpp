@@ -49,14 +49,16 @@ geometry::geometry()
   XCoordsGrid->vars[0 + NDIM*locations::BACK]   = 0.;
 
   /* X1 coordinate at all the locations */
+  // Note the necessary cast to double, because ArrayFire defaults to
+  // single precision when casting the indices from integer to real
   XCoordsGrid->vars[1 + NDIM*locations::CENTER] = 
-    params::X1Start + (indicesX1 + 0.5)*XCoordsGrid->dX1;
+    params::X1Start + (indicesX1.as(f64) + 0.5)*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::LEFT]   = 
-    params::X1Start + (indicesX1      )*XCoordsGrid->dX1;
+    params::X1Start + (indicesX1.as(f64)      )*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::RIGHT]  = 
-    params::X1Start + (indicesX1 + 1. )*XCoordsGrid->dX1;
+    params::X1Start + (indicesX1.as(f64) + 1. )*XCoordsGrid->dX1;
 
   XCoordsGrid->vars[1 + NDIM*locations::BOTTOM] = 
     XCoordsGrid->vars[1 + NDIM*locations::CENTER];
@@ -72,13 +74,13 @@ geometry::geometry()
 
   /* X2 coordinate at all the locations */
   XCoordsGrid->vars[2 + NDIM*locations::CENTER] = 
-    params::X2Start + (indicesX2 + 0.5)*XCoordsGrid->dX2;
+    params::X2Start + (indicesX2.as(f64) + 0.5)*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::BOTTOM] = 
-    params::X2Start + (indicesX2      )*XCoordsGrid->dX2;
+    params::X2Start + (indicesX2.as(f64)      )*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::TOP]    = 
-    params::X2Start + (indicesX2 + 1. )*XCoordsGrid->dX2;
+    params::X2Start + (indicesX2.as(f64) + 1. )*XCoordsGrid->dX2;
 
   XCoordsGrid->vars[2 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[2 + NDIM*locations::CENTER];
@@ -94,13 +96,13 @@ geometry::geometry()
 
   /* X3 coordinate at all the locations */
   XCoordsGrid->vars[3 + NDIM*locations::CENTER] = 
-    params::X3Start + (indicesX3 + 0.5)*XCoordsGrid->dX3;
+    params::X3Start + (indicesX3.as(f64) + 0.5)*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::BACK]   = 
-    params::X3Start + (indicesX3      )*XCoordsGrid->dX3;
+    params::X3Start + (indicesX3.as(f64)      )*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::FRONT]  = 
-    params::X3Start + (indicesX3 + 1. )*XCoordsGrid->dX3;
+    params::X3Start + (indicesX3.as(f64) + 1. )*XCoordsGrid->dX3;
 
   XCoordsGrid->vars[3 + NDIM*locations::LEFT]   = 
     XCoordsGrid->vars[3 + NDIM*locations::CENTER];
@@ -165,7 +167,6 @@ geometry::geometry()
       }
     }
   }
-
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],

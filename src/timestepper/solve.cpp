@@ -30,7 +30,7 @@ void timeStepper::solve(grid &primGuess)
     {
       /* Recommended value of Jacobian differencing parameter to achieve fp64
        * machine precision */
-      double epsilon = 4e-8;
+      double epsilon = 4.e-8;
 
       array smallPrim = af::abs(primGuess.vars[row])<2.*epsilon;
       primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)

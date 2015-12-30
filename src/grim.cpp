@@ -84,30 +84,61 @@ int main(int argc, char **argv)
   {
     timeStepper ts;
 
+    /*af::dtype type;
+    array arr = (ts.geom->xCoords[locations::CENTER][1]);
+    type = arr.type();
+    printf("xCoords has type %i\n",type);*/
+    
+
     double Aw = 1.e-4;
     array cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
     array sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
 
     /* Initial conditions */
-    ts.primOld->vars[vars::RHO] = 1.;
+
+    //Alfven Wave
+    /*ts.primOld->vars[vars::RHO] = 1.;
     ts.primOld->vars[vars::U]   = 2.;
     ts.primOld->vars[vars::U1]  = 0.;
     ts.primOld->vars[vars::U2]  = Aw*0.462905090215*cphi;
     ts.primOld->vars[vars::U3]  = 0.;
     ts.primOld->vars[vars::B1]  = 0.01;
     ts.primOld->vars[vars::B2]  = Aw*0.886407850514*cphi;
+    ts.primOld->vars[vars::B3]  = 0.;*/
+
+    //Sound wave
+    ts.primOld->vars[vars::RHO] = 1.+Aw*0.345991032308*cphi;
+    ts.primOld->vars[vars::U]   = 2.+Aw*0.922642752822*cphi;
+    ts.primOld->vars[vars::U1]  = 0.-Aw*0.170354208129*cphi; 
+    ts.primOld->vars[vars::U2]  = 0.; 
+    ts.primOld->vars[vars::U3]  = 0.; 
+    ts.primOld->vars[vars::B1]  = 0.01; 
+    ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
 
+    params::Time = 0.;
     while(params::Time<0.05)
       {
 	ts.timeStep(params::dt);
 	params::Time+=params::dt;
-	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       +0.0328124176673*params::Time);
+	
+	//Alfven wave
+	/*cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+		       +0.0328124176673*params::Time).as(f64);
 	array u2an = Aw*0.462905090215*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::U2]
-					  - u2an)));
+	- u2an)));*/
+
+	//Sound wave
+	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+		       +3.09362659024*params::Time).as(f64);
+	array rhoan = 1.+Aw*0.345991032308*cphi;
+	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
+	- rhoan)));
+
+	error = error/params::N1/params::N2/params::N3;
 	printf("Time = %e; dt = %e; Error = %e\n",params::Time,params::dt,error);
+	//af_print(ts.primOld->vars[vars::RHO](span,0,0)-rhoan(span,0,0),12);
       }
 
   }

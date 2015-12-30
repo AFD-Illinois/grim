@@ -16,8 +16,9 @@ fluidElement::fluidElement(const grid &prim,
   one = af::constant(1, 
                      prim.vars[0].dims(directions::X1),
                      prim.vars[0].dims(directions::X2),
-                     prim.vars[0].dims(directions::X3)
-                    );
+                     prim.vars[0].dims(directions::X3),
+		     f64
+		     );
 
   set(prim, geom, location);
 }
@@ -213,17 +214,17 @@ void fluidElement::computeSources(const geometry &geom,
       // shared by conduction and viscosity, i.e. 
       // u_{\mu;\nu} and u^{\mu}_{;\mu}
       array graduCov[NDIM][NDIM];     
-      array divuCov = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+      array divuCov = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
       // Use this if the source terms are treated implicitly (we then
       // compute them at the beginning and end of the step)
       array graduCovOld[NDIM][NDIM];     
-      array divuCovOld = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+      array divuCovOld = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
       for(int mu=0;mu<NDIM;mu++)
 	{
 	  for(int nu=0;nu<NDIM;nu++)
 	    {
-	      graduCov[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
-	      graduCovOld[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	      graduCov[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+	      graduCovOld[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
 	    }
 	  // 1) Time derivatives. Note that the old element is ghosted.
 	  graduCov[0][mu] += (uCov[mu]-elemOld.uCov[mu])/dt;
@@ -326,7 +327,7 @@ void fluidElement::computeSources(const geometry &geom,
 	{
 	  array gradT[NDIM];
 	  for(int mu=0;mu<NDIM;mu++)
-	    gradT[mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	    gradT[mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
 	  gradT[0] = (temperature - elemOld.temperature)/dt;
 	  array dT = riemann.slopeMM(directions::X1,elemForSpatialDeriv.temperature);
 	  gradT[1] = dT;
@@ -334,7 +335,7 @@ void fluidElement::computeSources(const geometry &geom,
           gradT[2] = dT;
 	  dT = riemann.slopeMM(directions::X3,elemForSpatialDeriv.temperature);
           gradT[3] = dT;
-	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2));
+	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
 	  if(useImplicitSources)
 	    {
 	      array bnorm = af::sqrt(bSqr);
