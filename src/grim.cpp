@@ -4,7 +4,7 @@ namespace vars
 {
   int Q = 8;
   int DP = 9;
-  int dof = 8;
+  int dof = 10;
 };
 
 namespace gridParams
@@ -21,7 +21,7 @@ namespace gridParams
 
 namespace params
 {
-  int N1 = 40;
+  int N1 = 20;
   int N2 = 1;
   int N3 = 1;
   int dim = 1;
@@ -52,8 +52,8 @@ namespace params
   double bSqrFloorInFluidElement        = 1e-20;
   double temperatureFloorInFluidElement = 1e-20;
 
-  int conduction = 0;
-  int viscosity  = 0;
+  int conduction = 1;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1;
   int highOrderTermsViscosity = 1;
   double adiabaticIndex = 4./3;
@@ -107,16 +107,26 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B3]  = 0.;*/
 
     //Sound wave
-    ts.primOld->vars[vars::RHO] = 1.+Aw*0.345991032308*cphi;
+    /*ts.primOld->vars[vars::RHO] = 1.+Aw*0.345991032308*cphi;
     ts.primOld->vars[vars::U]   = 2.+Aw*0.922642752822*cphi;
     ts.primOld->vars[vars::U1]  = 0.-Aw*0.170354208129*cphi; 
     ts.primOld->vars[vars::U2]  = 0.; 
     ts.primOld->vars[vars::U3]  = 0.; 
     ts.primOld->vars[vars::B1]  = 0.01; 
     ts.primOld->vars[vars::B2]  = 0.;
+    ts.primOld->vars[vars::B3]  = 0.;*/
+
+    //EMHD Sound wave
+    ts.primOld->vars[vars::RHO] = 1.+Aw*0.408365507885*cphi;
+    ts.primOld->vars[vars::U]   = 2.+Aw*0.816299597519*cphi;
+    ts.primOld->vars[vars::U1]  = 0.+Aw*0.0054163532418*sphi; 
+    ts.primOld->vars[vars::U2]  = 0.; 
+    ts.primOld->vars[vars::U3]  = 0.; 
+    ts.primOld->vars[vars::B1]  = 0.01; 
+    ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
-    //ts.primOld->vars[vars::DP]  = 0.;
-    //ts.primOld->vars[vars::Q]  = 0.;
+    ts.primOld->vars[vars::Q]  = 0.-Aw*0.00361662427435*sphi;
+    ts.primOld->vars[vars::DP]  = 0.+Aw*0.408472963863*cphi;
 
     params::Time = 0.;
     while(params::Time<0.05)
@@ -131,10 +141,19 @@ int main(int argc, char **argv)
 	double error = af::norm(af::flat((ts.primOld->vars[vars::U2]
 	- u2an)));*/
 
-	//Sound wave
-	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+	//MHD Sound wave
+	/*cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
 		       +3.09362659024*params::Time).as(f64);
 	array rhoan = 1.+Aw*0.345991032308*cphi;
+	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
+	- rhoan)));*/
+
+	//EMHD Sound wave
+	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+		       -0.0833369872094*params::Time).as(f64);
+	sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
+		       -0.0833369872094*params::Time).as(f64);
+	array rhoan = 1.+Aw*0.408365507885*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));
 

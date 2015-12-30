@@ -70,6 +70,7 @@ void timeStepper::timeStep(double dt)
 
   elemOld->set(*primOld, *geom, locations::CENTER);
   elemOld->computeFluxes(*geom, 0, *consOld);
+  elemOld->computeEMHDGradients(*geom);
 
   computeDivOfFluxes(*primOld);
 
@@ -91,6 +92,7 @@ void timeStepper::timeStep(double dt)
     primHalfStep->vars[var] = prim->vars[var];
   }
   elemHalfStep->set(*primHalfStep, *geom, locations::CENTER);
+  elemHalfStep->computeEMHDGradients(*geom);
 
   /* apply boundary conditions on primHalfStepGhosted */
   /* Half step complete */

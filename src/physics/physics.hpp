@@ -35,6 +35,13 @@ class fluidElement
     array NUp[NDIM];
     array TUpDown[NDIM][NDIM];
 
+    array gradT[NDIM];
+    array graduCov[NDIM][NDIM];
+    array divuCov;
+    array deltaP0;
+    array q0;
+    array bNorm;
+
     fluidElement(const grid &prim, 
                  const geometry &geom, 
                  const int location
@@ -56,6 +63,7 @@ class fluidElement
 			                  const int useImplicitSources,
                         grid &sources
                        );
+    void computeEMHDGradients(const geometry &geom);
 };
 
 class riemannSolver

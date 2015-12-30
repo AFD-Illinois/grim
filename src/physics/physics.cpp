@@ -137,7 +137,20 @@ void fluidElement::set(const grid &prim,
       }
     }
   }
-
+  //Allocate memory for gradients used in EMHD
+  if (params::conduction || params::viscosity)
+    {
+      divuCov = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+      for(int mu=0;mu<NDIM;mu++)
+	{
+	  gradT[mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+	  for(int nu=0;nu<NDIM;nu++)
+	    graduCov[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+	}
+      deltaP0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+      q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
+      bNorm = af::sqrt(bSqr);
+    }
 }
 
 void fluidElement::computeFluxes(const geometry &geom, 
@@ -176,10 +189,10 @@ void fluidElement::computeFluxes(const geometry &geom,
 }
 
 void fluidElement::computeSources(const geometry &geom,
-				                          const fluidElement &elemOld,
-                        				  const fluidElement &elemForSpatialDeriv,
-                        				  const double dt,
-                        				  const int useImplicitSources,
+				  const fluidElement &elemOld,
+				  const fluidElement &elemForSpatialDeriv,
+				  const double dt,
+				  const int useImplicitSources,
                                   grid &sources
                                  )
 {
@@ -213,94 +226,35 @@ void fluidElement::computeSources(const geometry &geom,
       // First, compute part of the source terms
       // shared by conduction and viscosity, i.e. 
       // u_{\mu;\nu} and u^{\mu}_{;\mu}
-      array graduCov[NDIM][NDIM];     
-      array divuCov = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-      // Use this if the source terms are treated implicitly (we then
-      // compute them at the beginning and end of the step)
-      array graduCovOld[NDIM][NDIM];     
-      array divuCovOld = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-      for(int mu=0;mu<NDIM;mu++)
-	{
-	  for(int nu=0;nu<NDIM;nu++)
-	    {
-	      graduCov[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-	      graduCovOld[nu][mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-	    }
-	  // 1) Time derivatives. Note that the old element is ghosted.
-	  graduCov[0][mu] += (uCov[mu]-elemOld.uCov[mu])/dt;
-	  // 2) Spatial derivatives.
-	  array du = riemann.slopeMM(directions::X1,elemForSpatialDeriv.uCov[mu]);
-	  graduCov[1][mu] += du;
-	  if(params::dim>1)
-	    {
-	      du =  riemann.slopeMM(directions::X2,elemForSpatialDeriv.uCov[mu]);
-	      graduCov[2][mu] += du;
-	      if(params::dim>2)
-		{
-		  du =  riemann.slopeMM(directions::X3,elemForSpatialDeriv.uCov[mu]);
-		  graduCov[3][mu] += du;
-		}
-	    }
-	  // 3) Connection terms
-	  if(useImplicitSources)
-	    {
-	      for(int nu=0;nu<NDIM;nu++)
-		for(int mu=0;mu<NDIM;mu++)
-		  {
-		    graduCovOld[nu][mu]=graduCov[nu][mu];
-		    for(int lambda=0;lambda<NDIM;lambda++)
-		      {
-			graduCov[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
-			graduCovOld[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*
-			  elemOld.uCov[lambda];
-		      }
-		  }
-	    }
-	  else
-	    {
-	      for(int nu=0;nu<NDIM;nu++)
-                for(int lambda=0;lambda<NDIM;lambda++)
-                  graduCov[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*
-		    elemForSpatialDeriv.uCov[lambda];
-	    }
-	}
-      // 4) Compute divergence. We could compute it from the derivatives of uCon,
-      //    but we already have u_{\mu;\nu}, so let's make use of it
       for(int mu=0;mu<NDIM;mu++)
 	for(int nu=0;nu<NDIM;nu++)
-	  {
-	    divuCov += geom.gCon[mu][nu]*graduCov[mu][nu];
-	    if(useImplicitSources)
-	      divuCovOld += geom.gCon[mu][nu]*graduCovOld[mu][nu];
-	  }
+	  graduCov[mu][nu] = elemForSpatialDeriv.graduCov[mu][nu];
+      // Add time derivatives, which were not precomputed of course... 
+      for(int mu=0;mu<NDIM;mu++)
+	graduCov[0][mu] += (uCov[mu]-elemOld.uCov[mu])/dt;
+      
+      // Compute divergence. We could compute it from the derivatives of uCon,
+      //    but we already have u_{\mu;\nu}, so let's make use of it
+      divuCov = 0.;
+      for(int mu=0;mu<NDIM;mu++)
+	for(int nu=0;nu<NDIM;nu++)
+	  divuCov += geom.gCon[mu][nu]*graduCov[mu][nu];
       
       // -------------------------------------
       // Now, look at viscosity-specific terms
       if(params::viscosity)
 	{
 	  // Compute target deltaP
-	  array deltaP0 = -divuCov*rho*nu;
-	  if(useImplicitSources)
-	    {
-	      deltaP0 = 0.5*(deltaP0 - divuCovOld*elemOld.rho*elemOld.nu);
-	      for(int mu=0;mu<NDIM;mu++)
-		for(int nu=0;nu<NDIM;nu++)
-		  deltaP0 += 0.5*(3.*rho*nu*bCon[mu]*bCon[nu]/bSqr*graduCov[mu][nu]+
-				  3.*elemOld.rho*elemOld.nu
-				    *elemOld.bCon[mu]
-				    *elemOld.bCon[nu]
-				    /elemOld.bSqr
-				    *graduCovOld[mu][nu]);
-	    }
-	  else
-	    for(int mu=0;mu<NDIM;mu++)
-	      for(int nu=0;nu<NDIM;nu++)
-		deltaP0 += 3.*elemForSpatialDeriv.rho
-		  *elemForSpatialDeriv.nu
-		  *elemForSpatialDeriv.bCon[mu]
-		  *elemForSpatialDeriv.bCon[nu]
-		  /elemForSpatialDeriv.bSqr
-		  *graduCov[mu][nu];
+	  deltaP0 = -divuCov*elemForSpatialDeriv.rho
+	    *elemForSpatialDeriv.nu;
+	  for(int mu=0;mu<NDIM;mu++)
+	    for(int nu=0;nu<NDIM;nu++)
+	      deltaP0 += 3.*elemForSpatialDeriv.rho
+		*elemForSpatialDeriv.nu
+		*elemForSpatialDeriv.bCon[mu]
+		*elemForSpatialDeriv.bCon[nu]
+		/elemForSpatialDeriv.bSqr
+		*graduCov[mu][nu];
 	  
 	  if (params::highOrderTermsViscosity == 1)
 	    deltaP0 *= af::sqrt(elemForSpatialDeriv.tau
@@ -315,8 +269,8 @@ void fluidElement::computeSources(const geometry &geom,
 					 - 0.5*elemOld.deltaPTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsViscosity == 1)
-		sources.vars[vars::DP] += 0.25*divuCov*deltaPTilde
-		  +0.25*divuCovOld*elemOld.deltaPTilde;
+		sources.vars[vars::DP] += 0.25*divuCov*
+		  (deltaPTilde+elemOld.deltaPTilde);
 	    }
 	  else
 	    {
@@ -331,72 +285,30 @@ void fluidElement::computeSources(const geometry &geom,
       // Finally, look at conduction-specific terms
       if(params::conduction)
 	{
-	  array gradT[NDIM];
 	  for(int mu=0;mu<NDIM;mu++)
-	    gradT[mu] = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-	  gradT[0] = (temperature - elemOld.temperature)/dt;
-	  array dT = riemann.slopeMM(directions::X1,elemForSpatialDeriv.temperature);
-	  gradT[1] = dT;
-	  if(params::dim>1)
+	    gradT[mu] = elemForSpatialDeriv.gradT[mu];
+	  gradT[0] += (temperature - elemOld.temperature)/dt;
+	  q0 = 0.;
+	  for(int mu=0;mu<NDIM;mu++)
 	    {
-	      dT = riemann.slopeMM(directions::X2,elemForSpatialDeriv.temperature);
-	      gradT[2] = dT;
-	      if(params::dim>2)
-		{
-		  dT = riemann.slopeMM(directions::X3,elemForSpatialDeriv.temperature);
-		  gradT[3] = dT;
-		}
-	    }
-	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-	  if(useImplicitSources)
-	    {
-	      array bnorm = af::sqrt(bSqr);
-	      array bnormOld = af::sqrt(elemOld.bSqr);
-	      for(int mu=0;mu<NDIM;mu++)
-		{
-		  q0 -= 0.5*(rho*chi*bCon[mu]/bnorm
-			     +elemOld.rho
-			     *elemOld.chi
-			     *elemOld.bCon[mu]
-			     /bnormOld)
-		    *gradT[mu];
-		  for(int nu=0;nu<NDIM;nu++)
-		    {
-		      q0 -= 0.5*(rho*chi*temperature*bCon[mu]/bnorm*uCon[nu]*graduCov[mu][nu]
-				 +elemOld.rho
-				 *elemOld.chi
-				 *elemOld.temperature
-				 *elemOld.bCon[mu]
-				 /bnormOld
-				 *elemOld.uCon[nu]
-				 *graduCovOld[mu][nu]);
-		    }
-		}
-	    }
-	  else
-	    {
-	      array bnorm = af::sqrt(elemForSpatialDeriv.bSqr);
-	      for(int mu=0;mu<NDIM;mu++)
-		{
-		  q0 -= elemForSpatialDeriv.rho
-		    *elemForSpatialDeriv.chi
-		    *elemForSpatialDeriv.bCon[mu]
-		    /bnorm
-		    *gradT[mu];
-		  for(int nu=0;nu<NDIM;nu++)
-		    q0 -= elemForSpatialDeriv.rho
-		      *elemForSpatialDeriv.chi
-		      *elemForSpatialDeriv.temperature
-		      *elemForSpatialDeriv.bCon[mu]
-		      /bnorm
-		      *elemForSpatialDeriv.uCon[nu]
-		      *graduCov[mu][nu];
-		}
+	      q0 -= elemForSpatialDeriv.rho
+		*elemForSpatialDeriv.chi
+		*elemForSpatialDeriv.bCon[mu]
+		/elemForSpatialDeriv.bNorm
+		*gradT[mu];
+	      for(int nu=0;nu<NDIM;nu++)
+		q0 -= elemForSpatialDeriv.rho
+		  *elemForSpatialDeriv.chi
+		  *elemForSpatialDeriv.temperature
+		  *elemForSpatialDeriv.bCon[mu]
+		  /elemForSpatialDeriv.bNorm
+		  *elemForSpatialDeriv.uCon[nu]
+		  *graduCov[mu][nu];
 	    }
 	  if (params::highOrderTermsConduction == 1)
 	    q0 *= af::sqrt(elemForSpatialDeriv.tau
-		       /elemForSpatialDeriv.chi
-		       /elemForSpatialDeriv.rho)
+			   /elemForSpatialDeriv.chi
+			   /elemForSpatialDeriv.rho)
 	      /elemForSpatialDeriv.temperature;
 	  
 	  
@@ -406,8 +318,8 @@ void fluidElement::computeSources(const geometry &geom,
 					 - 0.5*elemOld.qTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsConduction == 1)
-		sources.vars[vars::Q] += 0.25*divuCov*qTilde
-		  +0.25*divuCovOld*elemOld.qTilde;
+		sources.vars[vars::Q] += 0.25*divuCov*
+		  (qTilde+elemOld.qTilde);
 	    }
 	  else
 	    {
@@ -417,6 +329,51 @@ void fluidElement::computeSources(const geometry &geom,
 		sources.vars[vars::Q] +=0.5*divuCov*elemForSpatialDeriv.qTilde;
 	    }
 
+	}
+    }
+}
+
+void fluidElement::computeEMHDGradients(const geometry &geom)
+{
+  if (params::conduction || params::viscosity)
+    {
+      riemannSolver riemann(geom);
+      for(int mu=0;mu<NDIM;mu++)
+	{
+	  //Time derivative needs to be reset for reach residual computation,
+	  // so not computed here.
+	  graduCov[0][mu] = 0.;
+	  array du = riemann.slopeMM(directions::X1,uCov[mu]);
+	  graduCov[1][mu] = du;
+	  if(params::dim>1)
+	    {
+	      du =  riemann.slopeMM(directions::X2,uCov[mu]);
+	      graduCov[2][mu] = du;
+	    }
+	  if(params::dim>2)
+	    {
+	      du =  riemann.slopeMM(directions::X3,uCov[mu]);
+	      graduCov[3][mu] = du;
+            }
+	  for(int nu=0;nu<NDIM;nu++)
+	    for(int lambda=0;lambda<NDIM;lambda++)
+	      graduCov[nu][mu]+=geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
+	}
+      if(params::conduction)
+	{
+	  gradT[0] = 0.;
+	  array dT = riemann.slopeMM(directions::X1,temperature);
+	  gradT[1] = dT;
+	  if(params::dim>1)
+	    {
+	      dT = riemann.slopeMM(directions::X2,temperature);
+	      gradT[2] = dT;
+	    }
+	  if(params::dim>2)
+	    {
+	      dT = riemann.slopeMM(directions::X3,temperature);
+	      gradT[3] = dT;
+	    }
 	}
     }
 }
