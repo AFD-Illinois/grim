@@ -22,10 +22,10 @@ namespace gridParams
 namespace params
 {
   int N1 = 40;
-  int N2 = 2;
-  int N3 = 2;
+  int N2 = 3;
+  int N3 = 3;
   int dim = 3;
-  int numGhost = 2;
+  int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double dt = 0.2/N1;

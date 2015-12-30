@@ -217,7 +217,8 @@ void riemannSolver::reconstruct(const grid &prim,
                                 grid &primRight
                                )
 {
-  for(int var=0; var<vars::dof; var++)
+  reconstructWENO5(prim,dir,primLeft,primRight);
+  /*for(int var=0; var<vars::dof; var++)
   {
     array slope = slopeMM(dir,prim.vars[var]);
 
@@ -237,6 +238,6 @@ void riemannSolver::reconstruct(const grid &prim,
 
     primLeft.vars[var]  = prim.vars[var] - 0.5*slope*dX;
     primRight.vars[var] = prim.vars[var] + 0.5*slope*dX;
-  }
+    }*/
 
 }
