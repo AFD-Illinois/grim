@@ -220,8 +220,6 @@ void fluidElement::computeSources(const geometry &geom,
 
   if (params::conduction || params::viscosity)
     {
-      riemannSolver riemann(geom);
-
       // Non-ideal pieces
       // First, compute part of the source terms
       // shared by conduction and viscosity, i.e. 
@@ -337,22 +335,24 @@ void fluidElement::computeEMHDGradients(const geometry &geom)
 {
   if (params::conduction || params::viscosity)
     {
-      riemannSolver riemann(geom);
+      double dX1 = geom.xCoordsGrid->dX1;
+      double dX2 = geom.xCoordsGrid->dX2;
+      double dX3 = geom.xCoordsGrid->dX3;
       for(int mu=0;mu<NDIM;mu++)
 	{
 	  //Time derivative needs to be reset for reach residual computation,
 	  // so not computed here.
 	  graduCov[0][mu] = 0.;
-	  array du = riemann.slopeMM(directions::X1,uCov[mu]);
+	  array du = reconstruction::slopeMM(directions::X1,dX1,uCov[mu]);
 	  graduCov[1][mu] = du;
 	  if(params::dim>1)
 	    {
-	      du =  riemann.slopeMM(directions::X2,uCov[mu]);
+	      du =  reconstruction::slopeMM(directions::X2,dX2,uCov[mu]);
 	      graduCov[2][mu] = du;
 	    }
 	  if(params::dim>2)
 	    {
-	      du =  riemann.slopeMM(directions::X3,uCov[mu]);
+	      du =  reconstruction::slopeMM(directions::X3,dX3,uCov[mu]);
 	      graduCov[3][mu] = du;
             }
 	  for(int nu=0;nu<NDIM;nu++)
@@ -362,16 +362,16 @@ void fluidElement::computeEMHDGradients(const geometry &geom)
       if(params::conduction)
 	{
 	  gradT[0] = 0.;
-	  array dT = riemann.slopeMM(directions::X1,temperature);
+	  array dT = reconstruction::slopeMM(directions::X1,dX1,temperature);
 	  gradT[1] = dT;
 	  if(params::dim>1)
 	    {
-	      dT = riemann.slopeMM(directions::X2,temperature);
+	      dT = reconstruction::slopeMM(directions::X2,dX2,temperature);
 	      gradT[2] = dT;
 	    }
 	  if(params::dim>2)
 	    {
-	      dT = riemann.slopeMM(directions::X3,temperature);
+	      dT = reconstruction::slopeMM(directions::X3,dX3,temperature);
 	      gradT[3] = dT;
 	    }
 	}

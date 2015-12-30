@@ -1,4 +1,5 @@
 #include "timestepper.hpp"
+#include <sys/time.h>
 
 void timeStepper::solve(grid &primGuess)
 {
@@ -32,7 +33,7 @@ void timeStepper::solve(grid &primGuess)
        * machine precision */
       double epsilon = 4.e-8;
 
-      array smallPrim = af::abs(primGuess.vars[row])<2.*epsilon;
+      array smallPrim = af::abs(primGuess.vars[row])<.5*epsilon;
       primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
 	+smallPrim*epsilon; 
 
@@ -46,7 +47,6 @@ void timeStepper::solve(grid &primGuess)
             )
             /(primGuessPlusEps->vars[row]-primGuess.vars[row]);
       }
-
       /* reset */
       primGuessPlusEps->vars[row]  = primGuess.vars[row]; 
     }
@@ -109,8 +109,8 @@ void timeStepper::solve(grid &primGuess)
 
     /* Start with a full step */
     stepLength = 1.;
-    for (int lineSearchIter=0; 
-         lineSearchIter < params::maxLineSearchIters; lineSearchIter++
+    int lineSearchIter=0;
+    for (;lineSearchIter < params::maxLineSearchIters; lineSearchIter++
         )
     {
       /* 1) First take current step stepLength */
@@ -148,6 +148,7 @@ void timeStepper::solve(grid &primGuess)
       }
     }
 
+    //printf("Stopped linesearch after %i its\n",lineSearchIter);
     /* stepLength has now been set */
     for (int var=0; var<vars::dof; var++)
     {

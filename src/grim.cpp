@@ -21,7 +21,7 @@ namespace gridParams
 
 namespace params
 {
-  int N1 = 20;
+  int N1 = 40;
   int N2 = 1;
   int N3 = 1;
   int dim = 1;
