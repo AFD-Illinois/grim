@@ -90,6 +90,7 @@ void timeStepper::timeStep(double dt)
   {
     primHalfStep->vars[var] = prim->vars[var];
   }
+  elemHalfStep->set(*primHalfStep, *geom, locations::CENTER);
 
   /* apply boundary conditions on primHalfStepGhosted */
   /* Half step complete */
@@ -157,6 +158,24 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
                           + sourcesOld->vars[var];
     }
   }
+
+  //Normalization of the residual
+  for (int var=0; var<vars::dof; var++)
+    residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
+  if(params::conduction)
+    {
+      if(params::highOrderTermsConduction)
+	residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
+      else
+	residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->tau;
+    }
+  if(params::viscosity)
+    {
+      if(params::highOrderTermsViscosity)
+	residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
+      else
+	residual.vars[vars::DP] = residual.vars[vars::DP]*elemOld->tau;
+    }
 
   //This is one way to guarantee that ghost zones are synced...
   residual.communicate();

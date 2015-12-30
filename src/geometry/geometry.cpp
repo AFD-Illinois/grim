@@ -167,6 +167,10 @@ geometry::geometry()
       }
     }
   }
+  for (int mu=0; mu<NDIM; mu++)
+    for (int nu=0; nu<NDIM; nu++)
+      for (int lam = 0; lam<NDIM; lam++)
+	gammaUpDownDown[mu][nu][lam]=zero;
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],

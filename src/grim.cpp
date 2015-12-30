@@ -2,8 +2,8 @@
 
 namespace vars
 {
-  int Q = 0;
-  int DP = 0;
+  int Q = 8;
+  int DP = 9;
   int dof = 8;
 };
 
@@ -22,9 +22,9 @@ namespace gridParams
 namespace params
 {
   int N1 = 40;
-  int N2 = 3;
-  int N3 = 3;
-  int dim = 3;
+  int N2 = 1;
+  int N3 = 1;
+  int dim = 1;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -115,6 +115,8 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B1]  = 0.01; 
     ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;
+    //ts.primOld->vars[vars::DP]  = 0.;
+    //ts.primOld->vars[vars::Q]  = 0.;
 
     params::Time = 0.;
     while(params::Time<0.05)

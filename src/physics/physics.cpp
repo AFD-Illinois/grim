@@ -2,7 +2,7 @@
 
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
-  tau = one;
+  tau = one*10.;
   chi = one;
   nu  = one;
 }
@@ -231,10 +231,16 @@ void fluidElement::computeSources(const geometry &geom,
 	  // 2) Spatial derivatives.
 	  array du = riemann.slopeMM(directions::X1,elemForSpatialDeriv.uCov[mu]);
 	  graduCov[1][mu] += du;
-	  du =  riemann.slopeMM(directions::X2,elemForSpatialDeriv.uCov[mu]);
-          graduCov[2][mu] += du;
-	  du =  riemann.slopeMM(directions::X3,elemForSpatialDeriv.uCov[mu]);
-          graduCov[3][mu] += du;
+	  if(params::dim>1)
+	    {
+	      du =  riemann.slopeMM(directions::X2,elemForSpatialDeriv.uCov[mu]);
+	      graduCov[2][mu] += du;
+	      if(params::dim>2)
+		{
+		  du =  riemann.slopeMM(directions::X3,elemForSpatialDeriv.uCov[mu]);
+		  graduCov[3][mu] += du;
+		}
+	    }
 	  // 3) Connection terms
 	  if(useImplicitSources)
 	    {
@@ -331,10 +337,16 @@ void fluidElement::computeSources(const geometry &geom,
 	  gradT[0] = (temperature - elemOld.temperature)/dt;
 	  array dT = riemann.slopeMM(directions::X1,elemForSpatialDeriv.temperature);
 	  gradT[1] = dT;
-	  dT = riemann.slopeMM(directions::X2,elemForSpatialDeriv.temperature);
-          gradT[2] = dT;
-	  dT = riemann.slopeMM(directions::X3,elemForSpatialDeriv.temperature);
-          gradT[3] = dT;
+	  if(params::dim>1)
+	    {
+	      dT = riemann.slopeMM(directions::X2,elemForSpatialDeriv.temperature);
+	      gradT[2] = dT;
+	      if(params::dim>2)
+		{
+		  dT = riemann.slopeMM(directions::X3,elemForSpatialDeriv.temperature);
+		  gradT[3] = dT;
+		}
+	    }
 	  array q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
 	  if(useImplicitSources)
 	    {
