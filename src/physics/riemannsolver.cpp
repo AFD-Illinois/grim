@@ -141,11 +141,11 @@ void riemannSolver::reconstructWENO5(const grid &prim,
 {
   //WENO5 algorithm, copied from SpEC (up to some left/right conventions, and the use of AF...)
   const double eps2 = 1.0e-17;
-  double filter1D[]  = {-1, 0, 0, 0, 0, 
-			0, -1, 0, 0, 0,
-			0, 0, -1, 0, 0,
-			0, 0, 0, -1, 0,
-			0, 0, 0, 0, -1};
+  double filter1D[]  = {1., 0, 0, 0, 0, 
+			0, 1., 0, 0, 0,
+			0, 0, 1., 0, 0,
+			0, 0, 0, 1., 0,
+			0, 0, 0, 0, 1.};
   array filter;
   switch (dir)
     {
