@@ -54,8 +54,8 @@ namespace params
 
   int conduction = 1;
   int viscosity  = 1;
-  int highOrderTermsConduction = 1;
-  int highOrderTermsViscosity = 1;
+  int highOrderTermsConduction = 0.;
+  int highOrderTermsViscosity = 0.;
   double adiabaticIndex = 4./3;
 
   double slopeLimTheta = 2;
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B2]  = 0.;
     ts.primOld->vars[vars::B3]  = 0.;*/
 
-    //EMHD Sound wave
+    //Full EMHD mode (from grim2D)
     ts.primOld->vars[vars::RHO] = 1.+Aw*0.408365507885*cphi;
     ts.primOld->vars[vars::U]   = 2.+Aw*0.816299597519*cphi;
     ts.primOld->vars[vars::U1]  = 0.+Aw*0.0054163532418*sphi; 
@@ -136,23 +136,23 @@ int main(int argc, char **argv)
 	
 	//Alfven wave
 	/*cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       +0.0328124176673*params::Time).as(f64);
+		       +0.0328124176673*params::Time);
 	array u2an = Aw*0.462905090215*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::U2]
 	- u2an)));*/
 
 	//MHD Sound wave
 	/*cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       +3.09362659024*params::Time).as(f64);
+		       +3.09362659024*params::Time);
 	array rhoan = 1.+Aw*0.345991032308*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));*/
 
 	//EMHD Sound wave
 	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       -0.0833369872094*params::Time).as(f64);
+		       -0.0833369872094*params::Time);
 	sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       -0.0833369872094*params::Time).as(f64);
+		       -0.0833369872094*params::Time);
 	array rhoan = 1.+Aw*0.408365507885*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));

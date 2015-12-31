@@ -31,6 +31,7 @@ class fluidElement
   
     array gammaLorentzFactor, uCon[NDIM], uCov[NDIM];
     array bSqr, bCon[NDIM], bCov[NDIM];
+    array soundSpeed;
     
     array NUp[NDIM];
     array TUpDown[NDIM][NDIM];

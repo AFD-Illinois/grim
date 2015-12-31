@@ -70,7 +70,8 @@ void timeStepper::timeStep(double dt)
 
   elemOld->set(*primOld, *geom, locations::CENTER);
   elemOld->computeFluxes(*geom, 0, *consOld);
-  elemOld->computeEMHDGradients(*geom);
+  if(params::viscosity || params::conduction)
+    elemOld->computeEMHDGradients(*geom);
 
   computeDivOfFluxes(*primOld);
 
@@ -92,7 +93,8 @@ void timeStepper::timeStep(double dt)
     primHalfStep->vars[var] = prim->vars[var];
   }
   elemHalfStep->set(*primHalfStep, *geom, locations::CENTER);
-  elemHalfStep->computeEMHDGradients(*geom);
+  if(params::viscosity || params::conduction)
+    elemHalfStep->computeEMHDGradients(*geom);
 
   /* apply boundary conditions on primHalfStepGhosted */
   /* Half step complete */
@@ -140,7 +142,23 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
                           + divFluxes->vars[var]
                           + sourcesOld->vars[var];
     }
-
+    //Normalization of the residual
+    for (int var=0; var<vars::dof; var++)
+      residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
+    if(params::conduction)
+      {
+	if(params::highOrderTermsConduction)
+	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
+	else
+	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->tau;
+      }
+    if(params::viscosity)
+      {
+	if(params::highOrderTermsViscosity)
+	  residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
+	else
+	  residual.vars[vars::DP] = residual.vars[vars::DP]*elemOld->tau;
+      }
   }
   else if (currentStep == timeStepperSwitches::FULL_STEP)
   {
@@ -159,25 +177,24 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
                           + divFluxes->vars[var]
                           + sourcesOld->vars[var];
     }
+   //Normalization of the residual
+    for (int var=0; var<vars::dof; var++)
+      residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
+    if(params::conduction)
+      {
+	if(params::highOrderTermsConduction)
+	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemHalfStep->temperature*af::sqrt(elemHalfStep->rho*elemHalfStep->chi*elemHalfStep->tau);
+	else
+	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemHalfStep->tau;
+      }
+    if(params::viscosity)
+      {
+	if(params::highOrderTermsViscosity)
+	  residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemHalfStep->rho*elemHalfStep->nu*elemHalfStep->temperature*elemHalfStep->tau);
+	else
+	  residual.vars[vars::DP] = residual.vars[vars::DP]*elemHalfStep->tau;
+      }
   }
-
-  //Normalization of the residual
-  for (int var=0; var<vars::dof; var++)
-    residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
-  if(params::conduction)
-    {
-      if(params::highOrderTermsConduction)
-	residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
-      else
-	residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->tau;
-    }
-  if(params::viscosity)
-    {
-      if(params::highOrderTermsViscosity)
-	residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
-      else
-	residual.vars[vars::DP] = residual.vars[vars::DP]*elemOld->tau;
-    }
 
   //This is one way to guarantee that ghost zones are synced...
   residual.communicate();

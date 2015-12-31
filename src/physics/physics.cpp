@@ -3,8 +3,8 @@
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
   tau = one*10.;
-  chi = one;
-  nu  = one;
+  chi = one;//soundSpeed*soundSpeed*tau;
+  nu  = one;//2./3.*soundSpeed*soundSpeed*tau;
 }
 
 fluidElement::fluidElement(const grid &prim,
@@ -42,6 +42,7 @@ void fluidElement::set(const grid &prim,
   pressure    = (params::adiabaticIndex - 1.)*u;
   temperature = pressure/rho + params::temperatureFloorInFluidElement;
 
+  soundSpeed = af::sqrt(params::adiabaticIndex*pressure/(rho+params::adiabaticIndex*u));
   setFluidElementParameters(geom);
   
   if (params::conduction==1)
@@ -112,6 +113,7 @@ void fluidElement::set(const grid &prim,
 
   bSqr =  bCon[0]*bCov[0] + bCon[1]*bCov[1]
         + bCon[2]*bCov[2] + bCon[3]*bCov[3] + params::bSqrFloorInFluidElement;
+  bNorm = af::sqrt(bSqr);
 
   for (int mu : indicesToLoopOver[loc])
   {
@@ -125,7 +127,7 @@ void fluidElement::set(const grid &prim,
 
       if (params::conduction==1)
       {
-        TUpDown[mu][nu] += q/af::sqrt(bSqr) * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
+        TUpDown[mu][nu] += q/bNorm * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
       }
 
       if (params::viscosity==1)
@@ -137,6 +139,7 @@ void fluidElement::set(const grid &prim,
       }
     }
   }
+
   //Allocate memory for gradients used in EMHD
   if (params::conduction || params::viscosity)
     {
@@ -149,7 +152,6 @@ void fluidElement::set(const grid &prim,
 	}
       deltaP0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
       q0 = af::constant(0., rho.dims(0), rho.dims(1), rho.dims(2),f64);
-      bNorm = af::sqrt(bSqr);
     }
 }
 
@@ -201,6 +203,8 @@ void fluidElement::computeSources(const geometry &geom,
     sources.vars[var] = 0.;
   }
 
+  //Note on sign: residual computation places
+  // the source terms on the LHS of the equation!
   if (params::metric == metrics::MODIFIED_KERR_SCHILD)
   {
     for (int nu=0; nu<NDIM; nu++)
@@ -209,7 +213,7 @@ void fluidElement::computeSources(const geometry &geom,
       {
         for (int lamda=0; lamda<NDIM; lamda++)
         {
-          sources.vars[vars::U + nu] +=
+          sources.vars[vars::U + nu] -=
             geom.g[locations::CENTER]
           * TUpDown[kappa][lamda]
           * geom.gammaUpDownDown[lamda][kappa][nu];
@@ -261,21 +265,23 @@ void fluidElement::computeSources(const geometry &geom,
 			    /elemForSpatialDeriv.temperature);
 	  
 	  
+	  //Note on sign: we put the sources on the LHS when
+	  //computing the residual!
 	  if(useImplicitSources)
 	    {
-	      sources.vars[vars::DP] += (deltaP0 - 0.5*deltaPTilde 
+	      sources.vars[vars::DP] -= (deltaP0 - 0.5*deltaPTilde 
 					 - 0.5*elemOld.deltaPTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsViscosity == 1)
-		sources.vars[vars::DP] += 0.25*divuCov*
+		sources.vars[vars::DP] -= 0.25*divuCov*
 		  (deltaPTilde+elemOld.deltaPTilde);
 	    }
 	  else
 	    {
-	      sources.vars[vars::DP] += (deltaP0 - elemForSpatialDeriv.deltaPTilde)
+	      sources.vars[vars::DP] -= (deltaP0 - elemForSpatialDeriv.deltaPTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsViscosity == 1)
-		sources.vars[vars::DP] +=0.5*divuCov*elemForSpatialDeriv.deltaPTilde;
+		sources.vars[vars::DP] -=0.5*divuCov*elemForSpatialDeriv.deltaPTilde;
 	    }
 	}
 
@@ -310,21 +316,23 @@ void fluidElement::computeSources(const geometry &geom,
 	      /elemForSpatialDeriv.temperature;
 	  
 	  
+	  //Note on sign: we put the sources on the LHS when
+	  //computing the residual!
 	  if(useImplicitSources)
 	    {
-	      sources.vars[vars::Q] += (q0 - 0.5*qTilde 
+	      sources.vars[vars::Q] -= (q0 - 0.5*qTilde 
 					 - 0.5*elemOld.qTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsConduction == 1)
-		sources.vars[vars::Q] += 0.25*divuCov*
+		sources.vars[vars::Q] -= 0.25*divuCov*
 		  (qTilde+elemOld.qTilde);
 	    }
 	  else
 	    {
-	      sources.vars[vars::Q] += (q0 - elemForSpatialDeriv.qTilde)
+	      sources.vars[vars::Q] -= (q0 - elemForSpatialDeriv.qTilde)
 		/elemForSpatialDeriv.tau;
 	      if (params::highOrderTermsConduction == 1)
-		sources.vars[vars::Q] +=0.5*divuCov*elemForSpatialDeriv.qTilde;
+		sources.vars[vars::Q] -=0.5*divuCov*elemForSpatialDeriv.qTilde;
 	    }
 
 	}
