@@ -41,6 +41,7 @@ class grid
 
     void communicate();
     void copyVarsToHostPtr();
+    void copyHostPtrToVars(const double *hostPtr);
 };
 
 #endif /* GRIM_GRID_H_ */

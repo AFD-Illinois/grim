@@ -4,8 +4,9 @@ from gridPythonHeaders cimport grid
 
 np.import_array()
 
-cdef class gridpy:
+cdef class gridpy(object):
   cdef grid *gridPtr
+  cdef vars
 
   def __cinit__(self, int numVars):
     self.gridPtr = new grid(numVars)
@@ -87,8 +88,7 @@ cdef class gridpy:
     def __get__(self):
       return self.gridPtr.dim
 
-  property vars:
-    def __get__(self):
+  def getVars(self):
       self.gridPtr.copyVarsToHostPtr()
 
       cdef int N1Total = self.gridPtr.N1Total
@@ -96,10 +96,18 @@ cdef class gridpy:
       cdef int N3Total = self.gridPtr.N3Total
       cdef int numVars = self.gridPtr.numVars
 
-      vars = \
+      self.vars = \
         np.PyArray_SimpleNewFromData(4,
-                                     [numVars, N1Total, N2Total, N3Total],
+                                     [numVars, N3Total, N2Total, N1Total],
                                      np.NPY_DOUBLE,
                                      self.gridPtr.hostPtr
                                     )
-      return vars
+
+      return self.vars
+
+  def setVars(self, inputVars):
+    cdef np.ndarray[double, ndim=4] vars = \
+        np.ascontiguousarray(inputVars, dtype=np.float64)
+    
+    self.gridPtr.copyHostPtrToVars(&vars[0, 0, 0, 0])
+

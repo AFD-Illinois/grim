@@ -159,12 +159,34 @@ void grid::copyVarsToHostPtr()
 {
   for (int var=0; var < numVars; var++)
   {
+            /*i,    j,    k*/
     varsSoA(span, span, span, var) = vars[var];
   }
 
+  /* If already called once, free the existing memory */
+  if (hasHostPtrBeenAllocated)
+  {
+    delete hostPtr;
+  }
+
+  /* Allocate space for hostPtr and then copy data from device to host */
   hostPtr =  varsSoA.host<double>();
   hasHostPtrBeenAllocated = 1;
 }
+
+void grid::copyHostPtrToVars(const double *hostPtr)
+{
+  varsSoA = array(N1Total, N2Total, N3Total, numVars,
+                  hostPtr
+                 );
+
+  for (int var=0; var < numVars; var++)
+  {
+    vars[var] = varsSoA(span, span, span, var);
+  }
+}
+
+void grid::dump
 
 void grid::communicate()
 {

@@ -10,5 +10,6 @@ cdef extern from "grid.hpp":
     double dX1, dX2, dX3
 
     double *hostPtr
-    void copyVarsToHostPtr()
     void communicate()
+    void copyVarsToHostPtr()
+    void copyHostPtrToVars(const double *hostPtr)
