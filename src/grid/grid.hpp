@@ -16,7 +16,7 @@ class grid
     DM dm;
     Vec globalVec, localVec;
 
-    int numVars, numGhost;
+    int numVars, dim;
 
     DMBoundaryType boundaryLeft,  boundaryRight;
     DMBoundaryType boundaryTop,   boundaryBottom;
@@ -33,11 +33,14 @@ class grid
     double dX1, dX2, dX3;
 
     array *vars, varsSoA;
+    double *hostPtr;
+    bool hasHostPtrBeenAllocated;
 
     grid(int numVars);
     ~grid();
 
     void communicate();
+    void copyVarsToHostPtr();
 };
 
 #endif /* GRIM_GRID_H_ */

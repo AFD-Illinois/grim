@@ -3,14 +3,14 @@
 grid::grid(int numVars)
 {
   this->numVars  = numVars;
-  this->numGhost = params::numGhost; 
+  dim            = params::dim;
+  hasHostPtrBeenAllocated = 0;
 
   /* Implementations for MIRROR, OUTFLOW in boundary.cpp and DIRICHLET in
    * problem.cpp */
   boundaryLeft  = DM_BOUNDARY_GHOSTED; boundaryRight  = DM_BOUNDARY_GHOSTED;
   boundaryTop   = DM_BOUNDARY_GHOSTED; boundaryBottom = DM_BOUNDARY_GHOSTED;
   boundaryFront = DM_BOUNDARY_GHOSTED; boundaryBack   = DM_BOUNDARY_GHOSTED;
-
 
   if (   params::boundaryLeft  == boundaries::PERIODIC 
       || params::boundaryRight == boundaries::PERIODIC
@@ -39,12 +39,6 @@ grid::grid(int numVars)
   switch (params::dim)
   {
     case 1:
-
-      DMDACreate1d(PETSC_COMM_WORLD, boundaryLeft, 
-                   params::N1, numVars, numGhost, NULL,
-                   &dm
-                  );
-
       N1Total = params::N1 + 2*params::numGhost;
       N2Total = 1;
       N3Total = 1;
@@ -56,20 +50,15 @@ grid::grid(int numVars)
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(span);
       domainX3 = new af::seq(span);
-      break;
-  
-    case 2:
 
-      DMDACreate2d(PETSC_COMM_WORLD, 
-                   boundaryLeft, boundaryBottom,
-                   DMDA_STENCIL_BOX,
-                   params::N1, params::N2,
-                   PETSC_DECIDE, PETSC_DECIDE,
-                   numVars, numGhost,
-                   PETSC_NULL, PETSC_NULL,
+      DMDACreate1d(PETSC_COMM_WORLD, boundaryLeft, 
+                   params::N1, numVars, numGhostX1, NULL,
                    &dm
                   );
 
+      break;
+  
+    case 2:
       N1Total = params::N1 + 2*params::numGhost;
       N2Total = params::N2 + 2*params::numGhost;
       N3Total = 1;
@@ -81,20 +70,20 @@ grid::grid(int numVars)
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX3 = new af::seq(span);
-      break;
 
-    case 3:
-
-      DMDACreate3d(PETSC_COMM_WORLD, 
-                   boundaryLeft, boundaryBottom, boundaryBack,
+      DMDACreate2d(PETSC_COMM_WORLD, 
+                   boundaryLeft, boundaryBottom,
                    DMDA_STENCIL_BOX,
-                   params::N1, params::N2, params::N3,
-                   PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
-                   numVars, numGhost, 
-                   PETSC_NULL, PETSC_NULL, PETSC_NULL,
+                   params::N1, params::N2,
+                   PETSC_DECIDE, PETSC_DECIDE,
+                   numVars, numGhostX1,
+                   PETSC_NULL, PETSC_NULL,
                    &dm
                   );
 
+      break;
+
+    case 3:
       N1Total = params::N1 + 2*params::numGhost;
       N2Total = params::N2 + 2*params::numGhost;
       N3Total = params::N3 + 2*params::numGhost;
@@ -106,6 +95,17 @@ grid::grid(int numVars)
       domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
       domainX3 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
+
+      DMDACreate3d(PETSC_COMM_WORLD, 
+                   boundaryLeft, boundaryBottom, boundaryBack,
+                   DMDA_STENCIL_BOX,
+                   params::N1, params::N2, params::N3,
+                   PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
+                   numVars, numGhostX1,
+                   PETSC_NULL, PETSC_NULL, PETSC_NULL,
+                   &dm
+                  );
+
       break;
   }
 
@@ -153,6 +153,17 @@ void grid::copyLocalVecToVars()
   {
     vars[var] = varsSoA(span, span, span, var);
   }
+}
+
+void grid::copyVarsToHostPtr()
+{
+  for (int var=0; var < numVars; var++)
+  {
+    varsSoA(span, span, span, var) = vars[var];
+  }
+
+  hostPtr =  varsSoA.host<double>();
+  hasHostPtrBeenAllocated = 1;
 }
 
 void grid::communicate()
@@ -206,14 +217,15 @@ void grid::communicate()
   copyLocalVecToVars();
 }
 
-
-
 grid::~grid()
 {
+  if (hasHostPtrBeenAllocated)
+  {
+    delete hostPtr;
+  }
   delete [] vars;
   VecDestroy(&globalVec);
   VecDestroy(&localVec);
 
   DMDestroy(&dm);
 }
-

@@ -64,6 +64,7 @@ find_library(MATH_LIBRARIES m REQUIRED)
 # External packages
 find_package(PETSc REQUIRED)
 find_package(Cython REQUIRED)
+find_package(NumPy REQUIRED)
 include(UseCython)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
@@ -80,6 +81,7 @@ endif()
 include_directories(${PETSC_INCLUDES} 
 #                    ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
+                    ${PYTHON_NUMPY_INCLUDE_DIR}
                     grid
                    )
 
