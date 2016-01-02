@@ -186,8 +186,6 @@ void grid::copyHostPtrToVars(const double *hostPtr)
   }
 }
 
-void grid::dump
-
 void grid::communicate()
 {
   /* Get data into Array of Structs format as needed by Petsc */
