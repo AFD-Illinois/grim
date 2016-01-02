@@ -47,6 +47,7 @@ namespace params
   double adiabaticIndex = 4./3;
 
   double slopeLimTheta = 2;
+  int reconstruction = reconstructionOptions::WENO5;
 
   int maxNonLinearIter = 10;
   int maxLineSearchIters = 10;

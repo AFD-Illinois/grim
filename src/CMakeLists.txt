@@ -88,7 +88,7 @@ include_directories(${PETSC_INCLUDES}
 add_subdirectory(grid)
 add_subdirectory(geometry)
 add_subdirectory(physics)
-#add_subdirectory(reconstruct)
+add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
 add_subdirectory(timestepper)
 
@@ -98,7 +98,7 @@ include(${PROBLEM_DIR}/CMakeLists.txt)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid geometry physics timestepper
+target_link_libraries(grim grid geometry reconstruction physics timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
 #                      ${YAML_LIBRARIES}

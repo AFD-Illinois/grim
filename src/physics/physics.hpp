@@ -4,6 +4,7 @@
 #include "../params.hpp"
 #include "../grid/grid.hpp"
 #include "../geometry/geometry.hpp"
+#include "../reconstruction/reconstruction.hpp"
 
 inline int DELTA(int const &mu, int const &nu)
 {
@@ -79,38 +80,11 @@ class riemannSolver
     riemannSolver(const geometry &geom);
     ~riemannSolver();
 
-    void reconstruct(const grid &prim,
-                     const int dir,
-                     grid &primLeft,
-                     grid &primRight
-                    );
-
-  void solve(const grid &prim,
+    void solve(const grid &prim,
                const geometry &geom,
                const int dir,
                grid &fluxes
               );
 };
-
-//Reconstruction routines
-namespace reconstruction
-{
-  array minmod(array &x, array &y, array &z);
-  
-  array slopeMM(const int dir,const double dX,
-		const array& in);
-
-  void reconstructWENO5(const grid &prim,
-			const int dir,
-			grid &primLeft,
-			grid &primRight
-			);
-  void reconstructMM(const grid &prim,
-                        const int dir,
-			grid &primLeft,
-                        grid &primRight
-                        );
-}
-
 
 #endif /* GRIM_PHYSICS_H_ */

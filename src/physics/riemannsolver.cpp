@@ -59,7 +59,7 @@ void riemannSolver::solve(const grid &prim,
       break;
   }
 
-  reconstruct(prim, dir, *primLeft, *primRight);
+  reconstruction::reconstruct(prim, dir, *primLeft, *primRight);
 
   elemLeft->set(*primRight, geom, location);
   elemRight->set(*primLeft, geom, location);
@@ -83,13 +83,4 @@ void riemannSolver::solve(const grid &prim,
                          );
   }
             
-}
-
-void riemannSolver::reconstruct(const grid &prim,
-                                const int dir,
-                                grid &primLeft,
-                                grid &primRight
-                               )
-{
-  reconstruction::reconstructWENO5(prim,dir,primLeft,primRight);
 }
