@@ -30,17 +30,6 @@ namespace directions
   };
 };
 
-
-namespace gridParams
-{
-  extern bool haveGridParamsBeenSet;
-  extern int N1Local, N2Local, N3Local;
-  extern int iLocalStart, jLocalStart, kLocalStart;
-  extern int iLocalEnd,   jLocalEnd,   kLocalEnd;
-
-  extern double dX1, dX2, dX3;
-};
-
 namespace boundaries
 {
   enum
@@ -65,7 +54,6 @@ namespace timeStepping
   };
 };
 
-
 namespace params
 {
   extern int N1;
@@ -76,6 +64,7 @@ namespace params
 
   extern int timeStepper;
   extern double dt;
+  extern double Time;
   extern int metric;
   extern double hSlope;
   extern double blackHoleSpin;
