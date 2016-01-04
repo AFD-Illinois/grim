@@ -2,9 +2,9 @@
 
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
-  tau = one*10.;
-  chi = one;//soundSpeed*soundSpeed*tau;
-  nu  = one;//2./3.*soundSpeed*soundSpeed*tau;
+  tau = one;
+  chi = soundSpeed*soundSpeed*tau;
+  nu  = soundSpeed*soundSpeed*tau;
 }
 
 fluidElement::fluidElement(const grid &prim,

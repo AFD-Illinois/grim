@@ -28,8 +28,12 @@ int main(int argc, char **argv)
     
 
     double Aw = 1.e-4;
-    array cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
-    array sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]);
+    double k1 = 2.*M_PI;
+    double k2 = 4.*M_PI;
+    array cphi = af::cos(k1*ts.geom->xCoords[locations::CENTER][1]
+			 +k2*ts.geom->xCoords[locations::CENTER][2]);
+    array sphi = af::sin(k1*ts.geom->xCoords[locations::CENTER][1]
+			 +k2*ts.geom->xCoords[locations::CENTER][2]);
 
     /* Initial conditions */
 
@@ -54,16 +58,33 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B3]  = 0.;*/
 
     //Full EMHD mode (from grim2D)
-    ts.primOld->vars[vars::RHO] = 1.+Aw*0.408365507885*cphi;
-    ts.primOld->vars[vars::U]   = 2.+Aw*0.816299597519*cphi;
-    ts.primOld->vars[vars::U1]  = 0.+Aw*0.0054163532418*sphi; 
+    ts.primOld->vars[vars::RHO] = 1.;
+    ts.primOld->vars[vars::U]   = 2.;
+    ts.primOld->vars[vars::U1]  = 0.;
     ts.primOld->vars[vars::U2]  = 0.; 
     ts.primOld->vars[vars::U3]  = 0.; 
-    ts.primOld->vars[vars::B1]  = 0.01; 
-    ts.primOld->vars[vars::B2]  = 0.;
+    ts.primOld->vars[vars::B1]  = 0.1; 
+    ts.primOld->vars[vars::B2]  = 0.3;
     ts.primOld->vars[vars::B3]  = 0.;
-    ts.primOld->vars[vars::Q]  = 0.-Aw*0.00361662427435*sphi;
-    ts.primOld->vars[vars::DP]  = 0.+Aw*0.408472963863*cphi;
+    ts.primOld->vars[vars::Q]  = 0.;
+    ts.primOld->vars[vars::DP]  = 0.;
+    ts.primOld->vars[vars::RHO] += Aw*cphi*(-0.5185225240822464)
+      +Aw*sphi*0.1792647678001874;
+    ts.primOld->vars[vars::U] += Aw*cphi*0.551617073639382;
+    ts.primOld->vars[vars::U1]+= Aw*cphi*0.008463122479547853
+      +Aw*sphi*(-0.011862022608466373);
+    ts.primOld->vars[vars::U2]+= Aw*cphi*(-0.16175466371870748)
+      +Aw*sphi*(0.034828080823603495);
+    ts.primOld->vars[vars::B1]+= Aw*cphi*(-0.059737949796407556)
+      +Aw*sphi*0.0335170750615094;
+    ts.primOld->vars[vars::B2]+=Aw*cphi*0.029868974898203757
+      -Aw*sphi*0.01675853753075467;
+    ts.primOld->vars[vars::Q]+=Aw*cphi*0.5233486841539429
+      -Aw*sphi*0.04767672501939605;
+    ts.primOld->vars[vars::DP]+=Aw*cphi*0.2909106062057659
+      -Aw*sphi*0.021594520553365606;
+    double Gamma = -0.5533585207638141;
+    double Omega = - 3.6262571286888425;
 
     params::Time = 0.;
     while(params::Time<0.05)
@@ -86,11 +107,14 @@ int main(int argc, char **argv)
 	- rhoan)));*/
 
 	//EMHD Sound wave
-	cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       -0.0833369872094*params::Time);
-	sphi = af::sin(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       -0.0833369872094*params::Time);
-	array rhoan = 1.+Aw*0.408365507885*cphi;
+	cphi = af::cos(k1*ts.geom->xCoords[locations::CENTER][1]
+		       +k2*ts.geom->xCoords[locations::CENTER][2]
+		       +Omega*params::Time);
+	sphi = af::sin(k1*ts.geom->xCoords[locations::CENTER][1]
+		       +k2*ts.geom->xCoords[locations::CENTER][2]
+		       +Omega*params::Time);
+	array rhoan = 1.+(Aw*cphi*(-0.5185225240822464)
+			  +Aw*sphi*0.1792647678001874)*exp(-Gamma);
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));
 
