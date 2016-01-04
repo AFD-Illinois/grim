@@ -83,6 +83,7 @@ include_directories(${PETSC_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
                     grid
+                    reconstruction
                    )
 
 add_subdirectory(grid)
