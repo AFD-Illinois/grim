@@ -10,9 +10,9 @@ namespace vars
 namespace params
 {
   int N1 = 40;
-  int N2 = 1;
+  int N2 = 40;
   int N3 = 1;
-  int dim = 1;
+  int dim = 2;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
