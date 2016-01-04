@@ -30,7 +30,7 @@ void reconstruction::reconstructWENO5(const grid &prim,
     	break;
   }
   
-  for(int var=0; var<vars::dof; var++)
+  for(int var=0; var<prim.numVars; var++)
   {
   	array dvar = convolve(prim.vars[var], filter);
   	//Get stencil

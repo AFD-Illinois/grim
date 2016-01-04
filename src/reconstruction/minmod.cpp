@@ -54,7 +54,7 @@ void reconstruction::reconstructMM(const grid &prim,
           		                     grid &primRight
                           		    )
 {
-  for(int var=0; var<vars::dof; var++)
+  for(int var=0; var<prim.numVars; var++)
   {
   	//Note: we set dX=1., because the 1/dX in slope
   	//exactly cancels the dX in the computation of the

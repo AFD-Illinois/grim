@@ -19,11 +19,12 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
+set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/share/ArrayFire/cmake")
+set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
 
 # Double or float precision?
 set(REAL "double")
@@ -49,6 +50,10 @@ set(PROBLEM "performance_test")
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+set(ArrayFire_DIR "${ArrayFire_ROOT_DIR}/share/ArrayFire/cmake")
+
+# Needed to link python interfaces to precompiled .so libraries
+set(BUILD_SHARED_LIBS "ON")
 
 # Need to find all packages before starting compilation, so that all headers
 # needed by the code are included.
@@ -65,19 +70,24 @@ find_library(MATH_LIBRARIES m REQUIRED)
 find_package(PETSc REQUIRED)
 find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
-include(UseCython)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
-if (ArrayFire_CPU_FOUND)
-  message("ArrayFire_CPU_LIBRARIES: " ${ArrayFire_CPU_LIBRARIES})
-endif()
-if (ArrayFire_CUDA_FOUND)
-  message("ArrayFire_CUDA_LIBRARIES: " ${ArrayFire_CUDA_LIBRARIES})
-endif()
-if (ArrayFire_OpenCL_FOUND)
-  message("ArrayFire_OpenCL_LIBRARIES: " ${ArrayFire_OpenCL_LIBRARIES})
+
+if (ARCH STREQUAL "CPU")
+  
+  set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
+
+elseif (ARCH STREQUAL "CUDA")
+
+  set(ArrayFire_LIBRARIES ${ArrayFire_CUDA_LIBRARIES})
+
+elseif (ARCH STREQUAL "OpenCL")
+
+  set(ArrayFire_LIBRARIES ${ArrayFire_OpenCL_LIBRARIES})
+
 endif()
 
+include(UseCython)
 include_directories(${PETSC_INCLUDES} 
 #                    ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
@@ -103,7 +113,7 @@ target_link_libraries(grim grid geometry reconstruction physics timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
 #                      ${YAML_LIBRARIES}
-                      ${ArrayFire_CPU_LIBRARIES}
+                      ${ArrayFire_LIBRARIES}
                      )
 
 
@@ -112,7 +122,13 @@ message("#################")
 message("# Build options #")
 message("#################")
 message("")
+message("Problem          : " ${PROBLEM})
+message("Architecture     : " ${ARCH})
 message("C Compiler       : " ${CMAKE_C_COMPILER})
+message("CXX Compiler     : " ${CMAKE_CXX_COMPILER})
 message("C_FLAGS          : " ${CMAKE_C_FLAGS})
+message("CXX_FLAGS        : " ${CMAKE_CXX_FLAGS})
 message("PETSc dir        : " ${PETSC_DIR})
+message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
+message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
 message("")
