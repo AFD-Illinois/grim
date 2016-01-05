@@ -22,3 +22,15 @@ void reconstruction::reconstruct(const grid &prim,
   }
 
 }
+
+array reconstruction::slope(const int dir,const double dX,
+			    const array& in)
+{
+  switch (params::reconstruction)
+    {
+    case reconstructionOptions::MINMOD:
+      return reconstruction::slopeMM(dir,dX,in);
+    case reconstructionOptions::WENO5:
+      return reconstruction::slopeWENO5(dir,dX,in);
+   }
+}

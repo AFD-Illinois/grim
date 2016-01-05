@@ -12,6 +12,14 @@ namespace reconstruction
 		            const array& in
                );
 
+  array slopeWENO5(const int dir,const double dX,
+		            const array& in
+               );
+
+  array slope(const int dir,const double dX,
+		            const array& in
+               );
+
   void reconstructMM(const grid &prim,
                      const int dir,
 	              		 grid &primLeft,

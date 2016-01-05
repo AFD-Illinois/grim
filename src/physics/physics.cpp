@@ -398,18 +398,18 @@ void fluidElement::computeEMHDGradients(const geometry &geom)
 	    // so not computed here.
 	    graduCov[0][mu] = 0.;
 	  
-	    array du = reconstruction::slopeMM(directions::X1,dX1,uCov[mu]);
+	    array du = reconstruction::slope(directions::X1,dX1,uCov[mu]);
 	    graduCov[1][mu] = du;
 
 	    if(params::dim>1)
 	    {
-	      du =  reconstruction::slopeMM(directions::X2,dX2,uCov[mu]);
+	      du =  reconstruction::slope(directions::X2,dX2,uCov[mu]);
 	      graduCov[2][mu] = du;
 	    }
 	  
 	    if(params::dim>2)
 	    {
-	      du =  reconstruction::slopeMM(directions::X3,dX3,uCov[mu]);
+	      du =  reconstruction::slope(directions::X3,dX3,uCov[mu]);
 	      graduCov[3][mu] = du;
 	    }
 
@@ -427,18 +427,18 @@ void fluidElement::computeEMHDGradients(const geometry &geom)
 	    /* Time derivative not computed here */
 	    gradT[0] = 0.;
 
-	    array dT = reconstruction::slopeMM(directions::X1,dX1,temperature);
+	    array dT = reconstruction::slope(directions::X1,dX1,temperature);
 	    gradT[1] = dT;
 
 	    if(params::dim>1)
 	    {
-	      dT = reconstruction::slopeMM(directions::X2,dX2,temperature);
+	      dT = reconstruction::slope(directions::X2,dX2,temperature);
 	      gradT[2] = dT;
 	    }
 
 	    if(params::dim>2)
 	    {
-	      dT = reconstruction::slopeMM(directions::X3,dX3,temperature);
+	      dT = reconstruction::slope(directions::X3,dX3,temperature);
 	      gradT[3] = dT;
 	    }
 	  } /* End of conduction specific terms */
