@@ -10,10 +10,10 @@ void reconstruction::reconstructWENO5(const grid &prim,
   //the use of AF...)
   const double eps2 = 1.0e-17;
   double filter1D[]  = {1., 0, 0, 0, 0, 
-		                    0, 1., 0, 0, 0,
-                			  0, 0, 1., 0, 0,
-                			  0, 0, 0, 1., 0,
-                 			  0, 0, 0, 0, 1.};
+			0, 1., 0, 0, 0,
+			0, 0, 1., 0, 0,
+			0, 0, 0, 1., 0,
+			0, 0, 0, 0, 1.};
   array filter;
   switch (dir)
   {
@@ -55,7 +55,7 @@ void reconstruction::reconstructWENO5(const grid &prim,
                  +
               	  eps2*(1.0 + af::abs(y1) + af::abs(y2) + af::abs(y3));
 
-    array beta3 = ((10.0/3.0)*y2*y2 - (31.0/3.0)*y2*y3 +
+	array beta3 = ((10.0/3.0)*y2*y2 - (31.0/3.0)*y2*y3 +
 	                 (25.0/3.0)*y3*y3 + (11.0/3.0)*y2*y4 -
         		       (19.0/3.0)*y3*y4 + ( 4.0/3.0)*y4*y4
                   ) 
@@ -65,7 +65,7 @@ void reconstruction::reconstructWENO5(const grid &prim,
   	//Compute weights
   	array w1r = 1.0/(16.0*beta1*beta1);
   	array w2r = 5.0/( 8.0*beta2*beta2);
-    array w3r = 5.0/(16.0*beta3*beta3);
+	array w3r = 5.0/(16.0*beta3*beta3);
   	array w1l = 5.0/(16.0*beta1*beta1);
   	array w2l = 5.0/( 8.0*beta2*beta2);
   	array w3l = 1.0/(16.0*beta3*beta3);

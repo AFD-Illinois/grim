@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     printf("xCoords has type %i\n",type);*/
     
 
-    double Aw = 1.e-4;
+    double Aw = 1.e-5;
     double k1 = 2.*M_PI;
     double k2 = 4.*M_PI;
     array cphi = af::cos(k1*ts.geom->xCoords[locations::CENTER][1]
@@ -87,9 +87,9 @@ int main(int argc, char **argv)
     double Omega = - 3.6262571286888425;
 
     params::Time = 0.;
-    while(params::Time<0.05)
+    while(params::Time<0.5)
       {
-	ts.timeStep(params::dt);
+	ts.timeStep();
 	params::Time+=params::dt;
 	
 	//Alfven wave
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 
 	//MHD Sound wave
 	/*cphi = af::cos(2*M_PI*ts.geom->xCoords[locations::CENTER][1]
-		       +3.09362659024*params::Time);
+	  +3.09362659024*params::Time);
 	array rhoan = 1.+Aw*0.345991032308*cphi;
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));*/

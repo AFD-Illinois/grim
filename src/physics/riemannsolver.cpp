@@ -66,7 +66,6 @@ void riemannSolver::solve(const grid &prim,
 
   elemLeft->computeFluxes(geom, fluxDirection, *fluxLeft);
   elemLeft->computeFluxes(geom, 0,             *consLeft);
-
   elemRight->computeFluxes(geom, fluxDirection, *fluxRight);
   elemRight->computeFluxes(geom, 0,             *consRight);
 

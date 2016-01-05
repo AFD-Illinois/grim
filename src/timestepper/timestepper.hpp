@@ -29,7 +29,7 @@ class timeStepper
   array stepLength;
 
   void solve(grid &primGuess);
-  void computeResidual(const grid &prim, grid &residual);
+  void computeResidual(const grid &primGuess, grid &residualGuess);
 
   public:
     geometry *geom;
@@ -44,14 +44,14 @@ class timeStepper
 
     riemannSolver *riemann;
 
-    void computeDivOfFluxes(const grid &primGhosted);
+    void computeDivOfFluxes(const grid &primFlux);
 
     int currentStep;
 
     timeStepper();
     ~timeStepper();
 
-    void timeStep(double dt);
+    void timeStep();
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

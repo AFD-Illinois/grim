@@ -1,11 +1,11 @@
 #include "timestepper.hpp"
 
-void timeStepper::computeDivOfFluxes(const grid &prim)
+void timeStepper::computeDivOfFluxes(const grid &primFlux)
 {
   switch (params::dim)
   {
     case 1:
-      riemann->solve(prim, *geom, directions::X1, *fluxesX1);
+      riemann->solve(primFlux, *geom, directions::X1, *fluxesX1);
 
       for (int var=0; var<vars::dof; var++)
       {
@@ -21,8 +21,8 @@ void timeStepper::computeDivOfFluxes(const grid &prim)
       break;
 
     case 2:
-      riemann->solve(prim, *geom, directions::X1, *fluxesX1);
-      riemann->solve(prim, *geom, directions::X2, *fluxesX2);
+      riemann->solve(primFlux, *geom, directions::X1, *fluxesX1);
+      riemann->solve(primFlux, *geom, directions::X2, *fluxesX2);
 
       for (int var=0; var<vars::dof; var++)
       {
@@ -40,9 +40,9 @@ void timeStepper::computeDivOfFluxes(const grid &prim)
       break;
 
     case 3:
-      riemann->solve(prim, *geom, directions::X1, *fluxesX1);
-      riemann->solve(prim, *geom, directions::X2, *fluxesX2);
-      riemann->solve(prim, *geom, directions::X3, *fluxesX3);
+      riemann->solve(primFlux, *geom, directions::X1, *fluxesX1);
+      riemann->solve(primFlux, *geom, directions::X2, *fluxesX2);
+      riemann->solve(primFlux, *geom, directions::X3, *fluxesX3);
 
       for (int var=0; var<vars::dof; var++)
       {
@@ -63,7 +63,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim)
   }
 }
 
-void timeStepper::timeStep(double dt)
+void timeStepper::timeStep()
 {
   /* First take a half step */
   currentStep = timeStepperSwitches::HALF_STEP;
@@ -120,9 +120,9 @@ void timeStepper::timeStep(double dt)
 
 }
 
-void timeStepper::computeResidual(const grid &prim, grid &residual)
+void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
 {
-  elem->set(prim, *geom, locations::CENTER);
+  elem->set(primGuess, *geom, locations::CENTER);
   elem->computeFluxes(*geom, 0, *cons);
 
   if (currentStep == timeStepperSwitches::HALF_STEP)
@@ -136,7 +136,7 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
 
     for (int var=0; var<vars::dof; var++)
     {
-      residual.vars[var] = (  cons->vars[var] 
+      residualGuess.vars[var] = (  cons->vars[var] 
                             - consOld->vars[var]
                            )/(params::dt/2.)
                           + divFluxes->vars[var]
@@ -144,20 +144,20 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
     }
     //Normalization of the residual
     for (int var=0; var<vars::dof; var++)
-      residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
+      residualGuess.vars[var] = residualGuess.vars[var]/geom->g[locations::CENTER];
     if(params::conduction)
       {
 	if(params::highOrderTermsConduction)
-	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
 	else
-	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemOld->tau;
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemOld->tau;
       }
     if(params::viscosity)
       {
 	if(params::highOrderTermsViscosity)
-	  residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
 	else
-	  residual.vars[vars::DP] = residual.vars[vars::DP]*elemOld->tau;
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*elemOld->tau;
       }
   }
   else if (currentStep == timeStepperSwitches::FULL_STEP)
@@ -171,7 +171,7 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
 
     for (int var=0; var<vars::dof; var++)
     {
-      residual.vars[var] = (  cons->vars[var] 
+      residualGuess.vars[var] = (  cons->vars[var] 
                             - consOld->vars[var]
                            )/params::dt
                           + divFluxes->vars[var]
@@ -179,23 +179,23 @@ void timeStepper::computeResidual(const grid &prim, grid &residual)
     }
    //Normalization of the residual
     for (int var=0; var<vars::dof; var++)
-      residual.vars[var] = residual.vars[var]/geom->g[locations::CENTER];
+      residualGuess.vars[var] = residualGuess.vars[var]/geom->g[locations::CENTER];
     if(params::conduction)
       {
 	if(params::highOrderTermsConduction)
-	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemHalfStep->temperature*af::sqrt(elemHalfStep->rho*elemHalfStep->chi*elemHalfStep->tau);
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemHalfStep->temperature*af::sqrt(elemHalfStep->rho*elemHalfStep->chi*elemHalfStep->tau);
 	else
-	  residual.vars[vars::Q] = residual.vars[vars::Q]*elemHalfStep->tau;
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemHalfStep->tau;
       }
     if(params::viscosity)
       {
 	if(params::highOrderTermsViscosity)
-	  residual.vars[vars::DP] = residual.vars[vars::DP]*af::sqrt(elemHalfStep->rho*elemHalfStep->nu*elemHalfStep->temperature*elemHalfStep->tau);
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemHalfStep->rho*elemHalfStep->nu*elemHalfStep->temperature*elemHalfStep->tau);
 	else
-	  residual.vars[vars::DP] = residual.vars[vars::DP]*elemHalfStep->tau;
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*elemHalfStep->tau;
       }
   }
 
   //This is one way to guarantee that ghost zones are synced...
-  residual.communicate();
+  residualGuess.communicate();
 }

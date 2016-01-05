@@ -107,6 +107,10 @@ namespace params
   extern int maxNonLinearIter;
   extern int maxLineSearchIters;
 
+  extern double nonlinearsolve_atol;
+  extern double JacobianAssembleEpsilon;
+  extern double linesearchfloor;
+
 };
 
 #endif /* GRIM_PARAMS_H_ */

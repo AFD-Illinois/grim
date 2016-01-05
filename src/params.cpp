@@ -16,7 +16,7 @@ namespace params
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = 0.2/N1;
+  double dt = .5/N1;
   double Time = 0.;
   int metric = metrics::MINKOWSKI;
   double hSlope = 0.3;
@@ -52,4 +52,9 @@ namespace params
   int maxNonLinearIter = 10;
   int maxLineSearchIters = 10;
 
+  //Parameters controlling accuracy of nonlinear solver
+  double nonlinearsolve_atol = 1.e-10;
+  double JacobianAssembleEpsilon = 4.e-8;
+  double linesearchfloor = 1.e-24;
+  
 };

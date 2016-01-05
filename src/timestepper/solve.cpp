@@ -21,8 +21,8 @@ void timeStepper::solve(grid &primGuess)
 
     /* Still yet to put in code to compute global norm over mpi procs */
     double globalL2Norm =  af::norm(af::flat(residualSoA));
-    printf("Nonliner iter = %d, error = %.15f\n", nonLinearIter, globalL2Norm);
-    if(globalL2Norm<1.e-10)
+    printf("Nonliner iter = %i, error = %e\n", nonLinearIter, globalL2Norm);
+    if(globalL2Norm<params::nonlinearsolve_atol)
       break;
 
     /* Assemble the Jacobian in Struct of Arrays format where the physics
@@ -31,7 +31,7 @@ void timeStepper::solve(grid &primGuess)
     {
       /* Recommended value of Jacobian differencing parameter to achieve fp64
        * machine precision */
-      double epsilon = 4.e-8;
+      double epsilon = params::JacobianAssembleEpsilon;
 
       array smallPrim = af::abs(primGuess.vars[row])<.5*epsilon;
       primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
@@ -131,11 +131,11 @@ void timeStepper::solve(grid &primGuess)
       /* We have 3 pieces of information:
        * a) f(0)
        * b) f'(0) 
-       * c) f(1) 
+       * c) f(stepLength) 
        */
     
       const double alpha    = 1e-4;
-      const double EPS      = 1.e-24;
+      const double EPS      = params::linesearchfloor;
       array condition = f1 > (f0*(1. - alpha*stepLength) +EPS);
       array denom     = (f1-f0-fPrime0*stepLength) * condition + (1.-condition);
       array nextStepLength = -fPrime0*stepLength*stepLength/denom/2.;

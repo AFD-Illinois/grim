@@ -17,8 +17,8 @@ fluidElement::fluidElement(const grid &prim,
                      prim.vars[0].dims(directions::X1),
                      prim.vars[0].dims(directions::X2),
                      prim.vars[0].dims(directions::X3),
-		                 f64
-		                );
+		     f64
+		     );
 
   array zero = 0.*one;
 
@@ -213,7 +213,7 @@ void fluidElement::computeSources(const geometry &geom,
 
   //Note on sign: residual computation places
   // the source terms on the LHS of the equation!
-  if (params::metric == metrics::MODIFIED_KERR_SCHILD)
+  if (params::metric != metrics::MINKOWSKI)
   {
     for (int nu=0; nu<NDIM; nu++)
     {
