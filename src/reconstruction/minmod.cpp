@@ -17,7 +17,7 @@ array reconstruction::minmod(array &x, array &y, array &z)
 array reconstruction::slopeMM(const int dir,const double dX, const array& in)
 {
   double filter1D[]  = {1,-1, 0, /* Forward difference */
-                			  0, 1,-1  /* Backward difference */
+			0, 1,-1  /* Backward difference */
                        };
   array filter;
   switch (dir)

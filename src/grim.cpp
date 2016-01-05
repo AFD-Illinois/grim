@@ -68,22 +68,22 @@ int main(int argc, char **argv)
     ts.primOld->vars[vars::B3]  = 0.;
     ts.primOld->vars[vars::Q]  = 0.;
     ts.primOld->vars[vars::DP]  = 0.;
-    ts.primOld->vars[vars::RHO] += Aw*cphi*(-0.5185225240822464)
-      +Aw*sphi*0.1792647678001874;
-    ts.primOld->vars[vars::U] += Aw*cphi*0.551617073639382;
-    ts.primOld->vars[vars::U1]+= Aw*cphi*0.008463122479547853
-      +Aw*sphi*(-0.011862022608466373);
-    ts.primOld->vars[vars::U2]+= Aw*cphi*(-0.16175466371870748)
-      +Aw*sphi*(0.034828080823603495);
-    ts.primOld->vars[vars::B1]+= Aw*cphi*(-0.059737949796407556)
-      +Aw*sphi*0.0335170750615094;
-    ts.primOld->vars[vars::B2]+=Aw*cphi*0.029868974898203757
-      -Aw*sphi*0.01675853753075467;
-    ts.primOld->vars[vars::Q]+=Aw*cphi*0.5233486841539429
-      -Aw*sphi*0.04767672501939605;
-    ts.primOld->vars[vars::DP]+=Aw*cphi*0.2909106062057659
-      -Aw*sphi*0.021594520553365606;
-    double Gamma = -0.5533585207638141;
+    ts.primOld->vars[vars::RHO] += Aw*cphi*(-0.518522524082246)
+      +Aw*sphi*0.1792647678001878;
+    ts.primOld->vars[vars::U] += Aw*cphi*0.5516170736393813;
+    ts.primOld->vars[vars::U1]+= Aw*cphi*0.008463122479547856
+      +Aw*sphi*(-0.011862022608466367);
+    ts.primOld->vars[vars::U2]+= Aw*cphi*(-0.16175466371870734)
+      +Aw*sphi*(0.034828080823603294);
+    ts.primOld->vars[vars::B1]+= Aw*cphi*(-0.05973794979640743)
+      +Aw*sphi*0.03351707506150924;
+    ts.primOld->vars[vars::B2]+=Aw*cphi*0.02986897489820372
+      -Aw*sphi*0.016758537530754618;
+    ts.primOld->vars[vars::Q]+=Aw*cphi*0.5233486841539436
+      -Aw*sphi*0.04767672501939603;
+    ts.primOld->vars[vars::DP]+=Aw*cphi*0.2909106062057657
+      -Aw*sphi*0.02159452055336572;
+    double Gamma = - 0.5533585207638141;
     double Omega = - 3.6262571286888425;
 
     params::Time = 0.;
@@ -113,13 +113,18 @@ int main(int argc, char **argv)
 	sphi = af::sin(k1*ts.geom->xCoords[locations::CENTER][1]
 		       +k2*ts.geom->xCoords[locations::CENTER][2]
 		       +Omega*params::Time);
-	array rhoan = 1.+(Aw*cphi*(-0.5185225240822464)
-			  +Aw*sphi*0.1792647678001874)*exp(-Gamma);
+	array rhoan = 1.+(Aw*cphi*(-0.518522524082246)
+			  +Aw*sphi*0.1792647678001878)*exp(Gamma*params::Time);
+	array psian = 0. + (Aw*cphi*0.2909106062057657
+			    -Aw*sphi*0.02159452055336572)*exp(Gamma*params::Time);
 	double error = af::norm(af::flat((ts.primOld->vars[vars::RHO]
 	- rhoan)));
+	double error2 = af::norm(af::flat((ts.primOld->vars[vars::DP]
+					   -psian)));
 
 	error = error/params::N1/params::N2/params::N3;
-	printf("Time = %e; dt = %e; Error = %e\n",params::Time,params::dt,error);
+	error2 = error2/params::N1/params::N2/params::N3;
+	printf("Time = %e; dt = %e; Error = %e; Error2 = %e\n",params::Time,params::dt,error,error2);
 	//af_print(ts.primOld->vars[vars::RHO](span,0,0)-rhoan(span,0,0),12);
       }
 
