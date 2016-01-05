@@ -5,10 +5,10 @@ void timeStepper::solve(grid &primGuess)
 {
   for (int nonLinearIter=0;
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
-      )
+       )
   {
-    computeResidual(primGuess, *residual);
-
+    //True residual, with explicit terms (not needed for Jacobian)
+    computeResidual(primGuess, *residual,true);
     for (int var=0; var < vars::dof; var++)
     {
       /* Need residualSoA to compute norms */
@@ -25,6 +25,16 @@ void timeStepper::solve(grid &primGuess)
     if(globalL2Norm<params::nonlinearsolve_atol)
       break;
 
+    /* First assemble b. Need to reorder from SoA -> AoS. */
+    for (int var=0; var < vars::dof; var++)
+    {
+      bSoA(span, span, span, var) = -residual->vars[var];
+    }
+    array bAoS        = af::reorder(bSoA, 3, 0, 1, 2);
+
+    //Residual without explicit terms, for faster Jacobian assembly
+    computeResidual(primGuess, *residual,false);
+
     /* Assemble the Jacobian in Struct of Arrays format where the physics
      * operations are all vectorized */
     for (int row=0; row < vars::dof; row++)
@@ -37,7 +47,7 @@ void timeStepper::solve(grid &primGuess)
       primGuessPlusEps->vars[row]  = (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
 	+smallPrim*epsilon; 
 
-      computeResidual(*primGuessPlusEps, *residualPlusEps);
+      computeResidual(*primGuessPlusEps, *residualPlusEps,false);
 
       for (int column=0; column < vars::dof; column++)
       {
@@ -55,14 +65,7 @@ void timeStepper::solve(grid &primGuess)
     /* Solve the linear system Jacobian * deltaPrim = -residual for the
      * correction deltaPrim */
 
-    /* First assemble b. Need to reorder from SoA -> AoS. */
-    for (int var=0; var < vars::dof; var++)
-    {
-      bSoA(span, span, span, var) = -residual->vars[var];
-    }
-
     array jacobianAoS = af::reorder(jacobianSoA, 3, 0, 1, 2);
-    array bAoS        = af::reorder(bSoA, 3, 0, 1, 2);
 
     /* Now solve Ax = b using direct inversion, where
      * A = Jacobian
@@ -121,7 +124,7 @@ void timeStepper::solve(grid &primGuess)
       } 
 
       /* ...and then compute the norm */
-      computeResidual(*primGuessLineSearchTrial, *residual);
+      computeResidual(*primGuessLineSearchTrial, *residual,true);
       for (int var=0; var<vars::dof; var++)
       {
         residualSoA(span, span, span, var) = residual->vars[var];

@@ -72,7 +72,7 @@ void timeStepper::timeStep()
   elemOld->computeFluxes(*geom, 0, *consOld);
   if(params::viscosity || params::conduction)
     elemOld->computeEMHDGradients(*geom);
-
+  
   computeDivOfFluxes(*primOld);
 
   /* Set a guess for prim */
@@ -93,15 +93,14 @@ void timeStepper::timeStep()
     primHalfStep->vars[var] = prim->vars[var];
   }
   elemHalfStep->set(*primHalfStep, *geom, locations::CENTER);
-  if(params::viscosity || params::conduction)
-    elemHalfStep->computeEMHDGradients(*geom);
-
   /* apply boundary conditions on primHalfStepGhosted */
   /* Half step complete */
 
   /* Now take the full step */
   currentStep = timeStepperSwitches::FULL_STEP;
 
+  if(params::viscosity || params::conduction)
+    elemHalfStep->computeEMHDGradients(*geom);
   computeDivOfFluxes(*primHalfStep);
 
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
@@ -120,7 +119,7 @@ void timeStepper::timeStep()
 
 }
 
-void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
+void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess, const bool ComputeExplicitTerms)
 {
   elem->set(primGuess, *geom, locations::CENTER);
   elem->computeFluxes(*geom, 0, *cons);
@@ -128,19 +127,29 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
   if (currentStep == timeStepperSwitches::HALF_STEP)
   {
     int useImplicitSources = 0;
-    elem->computeSources(*geom, 
-                         *elemOld, *elemOld,
-                         params::dt/2., useImplicitSources,
-                         *sourcesOld
-                        );
-
+    if(ComputeExplicitTerms)
+      elemOld->computeExplicitSources(*geom, 
+				      *sourcesHalfStep
+				      );
+    else
+      for (int var=0; var<vars::dof; var++)
+	sourcesHalfStep->vars[var]=0.;
+    elemOld->computeImplicitSources(*geom,
+				    *elemOld,
+				    params::dt/2.,
+				    *sourcesOld);
+    elem->computeImplicitSources(*geom,
+				 *elemOld,
+				 params::dt/2.,
+				 *sources);
     for (int var=0; var<vars::dof; var++)
     {
       residualGuess.vars[var] = (  cons->vars[var] 
-                            - consOld->vars[var]
-                           )/(params::dt/2.)
-                          + divFluxes->vars[var]
-                          + sourcesOld->vars[var];
+				   - consOld->vars[var]
+				   )/(params::dt/2.)
+	+ divFluxes->vars[var]
+	+ sourcesHalfStep->vars[var]
+	+0.5*(sourcesOld->vars[var]+sources->vars[var]);
     }
     //Normalization of the residual
     for (int var=0; var<vars::dof; var++)
@@ -148,14 +157,14 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
     if(params::conduction)
       {
 	if(params::highOrderTermsConduction)
-	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi*elemOld->tau);
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemOld->temperature*af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
 	else
 	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemOld->tau;
       }
     if(params::viscosity)
       {
 	if(params::highOrderTermsViscosity)
-	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu*elemOld->temperature*elemOld->tau);
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemOld->rho*elemOld->nu_emhd*elemOld->temperature*elemOld->tau);
 	else
 	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*elemOld->tau;
       }
@@ -163,19 +172,29 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
   else if (currentStep == timeStepperSwitches::FULL_STEP)
   {
     int useImplicitSources = 0;
-    elem->computeSources(*geom, 
-                         *elemOld, *elemHalfStep, 
-                         params::dt, useImplicitSources,
-                         *sourcesOld
-                        );
-
+    if(ComputeExplicitTerms)
+      elemHalfStep->computeExplicitSources(*geom, 
+					   *sourcesHalfStep
+					   );
+    else
+      for (int var=0; var<vars::dof; var++)
+	sourcesOld->vars[var]=0.;
+    elemOld->computeImplicitSources(*geom,
+				    *elemOld,
+				    params::dt,
+				    *sourcesOld);
+    elem->computeImplicitSources(*geom,
+				 *elemOld,
+				 params::dt,
+				 *sources);
     for (int var=0; var<vars::dof; var++)
     {
       residualGuess.vars[var] = (  cons->vars[var] 
-                            - consOld->vars[var]
-                           )/params::dt
-                          + divFluxes->vars[var]
-                          + sourcesOld->vars[var];
+				   - consOld->vars[var]
+				   )/params::dt
+	+ divFluxes->vars[var]
+	+ sourcesHalfStep->vars[var]
+	+0.5*(sourcesOld->vars[var]+sources->vars[var]);
     }
    //Normalization of the residual
     for (int var=0; var<vars::dof; var++)
@@ -183,14 +202,14 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess)
     if(params::conduction)
       {
 	if(params::highOrderTermsConduction)
-	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemHalfStep->temperature*af::sqrt(elemHalfStep->rho*elemHalfStep->chi*elemHalfStep->tau);
+	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemHalfStep->temperature*af::sqrt(elemHalfStep->rho*elemHalfStep->chi_emhd*elemHalfStep->tau);
 	else
 	  residualGuess.vars[vars::Q] = residualGuess.vars[vars::Q]*elemHalfStep->tau;
       }
     if(params::viscosity)
       {
 	if(params::highOrderTermsViscosity)
-	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemHalfStep->rho*elemHalfStep->nu*elemHalfStep->temperature*elemHalfStep->tau);
+	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*af::sqrt(elemHalfStep->rho*elemHalfStep->nu_emhd*elemHalfStep->temperature*elemHalfStep->tau);
 	else
 	  residualGuess.vars[vars::DP] = residualGuess.vars[vars::DP]*elemHalfStep->tau;
       }

@@ -23,7 +23,7 @@ class fluidElement
     int loc;
 
     /* fluidElement parameters */
-    array tau, chi, nu;
+    array tau, chi_emhd, nu_emhd;
     
     array rho, u, u1, u2, u3, B1, B2, B3;
     array pressure, temperature;
@@ -38,6 +38,7 @@ class fluidElement
     array TUpDown[NDIM][NDIM];
 
     array gradT[NDIM];
+    array dtuCov[NDIM];
     array graduCov[NDIM][NDIM];
     array divuCov;
     array deltaP0;
@@ -58,13 +59,14 @@ class fluidElement
                        grid &flux
                       );
 
-    void computeSources(const geometry &geom,
-			                  const fluidElement &elemOld,
-    			              const fluidElement &elemForSpatialDeriv,
-                  			const double dt,
-			                  const int useImplicitSources,
-                        grid &sources
-                       );
+    void computeImplicitSources(const geometry &geom,
+				const fluidElement &elemOld,
+				const double dt,
+				grid &sources
+				);
+  void computeExplicitSources(const geometry &geom,
+			      grid &sources
+			      );
   void computeEMHDGradients(const geometry &geom);
 };
 

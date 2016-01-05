@@ -29,7 +29,8 @@ class timeStepper
   array stepLength;
 
   void solve(grid &primGuess);
-  void computeResidual(const grid &primGuess, grid &residualGuess);
+  void computeResidual(const grid &primGuess, grid &residualGuess,
+		        const bool ComputeExplicitTerms);
 
   public:
     geometry *geom;
