@@ -59,9 +59,14 @@ class fluidElement
                        grid &flux
                       );
 
-    void computeImplicitSources(const geometry &geom,
+    void computeTimeDerivSources(const geometry &geom,
 				const fluidElement &elemOld,
+				const fluidElement &elemNew,
 				const double dt,
+				grid &sources
+				);
+
+    void computeImplicitSources(const geometry &geom,
 				grid &sources
 				);
   void computeExplicitSources(const geometry &geom,

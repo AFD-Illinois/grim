@@ -129,27 +129,29 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess, co
     int useImplicitSources = 0;
     if(ComputeExplicitTerms)
       elemOld->computeExplicitSources(*geom, 
-				      *sourcesHalfStep
+				      *sourcesE
 				      );
     else
       for (int var=0; var<vars::dof; var++)
-	sourcesHalfStep->vars[var]=0.;
+	sourcesE->vars[var]=0.;
     elemOld->computeImplicitSources(*geom,
-				    *elemOld,
-				    params::dt/2.,
-				    *sourcesOld);
+				    *sourcesIOld);
     elem->computeImplicitSources(*geom,
-				 *elemOld,
-				 params::dt/2.,
-				 *sources);
+				 *sourcesINew);
+    elemOld->computeTimeDerivSources(*geom,
+				     *elemOld,
+				     *elem,
+				     params::dt/2,
+				     *sourcesDT);
     for (int var=0; var<vars::dof; var++)
     {
       residualGuess.vars[var] = (  cons->vars[var] 
 				   - consOld->vars[var]
 				   )/(params::dt/2.)
 	+ divFluxes->vars[var]
-	+ sourcesHalfStep->vars[var]
-	+0.5*(sourcesOld->vars[var]+sources->vars[var]);
+	+ sourcesE->vars[var]
+	+0.5*(sourcesIOld->vars[var]+sourcesINew->vars[var])
+	+sourcesDT->vars[var];
     }
     //Normalization of the residual
     for (int var=0; var<vars::dof; var++)
@@ -174,27 +176,29 @@ void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess, co
     int useImplicitSources = 0;
     if(ComputeExplicitTerms)
       elemHalfStep->computeExplicitSources(*geom, 
-					   *sourcesHalfStep
+					   *sourcesE
 					   );
     else
       for (int var=0; var<vars::dof; var++)
-	sourcesOld->vars[var]=0.;
+	sourcesE->vars[var]=0.;
     elemOld->computeImplicitSources(*geom,
-				    *elemOld,
-				    params::dt,
-				    *sourcesOld);
+				    *sourcesIOld);
     elem->computeImplicitSources(*geom,
-				 *elemOld,
-				 params::dt,
-				 *sources);
+				 *sourcesINew);
+    elemHalfStep->computeTimeDerivSources(*geom,
+					  *elemOld,
+					  *elem,
+					  params::dt,
+					  *sourcesDT);
     for (int var=0; var<vars::dof; var++)
     {
       residualGuess.vars[var] = (  cons->vars[var] 
 				   - consOld->vars[var]
 				   )/params::dt
 	+ divFluxes->vars[var]
-	+ sourcesHalfStep->vars[var]
-	+0.5*(sourcesOld->vars[var]+sources->vars[var]);
+	+ sourcesE->vars[var]
+	+0.5*(sourcesIOld->vars[var]+sourcesINew->vars[var])
+	+ sourcesDT->vars[var];
     }
    //Normalization of the residual
     for (int var=0; var<vars::dof; var++)

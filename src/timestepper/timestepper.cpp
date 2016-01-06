@@ -11,9 +11,10 @@ timeStepper::timeStepper()
   cons          = new grid(vars::dof); /* n+1 */
   consOld       = new grid(vars::dof); /* n   */
 
-  sources         = new grid(vars::dof); /* n     */
-  sourcesHalfStep = new grid(vars::dof); /* n+1/2 */
-  sourcesOld      = new grid(vars::dof); /* n     */
+  sourcesE         = new grid(vars::dof); /* Explicit     */
+  sourcesIOld      = new grid(vars::dof); /* Implicit at n */
+  sourcesINew      = new grid(vars::dof); /* Implicit at n+1 */
+  sourcesDT        = new grid(vars::dof); /* TimeDeriv     */
 
   /* Fluxes at n or n+1/2 time step. Depends on context used */
   fluxesX1  = new grid(vars::dof); 
@@ -86,7 +87,7 @@ timeStepper::~timeStepper()
   delete geom;
   delete prim, primHalfStep, primOld;
   delete cons, consOld;
-  delete sources, sourcesHalfStep, sourcesOld;
+  delete sourcesE, sourcesINew, sourcesIOld, sourcesDT;
   delete fluxesX1, fluxesX2, fluxesX3;
   delete elem, elemOld, elemHalfStep;
   delete riemann;

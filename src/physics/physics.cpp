@@ -199,10 +199,11 @@ void fluidElement::computeFluxes(const geometry &geom,
 }
 
 
-void fluidElement::computeImplicitSources(const geometry &geom,
-					  const fluidElement &elemOld,
-					  const double dt,
-					  grid &sources)
+void fluidElement::computeTimeDerivSources(const geometry &geom,
+                                          const fluidElement &elemOld,
+                                          const fluidElement &elemNew,
+                                          const double dt,
+                                          grid &sources)
 {
   for (int var=0; var<vars::dof; var++)
     {
@@ -211,17 +212,14 @@ void fluidElement::computeImplicitSources(const geometry &geom,
   if (params::conduction || params::viscosity)
   {
     // Non-ideal pieces. Note that we only compute
-    // the terms treated implicitly. Other terms are
-    // in computeExplicitSources. Implicit terms include
-    // all terms proportional to a time derivative,
-    // and the damping source terms for qTilde, deltaPTilde.
+    // the terms proportional to time derivatives. 
 
     // First, compute part of the source terms
     // shared by conduction and viscosity, i.e. 
     // u_{\mu;\nu} and u^{\mu}_{;\mu}
     // We only include the time derivative here!
     for(int mu=0;mu<NDIM;mu++)
-      dtuCov[mu] = (uCov[mu]-elemOld.uCov[mu])/dt;
+      dtuCov[mu] = (elemNew.uCov[mu]-elemOld.uCov[mu])/dt;
     // Compute divergence. We could compute it from the derivatives of uCon,
     //    but we already have u_{\mu;\nu}, so let's make use of it
     // Naturally, this is not truly the divergence. Only the part proportional
@@ -234,7 +232,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
     // Now, look at viscosity-specific terms
     if(params::viscosity)
       {
-	// Compute target deltaP (implicit part)
+	// Compute target deltaP (time deriv part)
 	deltaP0 = -divuCov*rho*nu_emhd;	    
 	for(int nu=0;nu<NDIM;nu++)
 	  deltaP0 += 3. * rho*nu_emhd*bCon[0]*bCon[nu]
@@ -244,29 +242,63 @@ void fluidElement::computeImplicitSources(const geometry &geom,
 	
 	//Note on sign: we put the sources on the LHS when
 	//computing the residual!
-	sources.vars[vars::DP] -= geom.g[locations::CENTER]*(deltaP0 - deltaPTilde)/tau;
-	
+	sources.vars[vars::DP] -= geom.g[locations::CENTER]*(deltaP0)/tau;
+
 	if (params::highOrderTermsViscosity == 1)
 	  sources.vars[vars::DP] -= 0.5*geom.g[locations::CENTER]*divuCov*deltaPTilde;
       } /* End of viscosity specific terms */
     
     // -------------------------------------
-    // Finally, look at conduction-specific terms (implicit terms)
+    // Finally, look at conduction-specific terms (time deriv terms)
     if(params::conduction)
       {
 	q0=0.;
-	q0 -=  rho*chi_emhd*bCon[0]/bNorm*(temperature - elemOld.temperature)/dt;
+	q0 -=  rho*chi_emhd*bCon[0]
+	  /bNorm*(elemNew.temperature - elemOld.temperature)/dt;
 	for(int nu=0;nu<NDIM;nu++)
-	  q0 -=  rho*chi_emhd*temperature*bCon[nu]/bNorm*uCon[0]*dtuCov[nu];
+	  q0 -=  rho*chi_emhd*temperature*
+	    bCon[nu]/bNorm*uCon[0]*dtuCov[nu];
 	
 	if (params::highOrderTermsConduction == 1)
 	  q0 *=  af::sqrt(tau/rho/chi_emhd)/temperature; 
 	    
 	//Note on sign: we put the sources on the LHS when
 	//computing the residual!
-	sources.vars[vars::Q] -= geom.g[locations::CENTER]*(q0 - qTilde)/tau;
+	sources.vars[vars::Q] -= geom.g[locations::CENTER]*(q0)/tau;
+	
 	if (params::highOrderTermsConduction == 1)
 	  sources.vars[vars::Q] -= 0.5*geom.g[locations::CENTER]*divuCov*qTilde;
+      } /* End of conduction */
+  } /* End of EMHD: viscosity || conduction */
+}
+
+
+void fluidElement::computeImplicitSources(const geometry &geom,
+					  grid &sources)
+{
+  for (int var=0; var<vars::dof; var++)
+    {
+      sources.vars[var] = 0.;
+    }
+  if (params::conduction || params::viscosity)
+  {
+    // Non-ideal pieces. Note that we only compute
+    // the terms treated implicitly. 
+    // Look at viscosity-specific terms
+    if(params::viscosity)
+      {
+	//Note on sign: we put the sources on the LHS when
+	//computing the residual!
+	sources.vars[vars::DP] -= geom.g[locations::CENTER]*(- deltaPTilde)/tau;
+      } /* End of viscosity specific terms */
+    
+    // -------------------------------------
+    // Finally, look at conduction-specific terms (implicit terms)
+    if(params::conduction)
+      {
+	//Note on sign: we put the sources on the LHS when
+	//computing the residual!
+	sources.vars[vars::Q] -= geom.g[locations::CENTER]*(- qTilde)/tau;
       } /* End of conduction */
   } /* End of EMHD: viscosity || conduction */
   

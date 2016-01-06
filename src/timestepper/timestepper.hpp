@@ -37,7 +37,7 @@ class timeStepper
 
     grid *prim, *primHalfStep, *primOld;
     grid *cons, *consOld;
-    grid *sources, *sourcesHalfStep, *sourcesOld;
+    grid *sourcesE, *sourcesIOld, *sourcesINew, *sourcesDT;
     grid *fluxesX1, *fluxesX2, *fluxesX3;
     grid *divFluxes;
 
