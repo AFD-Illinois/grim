@@ -59,6 +59,11 @@ class fluidElement
                        grid &flux
                       );
 
+    void computeMinMaxCharSpeeds(const geometry &geom,
+			       const int dir,
+			       array &MinSpeed,
+				 array &MaxSpeed);
+
     void computeTimeDerivSources(const geometry &geom,
 				const fluidElement &elemOld,
 				const fluidElement &elemNew,
@@ -83,6 +88,9 @@ class riemannSolver
     grid *primLeft, *primRight;
     grid *fluxLeft, *fluxRight;
     grid *consLeft, *consRight;
+
+    array MinSpeedLeft,MaxSpeedLeft;
+    array MinSpeedRight,MaxSpeedRight;
 
     riemannSolver(const geometry &geom);
     ~riemannSolver();
