@@ -3,6 +3,7 @@
 
 #include "../params.hpp"
 #include "../grid/grid.hpp"
+#include <string>
 
 class geometry
 {
@@ -24,15 +25,8 @@ class geometry
          locations::FRONT, locations::BACK
         };
 
-    /* The grids manage allocations and IO */
-    grid *xCoordsGrid;
     grid *XCoordsGrid;
-    grid *alphaGrid, *gGrid;
-    grid *gCovGrid, *gConGrid;
-    grid *connectionGrid;
 
-    /* Copy the data from the grids above into the arrays below so that they can
-     * be conveniently used in physics routines */
     array xCoords[LOCATIONS][NDIM];
     array XCoords[LOCATIONS][NDIM];
 
@@ -46,6 +40,8 @@ class geometry
 
     geometry();
     ~geometry();
+
+//    void getHostPtrTo(std::string str);
 };
 
 

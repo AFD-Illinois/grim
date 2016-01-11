@@ -1,138 +1,95 @@
 #include "geometry.hpp"
 
+//void geometry::getHostPtrTo(std::string str)
+//{
+//  if (str=="xCoords")
+//  {
+//    xCoordsHostPtr = 
+//
+//
+//  }
+//
+//}
+
 geometry::geometry()
 {
   numGhost  = params::numGhost;
 
-  xCoordsGrid     = new grid(LOCATIONS*NDIM);
-  XCoordsGrid     = new grid(LOCATIONS*NDIM);
-
-  alphaGrid       = new grid(LOCATIONS);
-  gGrid           = new grid(LOCATIONS);
-  gCovGrid        = new grid(LOCATIONS*NDIM*NDIM);
-  gConGrid        = new grid(LOCATIONS*NDIM*NDIM);
-  connectionGrid  = new grid(NDIM*NDIM*NDIM);
+  XCoordsGrid = new grid(LOCATIONS*NDIM);
 
   /* Indices go from [-numGhost, N + numGhost) in each direction */
   array indicesX1 = 
-    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
-              xCoordsGrid->N2Total, /* number of total zones in X2 */
-              xCoordsGrid->N3Total, /* number of total zones in X3 */
+    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
+              XCoordsGrid->N2Total, /* number of total zones in X2 */
+              XCoordsGrid->N3Total, /* number of total zones in X3 */
               1,                    /* number of variables */
-              directions::X1        /* Vary indices in X1 direction */
+              directions::X1 ,      /* Vary indices in X1 direction */
+              f64                   /* Double precision */
              ) - numGhost;
 
-
   array indicesX2 = 
-    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
-              xCoordsGrid->N2Total, /* number of total zones in X2 */
-              xCoordsGrid->N3Total, /* number of total zones in X3 */
+    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
+              XCoordsGrid->N2Total, /* number of total zones in X2 */
+              XCoordsGrid->N3Total, /* number of total zones in X3 */
               1,                    /* number of variables */
-              directions::X2        /* Vary indices in X2 direction */
+              directions::X2 ,      /* Vary indices in X2 direction */
+              f64                   /* Double precision */
              ) - numGhost;
 
   array indicesX3 = 
-    af::range(xCoordsGrid->N1Total, /* number of total zones in X1 */
-              xCoordsGrid->N2Total, /* number of total zones in X2 */
-              xCoordsGrid->N3Total, /* number of total zones in X3 */
+    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
+              XCoordsGrid->N2Total, /* number of total zones in X2 */
+              XCoordsGrid->N3Total, /* number of total zones in X3 */
               1,                    /* number of variables */
-              directions::X3        /* Vary indices in X3 direction */
+              directions::X3 ,      /* Vary indices in X3 direction */
+              f64                   /* Double precision */
              ) - numGhost;
 
-  /* Temporal coordinate. Just set to zero */
-  XCoordsGrid->vars[0 + NDIM*locations::CENTER] = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::RIGHT]  = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::LEFT]   = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::BOTTOM] = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::TOP]    = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::FRONT]  = 0.;
-  XCoordsGrid->vars[0 + NDIM*locations::BACK]   = 0.;
+  /* Use the following array to allocate other arrays */
+  zero = 0.*XCoordsGrid->vars[0];
 
-  /* X1 coordinate at all the locations */
-  // Note the necessary cast to double, because ArrayFire defaults to
-  // single precision when casting the indices from integer to real
-  XCoordsGrid->vars[1 + NDIM*locations::CENTER] = 
-    params::X1Start + (indicesX1.as(f64) + 0.5)*XCoordsGrid->dX1;
-
-  XCoordsGrid->vars[1 + NDIM*locations::LEFT]   = 
-    params::X1Start + (indicesX1.as(f64)      )*XCoordsGrid->dX1;
-
-  XCoordsGrid->vars[1 + NDIM*locations::RIGHT]  = 
-    params::X1Start + (indicesX1.as(f64) + 1. )*XCoordsGrid->dX1;
-
-  XCoordsGrid->vars[1 + NDIM*locations::BOTTOM] = 
-    XCoordsGrid->vars[1 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[1 + NDIM*locations::TOP]    = 
-    XCoordsGrid->vars[1 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[1 + NDIM*locations::FRONT]  = 
-    XCoordsGrid->vars[1 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[1 + NDIM*locations::BACK]   = 
-    XCoordsGrid->vars[1 + NDIM*locations::CENTER];
-
-  /* X2 coordinate at all the locations */
-  XCoordsGrid->vars[2 + NDIM*locations::CENTER] = 
-    params::X2Start + (indicesX2.as(f64) + 0.5)*XCoordsGrid->dX2;
-
-  XCoordsGrid->vars[2 + NDIM*locations::BOTTOM] = 
-    params::X2Start + (indicesX2.as(f64)      )*XCoordsGrid->dX2;
-
-  XCoordsGrid->vars[2 + NDIM*locations::TOP]    = 
-    params::X2Start + (indicesX2.as(f64) + 1. )*XCoordsGrid->dX2;
-
-  XCoordsGrid->vars[2 + NDIM*locations::LEFT]   = 
-    XCoordsGrid->vars[2 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[2 + NDIM*locations::RIGHT]  = 
-    XCoordsGrid->vars[2 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[2 + NDIM*locations::FRONT]  = 
-    XCoordsGrid->vars[2 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[2 + NDIM*locations::BACK]   = 
-    XCoordsGrid->vars[2 + NDIM*locations::CENTER];
-
-  /* X3 coordinate at all the locations */
-  XCoordsGrid->vars[3 + NDIM*locations::CENTER] = 
-    params::X3Start + (indicesX3.as(f64) + 0.5)*XCoordsGrid->dX3;
-
-  XCoordsGrid->vars[3 + NDIM*locations::BACK]   = 
-    params::X3Start + (indicesX3.as(f64)      )*XCoordsGrid->dX3;
-
-  XCoordsGrid->vars[3 + NDIM*locations::FRONT]  = 
-    params::X3Start + (indicesX3.as(f64) + 1. )*XCoordsGrid->dX3;
-
-  XCoordsGrid->vars[3 + NDIM*locations::LEFT]   = 
-    XCoordsGrid->vars[3 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[3 + NDIM*locations::RIGHT]  = 
-    XCoordsGrid->vars[3 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[3 + NDIM*locations::BOTTOM] = 
-    XCoordsGrid->vars[3 + NDIM*locations::CENTER];
-
-  XCoordsGrid->vars[3 + NDIM*locations::TOP]    = 
-    XCoordsGrid->vars[3 + NDIM*locations::CENTER];
-
+  /* Temporal X coordinate. Just set to zero */
   for (int loc: allLocations)
   {
-    for (int mu=0; mu<NDIM; mu++)
-    {
-      XCoords[loc][mu] = XCoordsGrid->vars[mu + NDIM*loc];
-    }
-
-    XCoordsToxCoords(XCoords[loc], xCoords[loc]);
-
-    for (int mu=0; mu<NDIM; mu++)
-    {
-      xCoordsGrid->vars[mu + NDIM*loc] = xCoords[loc][mu];
-    }
+    XCoords[loc][0] = zero;
   }
 
-  /* Use the following array to allocate other arrays */
-  zero = 0.*XCoords[locations::CENTER][0];
+  double dX1 = XCoordsGrid->dX1;
+  double dX2 = XCoordsGrid->dX2;
+  double dX3 = XCoordsGrid->dX3;
+
+  /* X1 coordinate at all the locations */
+  XCoords[locations::CENTER][1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+  XCoords[locations::LEFT][1]   = params::X1Start + (indicesX1      )*dX1;
+  XCoords[locations::RIGHT][1]  = params::X1Start + (indicesX1 + 1. )*dX1;
+  XCoords[locations::BOTTOM][1] = XCoords[locations::CENTER][1];
+  XCoords[locations::TOP][1]    = XCoords[locations::CENTER][1];
+  XCoords[locations::FRONT][1]  = XCoords[locations::CENTER][1];
+  XCoords[locations::BACK][1]   = XCoords[locations::CENTER][1];
+
+  /* X2 coordinate at all the locations */
+  XCoords[locations::CENTER][2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+  XCoords[locations::LEFT][2]   = XCoords[locations::CENTER][2];
+  XCoords[locations::RIGHT][2]  = XCoords[locations::CENTER][2];
+  XCoords[locations::BOTTOM][2] = params::X2Start + (indicesX2      )*dX2;
+  XCoords[locations::TOP][2]    = params::X2Start + (indicesX2 + 1. )*dX2;
+  XCoords[locations::FRONT][2]  = XCoords[locations::CENTER][2];
+  XCoords[locations::BACK][2]   = XCoords[locations::CENTER][2];
+
+  /* X3 coordinate at all the locations */
+  XCoords[locations::CENTER][3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+  XCoords[locations::LEFT][3]   = XCoords[locations::CENTER][3];
+  XCoords[locations::RIGHT][3]  = XCoords[locations::CENTER][3];
+  XCoords[locations::BOTTOM][3] = XCoords[locations::CENTER][3];
+  XCoords[locations::TOP][3]    = XCoords[locations::CENTER][3];
+  XCoords[locations::FRONT][3]  = params::X3Start + (indicesX3 + 1. )*dX3;
+  XCoords[locations::BACK][3]   = params::X3Start + (indicesX3      )*dX3;
+
+  /* Compute xCoords from XCoords */
+  for (int loc: allLocations)
+  {
+    XCoordsToxCoords(XCoords[loc], xCoords[loc]);
+  }
 
   for (int loc : allLocations)
   {
@@ -155,22 +112,19 @@ geometry::geometry()
     g[loc] = af::sqrt(-gDet);
 
     alpha[loc] = 1./af::sqrt(-gCon[loc][0][0]);
+  }
 
-    gGrid->vars[loc]     = g[loc];
-    alphaGrid->vars[loc] = alpha[loc];
-    for (int mu=0; mu<NDIM; mu++)
+  /* Only care about connection coefficients at the center */
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
     {
-      for (int nu=0; nu<NDIM; nu++)
+      for (int lam = 0; lam<NDIM; lam++)
       {
-        gCovGrid->vars[mu + NDIM*loc] = gCov[loc][mu][nu];
-        gConGrid->vars[mu + NDIM*loc] = gCon[loc][mu][nu];
+      	gammaUpDownDown[mu][nu][lam]=zero;
       }
     }
   }
-  for (int mu=0; mu<NDIM; mu++)
-    for (int nu=0; nu<NDIM; nu++)
-      for (int lam = 0; lam<NDIM; lam++)
-	gammaUpDownDown[mu][nu][lam]=zero;
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
@@ -418,13 +372,7 @@ void geometry::XCoordsToxCoords(const array XCoords[NDIM],
 
 geometry::~geometry()
 {
-  delete xCoordsGrid;
   delete XCoordsGrid;
-  delete alphaGrid;
-  delete gGrid;
-  delete gCovGrid;
-  delete gConGrid;
-  delete connectionGrid;
 }
 
 

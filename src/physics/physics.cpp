@@ -63,7 +63,10 @@ void fluidElement::set(const grid &prim,
   pressure    = (params::adiabaticIndex - 1.)*u;
   temperature = pressure/rho + params::temperatureFloorInFluidElement;
 
-  soundSpeed = af::sqrt(params::adiabaticIndex*pressure/(rho+params::adiabaticIndex*u));
+  soundSpeed  = af::sqrt( params::adiabaticIndex*pressure
+                         /(rho+params::adiabaticIndex*u)
+                        );
+
   setFluidElementParameters(geom);
   
   if (params::conduction==1)
@@ -493,9 +496,9 @@ void fluidElement::computeEMHDGradients(const geometry &geom)
 {
   if (params::conduction || params::viscosity)
   {
-    double dX1 = geom.xCoordsGrid->dX1;
-    double dX2 = geom.xCoordsGrid->dX2;
-    double dX3 = geom.xCoordsGrid->dX3;
+    double dX1 = geom.XCoordsGrid->dX1;
+    double dX2 = geom.XCoordsGrid->dX2;
+    double dX3 = geom.XCoordsGrid->dX3;
     
     for(int mu=0;mu<NDIM;mu++)
 	  {
