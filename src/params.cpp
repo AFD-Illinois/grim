@@ -18,6 +18,7 @@ namespace params
   int timeStepper = timeStepping::EXPLICIT;
   double dt = .5/N1;
   double Time = 0.;
+  double finalTime = 0.5;
   int metric = metrics::MINKOWSKI;
   double hSlope = 0.3;
   double blackHoleSpin = 0.9375;

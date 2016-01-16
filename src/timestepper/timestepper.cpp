@@ -79,7 +79,8 @@ timeStepper::timeStepper()
                                            f64
                                           );
   
-  
+  initialConditions();
+
 }
 
 timeStepper::~timeStepper()

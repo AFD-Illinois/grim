@@ -53,6 +53,11 @@ class timeStepper
     ~timeStepper();
 
     void timeStep();
+
+    /* Function definitions in the problem folder */
+    void initialConditions();
+    void halfStepDiagnostics();
+    void fullStepDiagnostics();
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

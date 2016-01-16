@@ -1,12 +1,5 @@
 #include "physics.hpp"
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
-{
-  tau = one;
-  chi_emhd = soundSpeed*soundSpeed*tau;
-  nu_emhd  = soundSpeed*soundSpeed*tau;
-}
-
 fluidElement::fluidElement(const grid &prim,
                            const geometry &geom,
                            const int location

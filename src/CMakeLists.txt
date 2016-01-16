@@ -23,7 +23,7 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
 
 # Double or float precision?
@@ -44,7 +44,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "performance_test")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
@@ -70,26 +70,20 @@ find_library(MATH_LIBRARIES m REQUIRED)
 find_package(PETSc REQUIRED)
 find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
-#find_package(YAML REQUIRED)
+find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 
 if (ARCH STREQUAL "CPU")
-  
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
-
 elseif (ARCH STREQUAL "CUDA")
-
   set(ArrayFire_LIBRARIES ${ArrayFire_CUDA_LIBRARIES})
-
 elseif (ARCH STREQUAL "OpenCL")
-
   set(ArrayFire_LIBRARIES ${ArrayFire_OpenCL_LIBRARIES})
-
 endif()
 
 include(UseCython)
 include_directories(${PETSC_INCLUDES} 
-#                    ${YAML_INCLUDES}
+                    ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
                     grid
@@ -104,15 +98,16 @@ add_subdirectory(reconstruction)
 add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
-include(${PROBLEM_DIR}/CMakeLists.txt)
-#add_subdirectory(problem)
+#include(${PROBLEM_DIR}/CMakeLists.txt)
+add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid geometry reconstruction physics timestepper
+target_link_libraries(grim grid geometry reconstruction physics 
+                      timestepper problem
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
-#                      ${YAML_LIBRARIES}
+                      ${YAML_LIBRARIES}
                       ${ArrayFire_LIBRARIES}
                      )
 

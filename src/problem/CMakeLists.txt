@@ -1,3 +1,3 @@
-add_library(problem ${PROBLEM_DIR}/problem.c ${PROBLEM_DIR}/problemdata.h problem.h)
-target_link_libraries(problem timestepper grid physics geometry boundary
-                      ${MATH_LIBRARIES})
+add_library(problem ${PROBLEM_DIR}/problem.cpp)
+#target_link_libraries(problem timestepper grid physics geometry boundary
+#                      ${MATH_LIBRARIES})

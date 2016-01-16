@@ -92,6 +92,7 @@ void timeStepper::timeStep()
   {
     primHalfStep->vars[var] = prim->vars[var];
   }
+  halfStepDiagnostics();
   elemHalfStep->set(*primHalfStep, *geom, locations::CENTER);
   /* apply boundary conditions on primHalfStepGhosted */
   /* Half step complete */
@@ -112,6 +113,7 @@ void timeStepper::timeStep()
   {
     primOld->vars[var] = prim->vars[var];
   }
+  fullStepDiagnostics();
 
   /* Compute diagnostics */
 

@@ -73,6 +73,7 @@ namespace params
   extern int timeStepper;
   extern double dt;
   extern double Time;
+  extern double finalTime;
   extern int metric;
   extern double hSlope;
   extern double blackHoleSpin;
