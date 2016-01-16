@@ -140,3 +140,8 @@ void timeStepper::fullStepDiagnostics()
         );
 	//af_print(ts.primOld->vars[vars::RHO](span,0,0)-rhoan(span,0,0),12);
 }
+
+void timeStepper::setProblemSpecificBCs()
+{
+
+};

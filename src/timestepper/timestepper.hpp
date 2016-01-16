@@ -58,6 +58,7 @@ class timeStepper
     void initialConditions();
     void halfStepDiagnostics();
     void fullStepDiagnostics();
+    void setProblemSpecificBCs();
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

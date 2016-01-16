@@ -67,6 +67,7 @@ void timeStepper::timeStep()
 {
   /* First take a half step */
   currentStep = timeStepperSwitches::HALF_STEP;
+  setProblemSpecificBCs();
 
   elemOld->set(*primOld, *geom, locations::CENTER);
   elemOld->computeFluxes(*geom, 0, *consOld);
@@ -99,6 +100,7 @@ void timeStepper::timeStep()
 
   /* Now take the full step */
   currentStep = timeStepperSwitches::FULL_STEP;
+  setProblemSpecificBCs();
 
   if(params::viscosity || params::conduction)
     elemHalfStep->computeEMHDGradients(*geom);
