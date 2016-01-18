@@ -10,8 +10,8 @@ fluidElement::fluidElement(const grid &prim,
                      prim.vars[0].dims(directions::X1),
                      prim.vars[0].dims(directions::X2),
                      prim.vars[0].dims(directions::X3),
-		     f64
-		     );
+		                 f64
+           		      );
 
   array zero = 0.*one;
 
@@ -21,14 +21,14 @@ fluidElement::fluidElement(const grid &prim,
     divuCov = zero;
     
     for(int mu=0;mu<NDIM;mu++)
-      {
-	gradT[mu] = zero;
-	dtuCov[mu] = zero;
-	for(int nu=0;nu<NDIM;nu++)
-	  {
-	    graduCov[nu][mu] = zero;
-	  }
-      }
+    {
+	    gradT[mu] = zero;
+	    dtuCov[mu] = zero;
+	    for(int nu=0;nu<NDIM;nu++)
+	    {
+	      graduCov[nu][mu] = zero;
+	    }
+    }
     
     deltaP0 = zero;
     q0 = zero;

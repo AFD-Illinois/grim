@@ -11,120 +11,97 @@
 //
 //}
 
-geometry::geometry()
+geometry::geometry(grid &XCoords)
 {
-  numGhost  = params::numGhost;
+  this->XCoords = &XCoords;
 
-  XCoordsGrid = new grid(LOCATIONS*NDIM);
-
-  /* Indices go from [-numGhost, N + numGhost) in each direction */
-  array indicesX1 = 
-    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
-              XCoordsGrid->N2Total, /* number of total zones in X2 */
-              XCoordsGrid->N3Total, /* number of total zones in X3 */
-              1,                    /* number of variables */
-              directions::X1 ,      /* Vary indices in X1 direction */
-              f64                   /* Double precision */
-             ) - numGhost;
-
-  array indicesX2 = 
-    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
-              XCoordsGrid->N2Total, /* number of total zones in X2 */
-              XCoordsGrid->N3Total, /* number of total zones in X3 */
-              1,                    /* number of variables */
-              directions::X2 ,      /* Vary indices in X2 direction */
-              f64                   /* Double precision */
-             ) - numGhost;
-
-  array indicesX3 = 
-    af::range(XCoordsGrid->N1Total, /* number of total zones in X1 */
-              XCoordsGrid->N2Total, /* number of total zones in X2 */
-              XCoordsGrid->N3Total, /* number of total zones in X3 */
-              1,                    /* number of variables */
-              directions::X3 ,      /* Vary indices in X3 direction */
-              f64                   /* Double precision */
-             ) - numGhost;
-
-  /* Use the following array to allocate other arrays */
-  zero = 0.*XCoordsGrid->vars[0];
-
-  /* Temporal X coordinate. Just set to zero */
-  for (int loc: allLocations)
-  {
-    XCoords[loc][0] = zero;
-  }
-
-  double dX1 = XCoordsGrid->dX1;
-  double dX2 = XCoordsGrid->dX2;
-  double dX3 = XCoordsGrid->dX3;
-
-  /* X1 coordinate at all the locations */
-  XCoords[locations::CENTER][1] = params::X1Start + (indicesX1 + 0.5)*dX1;
-  XCoords[locations::LEFT][1]   = params::X1Start + (indicesX1      )*dX1;
-  XCoords[locations::RIGHT][1]  = params::X1Start + (indicesX1 + 1. )*dX1;
-  XCoords[locations::BOTTOM][1] = XCoords[locations::CENTER][1];
-  XCoords[locations::TOP][1]    = XCoords[locations::CENTER][1];
-  XCoords[locations::FRONT][1]  = XCoords[locations::CENTER][1];
-  XCoords[locations::BACK][1]   = XCoords[locations::CENTER][1];
-
-  /* X2 coordinate at all the locations */
-  XCoords[locations::CENTER][2] = params::X2Start + (indicesX2 + 0.5)*dX2;
-  XCoords[locations::LEFT][2]   = XCoords[locations::CENTER][2];
-  XCoords[locations::RIGHT][2]  = XCoords[locations::CENTER][2];
-  XCoords[locations::BOTTOM][2] = params::X2Start + (indicesX2      )*dX2;
-  XCoords[locations::TOP][2]    = params::X2Start + (indicesX2 + 1. )*dX2;
-  XCoords[locations::FRONT][2]  = XCoords[locations::CENTER][2];
-  XCoords[locations::BACK][2]   = XCoords[locations::CENTER][2];
-
-  /* X3 coordinate at all the locations */
-  XCoords[locations::CENTER][3] = params::X3Start + (indicesX3 + 0.5)*dX3;
-  XCoords[locations::LEFT][3]   = XCoords[locations::CENTER][3];
-  XCoords[locations::RIGHT][3]  = XCoords[locations::CENTER][3];
-  XCoords[locations::BOTTOM][3] = XCoords[locations::CENTER][3];
-  XCoords[locations::TOP][3]    = XCoords[locations::CENTER][3];
-  XCoords[locations::FRONT][3]  = params::X3Start + (indicesX3 + 1. )*dX3;
-  XCoords[locations::BACK][3]   = params::X3Start + (indicesX3      )*dX3;
-
-  /* Compute xCoords from XCoords */
-  for (int loc: allLocations)
-  {
-    XCoordsToxCoords(XCoords[loc], xCoords[loc]);
-  }
-
-  for (int loc : allLocations)
-  {
-    /* Allocate space */
-    g[loc]     = zero;
-    array gDet = zero;
-    for (int mu=0; mu<NDIM; mu++)
-    {
-      for (int nu=0; nu<NDIM; nu++)
-      {
-        gCov[loc][mu][nu] = zero;
-        gCon[loc][mu][nu] = zero;
-      }
-    }
-    
-    /* Set gCov[loc] */
-    setgCovInXCoords(XCoords[loc], gCov[loc]);
-
-    setgDetAndgConFromgCov(gCov[loc], gDet, gCon[loc]);
-    g[loc] = af::sqrt(-gDet);
-
-    alpha[loc] = 1./af::sqrt(-gCon[loc][0][0]);
-  }
-
-  /* Only care about connection coefficients at the center */
+  /* Allocate space */
+  g          = zero;
+  array gDet = zero;
   for (int mu=0; mu<NDIM; mu++)
   {
     for (int nu=0; nu<NDIM; nu++)
     {
-      for (int lam = 0; lam<NDIM; lam++)
+      gCov[mu][nu] = zero;
+      gCon[mu][nu] = zero;
+
+      for (int lamda = 0; lamda<NDIM; lamda++)
       {
-      	gammaUpDownDown[mu][nu][lam]=zero;
+      	gammaUpDownDown[lamda][mu][nu] = zero;
       }
     }
   }
+  
+  setgCovInXCoords(XCoords, gCov);
+
+  setgDetAndgConFromgCov(gCov, gDet, gCon);
+  g = af::sqrt(-gDet);
+
+  alpha = 1./af::sqrt(-gCon[0][0]);
+}
+
+void geometry::setXCoords(grid &indices, int location, grid &XCoords)
+{
+  array indicesX1 = indices.vars[directions::X1];
+  array indicesX2 = indices.vars[directions::X2];
+  array indicesX3 = indices.vars[directions::X3];
+
+  double dX1 = indices.dX1;
+  double dX2 = indices.dX2;
+  double dX3 = indices.dX3;
+
+  switch (location)
+  {
+    case CENTER:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case LEFT:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1      )*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case RIGHT:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 +   1)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case BOTTOM:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2      )*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case TOP:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 +   1)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case FRONT:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3 +   1)*dX3;
+
+      break;
+
+    case BACK:
+      XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
+      XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
+      XCoords.vars[directions::X3] = params::X3Start + (indicesX3      )*dX3;
+
+      break;
+  }
+
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
@@ -248,9 +225,7 @@ void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
        - gCov[0][2]*gCov[1][1]*gCov[2][0])/gDet;
 }
 
-void geometry::setgCovInXCoords(const array XCoords[NDIM],
-                                array gCov[NDIM][NDIM]
-                               )
+void geometry::setgCovInXCoords(array gCov[NDIM][NDIM])
 {
   switch (params::metric)
   {
@@ -271,15 +246,15 @@ void geometry::setgCovInXCoords(const array XCoords[NDIM],
       XCoordsToxCoords(XCoords, xCoords);
 
       /* Easier to read with (r, theta) than (x[1], x[2]) */
-      array r     = xCoords[1];
-      array theta = xCoords[2];
+      array r     = xCoords[directions::X1];
+      array theta = xCoords[directions::X2];
 
       /* r = exp(X1) => dr/dX = exp(X1) = r */
       array dr_dX1 = r;
 
       /* theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) 
          => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
-      array dtheta_dX2 = M_PI + M_PI*(1 - params::hSlope)*af::cos(2*M_PI*XCoords[2]);
+      array dtheta_dX2 = M_PI + M_PI*(1 - params::hSlope)*af::cos(2*M_PI*XCoords[directions::X2]);
 
       array sigma =  r*r + af::pow2(params::blackHoleSpin * af::cos(theta) );
 
@@ -372,7 +347,6 @@ void geometry::XCoordsToxCoords(const array XCoords[NDIM],
 
 geometry::~geometry()
 {
-  delete XCoordsGrid;
 }
 
 
