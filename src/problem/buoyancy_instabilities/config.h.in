@@ -20,6 +20,7 @@
 #cmakedefine    DT_DUMP         (${DT_DUMP})
 #cmakedefine    START_TIME      (${START_TIME})
 #cmakedefine    FINAL_TIME      (${FINAL_TIME})
+#cmakedefine    START_DUMP_COUNTER  (${START_DUMP_COUNTER})
 #cmakedefine    COURANT         (${COURANT})
 #cmakedefine    MAX_DT_INCREMENT (${MAX_DT_INCREMENT})
 #cmakedefine    REAL             ${REAL}
@@ -37,6 +38,12 @@
 
 #cmakedefine    ADIABATIC_INDEX  (${ADIABATIC_INDEX})
 #cmakedefine01  CONDUCTION
+#cmakedefine01  VISCOSITY
+#cmakedefine01  HIGHORDERTERMS_CONDUCTION
+#cmakedefine01  HIGHORDERTERMS_VISCOSITY
+#cmakedefine01  FAKE_EMHD
+#cmakedefine01  ADD_WIND_SOURCE
+#cmakedefine01  BACKREACTION
 
 
 /* Initial condition parameters */

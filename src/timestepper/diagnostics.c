@@ -103,6 +103,8 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
         struct geometry geom;
         setGeometry(XCoords, &geom);
 
+        INDEX_PETSC(gDetGlobal, &zone, 0) = geom.gDet;
+
         for (int mu=0; mu<NDIM; mu++)
         {
           INDEX_PETSC(xCoordsGlobal, &zone, mu) = xCoords[mu];
@@ -128,6 +130,8 @@ void diagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 
     DMDAVecRestoreArrayDOF(metricDM, gCovVec, &gCovGlobal);
     DMDAVecRestoreArrayDOF(metricDM, gConVec, &gConGlobal);
+    DMDAVecRestoreArrayDOF(gDetDM,  gDetVec,  &gDetGlobal);
+    DMDAVecRestoreArrayDOF(alphaDM, alphaVec, &alphaGlobal);
 
     char gridFilename[50];
     sprintf(gridFilename, "grid.h5");

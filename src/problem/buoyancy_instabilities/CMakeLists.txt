@@ -6,18 +6,19 @@ set(DUMP_FILE_PREFIX "\"data\"")
 set(PROBLEM_DATA "\"${PROBLEM}/problemdata.h\"")
 
 # Time stepping options: EXPLICIT, IMEX or IMPLICIT
-set(TIME_STEPPING "EXPLICIT")
+set(TIME_STEPPING "IMEX")
 set(DT "0.0001")
 set(DT_DUMP "100.")
 set(START_TIME "0.")
 set(FINAL_TIME "100000.")
-set(COURANT "0.5")
+set(START_DUMP_COUNTER "0")
+set(COURANT "0.9")
 set(MAX_DT_INCREMENT "1.3")
 
 # Domain size. If the problem is 1D then N2 is ignored.
 set(COMPUTE_DIM "2")
-set(N1 "128")
-set(N2 "128")
+set(N1 "256")
+set(N2 "256")
 
 # The entire global domain is divided into tiles that are small enough to fit
 # into the cache of the compute node or an accelerator. This technique
@@ -39,6 +40,12 @@ set(USE_OPENMP   "YES")
 # Physics variables
 set(ADIABATIC_INDEX "5./3")
 set(CONDUCTION "ON")
+set(VISCOSITY  "OFF")
+set(HIGHORDERTERMS_CONDUCTION "OFF")
+set(HIGHORDERTERMS_VISCOSITY "OFF")
+set(ADD_WIND_SOURCE   "OFF")
+set(FAKE_EMHD "OFF")
+set(BACKREACTION "ON")
 
 # Geometry
 set(METRIC  "KERRSCHILD")
@@ -70,13 +77,13 @@ set(RECONSTRUCTION "MONOTONIZED_CENTRAL")
 
 # Initial condition parameters 
 # Everything in units of M
-set(PLASMA_BETA                   "1e4")
+set(PLASMA_BETA                   "1e12")
 set(PERTURBATIONS_AMPLITUDE       "4e-2")
 set(MAGNETIC_FIELD_CONFIGURATION  "THETA")
-set(RHO_INPUT_FILE "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_rho.txt\"")
-set(UU_INPUT_FILE  "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_u.txt\"")
-set(PHI_INPUT_FILE "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_phi.txt\"")
-set(RCOORDS_INPUT_FILE  "\"/home/manic/grim_refactored/grim/build/atmosphere_soln_rCoords.txt\"")
+set(RHO_INPUT_FILE "\"/home/astro/work/grim/build/atmosphere_soln_rho.txt\"")
+set(UU_INPUT_FILE  "\"/home/astro/work/grim/build/atmosphere_soln_u.txt\"")
+set(PHI_INPUT_FILE "\"/home/astro/work/grim/build/atmosphere_soln_phi.txt\"")
+set(RCOORDS_INPUT_FILE  "\"/home/astro/work/grim/build/atmosphere_soln_rCoords.txt\"")
 
 # Floor values
 set(RHO_FLOOR         "1e-4")

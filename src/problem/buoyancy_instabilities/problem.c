@@ -10,7 +10,7 @@ void setConductionParameters(const struct geometry geom[ARRAY_ARGS 1],
   REAL r = xCoords[1];
   REAL T = (ADIABATIC_INDEX-1.)*elem->primVars[UU]/elem->primVars[RHO];
     
-  elem->kappa = 10. * pow(r, 0.5) * elem->primVars[RHO];
+  elem->kappa = pow(r, 0.5) * elem->primVars[RHO];
   elem->tau   = 1.2 * elem->kappa/elem->primVars[RHO]/ T;
 }
 #endif
@@ -252,6 +252,7 @@ void initialConditions(struct timeStepper ts[ARRAY_ARGS 1])
 //        AVec = r*sin(theta);
 //        AVec = 0.000001*r;
         AVec = r;
+        //AVec = theta;
 
 //      #endif
 
@@ -526,26 +527,6 @@ void applyAdditionalProblemSpecificBCs
 
   }
 
-//  LOOP_INSIDE_TILE(-NG, TILE_SIZE_X1+NG, -NG, TILE_SIZE_X2+NG)
-//  {
-//    struct gridZone zone;
-//    setGridZone(iTile, jTile,
-//                iInTile, jInTile,
-//                X1Start, X2Start,
-//                X1Size, X2Size,
-//                &zone);
-//
-//    if (zone.i < 0)
-//    {
-//
-//    }
-//
-//    if (zone.i > N1-1)
-//    {
-//
-//    }
-//
-//  }
 }
 
 void applyProblemSpecificFluxFilter
@@ -676,4 +657,13 @@ void fullStepDiagnostics(struct timeStepper ts[ARRAY_ARGS 1])
 void writeProblemSpecificData(PetscViewer parametersViewer,
   const struct problemData problemSpecificData[ARRAY_ARGS 1]) {
 
+  WRITE_PARAM_DOUBLE(R_A, parametersViewer);
+  WRITE_PARAM_DOUBLE(R_B, parametersViewer);
+
+  WRITE_PARAM_DOUBLE(M, parametersViewer); /* mass of black hole */
+  WRITE_PARAM_DOUBLE(BH_SPIN, parametersViewer);
+  WRITE_PARAM_DOUBLE(H_SLOPE, parametersViewer); 
+
+  WRITE_PARAM_INT(CONDUCTION, parametersViewer);
+  WRITE_PARAM_INT(VISCOSITY, parametersViewer);
 }
