@@ -124,8 +124,55 @@ respective analytic solutions at the expected second order.
 
 #### EMHD Shock solutions
 
-![rho_viscosity](../stationary_shock_rho_viscosity.png){:style="max-width:600px; height: auto;"}
-![dP_viscosity](../stationary_shock_psi_viscosity.png){:style="max-width:600px; height: auto;"}
+The presence of sufficient viscosity can smoothen a shock and connect the left
+and the right sides with a well-defined solution. The hyperbolic nature of the
+dissipation in the EMHD model leads to new features in the shock structure
+which have been qualitatively described in Chandra et. al. Here, we solve the
+shock structure in the EMHD model as a boundary value problem with the left and
+the right states fixed to their values given by the Rankine-Hugoniot jump
+conditions. We then use this as a reference solution to check the EMHD shock
+solutions obtained from $$\mathtt{grim}$$, which solves the EMHD equations as an
+initial value problem. 
+
+The boundary value solutions are obtained using a global Newton root finder. We
+are looking for a steady state nonlinear solution of the EMHD equations and
+hence set the time derivatives $$\partial_t \rightarrow 0$$. Since we are
+interested in the $$\mathit{continuous}$$ shock sub-structure, we approximate all
+spatial derivatives $$\partial_x$$ by central differences with a truncation error
+$$O(\Delta x^8)$$. Thus we have a set of coupled discrete nonlinear equations
+$$R(P_i) = 0$$, where $$P_i$$ are the primitive variables at $$i=0, 1, ..., N_x$$ and
+$$N_x$$ is the chosen spatial resolution of the numerical grid. The system is
+iterated upon starting from a smooth initial guess using the Newton's method
+combined with a numerical Jacobian assembled to machine precision. The
+iterations are continued till we achieve machine precision error $$O(10^{-14})$$.
+
+We find that the major contribution to the shock structure comes from the
+pressure anisotropy with the role of the heat conduction in determining the
+values of the thermodynamic variables inside the shock being marginal. The EMHD
+equations have higher order corrections $$\sim q u^\mu \nabla_mu(\tau_R/(\chi
+P^2)), \Delta P u^\mu \nabla_\mu(\tau_R/(\rho \nu P))$$ that we expect to
+contribute in strong nonlinear regimes, and indeed we see that the shock
+structure differs as we turn on and turn off these terms.
+
+There exists an upper limit to the strength of the shock that can be solved for
+using the EMHD model. Higher mach number shocks require a larger viscosity (or
+$$\Delta P$$) to smoothly connect the left and the right states. Beyond a certain
+critical value of $$\Delta P$$, the theory loses hyperbolicity, and eventually
+causality and stability. The root of this problem lies in the fact that
+ultimately, the theory is a second order perturbation $$\sim q^2, \Delta P^2$$,
+about an equilibrium and as the dissipative effects become stronger, the
+validity of the expansion breaks down. We obtain the thresholds of this
+breakdown by expanding about an non-equilibrium using a background heat flux
+$$q_0$$ and assembling the characteristic matrix using $$\mathtt{balbusaur}$$. As $$q_0$$
+is increased, hyperbolicity is first broken upon the appearance of imaginary
+values in the eigenvalues. As $$q_0$$ is further increased, the real values of
+the eigenvalues exceed $$c$$, indicating a breakdown of causality. Finally, there
+is a loss of stability with the linear modes growing exponentially with the
+fastest growth at $$k \rightarrow \infty$$.
+
+![rho_viscosity](../bvp_solver_vs_grim_with_conduction_256_chi_5.png){:style="max-width:600px; height: auto;"}
+![rho_viscosity](../bvp_solver_HO_vs_No_HO.png){:style="max-width:600px; height: auto;"}
+![dP_viscosity](../bvp_solver_residuals_with_conduction_256_chi_5_random_initial_guess.png){:style="max-width:600px; height: auto;"}
 
 #### Hydrostatic Conducting Atmosphere
 Relativisitic conduction in curved space-time contains qualitatively new
@@ -148,9 +195,21 @@ with a hydrostatic fluid configuration in a Schwarzschild metric.
 
 #### Magneto Thermal Instability
 
-<iframe width="550" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>
+<iframe width="600" height="550" frameborder="0" src="https://app.box.com/embed/preview/65l28xjkqoqi1yw1r29h?view=&sort=&direction=ASC&theme=light"></iframe>
 
 ![radial_mag_field_growth](../MTI_growth_radial_magnetic_energy.png){:style="max-width:600px; height: auto;"}
+
+#### Heat Flux Driven buoyancy Instability
+
+<iframe width="560" height="525" frameborder="0" src="https://app.box.com/embed/preview/f7ce5l1dzbj3o7nmgi6ov1rqirrz6t9k?direction=ASC&theme=light"></iframe>
+
+![theta_mag_field_growth](../hbi_growth.png){:style="max-width:600px; height: auto;"}
+
+#### Firehose Instability
+
+<iframe width="560" height="550" frameborder="0" src="https://app.box.com/embed/preview/uuk907qk75cz0imd34szod4d8uvequ48?direction=ASC&theme=light"></iframe>
+
+![firehose_growth](../firehose_unstable_mode_growth.png){:style="max-width:600px; height: auto;"}
 
 ## Ideal MHD tests
 
