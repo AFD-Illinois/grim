@@ -45,61 +45,59 @@ class fluidElement
     array q0;
     array bNorm;
 
-    fluidElement(const grid &prim, 
-                 const geometry &geom, 
-                 const int location
+    fluidElement(const array prim[vars::dof],
+                 const geometry &geom
                 );
-    void set(const grid &prim, 
-             const geometry &geom, 
-             const int location
+    void set(const array prim[vars::dof],
+             const geometry &geom
             );
     void setFluidElementParameters(const geometry &geom);
     void computeFluxes(const geometry &geom, 
                        const int direction,
-                       grid &flux
+                       array flux[vars::dof]
                       );
-
-    void computeMinMaxCharSpeeds(const geometry &geom,
-			       const int dir,
-			       array &MinSpeed,
-				 array &MaxSpeed);
-
-    void computeTimeDerivSources(const geometry &geom,
-				const fluidElement &elemOld,
-				const fluidElement &elemNew,
-				const double dt,
-				grid &sources
-				);
-
-    void computeImplicitSources(const geometry &geom,
-				grid &sources
-				);
-  void computeExplicitSources(const geometry &geom,
-			      grid &sources
-			      );
-  void computeEMHDGradients(const geometry &geom);
+//
+//    void computeMinMaxCharSpeeds(const geometry &geom,
+//			       const int dir,
+//			       array &MinSpeed,
+//				 array &MaxSpeed);
+//
+//    void computeTimeDerivSources(const geometry &geom,
+//				const fluidElement &elemOld,
+//				const fluidElement &elemNew,
+//				const double dt,
+//				grid &sources
+//				);
+//
+//    void computeImplicitSources(const geometry &geom,
+//				grid &sources
+//				);
+//  void computeExplicitSources(const geometry &geom,
+//			      grid &sources
+//			      );
+//  void computeEMHDGradients(const geometry &geom);
 };
 
-class riemannSolver
-{
-  public:
-    fluidElement *elemLeft, *elemRight;
-
-    grid *primLeft, *primRight;
-    grid *fluxLeft, *fluxRight;
-    grid *consLeft, *consRight;
-
-    array MinSpeedLeft,MaxSpeedLeft;
-    array MinSpeedRight,MaxSpeedRight;
-
-    riemannSolver(const geometry &geom);
-    ~riemannSolver();
-
-    void solve(const grid &prim,
-               const geometry &geom,
-               const int dir,
-               grid &fluxes
-              );
-};
+//class riemannSolver
+//{
+//  public:
+//    fluidElement *elemLeft, *elemRight;
+//
+//    grid *primLeft, *primRight;
+//    grid *fluxLeft, *fluxRight;
+//    grid *consLeft, *consRight;
+//
+//    array MinSpeedLeft,MaxSpeedLeft;
+//    array MinSpeedRight,MaxSpeedRight;
+//
+//    riemannSolver(const geometry &geom);
+//    ~riemannSolver();
+//
+//    void solve(const grid &prim,
+//               const geometry &geom,
+//               const int dir,
+//               grid &fluxes
+//              );
+//};
 
 #endif /* GRIM_PHYSICS_H_ */

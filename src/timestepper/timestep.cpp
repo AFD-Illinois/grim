@@ -67,6 +67,41 @@ void timeStepper::timeStep()
 {
   /* First take a half step */
   currentStep = timeStepperSwitches::HALF_STEP;
+
+  grid primTile(params::tileSizeX1,
+                params::tileSizeX2, 
+                1+2*params::numGhost
+               );
+
+  grid XCoordsTile(params::tileSizeX1, 
+                   params::tileSizeX2,
+                   1+2*params::numGhost
+                  );
+
+  geometry geomTile(XCoordsTile);
+
+
+
+  for (int k=0; k < params::N3; k++)
+  {
+    gfor (af::seq jTile, numTilesX2)
+    {
+      for (int iTile; iTile < numTilesX1; iTile++)
+      {
+        indices->setTile(iTile, jTile, k);
+        setXCoords(indices, locations::CENTER, *XCoordsTile);
+
+        primTile->copy(*prim, *XCoordsTile);
+        geomTile->copy(*geom, *XCoordsTile);
+
+        elemTile->set(*primTile, *geomTile);
+
+        elemTile->computeFluxes(*geomTile, 0, *consOldTile);
+
+      }
+    }
+  }
+
   setProblemSpecificBCs();
 
   elemOld->set(*primOld, *geom, locations::CENTER);

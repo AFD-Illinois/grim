@@ -1,21 +1,13 @@
 #include "geometry.hpp"
 
-//void geometry::getHostPtrTo(std::string str)
-//{
-//  if (str=="xCoords")
-//  {
-//    xCoordsHostPtr = 
-//
-//
-//  }
-//
-//}
-
-geometry::geometry(grid &XCoords)
+geometry::geometry(const grid &XCoordsGrid)
 {
-  this->XCoords = &XCoords;
+  XCoords[directions::X1] = XCoordsGrid.vars[directions::X1];
+  XCoords[directions::X2] = XCoordsGrid.vars[directions::X2];
+  XCoords[directions::X3] = XCoordsGrid.vars[directions::X3];
 
   /* Allocate space */
+  array zero = 0.*XCoords[0];
   g          = zero;
   array gDet = zero;
   for (int mu=0; mu<NDIM; mu++)
@@ -38,9 +30,95 @@ geometry::geometry(grid &XCoords)
   g = af::sqrt(-gDet);
 
   alpha = 1./af::sqrt(-gCon[0][0]);
+
+  g.eval();
+  alpha.eval();
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      gCov[mu][nu].eval();
+      gCon[mu][nu].eval();
+
+      for (int lamda = 0; lamda<NDIM; lamda++)
+      {
+      	gammaUpDownDown[lamda][mu][nu].eval();
+      }
+    }
+  }
 }
 
-void geometry::setXCoords(grid &indices, int location, grid &XCoords)
+geometry::geometry(const geometry &geom,
+                   const int iStart, const int iEnd,
+                   const int jStart, const int jEnd,
+                   const int kStart, const int kEnd
+                  )
+{
+
+  af::seq domainX1(iStart, iEnd-1);
+  af::seq domainX2(jStart, jEnd-1);
+  af::seq domainX3(kStart, kEnd-1);
+
+  XCoords[directions::X1] = 
+    geom.XCoords[directions::X1](domainX1, domainX2, domainX3);
+
+  XCoords[directions::X2] = 
+    geom.XCoords[directions::X2](domainX1, domainX2, domainX3);
+
+  XCoords[directions::X3] = 
+    geom.XCoords[directions::X3](domainX1, domainX2, domainX3);
+
+  /* Allocate space */
+  array zero = 0.*XCoords[0];
+  g          = zero;
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      gCov[mu][nu] = zero;
+      gCon[mu][nu] = zero;
+
+      for (int lamda = 0; lamda<NDIM; lamda++)
+      {
+      	gammaUpDownDown[lamda][mu][nu] = zero;
+      }
+    }
+  }
+
+  copyFrom(geom, iStart, iEnd, jStart, jEnd, kStart, kEnd);
+}
+
+void geometry::copyFrom(const geometry &geom,
+                        const int iStart, const int iEnd,
+                        const int jStart, const int jEnd,
+                        const int kStart, const int kEnd
+                       )
+{
+  af::seq domainX1(iStart, iEnd-1);
+  af::seq domainX2(jStart, jEnd-1);
+  af::seq domainX3(kStart, kEnd-1);
+
+  g = geom.g(domainX1, domainX2, domainX3).copy();
+  alpha = geom.alpha(domainX1, domainX2, domainX3).copy();
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      gCov[mu][nu] = geom.gCov[mu][nu](domainX1, domainX2, domainX3).copy();
+      gCon[mu][nu] = geom.gCon[mu][nu](domainX1, domainX2, domainX3).copy();
+
+      for (int lamda = 0; lamda<NDIM; lamda++)
+      {
+      	gammaUpDownDown[lamda][mu][nu] = 
+        geom.gammaUpDownDown[lamda][mu][nu](domainX1, domainX2, domainX3).copy();
+      }
+    }
+  }
+
+
+}
+
+void setXCoords(const grid &indices, int location, grid &XCoords)
 {
   array indicesX1 = indices.vars[directions::X1];
   array indicesX2 = indices.vars[directions::X2];
@@ -52,49 +130,49 @@ void geometry::setXCoords(grid &indices, int location, grid &XCoords)
 
   switch (location)
   {
-    case CENTER:
+    case locations::CENTER:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
 
       break;
 
-    case LEFT:
+    case locations::LEFT:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1      )*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
 
       break;
 
-    case RIGHT:
+    case locations::RIGHT:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 +   1)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
 
       break;
 
-    case BOTTOM:
+    case locations::BOTTOM:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2      )*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
 
       break;
 
-    case TOP:
+    case locations::TOP:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 +   1)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 + 0.5)*dX3;
 
       break;
 
-    case FRONT:
+    case locations::FRONT:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3 +   1)*dX3;
 
       break;
 
-    case BACK:
+    case locations::BACK:
       XCoords.vars[directions::X1] = params::X1Start + (indicesX1 + 0.5)*dX1;
       XCoords.vars[directions::X2] = params::X2Start + (indicesX2 + 0.5)*dX2;
       XCoords.vars[directions::X3] = params::X3Start + (indicesX3      )*dX3;
@@ -225,7 +303,9 @@ void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
        - gCov[0][2]*gCov[1][1]*gCov[2][0])/gDet;
 }
 
-void geometry::setgCovInXCoords(array gCov[NDIM][NDIM])
+void geometry::setgCovInXCoords(const array XCoords[NDIM], 
+                                array gCov[NDIM][NDIM]
+                               )
 {
   switch (params::metric)
   {
@@ -254,7 +334,9 @@ void geometry::setgCovInXCoords(array gCov[NDIM][NDIM])
 
       /* theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) 
          => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
-      array dtheta_dX2 = M_PI + M_PI*(1 - params::hSlope)*af::cos(2*M_PI*XCoords[directions::X2]);
+      array dtheta_dX2 =  M_PI 
+                        + M_PI*(1 - params::hSlope)
+                              *af::cos(2*M_PI*XCoords[directions::X2]);
 
       array sigma =  r*r + af::pow2(params::blackHoleSpin * af::cos(theta) );
 

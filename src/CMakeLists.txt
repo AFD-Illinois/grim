@@ -100,18 +100,24 @@ include_directories(${PETSC_INCLUDES}
 add_subdirectory(grid)
 add_subdirectory(geometry)
 add_subdirectory(physics)
-add_subdirectory(reconstruction)
+#add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
-add_subdirectory(timestepper)
+#add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 #include(${PROBLEM_DIR}/CMakeLists.txt)
-add_subdirectory(problem)
+#add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid geometry reconstruction physics 
-                      timestepper problem
+#target_link_libraries(grim grid geometry reconstruction physics 
+#                      timestepper problem
+#                      ${MATH_LIBRARIES} 
+#                      ${PETSC_LIBRARIES}
+#                      ${YAML_LIBRARIES}
+#                      ${ArrayFire_LIBRARIES}
+#                     )
+target_link_libraries(grim grid geometry physics
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

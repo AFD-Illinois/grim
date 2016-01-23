@@ -1,9 +1,27 @@
 #include "grid.hpp"
 
-grid::grid(int numVars)
+grid::grid(int N1, int N2, int N3, 
+           int numGhost, int dim, int numVars,
+           DMBoundaryType boundaryLeft,
+           DMBoundaryType boundaryRight,
+           DMBoundaryType boundaryTop,
+           DMBoundaryType boundaryBottom,
+           DMBoundaryType boundaryFront,
+           DMBoundaryType boundaryBack
+          )
 {
   this->numVars  = numVars;
-  dim            = params::dim;
+  this->numGhost = numGhost;
+  this->N1 = N1;
+  this->N2 = N2;
+  this->N3 = N3;
+  this->boundaryLeft   = boundaryLeft;
+  this->boundaryRight  = boundaryRight;
+  this->boundaryTop    = boundaryTop;
+  this->boundaryBottom = boundaryBottom;
+  this->boundaryFront  = boundaryFront;
+  this->boundaryBack   = boundaryBack;
+
   hasHostPtrBeenAllocated = 0;
 
   /* Implementations for MIRROR, OUTFLOW in boundary.cpp and DIRICHLET in
@@ -12,24 +30,24 @@ grid::grid(int numVars)
   boundaryTop   = DM_BOUNDARY_GHOSTED; boundaryBottom = DM_BOUNDARY_GHOSTED;
   boundaryFront = DM_BOUNDARY_GHOSTED; boundaryBack   = DM_BOUNDARY_GHOSTED;
 
-  if (   params::boundaryLeft  == boundaries::PERIODIC 
-      || params::boundaryRight == boundaries::PERIODIC
+  if (   boundaryLeft  == boundaries::PERIODIC 
+      || boundaryRight == boundaries::PERIODIC
      )
   {
     boundaryLeft  = DM_BOUNDARY_PERIODIC;
     boundaryRight = DM_BOUNDARY_PERIODIC;
   }
 
-  if (   params::boundaryTop    == boundaries::PERIODIC 
-      || params::boundaryBottom == boundaries::PERIODIC
+  if (   boundaryTop    == boundaries::PERIODIC 
+      || boundaryBottom == boundaries::PERIODIC
      )
   {
     boundaryTop    = DM_BOUNDARY_PERIODIC;
     boundaryBottom = DM_BOUNDARY_PERIODIC;
   }
 
-  if (   params::boundaryFront == boundaries::PERIODIC 
-      || params::boundaryBack  == boundaries::PERIODIC
+  if (   boundaryFront == boundaries::PERIODIC 
+      || boundaryBack  == boundaries::PERIODIC
      )
   {
     boundaryFront = DM_BOUNDARY_PERIODIC;
@@ -39,42 +57,41 @@ grid::grid(int numVars)
   switch (params::dim)
   {
     case 1:
-      N1Total = params::N1 + 2*params::numGhost;
+      N1Total = N1 + 2*numGhost;
       N2Total = 1;
       N3Total = 1;
 
-      numGhostX1 = params::numGhost;
+      numGhostX1 = numGhost;
       numGhostX2 = 0;
       numGhostX3 = 0;
 
-      domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
       domainX2 = new af::seq(span);
       domainX3 = new af::seq(span);
 
       DMDACreate1d(PETSC_COMM_WORLD, boundaryLeft, 
-                   params::N1, numVars, numGhostX1, NULL,
+                   N1, numVars, numGhostX1, NULL,
                    &dm
                   );
-
       break;
   
     case 2:
-      N1Total = params::N1 + 2*params::numGhost;
-      N2Total = params::N2 + 2*params::numGhost;
+      N1Total = N1 + 2*numGhost;
+      N2Total = N2 + 2*numGhost;
       N3Total = 1;
 
-      numGhostX1 = params::numGhost;
-      numGhostX2 = params::numGhost;
+      numGhostX1 = numGhost;
+      numGhostX2 = numGhost;
       numGhostX3 = 0;
 
-      domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
-      domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX2 = new af::seq(numGhost, af::end - numGhost - 1);
       domainX3 = new af::seq(span);
 
       DMDACreate2d(PETSC_COMM_WORLD, 
                    boundaryLeft, boundaryBottom,
                    DMDA_STENCIL_BOX,
-                   params::N1, params::N2,
+                   N1, N2,
                    PETSC_DECIDE, PETSC_DECIDE,
                    numVars, numGhostX1,
                    PETSC_NULL, PETSC_NULL,
@@ -84,22 +101,22 @@ grid::grid(int numVars)
       break;
 
     case 3:
-      N1Total = params::N1 + 2*params::numGhost;
-      N2Total = params::N2 + 2*params::numGhost;
-      N3Total = params::N3 + 2*params::numGhost;
+      N1Total = N1 + 2*numGhost;
+      N2Total = N2 + 2*numGhost;
+      N3Total = N3 + 2*numGhost;
 
-      numGhostX1 = params::numGhost;
-      numGhostX2 = params::numGhost;
-      numGhostX3 = params::numGhost;
+      numGhostX1 = numGhost;
+      numGhostX2 = numGhost;
+      numGhostX3 = numGhost;
 
-      domainX1 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
-      domainX2 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
-      domainX3 = new af::seq(params::numGhost, af::end - params::numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX2 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX3 = new af::seq(numGhost, af::end - numGhost - 1);
 
       DMDACreate3d(PETSC_COMM_WORLD, 
                    boundaryLeft, boundaryBottom, boundaryBack,
                    DMDA_STENCIL_BOX,
-                   params::N1, params::N2, params::N3,
+                   N1, N2, N3,
                    PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                    numVars, numGhostX1,
                    PETSC_NULL, PETSC_NULL, PETSC_NULL,
