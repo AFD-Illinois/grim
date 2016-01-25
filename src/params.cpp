@@ -9,9 +9,13 @@ namespace vars
 
 namespace params
 {
-  int N1 = 256;
-  int N2 = 256;
-  int N3 = 400;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 1;
+  int tileSizeX1 = 64;
+  int tileSizeX2 = 64;
+  int tileSizeX3 = 1;
+
   int dim = 3;
   int numGhost = 0;
 

@@ -96,16 +96,56 @@ void fluidElement::set(const array prim[vars::dof],
                   + geom.gCov[2][3] * u2 * u3
                  )
             );
-  gammaLorentzFactor.eval();
+  gammaLorentzFactor.eval(); 
+  /* Reads:
+   * -----
+   * gCov[1][1], gCov[2][2], gCov[3][3], gCov[1][2], gCov[1][3], gCov[2][3]: 6
+   * u1, u2, u3 : 3
+   *
+   * Writes:
+   * ------
+   * gammaLorentzFactor : 1 */
 
   uCon[0] = gammaLorentzFactor/geom.alpha;
+  uCon[0].eval(); 
+  /* Reads:
+   * -----
+   * gammaLorentzFactor, alpha : 2
+   *
+   * Writes:
+   * ------
+   * uCon[0] : 1 */
+
+
   uCon[1] = u1 - gammaLorentzFactor*geom.gCon[0][1]*geom.alpha;
+  uCon[1].eval(); 
+  /* Reads:
+   * -----
+   * u1, gammaLorentzFactor, gCon[0][1], alpha : 4
+   *
+   * Writes:
+   * ------
+   * uCon[1] : 1 */
+
   uCon[2] = u2 - gammaLorentzFactor*geom.gCon[0][2]*geom.alpha;
+  uCon[2].eval(); 
+  /* Reads:
+   * -----
+   * u2, gammaLorentzFactor, gCon[0][2], alpha : 4
+   *
+   * Writes:
+   * ------
+   * uCon[2] : 1 */
+
   uCon[3] = u3 - gammaLorentzFactor*geom.gCon[0][3]*geom.alpha;
-  uCon[0].eval();
-  uCon[1].eval();
-  uCon[2].eval();
   uCon[3].eval();
+  /* Reads:
+   * -----
+   * u3, gammaLorentzFactor, gCon[0][3], alpha : 4
+   *
+   * Writes:
+   * ------
+   * uCon[3] : 1 */
 
   for (int mu=0; mu < NDIM; mu++)
   {
@@ -114,17 +154,55 @@ void fluidElement::set(const array prim[vars::dof],
               + geom.gCov[mu][2] * uCon[2]
               + geom.gCov[mu][3] * uCon[3];
     uCov[mu].eval(); 
-  }
+  } 
+  /* Reads:
+   * -----
+   * gCov[mu][0], gCov[mu][1], gCov[mu][2], gCov[mu][3]: 16
+   * uCon[0], uCon[1], uCon[2], uCon[3]: 4 x 4 = 16
+   *
+   * Writes:
+   * ------
+   * uCov[mu] : 4 */
 
   bCon[0] =  B1*uCov[1] + B2*uCov[2] + B3*uCov[3];
+  bCon[0].eval();
+  /* Reads:
+   * -----
+   * B1, B2, B3, uCov[1], uCov[2], uCov[3] : 6
+   *
+   * Writes:
+   * ------
+   * bCon[0] : 1 */
 
   bCon[1] = (B1 + bCon[0] * uCon[1])/uCon[0];
-  bCon[2] = (B2 + bCon[0] * uCon[2])/uCon[0];
-  bCon[3] = (B3 + bCon[0] * uCon[3])/uCon[0];
-  bCon[0].eval();
   bCon[1].eval();
+  /* Reads:
+   * -----
+   * B1, bCon[0], uCon[1], uCon[0]: 4
+   *
+   * Writes:
+   * ------
+   * bCon[1] : 1 */
+
+  bCon[2] = (B2 + bCon[0] * uCon[2])/uCon[0];
   bCon[2].eval();
+  /* Reads:
+   * -----
+   * B2, bCon[0], uCon[2], uCon[0]: 4
+   *
+   * Writes:
+   * ------
+   * bCon[2] : 1 */
+
+  bCon[3] = (B3 + bCon[0] * uCon[3])/uCon[0];
   bCon[3].eval();
+  /* Reads:
+   * -----
+   * B3, bCon[0], uCon[3], uCon[0]: 4
+   *
+   * Writes:
+   * ------
+   * bCon[3] : 1 */
 
   for (int mu=0; mu < NDIM; mu++)
   {
@@ -134,10 +212,27 @@ void fluidElement::set(const array prim[vars::dof],
               + geom.gCov[mu][3] * bCon[3];
     bCov[mu].eval();
   }
+  /* Reads:
+   * -----
+   * gCov[mu][0], gCov[mu][1], gCov[mu][2], gCov[mu][3]: 16
+   * bCon[0], bCon[1], bCon[2], bCon[3]: 4 x 4 = 16
+   *
+   * Writes:
+   * ------
+   * bCov[mu] : 4 */
 
   bSqr =  bCon[0]*bCov[0] + bCon[1]*bCov[1]
         + bCon[2]*bCov[2] + bCon[3]*bCov[3] + params::bSqrFloorInFluidElement;
   bSqr.eval();
+  /* Reads:
+   * -----
+   * bCon[0], bCon[1], bCon[2], bCon[3]: 4
+   * bCov[0], bCov[1], bCov[2], bCov[3]: 4
+   *
+   * Writes:
+   * ------
+   * bSqr : 1 */
+
   bNorm = af::sqrt(bSqr);
 
   for (int mu=0; mu < NDIM; mu++)
@@ -163,9 +258,27 @@ void fluidElement::set(const array prim[vars::dof],
                              );
       }
       TUpDown[mu][nu].eval();
+      /* Reads:
+       * -----
+       * rho, u, bSqr, q, deltaP: 4
+       * uCon[mu], uCov[nu], bCon[mu], bCov[nu]: 16
+       *
+       * Writes:
+       * ------
+       * TUpDown[mu][nu] : 16 */
     }
     NUp[mu].eval();
+    /* Reads:
+     * -----
+     * rho : 1
+     * uCon[mu] : 4
+     *
+     * Writes:
+     * ------
+     * NUp[mu] : 4 */
   }
+  /* Total reads : 138
+   * Total writes: 38 */ 
 
 }
 void fluidElement::setFluidElementParameters(const geometry &geom)
@@ -207,12 +320,6 @@ void fluidElement::computeFluxes(const geometry &geom,
   {
     flux[vars::DP] = g*(uCon[dir] * deltaPTilde);
   }
-
-  for (int var=0; var<vars::dof; var++)
-  {
-    flux[var].eval();
-  }
-
 }
 
 //void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
