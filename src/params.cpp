@@ -11,10 +11,10 @@ namespace params
 {
   int N1 = 64;
   int N2 = 64;
-  int N3 = 1;
+  int N3 = 64;
   int tileSizeX1 = 64;
   int tileSizeX2 = 64;
-  int tileSizeX3 = 1;
+  int tileSizeX3 = 8;
 
   int dim = 3;
   int numGhost = 0;
@@ -23,7 +23,7 @@ namespace params
   double dt = .5/N1;
   double Time = 0.;
   double finalTime = 0.5;
-  int metric = metrics::MINKOWSKI;
+  int metric = metrics::MODIFIED_KERR_SCHILD;
   double hSlope = 0.3;
   double blackHoleSpin = 0.9375;
 

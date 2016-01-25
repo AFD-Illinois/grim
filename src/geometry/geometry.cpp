@@ -98,19 +98,19 @@ void geometry::copyFrom(const geometry &geom,
   af::seq domainX2(jStart, jEnd-1);
   af::seq domainX3(kStart, kEnd-1);
 
-  g = geom.g(domainX1, domainX2, domainX3).copy();
-  alpha = geom.alpha(domainX1, domainX2, domainX3).copy();
+  g = geom.g(domainX1, domainX2, domainX3);
+  alpha = geom.alpha(domainX1, domainX2, domainX3);
   for (int mu=0; mu<NDIM; mu++)
   {
     for (int nu=0; nu<NDIM; nu++)
     {
-      gCov[mu][nu] = geom.gCov[mu][nu](domainX1, domainX2, domainX3).copy();
-      gCon[mu][nu] = geom.gCon[mu][nu](domainX1, domainX2, domainX3).copy();
+      gCov[mu][nu] = geom.gCov[mu][nu](domainX1, domainX2, domainX3);
+      gCon[mu][nu] = geom.gCon[mu][nu](domainX1, domainX2, domainX3);
 
       for (int lamda = 0; lamda<NDIM; lamda++)
       {
       	gammaUpDownDown[lamda][mu][nu] = 
-        geom.gammaUpDownDown[lamda][mu][nu](domainX1, domainX2, domainX3).copy();
+        geom.gammaUpDownDown[lamda][mu][nu](domainX1, domainX2, domainX3);
       }
     }
   }
@@ -338,7 +338,7 @@ void geometry::setgCovInXCoords(const array XCoords[NDIM],
                         + M_PI*(1 - params::hSlope)
                               *af::cos(2*M_PI*XCoords[directions::X2]);
 
-      array sigma =  r*r + af::pow2(params::blackHoleSpin * af::cos(theta) );
+      array sigma =  r*r + af::pow(params::blackHoleSpin * af::cos(theta), 2.);
 
       /* -(1 - 2*r/sigma) dt^2 */
       gCov[0][0] = -(1. - 2.*r/sigma);     
@@ -350,7 +350,7 @@ void geometry::setgCovInXCoords(const array XCoords[NDIM],
       gCov[0][2] = 0.; 
 
       /* -(4*a*r*sin(theta)^2/sigma) dt dphi */
-      gCov[0][3] = -(2.*params::blackHoleSpin*r*af::pow2(af::sin(theta))/sigma);
+      gCov[0][3] = -(2.*params::blackHoleSpin*r*af::pow(af::sin(theta), 2.)/sigma);
 
       /* (4*r/sigma * dr/dX1) dX1 dt */
       gCov[1][0] = gCov[0][1];
@@ -363,7 +363,7 @@ void geometry::setgCovInXCoords(const array XCoords[NDIM],
 
       /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX1) dX1 dphi */
       gCov[1][3] =
-        -params::blackHoleSpin*(1. + 2.*r/sigma)*af::pow2(af::sin(theta))*dr_dX1;
+        -params::blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX1;
 
       /* (0) dX2 dt */
       gCov[2][0] = gCov[0][2];
@@ -387,8 +387,8 @@ void geometry::setgCovInXCoords(const array XCoords[NDIM],
       gCov[3][2] = gCov[2][3];
 
       /* (sin(theta)^2*(sigma + a^2*(1. + 2*r/sigma)*sin(theta)^2) dphi dphi */
-      gCov[3][3] = (  af::pow2(af::sin(theta))
-                    * (sigma +   af::pow2(params::blackHoleSpin*af::sin(theta))
+      gCov[3][3] = (  af::pow(af::sin(theta), 2.)
+                    * (sigma +   af::pow(params::blackHoleSpin*af::sin(theta), 2.)
                                * (1. + 2*r/sigma)
                       )
                    );
@@ -407,21 +407,21 @@ void geometry::XCoordsToxCoords(const array XCoords[NDIM],
   {
     case metrics::MINKOWSKI:
       
-      for (int mu=0; mu<NDIM; mu++)
-      {
-        xCoords[mu] = XCoords[mu];
-      }
+      xCoords[directions::X1] = XCoords[directions::X1];
+      xCoords[directions::X2] = XCoords[directions::X2];
+      xCoords[directions::X3] = XCoords[directions::X3];
+
       break;
 
     case metrics::MODIFIED_KERR_SCHILD:
       
-      xCoords[0] = XCoords[0];
-      xCoords[1] = af::exp(XCoords[1]);
-      xCoords[2] =   M_PI*XCoords[2] 
-                   + 0.5*(1 - params::hSlope)
-                   * af::sin(2.*M_PI*XCoords[2]);
+      xCoords[directions::X1] = af::exp(XCoords[directions::X1]);
+      xCoords[directions::X2] =   M_PI*XCoords[directions::X2] 
+                               + 0.5*(1 - params::hSlope)
+                               * af::sin(2.*M_PI*XCoords[directions::X2]);
   
-      xCoords[3] = XCoords[3];
+      xCoords[directions::X3] = XCoords[directions::X3];
+
       break;
   }
 }
