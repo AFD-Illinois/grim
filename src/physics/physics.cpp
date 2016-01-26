@@ -13,6 +13,7 @@ fluidElement::fluidElement(const array prim[vars::dof],
            		      );
 
   array zero = 0.*one;
+  gammaLorentzFactor = zero;
 
   /* Allocate memory for gradients used in EMHD */
   if (params::conduction || params::viscosity)
@@ -260,8 +261,8 @@ void fluidElement::set(const array prim[vars::dof],
       TUpDown[mu][nu].eval();
       /* Reads:
        * -----
-       * rho, u, bSqr, q, deltaP: 4
-       * uCon[mu], uCov[nu], bCon[mu], bCov[nu]: 16
+       * rho, u, bSqr, q, deltaP: 5 x 16 = 80
+       * uCon[mu], uCov[nu], bCon[mu], bCov[nu]: 4 x 16 = 64
        *
        * Writes:
        * ------
@@ -270,14 +271,14 @@ void fluidElement::set(const array prim[vars::dof],
     NUp[mu].eval();
     /* Reads:
      * -----
-     * rho : 1
+     * rho : 1 x 4 = 4
      * uCon[mu] : 4
      *
      * Writes:
      * ------
      * NUp[mu] : 4 */
   }
-  /* Total reads : 138
+  /* Total reads : 265
    * Total writes: 38 */ 
 
 }
@@ -296,30 +297,113 @@ void fluidElement::computeFluxes(const geometry &geom,
   array g = geom.g;
 
   flux[vars::RHO] = g*NUp[dir];
+  flux[vars::RHO].eval();
+  /* Reads:
+   * -----
+   * g, NUp[dir] : 2
+   *
+   * Writes:
+   * ------
+   * flux[vars::RHO] : 1 */
 
   flux[vars::U]   = g*TUpDown[dir][0] + flux[vars::RHO];
+  flux[vars::U].eval();
+  /* Reads:
+   * -----
+   * g, TUpDown[dir][0], flux[vars::RHO] : 3
+   *
+   * Writes:
+   * ------
+   * flux[vars::U] : 1 */
 
   flux[vars::U1]  = g*TUpDown[dir][1];
+  flux[vars::U1].eval();
+  /* Reads:
+   * -----
+   * g, TUpDown[dir][1] : 2
+   *
+   * Writes:
+   * ------
+   * flux[vars::U1] : 1 */
 
   flux[vars::U2]  = g*TUpDown[dir][2];
+  flux[vars::U2].eval();
+  /* Reads:
+   * -----
+   * g, TUpDown[dir][2] : 2
+   *
+   * Writes:
+   * ------
+   * flux[vars::U2] : 1 */
 
   flux[vars::U3]  = g*TUpDown[dir][3];
+  flux[vars::U3].eval();
+  /* Reads:
+   * -----
+   * g, TUpDown[dir][3] : 2
+   *
+   * Writes:
+   * ------
+   * flux[vars::U3] : 1 */
 
   flux[vars::B1]  = g*(bCon[1]*uCon[dir] - bCon[dir]*uCon[1]);
+  flux[vars::B1].eval();
+  /* Reads:
+   * -----
+   * g, bCon[1], bCon[dir], uCon[1], uCon[dir] : 5
+   *
+   * Writes:
+   * ------
+   * flux[vars::B1] : 1 */
 
   flux[vars::B2]  = g*(bCon[2]*uCon[dir] - bCon[dir]*uCon[2]);
+  flux[vars::B2].eval();
+  /* Reads:
+   * -----
+   * g, bCon[2], bCon[dir], uCon[2], uCon[dir] : 5
+   *
+   * Writes:
+   * ------
+   * flux[vars::B2] : 1 */
 
   flux[vars::B3]  = g*(bCon[3]*uCon[dir] - bCon[dir]*uCon[3]);
+  flux[vars::B3].eval();
+  /* Reads:
+   * -----
+   * g, bCon[3], bCon[dir], uCon[3], uCon[dir] : 5
+   *
+   * Writes:
+   * ------
+   * flux[vars::B3] : 1 */
 
   if (params::conduction)
   {
     flux[vars::Q] = g*(uCon[dir] * qTilde);
+    flux[vars::Q].eval();
+    /* Reads:
+     * -----
+     * g, uCon[dir], qTilde : 3
+     *
+     * Writes:
+     * ------
+     * flux[vars::Q] : 1 */
   }
 
   if (params::viscosity)
   {
     flux[vars::DP] = g*(uCon[dir] * deltaPTilde);
+    flux[vars::DP].eval();
+    /* Reads:
+     * -----
+     * g, uCon[dir], deltaPTilde : 3
+     *
+     * Writes:
+     * ------
+     * flux[vars::DP] : 1 */
   }
+  /* Total reads : 32
+   * Total writes: 10 */ 
+
 }
 
 //void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,

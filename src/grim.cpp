@@ -112,49 +112,51 @@ int main(int argc, char **argv)
                                   );
     }
 
-    fluidElement elemTile(primTile, geomTile);
-
-    tiledComputation(prim, geomCenter, cons, 
-                     elemTile,
-                     geomTile, primTile, consTile
-                    );
-    af::sync();
+//    fluidElement elemTile(primTile, geomTile);
+//
+//    tiledComputation(prim, geomCenter, cons, 
+//                     elemTile,
+//                     geomTile, primTile, consTile
+//                    );
+//    af::sync();
 
     int numEvals = 1000;
-    double numReads = 138;
-    double numWrites = 38;
+    double numReads = 265 + 32;
+    double numWrites = 38 + 10;
     double memoryBandwidth = 0.;
     double timeElapsed = 0.;
 
-    af::timer::start();
-    for (int n=0; n<numEvals; n++)
-    {
-      tiledComputation(prim, geomCenter, cons, 
-                       elemTile, geomTile, primTile,
-                       consTile
-                      );
-    }
-    af::sync();
-    timeElapsed = af::timer::stop();
-    printf("Time taken for %d tiled computation = %g secs\n", 
-           numEvals, timeElapsed
-          );
-    memoryBandwidth =   (double)(params::N1) 
-                      * (double)(params::N2)
-                      * (double)(params::N3)
-                      * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-
-    printf("Memory bandwidth for tiled computation = %g GB/sec\n",
-           memoryBandwidth
-          );
+//    af::timer::start();
+//    for (int n=0; n<numEvals; n++)
+//    {
+//      tiledComputation(prim, geomCenter, cons, 
+//                       elemTile, geomTile, primTile,
+//                       consTile
+//                      );
+//    }
+//    af::sync();
+//    timeElapsed = af::timer::stop();
+//    printf("Time taken for %d tiled computation = %g secs\n", 
+//           numEvals, timeElapsed
+//          );
+//    memoryBandwidth =   (double)(params::N1) 
+//                      * (double)(params::N2)
+//                      * (double)(params::N3)
+//                      * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+//
+//    printf("Memory bandwidth for tiled computation = %g GB/sec\n",
+//           memoryBandwidth
+//          );
 
     fluidElement elem(prim.vars, geomCenter);
+    //elem.computeFluxes(geomCenter, 0, cons.vars);
     af::sync();
 
     af::timer::start();
     for (int n=0; n<numEvals; n++)
     {
       elem.set(prim.vars, geomCenter);
+      elem.computeFluxes(geomCenter, 0, cons.vars);
     }
     af::sync();
     timeElapsed = af::timer::stop();
