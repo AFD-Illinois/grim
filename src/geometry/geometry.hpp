@@ -17,6 +17,11 @@ class geometry
     void setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
                                 array &gDet, array gCon[NDIM][NDIM]
                                );
+    void computeGammaDownDownDown(const int eta,
+                                  const int mu,
+                                  const int nu,
+                                  array& out
+                                 );
   public:
     int numGhost;
 
@@ -28,19 +33,9 @@ class geometry
     array gammaUpDownDown[NDIM][NDIM][NDIM];
 
     geometry(const grid &XCoordsGrid);
-    geometry(const geometry &geom,
-             const int iStart, const int iEnd,
-             const int jStart, const int jEnd,
-             const int kStart, const int kEnd
-            );
     ~geometry();
 
-
-    void copyFrom(const geometry &geom,
-                  const int iStart, const int iEnd,
-                  const int jStart, const int jEnd,
-                  const int kStart, const int kEnd
-                 );
+    void computeConnectionCoeffs();
 };
 
 #endif /* GRIM_GEOMETRY_H_ */

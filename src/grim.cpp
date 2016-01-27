@@ -1,14 +1,46 @@
 #include "grim.hpp"
 #include "params.cpp"
 
-void tiledComputation(const grid &prim, 
-                      const geometry &geom, 
-                      grid &cons,
-                      fluidElement &elemTile,
-                      geometry &geomTile,
-                      array primTile[vars::dof],
-                      array consTile[vars::dof]
-                     );
+void initialConditions(const array xCoords[3],
+                       array prim[vars::dof]
+                      );
+
+/* Returns memory bandwidth in GB/sec */
+double memoryBandwidth(const double numReads,
+                       const double numWrites,
+                       const double numEvals,
+                       const double timeElapsed
+                      )
+{
+  switch (params::dim)
+  {
+    case 1:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 2:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * (double)(params::N2 + 2*params::numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 3:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * (double)(params::N2 + 2*params::numGhost)
+           * (double)(params::N3 + 2*params::numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+  }
+}
+
+void riemannSolver(fluidElement &elemFace,
+                   const grid &primLeft, const grid &primRight,
+                   const grid &fluxLeft, const grid &fluxRight,
+                   const grid &consLeft, const grid &consRight,
+                   const geometry &geomLeft, const geometry &geomRight,
+                   const int dir,
+                   grid &flux,
+                   int &numReads, int &numWrites
+                  );
 
 int main(int argc, char **argv)
 { 
@@ -75,6 +107,27 @@ int main(int argc, char **argv)
               DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
              );
 
+    grid primOld(params::N1, params::N2, params::N3,
+                 params::numGhost, params::dim, vars::dof,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                );
+
+    grid primLeft(params::N1, params::N2, params::N3,
+                  params::numGhost, params::dim, vars::dof,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                 );
+
+    grid primRight(params::N1, params::N2, params::N3,
+                   params::numGhost, params::dim, vars::dof,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                  );
+
     grid cons(params::N1, params::N2, params::N3,
               params::numGhost, params::dim, vars::dof,
               DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
@@ -82,96 +135,336 @@ int main(int argc, char **argv)
               DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
              );
 
+    grid consOld(params::N1, params::N2, params::N3,
+                 params::numGhost, params::dim, vars::dof,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                );
+
+    grid sourcesExplicit(params::N1, params::N2, params::N3,
+                         params::numGhost, params::dim, vars::dof,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                        );
+
+    grid sourcesImplicitOld(params::N1, params::N2, params::N3,
+                            params::numGhost, params::dim, vars::dof,
+                            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                           );
+
+    grid sourcesImplicit(params::N1, params::N2, params::N3,
+                         params::numGhost, params::dim, vars::dof,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                        );
+
+    grid sourcesTimeDer(params::N1, params::N2, params::N3,
+                        params::numGhost, params::dim, vars::dof,
+                        DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                        DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                        DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       );
+
+    grid fluxLeft(params::N1, params::N2, params::N3,
+                  params::numGhost, params::dim, vars::dof,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                 );
+
+    grid fluxRight(params::N1, params::N2, params::N3,
+                   params::numGhost, params::dim, vars::dof,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                  );
+
+    grid consLeft(params::N1, params::N2, params::N3,
+                  params::numGhost, params::dim, vars::dof,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                 );
+
+    grid consRight(params::N1, params::N2, params::N3,
+                   params::numGhost, params::dim, vars::dof,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                  );
+
+    grid fluxX1(params::N1, params::N2, params::N3,
+                params::numGhost, params::dim, vars::dof,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+               );
+
+    grid fluxX2(params::N1, params::N2, params::N3,
+                params::numGhost, params::dim, vars::dof,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+               );
+
+    grid fluxX3(params::N1, params::N2, params::N3,
+                params::numGhost, params::dim, vars::dof,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+               );
+
     setXCoords(indices, locations::CENTER, XCoords);
-
     geometry geomCenter(XCoords);
+    geomCenter.computeConnectionCoeffs();
 
-    geometry geomTile(geomCenter,
-                      0, params::tileSizeX1,
-                      0, params::tileSizeX2,
-                      0, params::tileSizeX3
+    initialConditions(XCoords.vars, prim.vars);
+    initialConditions(XCoords.vars, primOld.vars);
+
+    setXCoords(indices, locations::LEFT, XCoords);
+    geometry geomLeft(XCoords);
+
+    setXCoords(indices, locations::RIGHT, XCoords);
+    geometry geomRight(XCoords);
+
+    setXCoords(indices, locations::TOP, XCoords);
+    geometry geomTop(XCoords);
+
+    setXCoords(indices, locations::BOTTOM, XCoords);
+    geometry geomBottom(XCoords);
+
+    int numEvals = 10;
+    double timeElapsed = 0.;
+    int numReads, numWrites;
+    int numReadsElemSet, numWritesElemSet;
+    int numReadsComputeFluxes, numWritesComputeFluxes;
+
+    fluidElement elem(prim.vars, geomCenter, 
+                      numReadsElemSet, numWritesElemSet
                      );
-
-    array primTile[vars::dof], consTile[vars::dof];
-    af::seq tileDomainX1(0, params::tileSizeX1-1);
-    af::seq tileDomainX2(0, params::tileSizeX2-1);
-    af::seq tileDomainX3(0, params::tileSizeX3-1);
-
-    /* Allocate space for tile */
-    for (int var=0; var<vars::dof; var++)
+    fluidElement elemOld(primOld.vars, geomCenter, 
+                         numReadsElemSet, numWritesElemSet
+                        );
+    fluidElement elemFace(prim.vars, geomLeft, 
+                          numReadsElemSet, numWritesElemSet
+                         );
+    elem.computeFluxes(geomCenter, 0, cons.vars,
+                       numReadsComputeFluxes, numWritesComputeFluxes
+                      );
+    double dX[3];
+    dX[1] = prim.dX1;
+    dX[2] = prim.dX2;
+    dX[3] = prim.dX3;
+    for (int n=0; n<numEvals; n++)
     {
-      primTile[var] = af::constant(0., 
-                                   params::tileSizeX1,
-                                   params::tileSizeX2,
-                                   params::tileSizeX3, f64
+      elemOld.computeEMHDGradients(geomCenter, dX, numReads, numWrites);
+      elemOld.computeExplicitSources(geomCenter, 
+                                     sourcesExplicit.vars,
+                                     numReads, numWrites
+                                    );
+      elem.computeImplicitSources(geomCenter, 
+                                  sourcesImplicit.vars,
+                                  numReads, 
+                                  numWrites
+                                 );
+      elem.computeTimeDerivSources(geomCenter,
+                                   elemOld, elem, params::dt,
+                                   sourcesImplicit.vars,
+                                   numReads, 
+                                   numWrites
                                   );
-      consTile[var] = af::constant(0.,
-                                   params::tileSizeX1,
-                                   params::tileSizeX2,
-                                   params::tileSizeX3, f64
+      reconstruction::reconstruct(prim, directions::X1, primLeft, primRight,
+                                  numReads, numWrites
+                                 );
+      riemannSolver(elemFace,
+                    primLeft, primRight,
+                    fluxLeft, fluxRight,
+                    consLeft, consRight,
+                    geomLeft, geomRight,
+                    directions::X1,
+                    fluxX1,
+                    numReads, numWrites
+                  );
+    }
+    af::sync();
+
+    af::timer::start();
+    for (int n=0; n<100*numEvals; n++)
+    {
+      elem.set(prim.vars, geomCenter, 
+               numReadsElemSet, numWritesElemSet
+              );
+      elem.computeFluxes(geomCenter, 0, cons.vars,
+                         numReadsComputeFluxes, numWritesComputeFluxes
+                        );
+    }
+    af::sync();
+    timeElapsed = af::timer::stop();
+    numReads = numReadsElemSet + numReadsComputeFluxes;
+    numWrites = numWritesElemSet + numWritesComputeFluxes;
+    printf("\nConserved vars computation:\n");
+    printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+           100*numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, 100*numEvals, timeElapsed)
+          );
+
+    af::timer::start();
+    for (int n=0; n<100*numEvals; n++)
+    {
+      elem.computeImplicitSources(geomCenter, 
+                                  sourcesImplicit.vars,
+                                  numReads, 
+                                  numWrites
+                                 );
+      elemOld.computeImplicitSources(geomCenter, 
+                                     sourcesImplicitOld.vars,
+                                     numReads, 
+                                     numWrites
+                                    );
+    }
+    af::sync();
+    timeElapsed = af::timer::stop();
+    printf("\nImplicit sources computation:\n");
+    printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+           100*numEvals, timeElapsed, 
+           memoryBandwidth(2*numReads, 2*numWrites, 100*numEvals, timeElapsed)
+          );
+
+    af::timer::start();
+    for (int n=0; n<100*numEvals; n++)
+    {
+      elem.computeTimeDerivSources(geomCenter,
+                                   elemOld, elem, params::dt,
+                                   sourcesImplicit.vars,
+                                   numReads, 
+                                   numWrites
                                   );
     }
-
-//    fluidElement elemTile(primTile, geomTile);
-//
-//    tiledComputation(prim, geomCenter, cons, 
-//                     elemTile,
-//                     geomTile, primTile, consTile
-//                    );
-//    af::sync();
-
-    int numEvals = 1000;
-    double numReads = 265 + 32;
-    double numWrites = 38 + 10;
-    double memoryBandwidth = 0.;
-    double timeElapsed = 0.;
-
-//    af::timer::start();
-//    for (int n=0; n<numEvals; n++)
-//    {
-//      tiledComputation(prim, geomCenter, cons, 
-//                       elemTile, geomTile, primTile,
-//                       consTile
-//                      );
-//    }
-//    af::sync();
-//    timeElapsed = af::timer::stop();
-//    printf("Time taken for %d tiled computation = %g secs\n", 
-//           numEvals, timeElapsed
-//          );
-//    memoryBandwidth =   (double)(params::N1) 
-//                      * (double)(params::N2)
-//                      * (double)(params::N3)
-//                      * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-//
-//    printf("Memory bandwidth for tiled computation = %g GB/sec\n",
-//           memoryBandwidth
-//          );
-
-    fluidElement elem(prim.vars, geomCenter);
-    //elem.computeFluxes(geomCenter, 0, cons.vars);
     af::sync();
+    timeElapsed = af::timer::stop();
+    printf("\nTime derivative sources computation:\n");
+    printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+           100*numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, 100*numEvals, timeElapsed)
+          );
 
     af::timer::start();
     for (int n=0; n<numEvals; n++)
     {
-      elem.set(prim.vars, geomCenter);
-      elem.computeFluxes(geomCenter, 0, cons.vars);
+      elemOld.computeExplicitSources(geomCenter, 
+                                     sourcesExplicit.vars,
+                                     numReads, numWrites
+                                    );
     }
     af::sync();
     timeElapsed = af::timer::stop();
-    printf("Time taken for %d untiled computation = %g secs\n",
-           numEvals, timeElapsed
+    printf("\nExplicit sources computation:\n");
+    printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+           numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
           );
-    memoryBandwidth =   (double)(params::N1) 
-                      * (double)(params::N2)
-                      * (double)(params::N3)
-                      * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
 
-    printf("Memory bandwidth for untiled computation = %g GB/sec\n",
-           memoryBandwidth
+    for (int dir=directions::X1; dir<=directions::X3; dir++)
+    {
+      af::timer::start();
+      for (int n=0; n<numEvals; n++)
+      {
+        reconstruction::reconstruct(prim, directions::X1, primLeft, primRight,
+                                    numReads, numWrites
+                                   );
+      }
+      af::sync();
+      timeElapsed = af::timer::stop();
+      printf("\nReconstruction dir %d\n", dir);
+      printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+             numEvals, timeElapsed, 
+             memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
+            );
+
+      switch (dir)
+      {
+        case directions::X1:
+          af::timer::start();
+          for (int n=0; n<numEvals; n++)
+          {
+            riemannSolver(elemFace,
+                          primLeft, primRight,
+                          fluxLeft, fluxRight,
+                          consLeft, consRight,
+                          geomLeft, geomRight,
+                          dir,
+                          fluxX1,
+                          numReads, numWrites
+                         );
+          }
+          af::sync();
+          timeElapsed = af::timer::stop();
+          break;
+
+        case directions::X2:
+          af::timer::start();
+          for (int n=0; n<numEvals; n++)
+          {
+            riemannSolver(elemFace,
+                          primLeft, primRight,
+                          fluxLeft, fluxRight,
+                          consLeft, consRight,
+                          geomLeft, geomRight,
+                          dir,
+                          fluxX2,
+                          numReads, numWrites
+                         );
+          }
+          af::sync();
+          timeElapsed = af::timer::stop();
+          break;
+
+        case directions::X3:
+          af::timer::start();
+          for (int n=0; n<numEvals; n++)
+          {
+            riemannSolver(elemFace,
+                          primLeft, primRight,
+                          fluxLeft, fluxRight,
+                          consLeft, consRight,
+                          geomLeft, geomRight,
+                          dir,
+                          fluxX3,
+                          numReads, numWrites
+                         );
+          }
+          af::sync();
+          timeElapsed = af::timer::stop();
+          break;
+      }
+
+      printf("\nRiemann problem in dir %d:\n", dir);
+      printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+             numEvals, timeElapsed, 
+             memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
+            );
+
+    }
+
+    af::timer::start();
+    for (int n=0; n<numEvals; n++)
+    {
+      elemOld.computeEMHDGradients(geomCenter, dX, numReads, numWrites);
+    }
+    af::sync();
+    timeElapsed = af::timer::stop();
+    printf("\nEMHD gradient computation :\n");
+    printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+           numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
           );
-    
+
+
 //    timeStepper ts;
 //
 //    params::Time = 0.;
@@ -186,59 +479,154 @@ int main(int argc, char **argv)
   return(0);
 }
 
-void tiledComputation(const grid &prim, 
-                      const geometry &geom, 
-                      grid &cons,
-                      fluidElement &elemTile,
-                      geometry &geomTile,
-                      array primTile[vars::dof],
-                      array consTile[vars::dof]
-                     )
+void riemannSolver(fluidElement &elemFace,
+                   const grid &primLeft,
+                   const grid &primRight,
+                   const grid &fluxLeft,
+                   const grid &fluxRight,
+                   const grid &consLeft,
+                   const grid &consRight,
+                   const geometry &geomLeft,
+                   const geometry &geomRight,
+                   const int dir,
+                   grid &flux,
+                   int &numReads,
+                   int &numWrites
+                  )
 {
-  for (int kTile=0; kTile<params::N3/params::tileSizeX3; kTile++)
+  int numReadsElemSet, numWritesElemSet;
+  int numReadsComputeFluxes, numWritesComputeFluxes;
+
+  elemFace.set(primLeft.vars, geomLeft, 
+               numReadsElemSet, numWritesElemSet
+              );
+  elemFace.computeFluxes(geomLeft, 1, fluxLeft.vars,
+                         numReadsComputeFluxes, 
+                         numWritesComputeFluxes
+                        );
+  elemFace.computeFluxes(geomLeft, 0, consLeft.vars,
+                         numReadsComputeFluxes, 
+                         numWritesComputeFluxes
+                        );
+
+  elemFace.set(primRight.vars, geomRight, 
+               numReadsElemSet, numWritesElemSet
+              );
+  elemFace.computeFluxes(geomRight, 1, fluxRight.vars,
+                         numReadsComputeFluxes, 
+                         numWritesComputeFluxes
+                        );
+  elemFace.computeFluxes(geomRight, 0, consRight.vars,
+                         numReadsComputeFluxes, 
+                         numWritesComputeFluxes
+                        );
+
+
+  numReads = 2*(numReadsElemSet + 2*numReadsComputeFluxes);
+  numWrites = 2*(numWritesElemSet + 2*numWritesComputeFluxes);
+
+  int shiftX1, shiftX2, shiftX3;
+  switch (dir)
   {
-    //printf("kTile = %d of %d\n", kTile, params::N3/tileSizeX3);
-    for (int jTile=0; jTile<params::N2/params::tileSizeX2; jTile++)
-    {
-      for (int iTile=0; iTile<params::N1/params::tileSizeX1; iTile++)
-      {
-        int iStart = iTile     * params::tileSizeX1;
-        int iEnd   = (iTile+1) * params::tileSizeX1;
+    case directions::X1:
+      shiftX1  = 1;
+      shiftX2  = 0;
+      shiftX3  = 0;
+      break;
 
-        int jStart = jTile     * params::tileSizeX2;
-        int jEnd   = (jTile+1) * params::tileSizeX2;
+    case directions::X2:
+      shiftX1  = 0;
+      shiftX2  = 1;
+      shiftX3  = 0;
+      break;
 
-        int kStart = kTile     * params::tileSizeX3;
-        int kEnd   = (kTile+1) * params::tileSizeX3;
-
-        af::seq tileDomainX1(iStart, iEnd-1);
-        af::seq tileDomainX2(jStart, jEnd-1);
-        af::seq tileDomainX3(kStart, kEnd-1);
-
-        geomTile.copyFrom(geom, 
-                          iStart, iEnd,
-                          jStart, jEnd,
-                          kStart, kEnd
-                         );
-
-        /* Copy data to tile */
-        for (int var=0; var<vars::dof; var++)
-        {
-          primTile[var] = 
-           prim.vars[var](tileDomainX1, tileDomainX2, tileDomainX3);
-        }
-
-        elemTile.set(primTile, geomTile);
-        elemTile.computeFluxes(geomTile, 0, consTile);
-
-//        /* Copy computed data from tile */
-//        for (int var=0; var<vars::dof; var++)
-//        {
-//          cons.vars[var](tileDomainX1, tileDomainX2, tileDomainX3) = 
-//            consTile[var];
-//        }
-      }
-    }
+    case directions::X3:
+      shiftX1  = 0;
+      shiftX2  = 0;
+      shiftX3  = 1;
+      break;
   }
+
+  for (int var=0; var<vars::dof; var++)
+  {
+    flux.vars[var] = 
+      af::shift(fluxLeft.vars[var], shiftX1, shiftX2, shiftX3)
+    - fluxRight.vars[var]
+    + consRight.vars[var] 
+    - af::shift(consLeft.vars[var], shiftX1, shiftX2, shiftX3);
+
+    flux.vars[var].eval();
+  }
+  /* Reads:
+   * -----
+   *  fluxLeft[var], fluxRight[var], consLeft[var], consRight[var] : 4*vars::dof
+   *
+   * Writes:
+   * ------
+   * flux[var] : vars::dof */
+  numReads  += 4*vars::dof;
+  numWrites +=  vars::dof;
+}
+
+void initialConditions(const array xCoords[3],
+                       array prim[vars::dof]
+                      )
+{
+  double Aw = 1.e-5;
+  double k1 = 2.*M_PI;
+  double k2 = 4.*M_PI;
+  double Gamma = - 0.5533585207638141;
+  double Omega = - 3.6262571286888425;
+
+  array cphi = af::cos(  k1*xCoords[directions::X1]
+                  		 + k2*xCoords[directions::X2]
+                      );
+
+  array sphi = af::sin(  k1*xCoords[directions::X1]
+                  		 + k2*xCoords[directions::X2]
+                      );
+
+  /* Initial conditions */
+
+  //Full EMHD mode (from grim2D)
+  prim[vars::RHO] = 1.;
+  prim[vars::U]   = 2.;
+  prim[vars::U1]  = 0.;
+  prim[vars::U2]  = 0.; 
+  prim[vars::U3]  = 0.; 
+  prim[vars::B1]  = 0.1; 
+  prim[vars::B2]  = 0.3;
+  prim[vars::B3]  = 0.;
+  prim[vars::Q]  = 0.;
+  prim[vars::DP]  = 0.;
+
+  prim[vars::RHO] += Aw*cphi*(-0.518522524082246)
+                    +Aw*sphi*0.1792647678001878;
+
+  prim[vars::U]   += Aw*cphi*0.5516170736393813;
+
+  prim[vars::U1]  += Aw*cphi*0.008463122479547856
+                    +Aw*sphi*(-0.011862022608466367);
+
+  prim[vars::U2]  += Aw*cphi*(-0.16175466371870734)
+                    +Aw*sphi*(0.034828080823603294);
+
+  prim[vars::B1]  += Aw*cphi*(-0.05973794979640743)
+                    +Aw*sphi*0.03351707506150924;
+
+  prim[vars::B2]  += Aw*cphi*0.02986897489820372
+                    -Aw*sphi*0.016758537530754618;
+
+  prim[vars::Q]   += Aw*cphi*0.5233486841539436
+                    -Aw*sphi*0.04767672501939603;
+
+  prim[vars::DP]  += Aw*cphi*0.2909106062057657
+                    -Aw*sphi*0.02159452055336572;
+
+  for (int var=0; var<vars::dof; var++)
+  {
+    prim[var].eval();
+  }
+
   af::sync();
 }

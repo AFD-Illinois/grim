@@ -3,20 +3,26 @@
 void reconstruction::reconstruct(const grid &prim,
                                  const int dir,
                                  grid &primLeft,
-                                 grid &primRight
+                                 grid &primRight,
+                                 int &numReads,
+                                 int &numWrites
                                 )
 {
   switch (params::reconstruction)
   {
     case reconstructionOptions::MINMOD:
 
-      reconstruction::reconstructMM(prim, dir, primLeft, primRight);
+      reconstruction::reconstructMM(prim, dir, primLeft, primRight,
+                                    numReads, numWrites
+                                   );
 
       break;
 
     case reconstructionOptions::WENO5:
 
-      reconstruction::reconstructWENO5(prim, dir, primLeft, primRight);
+      reconstruction::reconstructWENO5(prim, dir, primLeft, primRight,
+                                       numReads, numWrites
+                                      );
 
       break;
   }
@@ -24,13 +30,19 @@ void reconstruction::reconstruct(const grid &prim,
 }
 
 array reconstruction::slope(const int dir,const double dX,
-			    const array& in)
+			                      const array& in,
+                            int &numReads,
+                            int &numWrites
+                           )
 {
   switch (params::reconstruction)
-    {
+  {
     case reconstructionOptions::MINMOD:
-      return reconstruction::slopeMM(dir,dX,in);
+
+      return reconstruction::slopeMM(dir,dX,in, numReads, numWrites);
+
     case reconstructionOptions::WENO5:
-      return reconstruction::slopeWENO5(dir,dX,in);
+
+      return reconstruction::slopeWENO5(dir,dX,in, numReads, numWrites);
    }
 }

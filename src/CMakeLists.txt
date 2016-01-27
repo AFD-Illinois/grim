@@ -24,14 +24,14 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
+#set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
 
 # Configuration for Stampede
-#set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
-##set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Double or float precision?
 set(REAL "double")
@@ -100,7 +100,7 @@ include_directories(${PETSC_INCLUDES}
 add_subdirectory(grid)
 add_subdirectory(geometry)
 add_subdirectory(physics)
-#add_subdirectory(reconstruction)
+add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
 #add_subdirectory(timestepper)
 
@@ -117,7 +117,7 @@ add_executable(grim grim.cpp grim.hpp params.hpp)
 #                      ${YAML_LIBRARIES}
 #                      ${ArrayFire_LIBRARIES}
 #                     )
-target_link_libraries(grim grid geometry physics
+target_link_libraries(grim grid geometry physics reconstruction
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

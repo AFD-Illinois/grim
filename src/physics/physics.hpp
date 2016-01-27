@@ -46,36 +46,53 @@ class fluidElement
     array bNorm;
 
     fluidElement(const array prim[vars::dof],
-                 const geometry &geom
+                 const geometry &geom,
+                 int &numReads,
+                 int &numWrites
                 );
     void set(const array prim[vars::dof],
-             const geometry &geom
+             const geometry &geom,
+             int &numReads,
+             int &numWrites
             );
     void setFluidElementParameters(const geometry &geom);
     void computeFluxes(const geometry &geom, 
                        const int direction,
-                       array flux[vars::dof]
-                      );
+                       array flux[vars::dof],            
+                       int &numReads,
+                       int &numWrites
+                      );                                
 //
 //    void computeMinMaxCharSpeeds(const geometry &geom,
 //			       const int dir,
 //			       array &MinSpeed,
 //				 array &MaxSpeed);
 //
-//    void computeTimeDerivSources(const geometry &geom,
-//				const fluidElement &elemOld,
-//				const fluidElement &elemNew,
-//				const double dt,
-//				grid &sources
-//				);
-//
-//    void computeImplicitSources(const geometry &geom,
-//				grid &sources
-//				);
-//  void computeExplicitSources(const geometry &geom,
-//			      grid &sources
-//			      );
-//  void computeEMHDGradients(const geometry &geom);
+  void computeTimeDerivSources(const geometry &geom,
+				                       const fluidElement &elemOld,
+                          		 const fluidElement &elemNew,
+                           		 const double dt,
+                               array sources[vars::dof],
+                               int &numReads,
+                               int &numWrites
+				                      );
+
+  void computeImplicitSources(const geometry &geom,
+				                      array sources[vars::dof],
+                              int &numReads,
+                              int &numWrites
+				                     );
+
+  void computeExplicitSources(const geometry &geom,
+                    		      array sources[vars::dof],
+                              int &numReads,
+                              int &numWrites
+                             );
+  void computeEMHDGradients(const geometry &geom,
+                            const double dX[3],
+                            int &numReads,
+                            int &numWrites
+                           );                   
 };
 
 //class riemannSolver

@@ -1,6 +1,8 @@
 #include "reconstruction.hpp"
 
-array reconstruction::minmod(array &x, array &y, array &z)
+array reconstruction::minmod(array &x, array &y, array &z,
+                             int &numReads, int &numWrites
+                            )
 {
   array minOfAll = af::min(af::min(af::abs(x), af::abs(y)), 
 		                       af::abs(z)
@@ -11,10 +13,16 @@ array reconstruction::minmod(array &x, array &y, array &z)
   array signy = 1.-2.*sign(y);
   array signz = 1.-2.*sign(z);
   
-  return 0.25 * af::abs(signx + signy ) * (signx + signz ) * minOfAll;
+  array result = 0.25 * af::abs(signx + signy ) * (signx + signz ) * minOfAll;
+  result.eval();
+
+  return result;
 }
 
-array reconstruction::slopeMM(const int dir,const double dX, const array& in)
+array reconstruction::slopeMM(const int dir,const double dX, const array& in,
+                              int &numReads,
+                              int &numWrites
+                             )
 {
   double filter1D[]  = {1,-1, 0, /* Forward difference */
 			0, 1,-1  /* Backward difference */
@@ -45,23 +53,37 @@ array reconstruction::slopeMM(const int dir,const double dX, const array& in)
   array center = 0.5 * centralDiff;
   array right  = params::slopeLimTheta * forwardDiff;
   
-  return  minmod(left, center, right);
+  int numReadsMinMod, numWritesMinMod;
+  array result = minmod(left, center, right,
+                        numReadsMinMod, numWritesMinMod
+                       );
+
+  return result;
 }
 
 void reconstruction::reconstructMM(const grid &prim,
                 	                 const int dir,
                           		     grid &primLeft,
-          		                     grid &primRight
+          		                     grid &primRight,
+                                   int &numReads,
+                                   int &numWrites
                           		    )
 {
+  int numReadsMinMod, numWritesMinMod;
   for(int var=0; var<prim.numVars; var++)
   {
   	//Note: we set dX=1., because the 1/dX in slope
   	//exactly cancels the dX in the computation of the
   	//value on cell faces...
-  	array slope = slopeMM(dir,1.,prim.vars[var]);
+  	array slope = slopeMM(dir,1.,prim.vars[var],
+                          numReadsMinMod, numWritesMinMod
+                         );
   	primLeft.vars[var]  = prim.vars[var] - 0.5*slope;
   	primRight.vars[var] = prim.vars[var] + 0.5*slope;
+
+    primLeft.vars[var].eval();
+    primRight.vars[var].eval();
+
   }
 }
 

@@ -11,13 +11,10 @@ namespace params
 {
   int N1 = 64;
   int N2 = 64;
-  int N3 = 64;
-  int tileSizeX1 = 64;
-  int tileSizeX2 = 64;
-  int tileSizeX3 = 8;
+  int N3 = 32;
 
   int dim = 3;
-  int numGhost = 0;
+  int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double dt = .5/N1;
