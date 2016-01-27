@@ -238,7 +238,7 @@ int main(int argc, char **argv)
     setXCoords(indices, locations::BOTTOM, XCoords);
     geometry geomBottom(XCoords);
 
-    int numEvals = 10;
+    int numEvals = 100;
     double timeElapsed = 0.;
     int numReads, numWrites;
     int numReadsElemSet, numWritesElemSet;
@@ -294,7 +294,7 @@ int main(int argc, char **argv)
     af::sync();
 
     af::timer::start();
-    for (int n=0; n<100*numEvals; n++)
+    for (int n=0; n<numEvals; n++)
     {
       elem.set(prim.vars, geomCenter, 
                numReadsElemSet, numWritesElemSet
@@ -309,12 +309,12 @@ int main(int argc, char **argv)
     numWrites = numWritesElemSet + numWritesComputeFluxes;
     printf("\nConserved vars computation:\n");
     printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
-           100*numEvals, timeElapsed, 
-           memoryBandwidth(numReads, numWrites, 100*numEvals, timeElapsed)
+           numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
           );
 
     af::timer::start();
-    for (int n=0; n<100*numEvals; n++)
+    for (int n=0; n<numEvals; n++)
     {
       elem.computeImplicitSources(geomCenter, 
                                   sourcesImplicit.vars,
@@ -331,12 +331,12 @@ int main(int argc, char **argv)
     timeElapsed = af::timer::stop();
     printf("\nImplicit sources computation:\n");
     printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
-           100*numEvals, timeElapsed, 
-           memoryBandwidth(2*numReads, 2*numWrites, 100*numEvals, timeElapsed)
+           numEvals, timeElapsed, 
+           memoryBandwidth(2*numReads, 2*numWrites, numEvals, timeElapsed)
           );
 
     af::timer::start();
-    for (int n=0; n<100*numEvals; n++)
+    for (int n=0; n<numEvals; n++)
     {
       elem.computeTimeDerivSources(geomCenter,
                                    elemOld, elem, params::dt,
@@ -349,8 +349,8 @@ int main(int argc, char **argv)
     timeElapsed = af::timer::stop();
     printf("\nTime derivative sources computation:\n");
     printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
-           100*numEvals, timeElapsed, 
-           memoryBandwidth(numReads, numWrites, 100*numEvals, timeElapsed)
+           numEvals, timeElapsed, 
+           memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
           );
 
     af::timer::start();

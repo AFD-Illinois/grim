@@ -635,10 +635,11 @@ void fluidElement::computeTimeDerivSources(const geometry &geom,
        *     bNorm                    : 1,
        *     dtuCov[mu]               : 8 ,
        *     uCon0                    : 1
-       *    )                                 : 16
-       *  geom.g                              : 1
-       *  tau                                 : 1
-       *  deltaPTilde                         : 1
+       *    )                                           : 16
+       *  geom.g                                        : 1
+       *  tau                                           : 1
+       *  qTilde                                        : 1
+       *  divuCov(geom.gCon[0][mu] : 4, dtuCov[mu] : 0) : 4
        *
        * Writes:
        * ------
@@ -647,7 +648,7 @@ void fluidElement::computeTimeDerivSources(const geometry &geom,
       numReads += 18;
       if (params::highOrderTermsConduction)
       {
-        numReads += 1;
+        numReads += 5;
       }
       numWrites += 1;
 
@@ -705,7 +706,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
     /* Reads:
      * -----
      *  geom.g          : 1
-     *  deltaPTilde     : 1
+     *  qTilde          : 1
      *  tau             : 1
      *
      * Writes:
@@ -816,6 +817,32 @@ void fluidElement::computeExplicitSources(const geometry &geom,
 	      sources[vars::DP] -= 0.5*geom.g*divuCov*deltaPTilde;
 	    }
       sources[vars::DP].eval();
+      /* Reads:
+       * -----
+       *  divuCov(geom.gCon[mu][nu] : 16, graduCov[mu][nu] : 16): 32
+       *  deltaP0(divuCov : 0 (already accounted),
+       *          rho : 1,
+       *          nu_emhd(rho:0, u:1) : 1
+       *          bCon[mu] : 4,
+       *          bCon[nu] : 0,(already accounted)
+       *          bSqr : 1,
+       *          graduCov[mu][nu] : 0 (already accounted),
+       *          temperature(rho:0, u:1) : 1,
+       *         )                                              : 7
+       *  geom.g                                                : 1
+       *  tau                                                   : 1
+       *  deltaPTilde                                           : 1
+       *
+       * Writes:
+       * ------
+       * sources[vars::DP] : 1 */
+      numReads += 41;
+      if (params::highOrderTermsViscosity)
+      {
+        numReads += 1;
+      }
+      numWrites += 1;
+
     } /* End of viscosity specific terms */
     
     // -------------------------------------
@@ -852,6 +879,33 @@ void fluidElement::computeExplicitSources(const geometry &geom,
     	  sources[vars::Q] -= 0.5*geom.g*divuCov*qTilde;
       }
       sources[vars::Q].eval();
+      /* Reads:
+       * -----
+       *  q0(rho                      : 1,
+       *     chi_emhd                 : 1
+       *     temperature(rho:0, u:0)  : 0,
+       *     bCon[mu]                 : 4,
+       *     bNorm                    : 1,
+       *     gradT[mu]                : 4 ,
+       *     uCon[mu]                 : 4 ,
+       *     graduCov[mu][nu]         : 16
+       *    )                                 : 31
+       *  geom.g                              : 1
+       *  tau                                 : 1
+       *  qTilde                              : 1
+       *  divuCov(gCon[mu][nu]     : 16,
+       *          graduCov[mu][nu] : 0
+       *        )                             : 16
+       *
+       * Writes:
+       * ------
+       * sources[vars::Q] : 1 */
+      numReads += 33;
+      if (params::highOrderTermsConduction)
+      {
+        numReads += 17;
+      }
+      numWrites += 1;
 
     } /* End of conduction */
   } /* End of EMHD: viscosity || conduction */

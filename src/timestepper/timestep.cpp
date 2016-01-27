@@ -158,7 +158,10 @@ void timeStepper::timeStep()
 
 }
 
-void timeStepper::computeResidual(const grid &primGuess, grid &residualGuess, const bool ComputeExplicitTerms)
+void timeStepper::computeResidual(const grid &primGuess,
+                                  grid &residualGuess, 
+                                  const bool ComputeExplicitTerms
+                                 )
 {
   elem->set(primGuess, *geom, locations::CENTER);
   elem->computeFluxes(*geom, 0, *cons);
