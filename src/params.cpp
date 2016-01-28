@@ -9,9 +9,9 @@ namespace vars
 
 namespace params
 {
-  int N1 = 48;
-  int N2 = 48;
-  int N3 = 48;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 64;
 
   int dim = 3;
   int numGhost = 3;

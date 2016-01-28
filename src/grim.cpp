@@ -42,6 +42,29 @@ void riemannSolver(fluidElement &elemFace,
                    int &numReads, int &numWrites
                   );
 
+void bandwidthTest()
+{
+  array a = af::randu(params::N1, params::N2, params::N3);
+  array b = af::randu(params::N1, params::N2, params::N3);
+  array c = af::constant(0., params::N1, params::N2, params::N3);
+  a.eval(); b.eval(); c.eval();
+  af::sync();
+
+  int numEvals = 10000;
+  af::timer::start();
+  for (int n=0; n < numEvals; n++)
+  {
+    c = a + b;
+    c.eval();
+  }
+  af::sync();
+  double timeElapsed = af::timer::stop();
+  printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+         numEvals, timeElapsed, 
+         memoryBandwidth(2, 1, numEvals, timeElapsed)
+        );
+}
+
 void computeResidual(const grid &prim,
                      fluidElement *elem,
                      fluidElement *elemOld,
@@ -71,6 +94,7 @@ int main(int argc, char **argv)
              );
   if (rank==0)
   {
+    //af::setDevice(1);
     af::info();
   };
 
@@ -269,7 +293,7 @@ int main(int argc, char **argv)
     setXCoords(indices, locations::BOTTOM, XCoords);
     geometry geomBottom(XCoords);
 
-    int numEvals = 100;
+    int numEvals = 10;
     double timeElapsed = 0.;
     int numReads, numWrites;
     int numReadsElemSet, numWritesElemSet;
@@ -348,6 +372,10 @@ int main(int argc, char **argv)
     af::sync();
 
     printf("\nKernel compilation complete\n");
+
+
+    printf("\n Performing bandwidth test...\n");
+    bandwidthTest();
 
     af::timer::start();
     for (int n=0; n<numEvals; n++)
