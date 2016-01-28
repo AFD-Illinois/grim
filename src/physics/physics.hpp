@@ -98,7 +98,7 @@ class fluidElement
 //class riemannSolver
 //{
 //  public:
-//    fluidElement *elemLeft, *elemRight;
+//    fluidElement *elemFace;
 //
 //    grid *primLeft, *primRight;
 //    grid *fluxLeft, *fluxRight;
@@ -113,7 +113,9 @@ class fluidElement
 //    void solve(const grid &prim,
 //               const geometry &geom,
 //               const int dir,
-//               grid &fluxes
+//               grid &fluxes,
+//               int &numReads,
+//               int &numWrites
 //              );
 //};
 

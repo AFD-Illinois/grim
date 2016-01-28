@@ -42,6 +42,23 @@ void riemannSolver(fluidElement &elemFace,
                    int &numReads, int &numWrites
                   );
 
+void computeResidual(const grid &prim,
+                     fluidElement *elem,
+                     fluidElement *elemOld,
+                     fluidElement *elemHalfStep,
+                     geometry *geom,
+                     grid *sourcesExplicit,
+                     grid *sourcesImplicit,
+                     grid *sourcesImplicitOld,
+                     grid *sourcesTimeDer,
+                     grid *cons,
+                     grid *consOld,
+                     grid *divFluxes,
+                     grid &residual, 
+                     const bool ComputeExplicitTerms,
+                     const int currentStep
+                    );
+
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
@@ -106,6 +123,13 @@ int main(int argc, char **argv)
               DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
               DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
              );
+
+    grid residual(params::N1, params::N2, params::N3,
+                  params::numGhost, params::dim, vars::dof,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                 );
 
     grid primOld(params::N1, params::N2, params::N3,
                  params::numGhost, params::dim, vars::dof,
@@ -219,6 +243,13 @@ int main(int argc, char **argv)
                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                );
 
+    grid divFluxes(params::N1, params::N2, params::N3,
+                   params::numGhost, params::dim, vars::dof,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                  );
+
     setXCoords(indices, locations::CENTER, XCoords);
     geometry geomCenter(XCoords);
     geomCenter.computeConnectionCoeffs();
@@ -247,6 +278,9 @@ int main(int argc, char **argv)
     fluidElement elem(prim.vars, geomCenter, 
                       numReadsElemSet, numWritesElemSet
                      );
+    fluidElement elemHalfStep(prim.vars, geomCenter, 
+                              numReadsElemSet, numWritesElemSet
+                             );
     fluidElement elemOld(primOld.vars, geomCenter, 
                          numReadsElemSet, numWritesElemSet
                         );
@@ -260,7 +294,7 @@ int main(int argc, char **argv)
     dX[1] = prim.dX1;
     dX[2] = prim.dX2;
     dX[3] = prim.dX3;
-    for (int n=0; n<numEvals; n++)
+    for (int n=0; n<1; n++)
     {
       elemOld.computeEMHDGradients(geomCenter, dX, numReads, numWrites);
       elemOld.computeExplicitSources(geomCenter, 
@@ -290,8 +324,30 @@ int main(int argc, char **argv)
                     fluxX1,
                     numReads, numWrites
                   );
+      for (int var=0; var<vars::dof; var++)
+      {
+        double filter1D[] = {1, -1, 0}; /* Forward difference */
+    
+        array filterX1 = array(3, 1, 1, 1, filter1D)/(fluxX1.dX1);
+        array filterX2 = array(1, 3, 1, 1, filter1D)/(fluxX2.dX2);
+        array filterX3 = array(1, 1, 3, 1, filter1D)/(fluxX3.dX3);
+
+        array dFluxX1_dX1 = convolve(fluxX1.vars[var], filterX1);
+        array dFluxX2_dX2 = convolve(fluxX2.vars[var], filterX2);
+        array dFluxX3_dX3 = convolve(fluxX3.vars[var], filterX3);
+
+        divFluxes.vars[var] = dFluxX1_dX1 + dFluxX2_dX2 + dFluxX3_dX3;
+        divFluxes.vars[var].eval();
+      }
+      computeResidual(prim, &elem, &elemOld, &elemHalfStep,
+                      &geomCenter, &sourcesExplicit, &sourcesImplicit,
+                      &sourcesImplicitOld, &sourcesTimeDer,
+                      &cons, &consOld, &divFluxes, residual, true, 1
+                     );
     }
     af::sync();
+
+    printf("\nKernel compilation complete\n");
 
     af::timer::start();
     for (int n=0; n<numEvals; n++)
@@ -464,6 +520,43 @@ int main(int argc, char **argv)
            memoryBandwidth(numReads, numWrites, numEvals, timeElapsed)
           );
 
+    af::timer::start();
+    for (int n=0; n<numEvals; n++)
+    {
+      for (int var=0; var<vars::dof; var++)
+      {
+        double filter1D[] = {1, -1, 0}; /* Forward difference */
+    
+        array filterX1 = array(3, 1, 1, 1, filter1D)/(fluxX1.dX1);
+        array filterX2 = array(1, 3, 1, 1, filter1D)/(fluxX2.dX2);
+        array filterX3 = array(1, 1, 3, 1, filter1D)/(fluxX3.dX3);
+
+        array dFluxX1_dX1 = convolve(fluxX1.vars[var], filterX1);
+        array dFluxX2_dX2 = convolve(fluxX2.vars[var], filterX2);
+        array dFluxX3_dX3 = convolve(fluxX3.vars[var], filterX3);
+
+        divFluxes.vars[var] = dFluxX1_dX1 + dFluxX2_dX2 + dFluxX3_dX3;
+        divFluxes.vars[var].eval();
+      }
+    }
+    af::sync();
+    timeElapsed = af::timer::stop();
+    printf("\ndivFluxes computation :\n");
+    printf("Num evals = %d, time taken = %g secs\n", numEvals, timeElapsed);
+
+    af::timer::start();
+    for (int n=0; n<numEvals; n++)
+    {
+      computeResidual(prim, &elem, &elemOld, &elemHalfStep,
+                      &geomCenter, &sourcesExplicit, &sourcesImplicit,
+                      &sourcesImplicitOld, &sourcesTimeDer,
+                      &cons, &consOld, &divFluxes, residual, true, 1
+                     );
+    }
+    af::sync();
+    timeElapsed = af::timer::stop();
+    printf("\nResidual computation :\n");
+    printf("Num evals = %d, time taken = %g secs\n", numEvals, timeElapsed);
 
 //    timeStepper ts;
 //
@@ -629,4 +722,175 @@ void initialConditions(const array xCoords[3],
   }
 
   af::sync();
+}
+
+void computeResidual(const grid &prim,
+                     fluidElement *elem,
+                     fluidElement *elemOld,
+                     fluidElement *elemHalfStep,
+                     geometry *geom,
+                     grid *sourcesExplicit,
+                     grid *sourcesImplicit,
+                     grid *sourcesImplicitOld,
+                     grid *sourcesTimeDer,
+                     grid *cons,
+                     grid *consOld,
+                     grid *divFluxes,
+                     grid &residual, 
+                     const bool ComputeExplicitTerms,
+                     const int currentStep
+                    )
+{
+  int numReads, numWrites;
+  elem->set(prim.vars, *geom, numReads, numWrites);
+  elem->computeFluxes(*geom, 0, cons->vars, numReads, numWrites);
+
+  if (currentStep == 1)
+  {
+    int useImplicitSources = 0;
+    if (ComputeExplicitTerms)
+    {
+      elemOld->computeExplicitSources(*geom, sourcesExplicit->vars,
+                                      numReads, numWrites                            
+                                     );
+    }
+    else
+    {
+      for (int var=0; var<vars::dof; var++)
+      {
+	      sourcesExplicit->vars[var]=0.;
+      }
+    }
+
+    elemOld->computeImplicitSources(*geom, sourcesImplicitOld->vars,
+                                    numReads, numWrites
+                                   );
+    elem->computeImplicitSources(*geom, sourcesImplicit->vars,
+                                 numReads, numWrites
+                                );
+    elemOld->computeTimeDerivSources(*geom,
+				                             *elemOld, *elem,
+		                         		     params::dt/2,
+                        				     sourcesTimeDer->vars,
+                                     numReads, numWrites
+                                    );
+
+    for (int var=0; var<vars::dof; var++)
+    {
+      residual.vars[var] = 
+        (cons->vars[var] - consOld->vars[var])/(params::dt/2.)
+  	  + divFluxes->vars[var]
+      + sourcesExplicit->vars[var]
+  	  + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
+	    + sourcesTimeDer->vars[var];
+    }
+
+    //Normalization of the residual
+    if (params::conduction)
+    {
+	    if(params::highOrderTermsConduction)
+      {
+	      residual.vars[vars::Q] *=
+          elemOld->temperature 
+        * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
+      }
+	    else
+      {
+	      residual.vars[vars::Q] *= elemOld->tau;
+      }
+    }
+
+    if (params::viscosity)
+    {
+	    if(params::highOrderTermsViscosity)
+      {
+	      residual.vars[vars::DP] *=
+          af::sqrt(   elemOld->rho*elemOld->nu_emhd
+                    * elemOld->temperature*elemOld->tau
+                  );
+      }
+	    else
+      {
+	      residual.vars[vars::DP] *= elemOld->tau;
+      }
+    }
+
+  } /* End of timeStepperSwitches::HALF_STEP */
+
+  else if (currentStep == 2)
+  {
+    int useImplicitSources = 0;
+    if(ComputeExplicitTerms)
+    {
+      elemHalfStep->computeExplicitSources(*geom, sourcesExplicit->vars,
+                                           numReads, numWrites
+                                          );
+    }
+    else
+    {
+      for (int var=0; var<vars::dof; var++)
+      {
+	      sourcesExplicit->vars[var]=0.;
+      }
+    }
+
+    elemOld->computeImplicitSources(*geom, sourcesImplicitOld->vars,
+                                    numReads, numWrites
+                                   );
+    elem->computeImplicitSources(*geom, sourcesImplicit->vars,
+                                 numReads, numWrites
+                                );
+    elemHalfStep->computeTimeDerivSources(*geom,
+	                                			  *elemOld, *elem,
+					                                params::dt,
+					                                sourcesTimeDer->vars,
+                                          numReads, numWrites
+                                         );
+
+    for (int var=0; var<vars::dof; var++)
+    {
+      residual.vars[var] = 
+        (cons->vars[var] - consOld->vars[var])/params::dt
+    	+ divFluxes->vars[var]
+	    + sourcesExplicit->vars[var]
+	    + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
+	    + sourcesTimeDer->vars[var];
+    }
+
+    //Normalization of the residual
+    if (params::conduction)
+    {
+	    if(params::highOrderTermsConduction)
+      {
+	      residual.vars[vars::Q] *= 
+          elemHalfStep->temperature
+        * af::sqrt(elemHalfStep->rho*elemHalfStep->chi_emhd*elemHalfStep->tau);
+      }
+    	else
+      {
+	      residual.vars[vars::Q] *= elemHalfStep->tau;
+      }
+    }
+
+    if (params::viscosity)
+    {
+      if (params::highOrderTermsViscosity)
+      {
+	      residual.vars[vars::DP] *= 
+          af::sqrt(   elemHalfStep->rho*elemHalfStep->nu_emhd
+                    * elemHalfStep->temperature*elemHalfStep->tau
+                  );
+      }
+	    else
+      {
+	      residual.vars[vars::DP] *= elemHalfStep->tau;
+      }
+    }
+
+  } /* End of timeStepperSwitches::FULL_STEP */
+
+  for (int var=0; var<vars::dof; var++)
+  {
+    residual.vars[var].eval();
+  }
 }

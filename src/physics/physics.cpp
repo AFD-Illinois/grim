@@ -70,6 +70,7 @@ void fluidElement::set(const array prim[vars::dof],
     if (params::highOrderTermsConduction==1)
     {
       q = qTilde * temperature * af::sqrt(rho*chi_emhd/tau);
+      q.eval();
     }
     else
     {
@@ -84,6 +85,7 @@ void fluidElement::set(const array prim[vars::dof],
     if (params::highOrderTermsViscosity == 1)
     {
       deltaP = deltaPTilde * af::sqrt(temperature * rho * nu_emhd / tau);
+      deltaP.eval();
     }
     else
     {
@@ -287,6 +289,18 @@ void fluidElement::set(const array prim[vars::dof],
 
   numReads  = 265;
   numWrites = 38;
+  
+  if (params::highOrderTermsConduction)
+  {
+    numReads  += 1;
+    numWrites += 1;
+  }
+
+  if (params::highOrderTermsViscosity)
+  {
+    numReads  += 1;
+    numWrites += 1;
+  }
 }
 
 void fluidElement::setFluidElementParameters(const geometry &geom)

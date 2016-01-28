@@ -9,9 +9,9 @@ namespace vars
 
 namespace params
 {
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 32;
+  int N1 = 48;
+  int N2 = 48;
+  int N3 = 48;
 
   int dim = 3;
   int numGhost = 3;
@@ -44,8 +44,8 @@ namespace params
 
   int conduction = 1;
   int viscosity  = 1;
-  int highOrderTermsConduction = 0.;
-  int highOrderTermsViscosity = 0.;
+  int highOrderTermsConduction = 1;
+  int highOrderTermsViscosity = 1;
   double adiabaticIndex = 4./3;
 
   double slopeLimTheta = 2;
