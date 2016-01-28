@@ -29,9 +29,14 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
 
 # Configuration for Stampede
-set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+#set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+
+# Configuration for Deathstar
+set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build/package")
 
 # Double or float precision?
 set(REAL "double")
