@@ -81,15 +81,47 @@ void geometry::computeConnectionCoeffs()
   af::sync();
 }
 
-void setXCoords(const grid &indices, int location, grid &XCoords)
+void setXCoords(const int location, grid &XCoords)
 {
-  array indicesX1 = indices.vars[directions::X1];
-  array indicesX2 = indices.vars[directions::X2];
-  array indicesX3 = indices.vars[directions::X3];
+  int N1Total = XCoords.N1Total;
+  int N2Total = XCoords.N2Total;
+  int N3Total = XCoords.N3Total;
 
-  double dX1 = indices.dX1;
-  double dX2 = indices.dX2;
-  double dX3 = indices.dX3;
+  int numGhostX1 = XCoords.numGhostX1;
+  int numGhostX2 = XCoords.numGhostX2;
+  int numGhostX3 = XCoords.numGhostX3;
+
+  double dX1 = XCoords.dX1;
+  double dX2 = XCoords.dX2;
+  double dX3 = XCoords.dX3;
+
+  array indicesX1
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X1 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX1;
+
+  array indicesX2
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X2 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX2;
+
+  array indicesX3
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X3 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX3;
+
 
   switch (location)
   {

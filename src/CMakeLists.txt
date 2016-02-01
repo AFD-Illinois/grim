@@ -18,15 +18,16 @@ project(grim)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
 set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-#set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 #set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
+set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
 
 # Configuration for Stampede
 #set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
@@ -34,9 +35,9 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Configuration for Deathstar
-set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
+#set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build/package")
+#set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build/package")
 
 # Double or float precision?
 set(REAL "double")

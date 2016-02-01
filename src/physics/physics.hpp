@@ -95,28 +95,29 @@ class fluidElement
                            );                   
 };
 
-//class riemannSolver
-//{
-//  public:
-//    fluidElement *elemFace;
-//
-//    grid *primLeft, *primRight;
-//    grid *fluxLeft, *fluxRight;
-//    grid *consLeft, *consRight;
-//
-//    array MinSpeedLeft,MaxSpeedLeft;
-//    array MinSpeedRight,MaxSpeedRight;
-//
-//    riemannSolver(const geometry &geom);
-//    ~riemannSolver();
-//
-//    void solve(const grid &prim,
-//               const geometry &geom,
-//               const int dir,
-//               grid &fluxes,
-//               int &numReads,
-//               int &numWrites
-//              );
-//};
+class riemannSolver
+{
+  public:
+    fluidElement *elemFace;
+
+    grid *fluxLeft, *fluxRight;
+    grid *consLeft, *consRight;
+
+    array MinSpeedLeft,MaxSpeedLeft;
+    array MinSpeedRight,MaxSpeedRight;
+
+    riemannSolver(const grid &prim, const geometry &geom);
+    ~riemannSolver();
+
+    void solve(const grid &primLeft,
+               const grid &primRight,
+               const geometry &geomLeft,
+               const geometry &geomRight,
+               const int dir,
+               grid &flux,
+               int &numReads,
+               int &numWrites
+              );
+};
 
 #endif /* GRIM_PHYSICS_H_ */

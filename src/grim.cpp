@@ -32,34 +32,31 @@ double memoryBandwidth(const double numReads,
   }
 }
 
-void riemannSolver(fluidElement &elemFace,
-                   const grid &primLeft, const grid &primRight,
-                   const grid &fluxLeft, const grid &fluxRight,
-                   const grid &consLeft, const grid &consRight,
-                   const geometry &geomLeft, const geometry &geomRight,
-                   const int dir,
-                   grid &flux,
-                   int &numReads, int &numWrites
-                  );
-
 void bandwidthTest()
 {
-  array a = af::randu(params::N1, params::N2, params::N3);
-  array b = af::randu(params::N1, params::N2, params::N3);
-  array c = af::constant(0., params::N1, params::N2, params::N3);
-  a.eval(); b.eval(); c.eval();
-  af::sync();
+//  array a = af::randu(params::N1, params::N2, params::N3);
+//  array b = af::randu(params::N1, params::N2, params::N3);
+//  array c = af::constant(0., params::N1, params::N2, params::N3);
+//  a.eval(); b.eval(); c.eval();
+//  af::sync();
+
+  grid prim(params::N1, params::N2, params::N3,
+            params::numGhost, params::dim, 3,
+            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
+            DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+           );
 
   int numEvals = 10000;
   af::timer::start();
   for (int n=0; n < numEvals; n++)
   {
-    c = a + b;
-    c.eval();
+    prim.vars[2] = prim.vars[1] + prim.vars[0];
+    prim.vars[2].eval();
   }
   af::sync();
   double timeElapsed = af::timer::stop();
-  printf("Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
+  PetscPrintf(PETSC_COMM_WORLD, "Num evals = %d, time taken = %g secs, memory bandwidth = %g GB/sec\n",
          numEvals, timeElapsed, 
          memoryBandwidth(2, 1, numEvals, timeElapsed)
         );
@@ -94,52 +91,19 @@ int main(int argc, char **argv)
              );
   if (rank==0)
   {
-    //af::setDevice(1);
+    //af::setDevice(4);
     af::info();
   };
 
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
   {
-    grid indices(params::N1, params::N2, params::N3,
-                 params::numGhost, params::dim, 3,
-                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                 DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                );
     grid XCoords(params::N1, params::N2, params::N3,
                  params::numGhost, params::dim, 3,
                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                 );
-
-    indices.vars[directions::X1]
-      = af::range(indices.N1Total, /* number of total zones in X1 */
-                  indices.N2Total, /* number of total zones in X2 */
-                  indices.N3Total, /* number of total zones in X3 */
-                  1,                /* number of variables */
-                  directions::X1 ,  /* Vary indices in X1 direction */
-                  f64               /* Double precision */
-                 ) - indices.numGhostX1;
-
-    indices.vars[directions::X2]
-      = af::range(indices.N1Total, /* number of total zones in X1 */
-                  indices.N2Total, /* number of total zones in X2 */
-                  indices.N3Total, /* number of total zones in X3 */
-                  1,                /* number of variables */
-                  directions::X2 ,  /* Vary indices in X1 direction */
-                  f64               /* Double precision */
-                 ) - indices.numGhostX2;
-
-    indices.vars[directions::X3]
-      = af::range(indices.N1Total, /* number of total zones in X1 */
-                  indices.N2Total, /* number of total zones in X2 */
-                  indices.N3Total, /* number of total zones in X3 */
-                  1,                /* number of variables */
-                  directions::X3 ,  /* Vary indices in X1 direction */
-                  f64               /* Double precision */
-                 ) - indices.numGhostX3;
 
     grid prim(params::N1, params::N2, params::N3,
               params::numGhost, params::dim, vars::dof,
@@ -162,19 +126,6 @@ int main(int argc, char **argv)
                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                 );
 
-    grid primLeft(params::N1, params::N2, params::N3,
-                  params::numGhost, params::dim, vars::dof,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                 );
-
-    grid primRight(params::N1, params::N2, params::N3,
-                   params::numGhost, params::dim, vars::dof,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                  );
 
     grid cons(params::N1, params::N2, params::N3,
               params::numGhost, params::dim, vars::dof,
@@ -218,28 +169,14 @@ int main(int argc, char **argv)
                         DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                        );
 
-    grid fluxLeft(params::N1, params::N2, params::N3,
+    grid primLeft(params::N1, params::N2, params::N3,
                   params::numGhost, params::dim, vars::dof,
                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                  );
 
-    grid fluxRight(params::N1, params::N2, params::N3,
-                   params::numGhost, params::dim, vars::dof,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                   DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                  );
-
-    grid consLeft(params::N1, params::N2, params::N3,
-                  params::numGhost, params::dim, vars::dof,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                  DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                 );
-
-    grid consRight(params::N1, params::N2, params::N3,
+    grid primRight(params::N1, params::N2, params::N3,
                    params::numGhost, params::dim, vars::dof,
                    DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
                    DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
@@ -274,24 +211,26 @@ int main(int argc, char **argv)
                    DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
                   );
 
-    setXCoords(indices, locations::CENTER, XCoords);
+    setXCoords(locations::CENTER, XCoords);
     geometry geomCenter(XCoords);
     geomCenter.computeConnectionCoeffs();
 
     initialConditions(XCoords.vars, prim.vars);
     initialConditions(XCoords.vars, primOld.vars);
 
-    setXCoords(indices, locations::LEFT, XCoords);
+    setXCoords(locations::LEFT, XCoords);
     geometry geomLeft(XCoords);
 
-    setXCoords(indices, locations::RIGHT, XCoords);
+    setXCoords(locations::RIGHT, XCoords);
     geometry geomRight(XCoords);
 
-    setXCoords(indices, locations::TOP, XCoords);
+    setXCoords(locations::TOP, XCoords);
     geometry geomTop(XCoords);
 
-    setXCoords(indices, locations::BOTTOM, XCoords);
+    setXCoords(locations::BOTTOM, XCoords);
     geometry geomBottom(XCoords);
+
+    riemannSolver riemann(prim, geomCenter);
 
     int numEvals = 10;
     double timeElapsed = 0.;
@@ -339,15 +278,12 @@ int main(int argc, char **argv)
       reconstruction::reconstruct(prim, directions::X1, primLeft, primRight,
                                   numReads, numWrites
                                  );
-      riemannSolver(elemFace,
-                    primLeft, primRight,
-                    fluxLeft, fluxRight,
-                    consLeft, consRight,
+      riemann.solve(primLeft, primRight,
                     geomLeft, geomRight,
                     directions::X1,
                     fluxX1,
                     numReads, numWrites
-                  );
+                   );
       for (int var=0; var<vars::dof; var++)
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
@@ -476,10 +412,7 @@ int main(int argc, char **argv)
           af::timer::start();
           for (int n=0; n<numEvals; n++)
           {
-            riemannSolver(elemFace,
-                          primLeft, primRight,
-                          fluxLeft, fluxRight,
-                          consLeft, consRight,
+            riemann.solve(primLeft, primRight,
                           geomLeft, geomRight,
                           dir,
                           fluxX1,
@@ -494,11 +427,8 @@ int main(int argc, char **argv)
           af::timer::start();
           for (int n=0; n<numEvals; n++)
           {
-            riemannSolver(elemFace,
-                          primLeft, primRight,
-                          fluxLeft, fluxRight,
-                          consLeft, consRight,
-                          geomLeft, geomRight,
+            riemann.solve(primLeft, primRight,
+                          geomBottom, geomTop,
                           dir,
                           fluxX2,
                           numReads, numWrites
@@ -512,11 +442,8 @@ int main(int argc, char **argv)
           af::timer::start();
           for (int n=0; n<numEvals; n++)
           {
-            riemannSolver(elemFace,
-                          primLeft, primRight,
-                          fluxLeft, fluxRight,
-                          consLeft, consRight,
-                          geomLeft, geomRight,
+            riemann.solve(primLeft, primRight,
+                          geomCenter, geomCenter,
                           dir,
                           fluxX3,
                           numReads, numWrites
@@ -598,95 +525,6 @@ int main(int argc, char **argv)
 
   PetscFinalize();  
   return(0);
-}
-
-void riemannSolver(fluidElement &elemFace,
-                   const grid &primLeft,
-                   const grid &primRight,
-                   const grid &fluxLeft,
-                   const grid &fluxRight,
-                   const grid &consLeft,
-                   const grid &consRight,
-                   const geometry &geomLeft,
-                   const geometry &geomRight,
-                   const int dir,
-                   grid &flux,
-                   int &numReads,
-                   int &numWrites
-                  )
-{
-  int numReadsElemSet, numWritesElemSet;
-  int numReadsComputeFluxes, numWritesComputeFluxes;
-
-  elemFace.set(primLeft.vars, geomLeft, 
-               numReadsElemSet, numWritesElemSet
-              );
-  elemFace.computeFluxes(geomLeft, 1, fluxLeft.vars,
-                         numReadsComputeFluxes, 
-                         numWritesComputeFluxes
-                        );
-  elemFace.computeFluxes(geomLeft, 0, consLeft.vars,
-                         numReadsComputeFluxes, 
-                         numWritesComputeFluxes
-                        );
-
-  elemFace.set(primRight.vars, geomRight, 
-               numReadsElemSet, numWritesElemSet
-              );
-  elemFace.computeFluxes(geomRight, 1, fluxRight.vars,
-                         numReadsComputeFluxes, 
-                         numWritesComputeFluxes
-                        );
-  elemFace.computeFluxes(geomRight, 0, consRight.vars,
-                         numReadsComputeFluxes, 
-                         numWritesComputeFluxes
-                        );
-
-
-  numReads = 2*(numReadsElemSet + 2*numReadsComputeFluxes);
-  numWrites = 2*(numWritesElemSet + 2*numWritesComputeFluxes);
-
-  int shiftX1, shiftX2, shiftX3;
-  switch (dir)
-  {
-    case directions::X1:
-      shiftX1  = 1;
-      shiftX2  = 0;
-      shiftX3  = 0;
-      break;
-
-    case directions::X2:
-      shiftX1  = 0;
-      shiftX2  = 1;
-      shiftX3  = 0;
-      break;
-
-    case directions::X3:
-      shiftX1  = 0;
-      shiftX2  = 0;
-      shiftX3  = 1;
-      break;
-  }
-
-  for (int var=0; var<vars::dof; var++)
-  {
-    flux.vars[var] = 
-      af::shift(fluxLeft.vars[var], shiftX1, shiftX2, shiftX3)
-    - fluxRight.vars[var]
-    + consRight.vars[var] 
-    - af::shift(consLeft.vars[var], shiftX1, shiftX2, shiftX3);
-
-    flux.vars[var].eval();
-  }
-  /* Reads:
-   * -----
-   *  fluxLeft[var], fluxRight[var], consLeft[var], consRight[var] : 4*vars::dof
-   *
-   * Writes:
-   * ------
-   * flux[var] : vars::dof */
-  numReads  += 4*vars::dof;
-  numWrites +=  vars::dof;
 }
 
 void initialConditions(const array xCoords[3],

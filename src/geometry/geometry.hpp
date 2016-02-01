@@ -5,7 +5,7 @@
 #include "../grid/grid.hpp"
 #include <string>
 
-void setXCoords(const grid &indices, int location, grid &XCoords);
+void setXCoords(const int location, grid &XCoords);
 
 class geometry
 {
