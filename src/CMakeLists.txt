@@ -17,8 +17,8 @@ project(grim)
 # Options for icc:
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
 set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
@@ -27,7 +27,7 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 #set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
-set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
+set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
 
 # Configuration for Stampede
 #set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
@@ -108,7 +108,7 @@ add_subdirectory(geometry)
 add_subdirectory(physics)
 add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
-#add_subdirectory(timestepper)
+add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 #include(${PROBLEM_DIR}/CMakeLists.txt)
@@ -124,6 +124,7 @@ add_executable(grim grim.cpp grim.hpp params.hpp)
 #                      ${ArrayFire_LIBRARIES}
 #                     )
 target_link_libraries(grim grid geometry physics reconstruction
+                      timestepper
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

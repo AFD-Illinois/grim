@@ -229,12 +229,12 @@ void grid::communicate()
       {
         for (int var=0; var<numVars; var++)
         {
-	        /* Note on indices: Petsc use non-ghosted vectors for the global vector,
+	        /* Note on indices: Petsc uses non-ghosted vectors for the global vector,
 	        * but ghosted indices for the local vector! */
           const int globalindex = var + numVars*(i + N1Local*(j + N2Local*(k) ) );
-          const int localindex  = var + numVars*(i+numGhostX1 
-                                                   + N1Total*(j+numGhostX2
-                                                              + N2Total*(k+numGhostX3) 
+          const int localindex  = var + numVars*(i + numGhostX1 
+                                                   + N1Total*(j + numGhostX2
+                                                              + N2Total*(k + numGhostX3)
                                                              ) 
                                                 );
 
@@ -265,4 +265,6 @@ grid::~grid()
   VecDestroy(&localVec);
 
   DMDestroy(&dm);
+
+  delete domainX1, domainX2, domainX3;
 }

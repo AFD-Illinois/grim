@@ -13,14 +13,8 @@ inline int DELTA(int const &mu, int const &nu)
 
 class fluidElement
 {
-  private:
-    const std::vector<std::vector<int>> indicesToLoopOver 
-      = {{0},    {0, 1}, {0, 1}, {0, 2}, {0, 2}, {0, 3}, {0, 3}};
-    /*   CENTER, LEFT,   RIGHT,  TOP,    BOTTOM, FRONT,  BACK*/
-
-    array one;
   public:
-    int loc;
+    array one;
 
     /* fluidElement parameters */
     array tau, chi_emhd, nu_emhd;
@@ -62,37 +56,40 @@ class fluidElement
                        int &numReads,
                        int &numWrites
                       );                                
-//
-//    void computeMinMaxCharSpeeds(const geometry &geom,
-//			       const int dir,
-//			       array &MinSpeed,
-//				 array &MaxSpeed);
-//
-  void computeTimeDerivSources(const geometry &geom,
-				                       const fluidElement &elemOld,
-                          		 const fluidElement &elemNew,
-                           		 const double dt,
-                               array sources[vars::dof],
-                               int &numReads,
-                               int &numWrites
-				                      );
 
-  void computeImplicitSources(const geometry &geom,
-				                      array sources[vars::dof],
+    void computeMinMaxCharSpeeds(const geometry &geom,
+			                           const int dir,
+                    			       array &MinSpeed,
+                        				 array &MaxSpeed,
+                                 int &numReads,
+                                 int &numWrites
+                                );
+
+    void computeTimeDerivSources(const geometry &geom,
+		  		                       const fluidElement &elemOld,
+                            		 const fluidElement &elemNew,
+                             		 const double dt,
+                                 array sources[vars::dof],
+                                 int &numReads,
+                                 int &numWrites
+				                        );
+
+    void computeImplicitSources(const geometry &geom,
+	  			                      array sources[vars::dof],
+                                int &numReads,
+                                int &numWrites
+				                       );
+
+    void computeExplicitSources(const geometry &geom,
+                      		      array sources[vars::dof],
+                                int &numReads,
+                                int &numWrites
+                               );
+    void computeEMHDGradients(const geometry &geom,
+                              const double dX[3],
                               int &numReads,
                               int &numWrites
-				                     );
-
-  void computeExplicitSources(const geometry &geom,
-                    		      array sources[vars::dof],
-                              int &numReads,
-                              int &numWrites
-                             );
-  void computeEMHDGradients(const geometry &geom,
-                            const double dX[3],
-                            int &numReads,
-                            int &numWrites
-                           );                   
+                             );                   
 };
 
 class riemannSolver
@@ -103,8 +100,8 @@ class riemannSolver
     grid *fluxLeft, *fluxRight;
     grid *consLeft, *consRight;
 
-    array MinSpeedLeft,MaxSpeedLeft;
-    array MinSpeedRight,MaxSpeedRight;
+    array minSpeedLeft,  maxSpeedLeft;
+    array minSpeedRight, maxSpeedRight;
 
     riemannSolver(const grid &prim, const geometry &geom);
     ~riemannSolver();

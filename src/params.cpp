@@ -13,14 +13,14 @@ namespace params
   int N2 = 64;
   int N3 = 64;
 
-  int dim = 3;
+  int dim = 2;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double dt = .5/N1;
   double Time = 0.;
   double finalTime = 0.5;
-  int metric = metrics::MODIFIED_KERR_SCHILD;
+  int metric = metrics::MINKOWSKI;
   double hSlope = 0.3;
   double blackHoleSpin = 0.9375;
 
@@ -50,9 +50,10 @@ namespace params
 
   double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::WENO5;
+  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
-  int maxNonLinearIter = 10;
-  int maxLineSearchIters = 10;
+  int maxNonLinearIter = 3;
+  int maxLineSearchIters = 3;
 
   //Parameters controlling accuracy of nonlinear solver
   double nonlinearsolve_atol = 1.e-10;

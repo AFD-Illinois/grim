@@ -62,6 +62,14 @@ namespace reconstructionOptions
   };
 };
 
+namespace riemannSolvers
+{
+  enum
+  {
+    HLL, LOCAL_LAX_FRIEDRICH
+  };
+};
+
 namespace params
 {
   extern int N1;
@@ -104,6 +112,7 @@ namespace params
 
   extern double slopeLimTheta;
   extern int reconstruction;
+  extern int riemannSolver;
 
   extern int maxNonLinearIter;
   extern int maxLineSearchIters;

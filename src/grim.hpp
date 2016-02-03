@@ -1,12 +1,12 @@
 #ifndef GRIM_H_
 #define GRIM_H_
 
-//#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/yaml.h>
 #include "params.hpp"
 #include "grid/grid.hpp"
 #include "geometry/geometry.hpp"
 #include "physics/physics.hpp"
-//#include "timestepper/timestepper.hpp"
+#include "timestepper/timestepper.hpp"
 
 static const char help[] = 
     "GRIM -- General Relativistic Implicit Magnetohydrodynamics";
