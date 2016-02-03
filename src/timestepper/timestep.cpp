@@ -3,12 +3,12 @@
 void timeStepper::timeStep(int &numReads, int &numWrites)
 {
   /* First take a half step */
-  PetscPrintf(PETSC_COMM_WORLD, " ---Half step--- \n");
+  PetscPrintf(PETSC_COMM_WORLD, "  ---Half step--- \n");
 
   currentStep = timeStepperSwitches::HALF_STEP;
   primOld->communicate();
   /* Apply boundary conditions on primOld */
-//  setProblemSpecificBCs(*primOld);
+  setProblemSpecificBCs(XCoords->vars, primOld->vars);
 
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
@@ -59,16 +59,16 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     numReads  += 1;
     numWrites += 1;
   }
-//  halfStepDiagnostics();
+  halfStepDiagnostics(XCoords->vars, primHalfStep->vars);
   /* Half step complete */
 
   /* Now take the full step */
-  PetscPrintf(PETSC_COMM_WORLD, " ---Full step--- \n");
+  PetscPrintf(PETSC_COMM_WORLD, "  ---Full step--- \n");
 
   currentStep = timeStepperSwitches::FULL_STEP;
   primHalfStep->communicate();
   /* apply boundary conditions on primHalfStep */
-//  setProblemSpecificBCs(*primHalfStep);
+  setProblemSpecificBCs(XCoords->vars, primHalfStep->vars);
 
   elemHalfStep->set(primHalfStep->vars, *geomCenter,
                     numReadsElemSet, numWritesElemSet
@@ -103,10 +103,10 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     numReads  += 1;
     numWrites += 1;
   }
-//  fullStepDiagnostics();
-
   /* Compute diagnostics */
+  fullStepDiagnostics(XCoords->vars, primOld->vars);
 
+  time += dt;
   /* done */
 }
 

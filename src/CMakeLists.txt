@@ -26,7 +26,6 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 # Configuration for SAVIO
 set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/global/home/users/foucart/arrayfire-no-gl-3.2.1/")
 set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
 
 # Configuration for Stampede
@@ -111,20 +110,12 @@ add_subdirectory(reconstruction)
 add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
-#include(${PROBLEM_DIR}/CMakeLists.txt)
-#add_subdirectory(problem)
+add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-#target_link_libraries(grim grid geometry reconstruction physics 
-#                      timestepper problem
-#                      ${MATH_LIBRARIES} 
-#                      ${PETSC_LIBRARIES}
-#                      ${YAML_LIBRARIES}
-#                      ${ArrayFire_LIBRARIES}
-#                     )
 target_link_libraries(grim grid geometry physics reconstruction
-                      timestepper
+                      timestepper problem
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

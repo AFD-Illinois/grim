@@ -37,7 +37,7 @@ void timeStepper::solve(grid &primGuess)
 //      break;
 //    }
 
-    PetscPrintf(PETSC_COMM_WORLD, "|Residual| = %g\n", 
+    PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g\n", 
                 af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)))
                );
 

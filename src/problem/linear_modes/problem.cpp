@@ -13,78 +13,93 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   nu_emhd  = soundSpeed*soundSpeed*tau;
 }
 
-void timeStepper::initialConditions()
+void timeStepper::initialConditions(const array xCoords[3],
+                                    array prim[vars::dof]
+                                   )
 {
-  array cphi = af::cos(  k1*geom->xCoords[locations::CENTER][1]
-                  		 + k2*geom->xCoords[locations::CENTER][2]
+
+  array cphi = af::cos(  k1*xCoords[directions::X1]
+                  		 + k2*xCoords[directions::X2]
                       );
 
-  array sphi = af::sin(  k1*geom->xCoords[locations::CENTER][1]
-	                  	 + k2*geom->xCoords[locations::CENTER][2]
+  array sphi = af::sin(  k1*xCoords[directions::X1]
+                  		 + k2*xCoords[directions::X2]
                       );
 
   /* Initial conditions */
 
   //Alfven Wave
-  /*ts.primOld->vars[vars::RHO] = 1.;
-  ts.primOld->vars[vars::U]   = 2.;
-  ts.primOld->vars[vars::U1]  = 0.;
-  ts.primOld->vars[vars::U2]  = Aw*0.462905090215*cphi;
-  ts.primOld->vars[vars::U3]  = 0.;
-  ts.primOld->vars[vars::B1]  = 0.01;
-  ts.primOld->vars[vars::B2]  = Aw*0.886407850514*cphi;
-  ts.primOld->vars[vars::B3]  = 0.;*/
+  /*prim[vars::RHO] = 1.;
+  prim[vars::U]   = 2.;
+  prim[vars::U1]  = 0.;
+  prim[vars::U2]  = Aw*0.462905090215*cphi;
+  prim[vars::U3]  = 0.;
+  prim[vars::B1]  = 0.01;
+  prim[vars::B2]  = Aw*0.886407850514*cphi;
+  prim[vars::B3]  = 0.;*/
 
   //Sound wave
-  /*ts.primOld->vars[vars::RHO] = 1.+Aw*0.345991032308*cphi;
-  ts.primOld->vars[vars::U]   = 2.+Aw*0.922642752822*cphi;
-  ts.primOld->vars[vars::U1]  = 0.-Aw*0.170354208129*cphi; 
-  ts.primOld->vars[vars::U2]  = 0.; 
-  ts.primOld->vars[vars::U3]  = 0.; 
-  ts.primOld->vars[vars::B1]  = 0.01; 
-  ts.primOld->vars[vars::B2]  = 0.;
-  ts.primOld->vars[vars::B3]  = 0.;*/
+  /*prim[vars::RHO] = 1.+Aw*0.345991032308*cphi;
+  prim[vars::U]   = 2.+Aw*0.922642752822*cphi;
+  prim[vars::U1]  = 0.-Aw*0.170354208129*cphi; 
+  prim[vars::U2]  = 0.; 
+  prim[vars::U3]  = 0.; 
+  prim[vars::B1]  = 0.01; 
+  prim[vars::B2]  = 0.;
+  prim[vars::B3]  = 0.;*/
 
   //Full EMHD mode (from grim2D)
-  primOld->vars[vars::RHO] = 1.;
-  primOld->vars[vars::U]   = 2.;
-  primOld->vars[vars::U1]  = 0.;
-  primOld->vars[vars::U2]  = 0.; 
-  primOld->vars[vars::U3]  = 0.; 
-  primOld->vars[vars::B1]  = 0.1; 
-  primOld->vars[vars::B2]  = 0.3;
-  primOld->vars[vars::B3]  = 0.;
-  primOld->vars[vars::Q]  = 0.;
-  primOld->vars[vars::DP]  = 0.;
-  primOld->vars[vars::RHO] += Aw*cphi*(-0.518522524082246)
-    +Aw*sphi*0.1792647678001878;
-  primOld->vars[vars::U] += Aw*cphi*0.5516170736393813;
-  primOld->vars[vars::U1]+= Aw*cphi*0.008463122479547856
-    +Aw*sphi*(-0.011862022608466367);
-  primOld->vars[vars::U2]+= Aw*cphi*(-0.16175466371870734)
-    +Aw*sphi*(0.034828080823603294);
-  primOld->vars[vars::B1]+= Aw*cphi*(-0.05973794979640743)
-    +Aw*sphi*0.03351707506150924;
-  primOld->vars[vars::B2]+=Aw*cphi*0.02986897489820372
-    -Aw*sphi*0.016758537530754618;
-  primOld->vars[vars::Q]+=Aw*cphi*0.5233486841539436
-    -Aw*sphi*0.04767672501939603;
-  primOld->vars[vars::DP]+=Aw*cphi*0.2909106062057657
-    -Aw*sphi*0.02159452055336572;
+  prim[vars::RHO] = 1.;
+  prim[vars::U]   = 2.;
+  prim[vars::U1]  = 0.;
+  prim[vars::U2]  = 0.; 
+  prim[vars::U3]  = 0.; 
+  prim[vars::B1]  = 0.1; 
+  prim[vars::B2]  = 0.3;
+  prim[vars::B3]  = 0.;
+  prim[vars::Q]   = 0.;
+  prim[vars::DP]  = 0.;
 
-  for (int var=0; var<vars::dof; var++)
+  prim[vars::RHO] += Aw*cphi*(-0.518522524082246)
+                    +Aw*sphi*0.1792647678001878;
+
+  prim[vars::U]   += Aw*cphi*0.5516170736393813;
+
+  prim[vars::U1]  += Aw*cphi*0.008463122479547856
+                    +Aw*sphi*(-0.011862022608466367);
+
+  prim[vars::U2]  += Aw*cphi*(-0.16175466371870734)
+                    +Aw*sphi*(0.034828080823603294);
+
+  prim[vars::B1]  += Aw*cphi*(-0.05973794979640743)
+                    +Aw*sphi*0.03351707506150924;
+
+  prim[vars::B2]  += Aw*cphi*0.02986897489820372
+                    -Aw*sphi*0.016758537530754618;
+
+  prim[vars::Q]   += Aw*cphi*0.5233486841539436
+                    -Aw*sphi*0.04767672501939603;
+
+  prim[vars::DP]  += Aw*cphi*0.2909106062057657
+                    -Aw*sphi*0.02159452055336572;
+
+  for (int var=0; var < numVars; var++)
   {
-    primOld->vars[var].eval();
+    prim[var].eval();
   }
   af::sync();
 }
 
-void timeStepper::halfStepDiagnostics()
+void timeStepper::halfStepDiagnostics(const array xCoords[3],
+                                      array prim[vars::dof]
+                                     )
 {
 
 }
 
-void timeStepper::fullStepDiagnostics()
+void timeStepper::fullStepDiagnostics(const array xCoords[3],
+                                      array prim[vars::dof]
+                                     )
 {
   /* Compute the errors for the different modes */
 
@@ -103,45 +118,39 @@ void timeStepper::fullStepDiagnostics()
 	- rhoan)));*/
 
 	//EMHD Sound wave
-	array cphi = af::cos(  k1*geom->xCoords[locations::CENTER][1]
-      	      	       + k2*geom->xCoords[locations::CENTER][2]
-		                   + Omega*params::Time
+	array cphi = af::cos(  k1*xCoords[directions::X1]
+      	      	       + k2*xCoords[directions::X2]
+		                   + Omega*time
                       );
 
-	array sphi = af::sin(  k1*geom->xCoords[locations::CENTER][1]
-		                   + k2*geom->xCoords[locations::CENTER][2]
-		                   + Omega*params::Time
+	array sphi = af::sin(  k1*xCoords[directions::X1]
+		                   + k2*xCoords[directions::X2]
+		                   + Omega*time
                       );
 
-	array rhoan = 1. + (  Aw*cphi*(-0.518522524082246)
-			                + Aw*sphi*0.1792647678001878
-                     )*exp(Gamma*params::Time);
+	array rhoAnalytic = 1. + (  Aw*cphi*(-0.518522524082246)
+			                      + Aw*sphi*0.1792647678001878
+                           )*exp(Gamma*time);
 
-	array psian = 0. + ( Aw*cphi*0.2909106062057657
-			                -Aw*sphi*0.02159452055336572
-                     )*exp(Gamma*params::Time);
+	array dPAnalytic = 0. + ( Aw*cphi*0.2909106062057657
+			                     -Aw*sphi*0.02159452055336572
+                          )*exp(Gamma*time);
 
-	double error = af::norm( af::flat((  primOld->vars[vars::RHO]
-	                                   - rhoan
-                                    )
-                                   )
-                         );
+	double errorRho = af::norm(af::flat(prim[vars::RHO] - rhoAnalytic));
 
-	double error2 = af::norm(af::flat((  primOld->vars[vars::DP]
-		                        			   - psian
-                                    )
-                                   )
-                          );
+	double errordP  = af::norm(af::flat(prim[vars::DP]  - dPAnalytic));
 
-	error = error/params::N1/params::N2/params::N3;
-	error2 = error2/params::N1/params::N2/params::N3;
-	printf("Time = %e; dt = %e; Error = %e; Error2 = %e\n",
-         params::Time,params::dt,error,error2
-        );
-	//af_print(ts.primOld->vars[vars::RHO](span,0,0)-rhoan(span,0,0),12);
+	errorRho = errorRho/N1/N2/N3;
+	errordP  = errordP/N1/N2/N3;
+	PetscPrintf(PETSC_COMM_WORLD, 
+              "Time = %e; dt = %e; Error in rho = %e; Error in dP = %e\n",
+              time, dt, errorRho, errordP
+              );
 }
 
-void timeStepper::setProblemSpecificBCs()
+void timeStepper::setProblemSpecificBCs(const array xCoords[3],
+                                        array prim[vars::dof]
+                                       )
 {
 
 };

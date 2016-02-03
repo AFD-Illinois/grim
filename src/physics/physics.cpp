@@ -303,13 +303,6 @@ void fluidElement::set(const array prim[vars::dof],
   }
 }
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
-{
-  tau = one;
-  chi_emhd = soundSpeed*soundSpeed*tau;
-  nu_emhd  = soundSpeed*soundSpeed*tau;
-}
-
 void fluidElement::computeFluxes(const geometry &geom, 
                                  const int dir,
                                  array flux[vars::dof],

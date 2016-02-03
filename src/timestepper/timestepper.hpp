@@ -39,6 +39,10 @@ class timeStepper
   void batchLinearSolve(const array &A, const array &b, array &x);
 
   public:
+    double dt, time;
+    int N1, N2, N3;
+    int numVars;
+
     grid *XCoords;
     grid *prim, *primHalfStep, *primOld;
     grid *cons, *consOld;
@@ -66,17 +70,19 @@ class timeStepper
 
     timeStepper(const int N1, const int N2, const int N3,
                 const int numGhost, const int dim, 
-                const int numVars
+                const int numVars, 
+                const double time,
+                const double dt
                );
     ~timeStepper();
 
     void timeStep(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
-    void initialConditions();
-    void halfStepDiagnostics();
-    void fullStepDiagnostics();
-    void setProblemSpecificBCs();
+    void initialConditions(const array xCoords[3], array prim[vars::dof]);
+    void halfStepDiagnostics(const array xCoords[3], array prim[vars::dof]);
+    void fullStepDiagnostics(const array xCoords[3], array prim[vars::dof]);
+    void setProblemSpecificBCs(const array xCoords[3], array prim[vars::dof]);
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

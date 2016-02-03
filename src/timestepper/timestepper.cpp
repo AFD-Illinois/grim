@@ -2,9 +2,18 @@
 
 timeStepper::timeStepper(const int N1, const int N2, const int N3,
                          const int numGhost, const int dim, 
-                         const int numVars
+                         const int numVars, 
+                         const double time,
+                         const double dt
                         )
 {
+  this->time = time;
+  this->dt = dt;
+  this->N1 = N1;
+  this->N2 = N2;
+  this->N3 = N3;
+  this->numVars = numVars;
+
   XCoords = new grid(N1, N2, N3,
                      numGhost, dim, 3,
                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
@@ -132,6 +141,7 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   setXCoords(locations::CENTER, *XCoords);
   geomCenter  = new geometry(*XCoords);
   geomCenter->computeConnectionCoeffs();
+  /* XCoords set to locations::CENTER */
 
 
   int numReads, numWrites;
@@ -212,7 +222,7 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
   xHostPtr = new double [numVars*N1Total*N2Total*N3Total];
 
-  //initialConditions();
+  initialConditions(XCoords->vars, primOld->vars);
 }
 
 timeStepper::~timeStepper()
