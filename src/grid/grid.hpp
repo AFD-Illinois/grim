@@ -17,10 +17,14 @@ class grid
     Vec globalVec, localVec;
 
     int numGhost, numVars, dim;
+         
+    int boundaryLeft,  boundaryRight;
+    int boundaryTop,   boundaryBottom;
+    int boundaryFront, boundaryBack;
 
-    DMBoundaryType boundaryLeft,  boundaryRight;
-    DMBoundaryType boundaryTop,   boundaryBottom;
-    DMBoundaryType boundaryFront, boundaryBack;
+    DMBoundaryType DMBoundaryLeft,  DMBoundaryRight;
+    DMBoundaryType DMBoundaryTop,   DMBoundaryBottom;
+    DMBoundaryType DMBoundaryFront, DMBoundaryBack;
 
     int iLocalStart, jLocalStart, kLocalStart;
     int iLocalEnd,   jLocalEnd,   kLocalEnd;
@@ -40,12 +44,9 @@ class grid
 
     grid(int N1, int N2, int N3, 
          int numGhost, int dim, int numVars,
-         DMBoundaryType boundaryLeft,
-         DMBoundaryType boundaryRight,
-         DMBoundaryType boundaryTop,
-         DMBoundaryType boundaryBottom,
-         DMBoundaryType boundaryFront,
-         DMBoundaryType boundaryBack
+         int boundaryLeft,  int boundaryRight,
+         int boundaryTop,   int boundaryBottom,
+         int boundaryFront, int boundaryBack
         );
     ~grid();
 

@@ -2,12 +2,9 @@
 
 grid::grid(int N1, int N2, int N3, 
            int numGhost, int dim, int numVars,
-           DMBoundaryType boundaryLeft,
-           DMBoundaryType boundaryRight,
-           DMBoundaryType boundaryTop,
-           DMBoundaryType boundaryBottom,
-           DMBoundaryType boundaryFront,
-           DMBoundaryType boundaryBack
+           int boundaryLeft,  int boundaryRight,
+           int boundaryTop,   int boundaryBottom,
+           int boundaryFront, int boundaryBack
           )
 {
   this->numVars  = numVars;
@@ -26,32 +23,32 @@ grid::grid(int N1, int N2, int N3,
 
   /* Implementations for MIRROR, OUTFLOW in boundary.cpp and DIRICHLET in
    * problem.cpp */
-  boundaryLeft  = DM_BOUNDARY_GHOSTED; boundaryRight  = DM_BOUNDARY_GHOSTED;
-  boundaryTop   = DM_BOUNDARY_GHOSTED; boundaryBottom = DM_BOUNDARY_GHOSTED;
-  boundaryFront = DM_BOUNDARY_GHOSTED; boundaryBack   = DM_BOUNDARY_GHOSTED;
+  DMBoundaryLeft  = DM_BOUNDARY_GHOSTED; DMBoundaryRight  = DM_BOUNDARY_GHOSTED;
+  DMBoundaryTop   = DM_BOUNDARY_GHOSTED; DMBoundaryBottom = DM_BOUNDARY_GHOSTED;
+  DMBoundaryFront = DM_BOUNDARY_GHOSTED; DMBoundaryBack   = DM_BOUNDARY_GHOSTED;
 
   if (   boundaryLeft  == boundaries::PERIODIC 
       || boundaryRight == boundaries::PERIODIC
      )
   {
-    boundaryLeft  = DM_BOUNDARY_PERIODIC;
-    boundaryRight = DM_BOUNDARY_PERIODIC;
+    DMBoundaryLeft  = DM_BOUNDARY_PERIODIC;
+    DMBoundaryRight = DM_BOUNDARY_PERIODIC;
   }
 
   if (   boundaryTop    == boundaries::PERIODIC 
       || boundaryBottom == boundaries::PERIODIC
      )
   {
-    boundaryTop    = DM_BOUNDARY_PERIODIC;
-    boundaryBottom = DM_BOUNDARY_PERIODIC;
+    DMBoundaryTop    = DM_BOUNDARY_PERIODIC;
+    DMBoundaryBottom = DM_BOUNDARY_PERIODIC;
   }
 
   if (   boundaryFront == boundaries::PERIODIC 
       || boundaryBack  == boundaries::PERIODIC
      )
   {
-    boundaryFront = DM_BOUNDARY_PERIODIC;
-    boundaryBack  = DM_BOUNDARY_PERIODIC;
+    DMBoundaryFront = DM_BOUNDARY_PERIODIC;
+    DMBoundaryBack  = DM_BOUNDARY_PERIODIC;
   }
 
   switch (params::dim)
@@ -69,7 +66,7 @@ grid::grid(int N1, int N2, int N3,
       domainX2 = new af::seq(span);
       domainX3 = new af::seq(span);
 
-      DMDACreate1d(PETSC_COMM_WORLD, boundaryLeft, 
+      DMDACreate1d(PETSC_COMM_WORLD, DMBoundaryLeft, 
                    N1, numVars, numGhostX1, NULL,
                    &dm
                   );
@@ -89,7 +86,7 @@ grid::grid(int N1, int N2, int N3,
       domainX3 = new af::seq(span);
 
       DMDACreate2d(PETSC_COMM_WORLD, 
-                   boundaryLeft, boundaryBottom,
+                   DMBoundaryLeft, DMBoundaryBottom,
                    DMDA_STENCIL_BOX,
                    N1, N2,
                    PETSC_DECIDE, PETSC_DECIDE,
@@ -114,7 +111,7 @@ grid::grid(int N1, int N2, int N3,
       domainX3 = new af::seq(numGhost, af::end - numGhost - 1);
 
       DMDACreate3d(PETSC_COMM_WORLD, 
-                   boundaryLeft, boundaryBottom, boundaryBack,
+                   DMBoundaryLeft, DMBoundaryBottom, DMBoundaryBack,
                    DMDA_STENCIL_BOX,
                    N1, N2, N3,
                    PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,

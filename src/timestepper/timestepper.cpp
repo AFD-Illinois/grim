@@ -5,9 +5,9 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
                          const int numVars, 
                          const double time,
                          const double dt,
-                         DMBoundaryType boundaryLeft,  DMBoundaryType boundaryRight,
-                         DMBoundaryType boundaryTop,   DMBoundaryType boundaryBottom,
-                         DMBoundaryType boundaryFront, DMBoundaryType boundaryBack
+                         int boundaryLeft,  int boundaryRight,
+                         int boundaryTop,   int boundaryBottom,
+                         int boundaryFront, int boundaryBack
                         )
 {
   this->time = time;
