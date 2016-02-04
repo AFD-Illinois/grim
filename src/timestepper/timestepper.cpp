@@ -4,7 +4,10 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
                          const int numGhost, const int dim, 
                          const int numVars, 
                          const double time,
-                         const double dt
+                         const double dt,
+                         DMBoundaryType boundaryLeft,  DMBoundaryType boundaryRight,
+                         DMBoundaryType boundaryTop,   DMBoundaryType boundaryBottom,
+                         DMBoundaryType boundaryFront, DMBoundaryType boundaryBack
                         )
 {
   this->time = time;
@@ -16,114 +19,114 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
 
   XCoords = new grid(N1, N2, N3,
                      numGhost, dim, 3,
-                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                     DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                     boundaryLeft,  boundaryRight,
+                     boundaryTop,   boundaryBottom,
+                     boundaryFront, boundaryBack
                     );
 
   prim         = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
                          );
 
   primHalfStep = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
                          );
 
   primOld      = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
                          );
 
   cons         = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
                          );
 
   consOld      = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                          DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
                          );
 
   sourcesExplicit    = new grid(N1, N2, N3,
                                 numGhost, dim, numVars,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                                boundaryLeft,  boundaryRight,
+                                boundaryTop,   boundaryBottom,
+                                boundaryFront, boundaryBack
                                );
 
   sourcesImplicit    = new grid(N1, N2, N3,
                                 numGhost, dim, numVars,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                                boundaryLeft,  boundaryRight,
+                                boundaryTop,   boundaryBottom,
+                                boundaryFront, boundaryBack
                                );
 
   sourcesImplicitOld = new grid(N1, N2, N3,
                                 numGhost, dim, numVars,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                                boundaryLeft,  boundaryRight,
+                                boundaryTop,   boundaryBottom,
+                                boundaryFront, boundaryBack
                                );
 
   sourcesTimeDer     = new grid(N1, N2, N3,
                                 numGhost, dim, numVars,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                                boundaryLeft,  boundaryRight,
+                                boundaryTop,   boundaryBottom,
+                                boundaryFront, boundaryBack
                                );
 
   primLeft  = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   primRight = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   fluxesX1  = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   fluxesX2  = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   fluxesX3  = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   divFluxes = new grid(N1, N2, N3,
                        numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       boundaryLeft,  boundaryRight,
+                       boundaryTop,   boundaryBottom,
+                       boundaryFront, boundaryBack
                       );
 
   setXCoords(locations::LEFT,   *XCoords);
@@ -160,30 +163,30 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   /* Data structures needed for the nonlinear solver */
   residual        = new grid(N1, N2, N3,
                              numGhost, dim, numVars,
-                             DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                             DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                             DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                             boundaryLeft,  boundaryRight,
+                             boundaryTop,   boundaryBottom,
+                             boundaryFront, boundaryBack
                             );
 
   residualPlusEps  = new grid(N1, N2, N3,
                               numGhost, dim, numVars,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                              boundaryLeft,  boundaryRight,
+                              boundaryTop,   boundaryBottom,
+                              boundaryFront, boundaryBack
                              );
 
   primGuessPlusEps = new grid(N1, N2, N3,
                               numGhost, dim, numVars,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                              DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                              boundaryLeft,  boundaryRight,
+                              boundaryTop,   boundaryBottom,
+                              boundaryFront, boundaryBack
                              );
 
   primGuessLineSearchTrial = new grid(N1, N2, N3,
                                       numGhost, dim, numVars,
-                                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                                      boundaryLeft,  boundaryRight,
+                                      boundaryTop,   boundaryBottom,
+                                      boundaryFront, boundaryBack
                                      );
 
   /* The grid data structure arranges data in Struct of Arrays format. Need to

@@ -93,7 +93,10 @@ int main(int argc, char **argv)
   {
     timeStepper ts(params::N1, params::N2, params::N3,
                    params::numGhost, params::dim,
-                   vars::dof, 0, params::dt
+                   vars::dof, params::Time, params::dt,
+                   DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
+                   DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC,
+                   DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC
                   );
 
     int numReads, numWrites;

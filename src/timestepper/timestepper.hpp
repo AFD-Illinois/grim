@@ -72,7 +72,10 @@ class timeStepper
                 const int numGhost, const int dim, 
                 const int numVars, 
                 const double time,
-                const double dt
+                const double dt,
+                DMBoundaryType boundaryLeft,  DMBoundaryType boundaryRight,
+                DMBoundaryType boundaryTop,   DMBoundaryType boundaryBottom,
+                DMBoundaryType boundaryFront, DMBoundaryType boundaryBack
                );
     ~timeStepper();
 
