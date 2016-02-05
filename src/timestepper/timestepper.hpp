@@ -44,7 +44,7 @@ class timeStepper
     int numVars;
 
     grid *XCoords;
-    grid *prim, *primHalfStep, *primOld;
+    grid *prim, *primHalfStep, *primOld, *primIC;
     grid *cons, *consOld;
     grid *sourcesExplicit;
     grid *sourcesImplicit;
@@ -82,10 +82,10 @@ class timeStepper
     void timeStep(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
-    void initialConditions(const array xCoords[3], array prim[vars::dof]);
-    void halfStepDiagnostics(const array xCoords[3], array prim[vars::dof]);
-    void fullStepDiagnostics(const array xCoords[3], array prim[vars::dof]);
-    void setProblemSpecificBCs(const array xCoords[3], array prim[vars::dof]);
+    void initialConditions();
+    void halfStepDiagnostics();
+    void fullStepDiagnostics();
+    void setProblemSpecificBCs();
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

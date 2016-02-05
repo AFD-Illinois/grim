@@ -31,6 +31,13 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
                           boundaryFront, boundaryBack
                          );
 
+  primIC         = new grid(N1, N2, N3,
+                          numGhost, dim, numVars,
+                          boundaryLeft,  boundaryRight,
+                          boundaryTop,   boundaryBottom,
+                          boundaryFront, boundaryBack
+                         );
+
   primHalfStep = new grid(N1, N2, N3,
                           numGhost, dim, numVars,
                           boundaryLeft,  boundaryRight,
@@ -225,7 +232,7 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
   xHostPtr = new double [numVars*N1Total*N2Total*N3Total];
 
-  initialConditions(XCoords->vars, primOld->vars);
+  initialConditions();
 }
 
 timeStepper::~timeStepper()

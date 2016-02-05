@@ -1,5 +1,5 @@
 #include "grim.hpp"
-#include "params.cpp"
+#include "params.hpp"
 
 /* Returns memory bandwidth in GB/sec */
 double memoryBandwidth(const double numReads,

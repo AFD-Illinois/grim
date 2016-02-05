@@ -12,7 +12,6 @@ class geometry
   private:
     array zero;
     array XCoords[3];
-    void XCoordsToxCoords(const array XCoords[NDIM], array xCoords[NDIM]);
     void setgCovInXCoords(const array XCoords[NDIM], array gCov[NDIM][NDIM]);
     void setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
                                 array &gDet, array gCon[NDIM][NDIM]
@@ -36,6 +35,7 @@ class geometry
     ~geometry();
 
     void computeConnectionCoeffs();
+    void XCoordsToxCoords(const array XCoords[3], array xCoords[3]);
 };
 
 #endif /* GRIM_GEOMETRY_H_ */
