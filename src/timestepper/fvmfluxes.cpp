@@ -1,6 +1,6 @@
 #include "timestepper.hpp"
 
-void timeStepper::computeDivOfFluxes(const grid &prim,
+void timeStepper::computeDivOfFluxes(const grid &primFlux,
                                      int &numReads,
                                      int &numWrites
                                     )
@@ -14,7 +14,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
     /* Reconstruction gives, at a point of index i:
      * primLeft : right-biased stencil reconstructs on face i-/1.2
      * primRight: left-biased stencil reconstructs on face i+1/2 */
-      reconstruction::reconstruct(prim, directions::X1,
+      reconstruction::reconstruct(primFlux, directions::X1,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -30,7 +30,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numReads  += numReadsRiemann;
       numWrites += numWritesRiemann;
 
-      for (int var=0; var < prim.numVars; var++)
+      for (int var=0; var < primFlux.numVars; var++)
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     
@@ -47,7 +47,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
     case 2:
 
       /* directions:: X1 */
-      reconstruction::reconstruct(prim, directions::X1,
+      reconstruction::reconstruct(primFlux, directions::X1,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -64,7 +64,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numWrites += numWritesRiemann;
 
       /* directions:: X2 */
-      reconstruction::reconstruct(prim, directions::X2,
+      reconstruction::reconstruct(primFlux, directions::X2,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -80,7 +80,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numReads  += numReadsRiemann;
       numWrites += numWritesRiemann;
 
-      for (int var=0; var < prim.numVars; var++)
+      for (int var=0; var < primFlux.numVars; var++)
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     
@@ -98,7 +98,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
 
     case 3:
       /* directions:: X1 */
-      reconstruction::reconstruct(prim, directions::X1,
+      reconstruction::reconstruct(primFlux, directions::X1,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -115,7 +115,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numWrites += numWritesRiemann;
 
       /* directions:: X2 */
-      reconstruction::reconstruct(prim, directions::X2,
+      reconstruction::reconstruct(primFlux, directions::X2,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -132,7 +132,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numWrites += numWritesRiemann;
 
       /* directions:: X3 */
-      reconstruction::reconstruct(prim, directions::X3,
+      reconstruction::reconstruct(primFlux, directions::X3,
                                   *primLeft, *primRight,
                                   numReadsReconstruction,
                                   numWritesReconstruction
@@ -148,7 +148,7 @@ void timeStepper::computeDivOfFluxes(const grid &prim,
       numReads  += numReadsRiemann;
       numWrites += numWritesRiemann;
 
-      for (int var=0; var < prim.numVars; var++)
+      for (int var=0; var < primFlux.numVars; var++)
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     

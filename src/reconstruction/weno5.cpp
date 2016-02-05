@@ -15,24 +15,24 @@ array reconstruction::slopeWENO5(const int dir,const double dX, const array& in,
   switch (dir)
   {
     case directions::X1:
-      x0Shift = -2; y0Shift = 0;  z0Shift = 0;
-      x1Shift = -1; y1Shift = 0;  z1Shift = 0;
-      x3Shift =  1; y3Shift = 0;  z3Shift = 0;
-      x4Shift =  2; y4Shift = 0;  z4Shift = 0;
+      x0Shift = 2; y0Shift = 0;  z0Shift = 0;
+      x1Shift = 1; y1Shift = 0;  z1Shift = 0;
+      x3Shift = -1; y3Shift = 0;  z3Shift = 0;
+      x4Shift = -2; y4Shift = 0;  z4Shift = 0;
     	break;
 
     case directions::X2:
-      x0Shift =  0; y0Shift = -2; z0Shift = 0;
-      x1Shift =  0; y1Shift = -1; z1Shift = 0;
-      x3Shift =  0; y3Shift =  1; z3Shift = 0;
-      x4Shift =  0; y4Shift =  2; z4Shift = 0;
+      x0Shift =  0; y0Shift = 2; z0Shift = 0;
+      x1Shift =  0; y1Shift = 1; z1Shift = 0;
+      x3Shift =  0; y3Shift = -1; z3Shift = 0;
+      x4Shift =  0; y4Shift = -2; z4Shift = 0;
     	break;
 
     case directions::X3:
-      x0Shift =  0; y0Shift =  0; z0Shift = -2;
-      x1Shift =  0; y1Shift =  0; z1Shift = -1;
-      x3Shift =  0; y3Shift =  0; z3Shift =  1;
-      x4Shift =  0; y4Shift =  0; z4Shift =  2;
+      x0Shift =  0; y0Shift =  0; z0Shift = 2;
+      x1Shift =  0; y1Shift =  0; z1Shift = 1;
+      x3Shift =  0; y3Shift =  0; z3Shift = -1;
+      x4Shift =  0; y4Shift =  0; z4Shift = -2;
     	break;
   }
 
@@ -127,24 +127,24 @@ void reconstruction::reconstructWENO5(const grid &prim,
   switch (dir)
   {
     case directions::X1:
-      x0Shift = -2; y0Shift = 0;  z0Shift = 0;
-      x1Shift = -1; y1Shift = 0;  z1Shift = 0;
-      x3Shift =  1; y3Shift = 0;  z3Shift = 0;
-      x4Shift =  2; y4Shift = 0;  z4Shift = 0;
+      x0Shift = 2; y0Shift = 0;  z0Shift = 0;
+      x1Shift = 1; y1Shift = 0;  z1Shift = 0;
+      x3Shift = -1; y3Shift = 0;  z3Shift = 0;
+      x4Shift = -2; y4Shift = 0;  z4Shift = 0;
     	break;
 
     case directions::X2:
-      x0Shift =  0; y0Shift = -2; z0Shift = 0;
-      x1Shift =  0; y1Shift = -1; z1Shift = 0;
-      x3Shift =  0; y3Shift =  1; z3Shift = 0;
-      x4Shift =  0; y4Shift =  2; z4Shift = 0;
+      x0Shift =  0; y0Shift = 2; z0Shift = 0;
+      x1Shift =  0; y1Shift = 1; z1Shift = 0;
+      x3Shift =  0; y3Shift = -1; z3Shift = 0;
+      x4Shift =  0; y4Shift = -2; z4Shift = 0;
     	break;
 
     case directions::X3:
-      x0Shift =  0; y0Shift =  0; z0Shift = -2;
-      x1Shift =  0; y1Shift =  0; z1Shift = -1;
-      x3Shift =  0; y3Shift =  0; z3Shift =  1;
-      x4Shift =  0; y4Shift =  0; z4Shift =  2;
+      x0Shift =  0; y0Shift =  0; z0Shift = 2;
+      x1Shift =  0; y1Shift =  0; z1Shift = 1;
+      x3Shift =  0; y3Shift =  0; z3Shift = -1;
+      x4Shift =  0; y4Shift =  0; z4Shift = -2;
     	break;
   }
   

@@ -1,7 +1,7 @@
 #include "timestepper.hpp"
 
-void timeStepper::computeResidual(const grid &prim,
-                                  grid &residual, 
+void timeStepper::computeResidual(const grid &primGuess,
+                                  grid &residualGuess, 
                                   const bool computeExplicitTerms,
                                   int &numReads,
                                   int &numWrites
@@ -10,7 +10,7 @@ void timeStepper::computeResidual(const grid &prim,
   numReads = 0; numWrites = 0;
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
-  elem->set(prim.vars, *geomCenter, numReadsElemSet, numWritesElemSet);
+  elem->set(primGuess.vars, *geomCenter, numReadsElemSet, numWritesElemSet);
   elem->computeFluxes(*geomCenter, 0, cons->vars, 
                       numReadsComputeFluxes, numWritesComputeFluxes
                      );
@@ -57,9 +57,9 @@ void timeStepper::computeResidual(const grid &prim,
     numReads  += 2*numReadsImplicitSources  + numReadsTimeDerivSources;
     numWrites += 2*numWritesImplicitSources + numWritesTimeDerivSources; 
 
-    for (int var=0; var<residual.numVars; var++)
+    for (int var=0; var<residualGuess.numVars; var++)
     {
-      residual.vars[var] = 
+      residualGuess.vars[var] = 
         (cons->vars[var] - consOld->vars[var])/(dt/2.)
   	  + divFluxes->vars[var]
       + sourcesExplicit->vars[var]
@@ -74,15 +74,15 @@ void timeStepper::computeResidual(const grid &prim,
      *
      * Writes:
      * ------
-     * residual[var] : numVars */
-    numReads  += 7*residual.numVars;
+     * residualGuess[var] : numVars */
+    numReads  += 7*residualGuess.numVars;
 
-    /* Normalization of the residual */
+    /* Normalization of the residualGuess */
     if (params::conduction)
     {
 	    if(params::highOrderTermsConduction)
       {
-	      residual.vars[vars::Q] *=
+	      residualGuess.vars[vars::Q] *=
           elemOld->temperature 
         * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
 
@@ -90,7 +90,7 @@ void timeStepper::computeResidual(const grid &prim,
       }
 	    else
       {
-	      residual.vars[vars::Q] *= elemOld->tau;
+	      residualGuess.vars[vars::Q] *= elemOld->tau;
         numReads += 1;
       }
     }
@@ -99,7 +99,7 @@ void timeStepper::computeResidual(const grid &prim,
     {
 	    if(params::highOrderTermsViscosity)
       {
-	      residual.vars[vars::DP] *=
+	      residualGuess.vars[vars::DP] *=
           af::sqrt(   elemOld->rho*elemOld->nu_emhd
                     * elemOld->temperature*elemOld->tau
                   );
@@ -107,7 +107,7 @@ void timeStepper::computeResidual(const grid &prim,
       }
 	    else
       {
-	      residual.vars[vars::DP] *= elemOld->tau;
+	      residualGuess.vars[vars::DP] *= elemOld->tau;
         numReads += 1;
       }
     }
@@ -156,7 +156,7 @@ void timeStepper::computeResidual(const grid &prim,
 
     for (int var=0; var<vars::dof; var++)
     {
-      residual.vars[var] = 
+      residualGuess.vars[var] = 
         (cons->vars[var] - consOld->vars[var])/params::dt
     	+ divFluxes->vars[var]
 	    + sourcesExplicit->vars[var]
@@ -171,15 +171,15 @@ void timeStepper::computeResidual(const grid &prim,
      *
      * Writes:
      * ------
-     * residual[var] : numVars */
-    numReads  += 7*residual.numVars;
+     * residualGuess[var] : numVars */
+    numReads  += 7*residualGuess.numVars;
 
-    /* Normalization of the residual */
+    /* Normalization of the residualGuess */
     if (params::conduction)
     {
 	    if(params::highOrderTermsConduction)
       {
-	      residual.vars[vars::Q] *= 
+	      residualGuess.vars[vars::Q] *= 
           elemHalfStep->temperature
         * af::sqrt(elemHalfStep->rho*elemHalfStep->chi_emhd*elemHalfStep->tau);
 
@@ -187,7 +187,7 @@ void timeStepper::computeResidual(const grid &prim,
       }
     	else
       {
-	      residual.vars[vars::Q] *= elemHalfStep->tau;
+	      residualGuess.vars[vars::Q] *= elemHalfStep->tau;
         numReads += 1;
       }
     }
@@ -196,7 +196,7 @@ void timeStepper::computeResidual(const grid &prim,
     {
       if (params::highOrderTermsViscosity)
       {
-	      residual.vars[vars::DP] *= 
+	      residualGuess.vars[vars::DP] *= 
           af::sqrt(   elemHalfStep->rho*elemHalfStep->nu_emhd
                     * elemHalfStep->temperature*elemHalfStep->tau
                   );
@@ -205,16 +205,16 @@ void timeStepper::computeResidual(const grid &prim,
       }
 	    else
       {
-	      residual.vars[vars::DP] *= elemHalfStep->tau;
+	      residualGuess.vars[vars::DP] *= elemHalfStep->tau;
         numReads += 1;
       }
     }
 
   } /* End of timeStepperSwitches::FULL_STEP */
 
-  for (int var=0; var < residual.numVars; var++)
+  for (int var=0; var < residualGuess.numVars; var++)
   {
-    residual.vars[var].eval();
+    residualGuess.vars[var].eval();
   }
-  numWrites += residual.numVars;
+  numWrites += residualGuess.numVars;
 }
