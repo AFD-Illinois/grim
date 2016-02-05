@@ -9,9 +9,9 @@ namespace vars
 
 namespace params
 {
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 64;
+  int N1 = 40;
+  int N2 = 40;
+  int N3 = 1;
 
   int dim = 2;
   int numGhost = 3;
@@ -44,13 +44,13 @@ namespace params
 
   int conduction = 1;
   int viscosity  = 1;
-  int highOrderTermsConduction = 1;
-  int highOrderTermsViscosity = 1;
+  int highOrderTermsConduction = 0;
+  int highOrderTermsViscosity = 0;
   double adiabaticIndex = 4./3;
 
   double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::WENO5;
-  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
+  int riemannSolver  = riemannSolvers::HLL;
 
   int maxNonLinearIter = 3;
   int maxLineSearchIters = 3;

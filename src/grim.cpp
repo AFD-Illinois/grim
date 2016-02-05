@@ -106,17 +106,18 @@ int main(int argc, char **argv)
 
     PetscPrintf(PETSC_COMM_WORLD, "\nKernel compilation complete\n");
 
-    int numTimeSteps = 100;
     af::timer::start();
-    for (int n=0; n < numTimeSteps; n++)
+    int n=0;
+    while(ts.time<params::finalTime)
     {
+      n++;
       PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|\n", n);
       ts.timeStep(numReads, numWrites);
     }
     double timeElapsed = af::timer::stop();
     PetscPrintf(PETSC_COMM_WORLD, "Time taken for %d time steps = %g\n",
-                numTimeSteps, timeElapsed
-               );
+               n, timeElapsed
+		);
 
   }
 

@@ -140,6 +140,8 @@ void timeStepper::fullStepDiagnostics(const array xCoords[3],
 
 	double errordP  = af::norm(af::flat(prim[vars::DP]  - dPAnalytic));
 
+	//af_print(prim[vars::RHO] - rhoAnalytic,12);
+
 	errorRho = errorRho/N1/N2/N3;
 	errordP  = errordP/N1/N2/N3;
 	PetscPrintf(PETSC_COMM_WORLD, 
