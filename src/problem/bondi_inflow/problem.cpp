@@ -155,7 +155,6 @@ void timeStepper::initialConditions()
   for(int i=0;i<N1g;i++)
     {
       const double Rl = host_R[i];
-      printf("Computing bondi flow for R = %e\n",Rl);
       double Tl,rhol,url,utl;
       if(Rl>2.+1.e-8)
 	{

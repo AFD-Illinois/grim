@@ -640,7 +640,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
 }
 
 void fluidElement::computeExplicitSources(const geometry &geom,
-					                                array sources[vars::dof],
+					  array sources[vars::dof],
                                           int &numReads,
                                           int &numWrites
                              					   )

@@ -50,7 +50,7 @@ void geometry::computeConnectionCoeffs()
     {
       for (int lamda = 0; lamda<NDIM; lamda++)
       {
-      	gammaDownDownDown[lamda][mu][nu] = zero;
+      	gammaDownDownDown[mu][nu][lamda] = zero;
         computeGammaDownDownDown(mu,nu,lamda,
                                  gammaDownDownDown[mu][nu][lamda]
                                 );
@@ -79,6 +79,7 @@ void geometry::computeConnectionCoeffs()
   }
 
   af::sync();
+
 }
 
 void setXCoords(const int location, grid &XCoords)
@@ -428,15 +429,15 @@ void geometry::computeGammaDownDownDown(const int eta,
                                        )
 {
   const double GAMMA_EPS=1.e-8;
-  array XCoords[NDIM];
+  array XCoords_4D[NDIM];
   array XEpsilon[NDIM];
   array XEpsilonSpatial[3];
   array gCovEpsilon[NDIM][NDIM];
 
-  XCoords[0] = zero;
-  XCoords[1] = this->XCoords[directions::X1];
-  XCoords[2] = this->XCoords[directions::X2];
-  XCoords[3] = this->XCoords[directions::X3];
+  XCoords_4D[0] = zero;
+  XCoords_4D[1] = this->XCoords[directions::X1];
+  XCoords_4D[2] = this->XCoords[directions::X2];
+  XCoords_4D[3] = this->XCoords[directions::X3];
 
   for (int alpha=0; alpha<NDIM; alpha++)
   {
@@ -461,7 +462,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* Handle +EPS first */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha]=XCoords[alpha];
+    XEpsilon[alpha]=XCoords_4D[alpha];
   }
   XEpsilon[nu] += GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
@@ -475,7 +476,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* Now do -EPS */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha] = XCoords[alpha];
+    XEpsilon[alpha] = XCoords_4D[alpha];
   }
   XEpsilon[nu] -= GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
@@ -491,7 +492,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* +EPS first */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha] = XCoords[alpha];
+    XEpsilon[alpha] = XCoords_4D[alpha];
   }
   XEpsilon[mu] += GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
@@ -505,7 +506,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* Now do -EPS */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha] = XCoords[alpha];
+    XEpsilon[alpha] = XCoords_4D[alpha];
   }
   XEpsilon[mu] -= GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
@@ -521,7 +522,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* +EPS first */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha] = XCoords[alpha];
+    XEpsilon[alpha] = XCoords_4D[alpha];
   }
   XEpsilon[eta] += GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
@@ -535,7 +536,7 @@ void geometry::computeGammaDownDownDown(const int eta,
   /* Now do -EPS */
   for (int alpha=0; alpha<NDIM; alpha++)
   {
-    XEpsilon[alpha] = XCoords[alpha];
+    XEpsilon[alpha] = XCoords_4D[alpha];
   }
   XEpsilon[eta] -= GAMMA_EPS;
   /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */

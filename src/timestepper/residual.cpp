@@ -66,6 +66,7 @@ void timeStepper::computeResidual(const grid &primGuess,
   	  + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
 	    + sourcesTimeDer->vars[var];
     }
+
     /* Reads:
      * -----
      *  cons[var], consOld[var], divFluxes[var]       : 3*numVars
@@ -78,6 +79,8 @@ void timeStepper::computeResidual(const grid &primGuess,
     numReads  += 7*residualGuess.numVars;
 
     /* Normalization of the residualGuess */
+    //for (int var=0; var<vars::dof; var++)
+    //  residualGuess.vars[var] = residualGuess.vars[var]/geomCenter->g;
     if (params::conduction)
     {
 	    if(params::highOrderTermsConduction)
@@ -211,6 +214,27 @@ void timeStepper::computeResidual(const grid &primGuess,
     }
 
   } /* End of timeStepperSwitches::FULL_STEP */
+
+  //Zero the residual in global ghost zones
+  for (int var=0; var<vars::dof; var++) 
+    {
+      for(int i=0;i<params::numGhost;i++)
+	residualGuess.vars[var](i,span,span)=0.;
+      for(int i=params::N1+params::numGhost;i<params::N1+2*params::numGhost;i++)
+	residualGuess.vars[var](i,span,span)=0.;
+      if(params::dim==1)
+	continue;
+      for(int i=0;i<params::numGhost;i++)
+	residualGuess.vars[var](span,i,span)=0.;
+      for(int i=params::N2+params::numGhost;i<params::N2+2*params::numGhost;i++)
+	residualGuess.vars[var](span,i,span)=0.;
+      if(params::dim==2)
+	continue;
+      for(int i=0;i<params::numGhost;i++)
+	residualGuess.vars[var](span,span,i)=0.;
+      for(int i=params::N3+params::numGhost;i<params::N3+2*params::numGhost;i++)
+	residualGuess.vars[var](span,span,i)=0.;
+    }
 
   for (int var=0; var < residualGuess.numVars; var++)
   {
