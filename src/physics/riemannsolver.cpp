@@ -138,7 +138,7 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
     case directions::X3:
       sdir=3; break;
   }
-  
+
   array ACov[NDIM], ACon[NDIM];
   array BCov[NDIM], BCon[NDIM];
   for (int mu=0; mu<NDIM; mu++)
@@ -184,8 +184,8 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
   array A = (BDotU*BDotU)   - (BSqr + BDotU*BDotU)*csSqr;
   array B = 2.*(ADotU*BDotU - (ADotB + ADotU*BDotU)*csSqr);
   array C = ADotU*ADotU     - (ASqr + ADotU*ADotU)*csSqr;
-  array discr = af::sqrt(B*B - 4.*A*C);
-  
+  array discr = af::sqrt(B*B - 4.*A*C);  
+
   minSpeed = -(-B + discr)/2./A;
   maxSpeed = -(-B - discr)/2./A;
   
@@ -271,7 +271,7 @@ void riemannSolver::solve(const grid &primLeft,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
   elemFace->computeMinMaxCharSpeeds(geomLeft, dir, 
-                                    minSpeedLeft, maxSpeedLeft,
+                                    minSpeedRight, maxSpeedRight,
                                     numReadsCharSpeeds, numWritesCharSpeeds
                                    );
 

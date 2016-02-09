@@ -175,6 +175,10 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   array xCoords[3];
   geomCenter->XCoordsToxCoords(XCoords->vars, xCoords);
 
+  const int N1g = params::N1+2*params::numGhost;
+  const int N2g = params::dim>1 ? params::N2+2*params::numGhost : 1;
+  const int N3g = params::dim>2 ? params::N3+2*params::numGhost : 1;
+
   const double* R = xCoords[directions::X1].host<double>();
   const double* Theta = xCoords[directions::X2].host<double>();
   const double* Phi = xCoords[directions::X3].host<double>();
@@ -184,171 +188,170 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   const double* beta2 = geomCenter->gCon[0][2].host<double>();
   const double* beta3 = geomCenter->gCon[0][3].host<double>();
 
-  const int Npts = primOld->vars[vars::RHO].elements();
-  double* Rho = primOld->vars[vars::RHO].device<double>();
-  double* U = primOld->vars[vars::U].device<double>();
-  double* U1 = primOld->vars[vars::U1].device<double>();
-  double* U2 = primOld->vars[vars::U2].device<double>();
-  double* U3 = primOld->vars[vars::U3].device<double>();
-  double* B1 = primOld->vars[vars::B1].device<double>();
-  double* B2 = primOld->vars[vars::B2].device<double>();
-  double* B3 = primOld->vars[vars::B3].device<double>();
-  
+  array& Rho = primOld->vars[vars::RHO];
+  array& U = primOld->vars[vars::U];
+  array& U1 = primOld->vars[vars::U1];
+  array& U2 = primOld->vars[vars::U2];
+  array& U3 = primOld->vars[vars::U3];
+  array& B1 = primOld->vars[vars::B1];
+  array& B2 = primOld->vars[vars::B2];
+  array& B3 = primOld->vars[vars::B3];
+
+
   double aBH = params::blackHoleSpin;
-  double rhoMax = 0.;
-  for(int p=0;p<Npts;p++)
-    {
-      const double& r = R[p];
-      const double& theta = Theta[p];
-      const double& phi = Phi[p];
-      double lnOfh = 1.;
-      if(r>=params::InnerEdgeRadius)
-	lnOfh = computeLnOfh(aBH,r,theta);
-      
-      /* Region outside the torus */
-      if(lnOfh<0. || r<params::InnerEdgeRadius)
+  for(int k=0;k<N3g;k++)
+    for(int j=0;j<N2g;j++)
+      for(int i=0;i<N1g;i++)
 	{
-	  Rho[p]=params::rhoFloorInFluidElement;
-	  U[p]=params::uFloorInFluidElement;
-	  U1[p]=0.;
-	  U2[p]=0.;
-	  U3[p]=0.;
-	}
-      else
-	{
-	  double h = exp(lnOfh);
-	  double Gamma = params::adiabaticIndex;
-	  double Kappa = params::Adiabat;
+	  const int p = i+j*N1g+k*N2g;
+	  const double& r = R[p];
+	  const double& theta = Theta[p];
+	  const double& phi = Phi[p];
 
-	  /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
-	   * here is the rest mass energy density and P = C * rho^Gamma */
-	  Rho[p] = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
-                       1./(Gamma-1.));
-	  U[p] =  Kappa * pow(Rho[p], Gamma)/(Gamma-1.);
+	  double lnOfh = 1.;
+	  if(r>=params::InnerEdgeRadius)
+	    lnOfh = computeLnOfh(aBH,r,theta);
 	  
-	  /* TODO: Should add random noise here */
-	  
-
-	  /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
-	   * Need to transform to (modified) Kerr-Schild */
-	  double A = computeA(aBH, r, theta);
-	  double Sigma = computeSigma(aBH, r, theta);
-	  double Delta = computeDelta(aBH, r, theta);
-	  double l = lFishboneMoncrief(aBH, params::PressureMaxRadius, M_PI/2.);
-	  double expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
-	  double uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi))/2.);
-	  double uConPhiBL =   2.*aBH*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
-	    /sqrt(A*Sigma*Delta)+ sqrt(Sigma/A)*uCovPhiBL/sin(theta);
-
-	  double uConBL[NDIM];
-	  uConBL[0] = 0.;
-	  uConBL[1] = 0.;
-	  uConBL[2] = 0.;
-	  uConBL[3] = uConPhiBL;
-	  
-	  double gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
-	  double transformBLToMKS[NDIM][NDIM];
-	  
-	  for (int alpha=0; alpha<NDIM; alpha++)
+	  /* Region outside the torus */
+	  if(lnOfh<0. || r<params::InnerEdgeRadius)
 	    {
-	      for (int beta=0; beta<NDIM; beta++)
-		{
-		  gCovBL[alpha][beta] = 0.;
-		  gConBL[alpha][beta] = 0.;
-		  transformBLToMKS[alpha][beta] = 0.;
-		}
+	      Rho(i,j,k)=params::rhoFloorInFluidElement;
+	      U(i,j,k)=params::uFloorInFluidElement;
+	      U1(i,j,k)=0.;
+	      U2(i,j,k)=0.;
+	      U3(i,j,k)=0.;
 	    }
-	  
-	  double mu = 1 + aBH*aBH*cos(theta)*cos(theta)/(r*r);
-
-	  gCovBL[0][0] = -(1. - 2./(r*mu));
-	  gCovBL[0][3] = -2.*aBH*sin(theta)*sin(theta)/(r*mu);
-	  gCovBL[3][0] = gCovBL[0][3];
-	  gCovBL[1][1] = mu*r*r/Delta;
-	  gCovBL[2][2] = r*r*mu;
-	  gCovBL[3][3] = r*r*sin(theta)*sin(theta)*
-	    (1. + aBH*aBH/(r*r) + 2.*aBH*aBH*sin(theta)*sin(theta)/(r*r*r*mu));
-	  
-	  gConBL[0][0] = -1. -2.*(1 + aBH*aBH/(r*r))/(Delta*mu/r);
-	  gConBL[0][3] = -2.*aBH/(r*Delta*mu);
-	  gConBL[3][0] = gConBL[0][3];
-	  gConBL[1][1] = Delta/(r*r*mu);
-	  gConBL[2][2] = 1./(r*r*mu);
-	  gConBL[3][3] = (1. - 2./(r*mu))/(sin(theta)*sin(theta)*Delta);
-
-	  transformBLToMKS[0][0] = 1.;
-	  transformBLToMKS[1][1] = 1.;
-	  transformBLToMKS[2][2] = 1.;
-	  transformBLToMKS[3][3] = 1.;
-	  transformBLToMKS[0][1] = 2.*r/Delta;
-	  transformBLToMKS[3][1] = aBH/Delta; 
-	  
-	  /* Need to get uConBL[0] using u^mu u_mu = -1 */
-	  double AA = gCovBL[0][0];
-	  double BB = 2.*(gCovBL[0][1]*uConBL[1] +
-			  gCovBL[0][2]*uConBL[2] +
-			  gCovBL[0][3]*uConBL[3]
-			  );
-	  double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1] +
-	    gCovBL[2][2]*uConBL[2]*uConBL[2] +
-	    gCovBL[3][3]*uConBL[3]*uConBL[3] +
-	    2.*(gCovBL[1][2]*uConBL[1]*uConBL[2] +
-		gCovBL[1][3]*uConBL[1]*uConBL[3] +
-		gCovBL[2][3]*uConBL[2]*uConBL[3]);
-	  
-	  double discriminent = BB*BB - 4.*AA*CC;
-	  uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
-	  
-	  double uConKS[NDIM];
-	  
-	  for (int alpha=0; alpha<NDIM; alpha++)
+	  else
 	    {
-	      uConKS[alpha] = 0.;
+	      double h = exp(lnOfh);
+	      double Gamma = params::adiabaticIndex;
+	      double Kappa = params::Adiabat;
+
+	      /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
+	       * here is the rest mass energy density and P = C * rho^Gamma */
+	      Rho(i,j,k) = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
+			       1./(Gamma-1.));
+	      U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.);
+	  
+	      /* TODO: Should add random noise here */
+	  
 	      
-	      for (int beta=0; beta<NDIM; beta++)
+	      /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
+	       * Need to transform to (modified) Kerr-Schild */
+	      double A = computeA(aBH, r, theta);
+	      double Sigma = computeSigma(aBH, r, theta);
+	      double Delta = computeDelta(aBH, r, theta);
+	      double l = lFishboneMoncrief(aBH, params::PressureMaxRadius, M_PI/2.);
+	      double expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
+	      double uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi))/2.);
+	      double uConPhiBL =   2.*aBH*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
+		/sqrt(A*Sigma*Delta)+ sqrt(Sigma/A)*uCovPhiBL/sin(theta);
+
+	      double uConBL[NDIM];
+	      uConBL[0] = 0.;
+	      uConBL[1] = 0.;
+	      uConBL[2] = 0.;
+	      uConBL[3] = uConPhiBL;
+	      
+	      double gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
+	      double transformBLToMKS[NDIM][NDIM];
+	      
+	      for (int alpha=0; alpha<NDIM; alpha++)
 		{
-		  uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
+		  for (int beta=0; beta<NDIM; beta++)
+		    {
+		      gCovBL[alpha][beta] = 0.;
+		      gConBL[alpha][beta] = 0.;
+		      transformBLToMKS[alpha][beta] = 0.;
+		    }
 		}
+	      
+	      double mu = 1 + aBH*aBH*cos(theta)*cos(theta)/(r*r);
+	      
+	      gCovBL[0][0] = -(1. - 2./(r*mu));
+	      gCovBL[0][3] = -2.*aBH*sin(theta)*sin(theta)/(r*mu);
+	      gCovBL[3][0] = gCovBL[0][3];
+	      gCovBL[1][1] = mu*r*r/Delta;
+	      gCovBL[2][2] = r*r*mu;
+	      gCovBL[3][3] = r*r*sin(theta)*sin(theta)*
+		(1. + aBH*aBH/(r*r) + 2.*aBH*aBH*sin(theta)*sin(theta)/(r*r*r*mu));
+	      
+	      gConBL[0][0] = -1. -2.*(1 + aBH*aBH/(r*r))/(Delta*mu/r);
+	      gConBL[0][3] = -2.*aBH/(r*Delta*mu);
+	      gConBL[3][0] = gConBL[0][3];
+	      gConBL[1][1] = Delta/(r*r*mu);
+	      gConBL[2][2] = 1./(r*r*mu);
+	      gConBL[3][3] = (1. - 2./(r*mu))/(sin(theta)*sin(theta)*Delta);
+	      
+	      transformBLToMKS[0][0] = 1.;
+	      transformBLToMKS[1][1] = 1.;
+	      transformBLToMKS[2][2] = 1.;
+	      transformBLToMKS[3][3] = 1.;
+	      transformBLToMKS[0][1] = 2.*r/Delta;
+	      transformBLToMKS[3][1] = aBH/Delta; 
+	      
+	      /* Need to get uConBL[0] using u^mu u_mu = -1 */
+	      double AA = gCovBL[0][0];
+	      double BB = 2.*(gCovBL[0][1]*uConBL[1] +
+			      gCovBL[0][2]*uConBL[2] +
+			      gCovBL[0][3]*uConBL[3]
+			      );
+	      double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1] +
+		gCovBL[2][2]*uConBL[2]*uConBL[2] +
+		gCovBL[3][3]*uConBL[3]*uConBL[3] +
+		2.*(gCovBL[1][2]*uConBL[1]*uConBL[2] +
+		    gCovBL[1][3]*uConBL[1]*uConBL[3] +
+		    gCovBL[2][3]*uConBL[2]*uConBL[3]);
+	      
+	      double discriminent = BB*BB - 4.*AA*CC;
+	      uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
+	      
+	      double uConKS[NDIM];
+	      
+	      for (int alpha=0; alpha<NDIM; alpha++)
+		{
+		  uConKS[alpha] = 0.;
+		  
+		  for (int beta=0; beta<NDIM; beta++)
+		    {
+		      uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
+		    }
+		}
+	      
+	      /* Finally get the four-velocity in the X coordinates, which is modified
+	       * Kerr-Schild */
+	      double uConMKS[NDIM];
+	      double rFactor = r;
+	      double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2[p]);
+	      uConMKS[0] = uConKS[0];
+	      uConMKS[1] = uConKS[1]/rFactor;
+	      uConMKS[2] = uConKS[2]/hFactor;
+	      uConMKS[3] = uConKS[3];
+	      
+	      U1(i,j,k) = uConMKS[1] + pow(Lapse[p], 2.)*beta1[p]*uConMKS[0];
+	      U2(i,j,k) = uConMKS[2] + pow(Lapse[p], 2.)*beta2[p]*uConMKS[0];
+	      U3(i,j,k) = uConMKS[3] + pow(Lapse[p], 2.)*beta3[p]*uConMKS[0];
 	    }
-
-	  /* Finally get the four-velocity in the X coordinates, which is modified
-	   * Kerr-Schild */
-	  double uConMKS[NDIM];
-	  double rFactor = r;
-	  double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2[p]);
-	  uConMKS[0] = uConKS[0];
-	  uConMKS[1] = uConKS[1]/rFactor;
-	  uConMKS[2] = uConKS[2]/hFactor;
-	  uConMKS[3] = uConKS[3];
-
-	  U1[p] = uConMKS[1] + pow(Lapse[p], 2.)*beta1[p]*uConMKS[0];
-	  U2[p] = uConMKS[2] + pow(Lapse[p], 2.)*beta2[p]*uConMKS[0];
-	  U3[p] = uConMKS[3] + pow(Lapse[p], 2.)*beta3[p]*uConMKS[0];
+	  B1(i,j,k) = 0.;
+	  B2(i,j,k) = 0.;
+	  B3(i,j,k) = 0.;
 	}
-      B1[p] = 0.;
-      B2[p] = 0.;
-      B3[p] = 0.;
 
-      if(Rho[p]>rhoMax) rhoMax=Rho[p];
-    }
-
+  array rhoMax_af = af::max(af::max(af::max(Rho,2),1),0);
+  double rhoMax = rhoMax_af.host<double>()[0];
   /* TODO : Do we need communication of rhoMax here when using MPI??? */
   
-  for(int p=0;p<Npts;p++)
-    {
-      Rho[p]=Rho[p]/rhoMax;
-      U[p]=U[p]/rhoMax;
-    }
+  Rho=Rho/rhoMax;
+  U=U/rhoMax;
 
-  primOld->vars[vars::RHO].unlock();
-  primOld->vars[vars::U].unlock();
-  primOld->vars[vars::U1].unlock();
-  primOld->vars[vars::U2].unlock();
-  primOld->vars[vars::U3].unlock();
-  primOld->vars[vars::B1].unlock();
-  primOld->vars[vars::B2].unlock();
-  primOld->vars[vars::B3].unlock();
-
+  Rho.eval();
+  U.eval();
+  U1.eval();
+  U2.eval();
+  U3.eval();
+  B1.eval();
+  B2.eval();
+  B3.eval();
 
   /* TODO : apply floors */
 
