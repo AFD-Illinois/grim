@@ -78,7 +78,7 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   nu_emhd  = soundSpeed*soundSpeed*tau;
 }
 
-void timeStepper::initialConditions()
+void timeStepper::initialConditions(int &numReads,int &numWrites)
 {
   array xCoords[3];
   for(int d=0;d<3;d++)
@@ -157,12 +157,12 @@ void timeStepper::initialConditions()
   af::sync();
 }
 
-void timeStepper::halfStepDiagnostics()
+void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 {
 
 }
 
-void timeStepper::fullStepDiagnostics()
+void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
   /* Compute the errors for the different modes */
 
@@ -218,7 +218,7 @@ void timeStepper::fullStepDiagnostics()
               );
 }
 
-void timeStepper::setProblemSpecificBCs()
+void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
 
 };

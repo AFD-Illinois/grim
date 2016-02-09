@@ -32,14 +32,14 @@ void timeStepper::solve(grid &primGuess)
     l2Norm.eval();
     array notConverged      = l2Norm > params::nonlinearsolve_atol;
     array conditionIndices  = where(notConverged > 0);
-//    if (conditionIndices.elements() == 0)
-//    {
-//      break;
-//    }
-
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g\n", 
                 af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)))
                );
+    /*if (conditionIndices.elements() == 0)
+    {
+      break;
+      }*/
+
 
     /* Residual without explicit terms, for faster Jacobian assembly */
     computeResidual(primGuess, *residual, false,
@@ -157,10 +157,10 @@ void timeStepper::solve(grid &primGuess)
         = stepLengthNoGhost*(1. - condition) + condition*nextStepLengthNoGhost;
       
       array conditionIndices = where(condition > 0);
-//      if (conditionIndices.elements() == 0)
-//      {
-//        break;
-//      }
+      /*if (conditionIndices.elements() == 0)
+      {
+        break;
+	}*/
     }
 
     /* stepLength has now been set */

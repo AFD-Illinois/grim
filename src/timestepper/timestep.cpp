@@ -7,7 +7,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   currentStep = timeStepperSwitches::HALF_STEP;
   /* Apply boundary conditions on primOld */
-  setProblemSpecificBCs();
+  setProblemSpecificBCs(numReads,numWrites);
 
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
@@ -59,7 +59,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     numWrites += 1;
   }
   primHalfStep->communicate();
-  halfStepDiagnostics();
+  halfStepDiagnostics(numReads,numWrites);
   /* Half step complete */
 
   /* Now take the full step */
@@ -67,7 +67,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   currentStep = timeStepperSwitches::FULL_STEP;
   /* apply boundary conditions on primHalfStep */
-  setProblemSpecificBCs();
+  setProblemSpecificBCs(numReads,numWrites);
 
   elemHalfStep->set(primHalfStep->vars, *geomCenter,
                     numReadsElemSet, numWritesElemSet
@@ -104,7 +104,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   }
   /* Compute diagnostics */
   primOld->communicate();
-  fullStepDiagnostics();
+  fullStepDiagnostics(numReads,numWrites);
 
   time += dt;
   /* done */

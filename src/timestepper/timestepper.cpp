@@ -232,7 +232,8 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
   xHostPtr = new double [numVars*N1Total*N2Total*N3Total];
 
-  initialConditions();
+  int a,b;
+  initialConditions(a,b);
 }
 
 timeStepper::~timeStepper()

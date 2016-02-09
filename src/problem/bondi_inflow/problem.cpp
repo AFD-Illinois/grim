@@ -60,7 +60,7 @@ namespace params
   int maxLineSearchIters = 10;
 
   //Parameters controlling accuracy of nonlinear solver
-  double nonlinearsolve_atol = 1.e-10;
+  double nonlinearsolve_atol = 1.e-16;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
@@ -120,7 +120,7 @@ double SolveT(const double R, const double C1, const double C2)
   return Th;
 }
 
-void timeStepper::initialConditions()
+void timeStepper::initialConditions(int &numReads,int &numWrites)
 {
   const double nPoly = 1./(params::adiabaticIndex-1.);
   const double Rc = params::sonicRadius; 
@@ -208,18 +208,18 @@ void timeStepper::initialConditions()
   af::sync();
 }
 
-void timeStepper::halfStepDiagnostics()
+void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 {
   printf("halfStepDiagnostics\n");
 }
 
-void timeStepper::fullStepDiagnostics()
+void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
   printf("fullStepDiagnostics: Time = %e\n",params::Time);
   //af_print(primOld->varsOld->vars[vars::RHO],8.);
 }
 
-void timeStepper::setProblemSpecificBCs()
+void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
   for (int var=0; var<vars::dof; var++) 
     {

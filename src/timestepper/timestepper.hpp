@@ -82,10 +82,10 @@ class timeStepper
     void timeStep(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
-    void initialConditions();
-    void halfStepDiagnostics();
-    void fullStepDiagnostics();
-    void setProblemSpecificBCs();
+  void initialConditions(int &numReads,int &numWrites);
+  void halfStepDiagnostics(int &numReads,int &numWrites);
+  void fullStepDiagnostics(int &numReads,int &numWrites);
+  void setProblemSpecificBCs(int &numReads,int &numWrites);
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

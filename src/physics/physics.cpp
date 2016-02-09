@@ -45,8 +45,8 @@ void fluidElement::set(const array prim[vars::dof],
                        int &numWrites
                       )
 {
-  rho = prim[vars::RHO] + params::rhoFloorInFluidElement;
-  u   = prim[vars::U  ] + params::uFloorInFluidElement;
+  rho = af::max(prim[vars::RHO],params::rhoFloorInFluidElement);
+  u   = af::max(prim[vars::U  ],params::uFloorInFluidElement);
   u1  = prim[vars::U1 ];
   u2  = prim[vars::U2 ];
   u3  = prim[vars::U3 ];
@@ -55,12 +55,11 @@ void fluidElement::set(const array prim[vars::dof],
   B3  = prim[vars::B3 ];
 
   pressure    = (params::adiabaticIndex - 1.)*u;
-  temperature = pressure/rho + params::temperatureFloorInFluidElement;
+  temperature = af::max(pressure/rho,params::temperatureFloorInFluidElement);
 
   soundSpeed  = af::sqrt( params::adiabaticIndex*pressure
                          /(rho+params::adiabaticIndex*u)
                         );
-
   setFluidElementParameters(geom);
   
   if (params::conduction==1)
