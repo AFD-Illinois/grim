@@ -170,23 +170,12 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 {
   //Let's ignore ArrayFire here - it's only the initial
   //conditions...
-  const double* X2 = XCoords->vars[directions::X2].host<double>();
-  
   array xCoords[3];
   geomCenter->XCoordsToxCoords(XCoords->vars, xCoords);
 
-  const int N1g = params::N1+2*params::numGhost;
-  const int N2g = params::dim>1 ? params::N2+2*params::numGhost : 1;
-  const int N3g = params::dim>2 ? params::N3+2*params::numGhost : 1;
-
-  const double* R = xCoords[directions::X1].host<double>();
-  const double* Theta = xCoords[directions::X2].host<double>();
-  const double* Phi = xCoords[directions::X3].host<double>();
-
-  const double* Lapse = geomCenter->alpha.host<double>();
-  const double* beta1 = geomCenter->gCon[0][1].host<double>();
-  const double* beta2 = geomCenter->gCon[0][2].host<double>();
-  const double* beta3 = geomCenter->gCon[0][3].host<double>();
+  const int N1g = primOld->N1Total;
+  const int N2g = primOld->N2Total;
+  const int N3g = primOld->N3Total;
 
   array& Rho = primOld->vars[vars::RHO];
   array& U = primOld->vars[vars::U];
@@ -204,9 +193,16 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
       for(int i=0;i<N1g;i++)
 	{
 	  const int p = i+j*N1g+k*N2g;
-	  const double& r = R[p];
-	  const double& theta = Theta[p];
-	  const double& phi = Phi[p];
+	  const double& r = xCoords[directions::X1](i,j,k).scalar<double>();
+	  const double& theta = xCoords[directions::X2](i,j,k).scalar<double>();
+	  const double& phi = xCoords[directions::X3](i,j,k).scalar<double>();
+	  const double& X2 = XCoords->vars[directions::X2](i,j,k).scalar<double>();
+
+	  const double& lapse = geomCenter->alpha(i,j,k).scalar<double>();
+	  const double& beta1 = geomCenter->gCon[0][1](i,j,k).scalar<double>();
+	  const double& beta2 = geomCenter->gCon[0][2](i,j,k).scalar<double>();
+	  const double& beta3 = geomCenter->gCon[0][3](i,j,k).scalar<double>();
+
 
 	  double lnOfh = 1.;
 	  if(r>=params::InnerEdgeRadius)
@@ -322,15 +318,15 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	       * Kerr-Schild */
 	      double uConMKS[NDIM];
 	      double rFactor = r;
-	      double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2[p]);
+	      double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2);
 	      uConMKS[0] = uConKS[0];
 	      uConMKS[1] = uConKS[1]/rFactor;
 	      uConMKS[2] = uConKS[2]/hFactor;
 	      uConMKS[3] = uConKS[3];
 	      
-	      U1(i,j,k) = uConMKS[1] + pow(Lapse[p], 2.)*beta1[p]*uConMKS[0];
-	      U2(i,j,k) = uConMKS[2] + pow(Lapse[p], 2.)*beta2[p]*uConMKS[0];
-	      U3(i,j,k) = uConMKS[3] + pow(Lapse[p], 2.)*beta3[p]*uConMKS[0];
+	      U1(i,j,k) = uConMKS[1] + pow(lapse, 2.)*beta1*uConMKS[0];
+	      U2(i,j,k) = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
+	      U3(i,j,k) = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
 	    }
 	  B1(i,j,k) = 0.;
 	  B2(i,j,k) = 0.;
@@ -339,7 +335,30 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   array rhoMax_af = af::max(af::max(af::max(Rho,2),1),0);
   double rhoMax = rhoMax_af.host<double>()[0];
-  /* TODO : Do we need communication of rhoMax here when using MPI??? */
+
+  /* Communicate rhoMax to all processors */
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  if (world_rank == 0) 
+    {
+      double temp; 
+      for(int i=1;i<world_size;i++)
+	{
+	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	  if(rhoMax < temp)
+	    rhoMax = temp;
+	}
+      }
+    else
+      {
+        MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, MPI_COMM_WORLD);
+      }
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (world_rank == 0)
+    MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
   
   Rho=Rho/rhoMax;
   U=U/rhoMax;
@@ -393,6 +412,27 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
     double BFactor = BetaMin_af.host<double>()[0];
     BFactor = sqrt(BFactor/params::MinPlasmaBeta);
+
+    /* Use MPI to find minimum over all processors */
+    if (world_rank == 0) 
+      {
+	double temp; 
+	for(int i=1;i<world_size;i++)
+	  {
+	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	    if(BFactor > temp)
+	      BFactor = temp;
+	  }
+      }
+    else
+      {
+        MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, MPI_COMM_WORLD);
+      }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (world_rank == 0)
+      MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
     primOld->vars[vars::B1] *= BFactor;
     primOld->vars[vars::B2] *= BFactor;
     primOld->vars[vars::B3] *= BFactor;

@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     while(ts.time<params::finalTime)
     {
       n++;
-      PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|\n", n);
+      PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|  t = %e\n", n,ts.time);
       ts.timeStep(numReads, numWrites);
     }
     double timeElapsed = af::timer::stop();
