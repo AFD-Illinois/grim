@@ -10,8 +10,8 @@ namespace vars
 
 namespace params
 {
-  int N1 = 128;
-  int N2 = 128;
+  int N1 = 256;
+  int N2 = 256;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
@@ -338,27 +338,27 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   /* Communicate rhoMax to all processors */
   int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
   int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
   if (world_rank == 0) 
     {
       double temp; 
       for(int i=1;i<world_size;i++)
 	{
-	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
 	  if(rhoMax < temp)
 	    rhoMax = temp;
 	}
       }
     else
       {
-        MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, MPI_COMM_WORLD);
+        MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
       }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(PETSC_COMM_WORLD);
   if (world_rank == 0)
-    MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+  MPI_Barrier(PETSC_COMM_WORLD);
   
   Rho=Rho/rhoMax;
   U=U/rhoMax;
@@ -419,19 +419,19 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	double temp; 
 	for(int i=1;i<world_size;i++)
 	  {
-	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
 	    if(BFactor > temp)
 	      BFactor = temp;
 	  }
       }
     else
       {
-        MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, MPI_COMM_WORLD);
+        MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
       }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(PETSC_COMM_WORLD);
     if (world_rank == 0)
-      MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+    MPI_Barrier(PETSC_COMM_WORLD);
     
     primOld->vars[vars::B1] *= BFactor;
     primOld->vars[vars::B2] *= BFactor;
