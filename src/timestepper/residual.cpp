@@ -216,25 +216,64 @@ void timeStepper::computeResidual(const grid &primGuess,
   } /* End of timeStepperSwitches::FULL_STEP */
 
   //Zero the residual in global ghost zones
-  for (int var=0; var<vars::dof; var++) 
+  // TODO: prefill a mask with zero in the ghost zones and one in the bulk and
+  // and then do residual = residual*mask;
+  int N1Total = residualGuess.N1Total;
+  int N2Total = residualGuess.N2Total;
+  int N3Total = residualGuess.N3Total;
+
+  int N1Local = residualGuess.N1Local;
+  int N2Local = residualGuess.N2Local;
+  int N3Local = residualGuess.N3Local;
+
+  int numGhostX1 = residualGuess.numGhostX1;
+  int numGhostX2 = residualGuess.numGhostX2;
+  int numGhostX3 = residualGuess.numGhostX3;
+
+  for (int var=0; var<residual.numVars; var++) 
+  {
+    /* Left boundary */
+    for(int i=0; i<numGhostX1; i++)
     {
-      for(int i=0;i<params::numGhost;i++)
-	residualGuess.vars[var](i,span,span)=0.;
-      for(int i=params::N1+params::numGhost;i<params::N1+2*params::numGhost;i++)
-	residualGuess.vars[var](i,span,span)=0.;
-      if(params::dim==1)
-	continue;
-      for(int i=0;i<params::numGhost;i++)
-	residualGuess.vars[var](span,i,span)=0.;
-      for(int i=params::N2+params::numGhost;i<params::N2+2*params::numGhost;i++)
-	residualGuess.vars[var](span,i,span)=0.;
-      if(params::dim==2)
-	continue;
-      for(int i=0;i<params::numGhost;i++)
-	residualGuess.vars[var](span,span,i)=0.;
-      for(int i=params::N3+params::numGhost;i<params::N3+2*params::numGhost;i++)
-	residualGuess.vars[var](span,span,i)=0.;
+	    residualGuess.vars[var](i,span,span)=0.;
     }
+
+    /* Right boundary */
+    for(int i=N1Local+numGhostX1; i<N1Local + 2*numGhostX1; i++)
+    {
+	    residualGuess.vars[var](i,span,span)=0.;
+    }
+    
+    if(params::dim==1)
+	    continue;
+      
+    /* Bottom boundary */
+    for(int j=0; j < numGhostX2; j++)
+    {
+	    residualGuess.vars[var](span,j,span)=0.;
+    }
+      
+    /* Top boundary */
+    for(int j=N2Local+numGhostX2; j < N2Local+2*numGhostX2; j++)
+    {
+	    residualGuess.vars[var](span,j,span)=0.;
+    }
+      
+    if(params::dim==2)
+	    continue;
+      
+    /* Back boundary */
+    for(int k=0; k<numGhostX3; k++)
+    {
+	    residualGuess.vars[var](span,span,k)=0.;
+    }
+      
+    /* Front boundary */
+    for(int k=N3Local+numGhostX3; k<N3Local + 2*numGhostX3; k++)
+    {
+	    residualGuess.vars[var](span,span,k)=0.;
+    }
+  }
 
   for (int var=0; var < residualGuess.numVars; var++)
   {

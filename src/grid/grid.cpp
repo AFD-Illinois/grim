@@ -54,10 +54,6 @@ grid::grid(int N1, int N2, int N3,
   switch (params::dim)
   {
     case 1:
-      N1Total = N1 + 2*numGhost;
-      N2Total = 1;
-      N3Total = 1;
-
       numGhostX1 = numGhost;
       numGhostX2 = 0;
       numGhostX3 = 0;
@@ -70,13 +66,19 @@ grid::grid(int N1, int N2, int N3,
                    N1, numVars, numGhostX1, NULL,
                    &dm
                   );
+
+      DMDAGetCorners
+      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
+           &N1Local,     &N2Local,     &N3Local
+      );
+
+      N1Total = N1Local + 2*numGhost;
+      N2Total = N2Local;
+      N3Total = N3Local;
+
       break;
   
     case 2:
-      N1Total = N1 + 2*numGhost;
-      N2Total = N2 + 2*numGhost;
-      N3Total = 1;
-
       numGhostX1 = numGhost;
       numGhostX2 = numGhost;
       numGhostX3 = 0;
@@ -94,6 +96,15 @@ grid::grid(int N1, int N2, int N3,
                    PETSC_NULL, PETSC_NULL,
                    &dm
                   );
+
+      DMDAGetCorners
+      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
+           &N1Local,     &N2Local,     &N3Local
+      );
+
+      N1Total = N1Local + 2*numGhost;
+      N2Total = N2Local + 2*numGhost;
+      N3Total = N3Local;
 
       break;
 
@@ -120,6 +131,15 @@ grid::grid(int N1, int N2, int N3,
                    &dm
                   );
 
+      DMDAGetCorners
+      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
+           &N1Local,     &N2Local,     &N3Local
+      );
+
+      N1Total = N1Local + 2*numGhost;
+      N2Total = N2Local + 2*numGhost;
+      N3Total = N3Local + 2*numGhost;
+
       break;
   }
 
@@ -127,11 +147,6 @@ grid::grid(int N1, int N2, int N3,
   DMCreateLocalVector(dm, &localVec);
   VecSet(globalVec, 0.);
   VecSet(localVec,  0.);
-
-  DMDAGetCorners
-    (dm, &iLocalStart, &jLocalStart, &kLocalStart,
-         &N1Local,     &N2Local,     &N3Local
-    );
 
   iLocalEnd = iLocalStart + N1Local;
   jLocalEnd = jLocalStart + N2Local;
