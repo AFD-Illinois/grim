@@ -1,6 +1,6 @@
 #include "physics.hpp"
 
-fluidElement::fluidElement(const array prim[vars::dof],
+fluidElement::fluidElement(const array *prim,
                            const geometry &geom,
                            int &numReads,
                            int &numWrites
@@ -39,7 +39,7 @@ fluidElement::fluidElement(const array prim[vars::dof],
   set(prim, geom, numReads, numWrites);
 }
 
-void fluidElement::set(const array prim[vars::dof],
+void fluidElement::set(const array *prim,
                        const geometry &geom,
                        int &numReads,
                        int &numWrites
@@ -304,7 +304,7 @@ void fluidElement::set(const array prim[vars::dof],
 
 void fluidElement::computeFluxes(const geometry &geom, 
                                  const int dir,
-                                 array flux[vars::dof],
+                                 array *flux,
                                  int &numReads,
                                  int &numWrites
                                 )
@@ -427,7 +427,7 @@ void fluidElement::computeTimeDerivSources(const geometry &geom,
                                            const fluidElement &elemOld,
                                            const fluidElement &elemNew,
                                            const double dt,
-                                           array sources[vars::dof],
+                                           array *sources,
                                            int &numReads,
                                            int &numWrites
                                           )
@@ -578,7 +578,7 @@ void fluidElement::computeTimeDerivSources(const geometry &geom,
 
 
 void fluidElement::computeImplicitSources(const geometry &geom,
-					                                array sources[vars::dof],
+					                                array *sources,
                                           int &numReads,
                                           int &numWrites
                                          )
@@ -639,7 +639,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
 }
 
 void fluidElement::computeExplicitSources(const geometry &geom,
-					  array sources[vars::dof],
+                              					  array *sources,
                                           int &numReads,
                                           int &numWrites
                              					   )
