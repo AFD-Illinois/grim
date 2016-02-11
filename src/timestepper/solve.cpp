@@ -32,13 +32,47 @@ void timeStepper::solve(grid &primGuess)
     l2Norm.eval();
     array notConverged      = l2Norm > params::nonlinearsolve_atol;
     array conditionIndices  = where(notConverged > 0);
+
+    /* Communicate residual */
+    double localresnorm = af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)));
+    double globalresnorm = localresnorm;
+    int localNonConverged = conditionIndices.elements();
+    int globalNonConverged = localNonConverged;
+    int world_rank;
+    MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+    int world_size;
+    MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+    if (world_rank == 0)
+      {
+	double temp;
+	int Nel;
+	for(int i=1;i<world_size;i++)
+	  {
+	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	    MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	    globalresnorm+=localresnorm;
+	    globalNonConverged+=Nel;
+	  }
+      }
+    else
+      {
+	MPI_Send(&localresnorm, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
+      }
+    MPI_Barrier(PETSC_COMM_WORLD);
+    if (world_rank == 0)
+      {
+	MPI_Bcast(&globalresnorm,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+	MPI_Bcast(&globalNonConverged,1,MPI_INT,0,PETSC_COMM_WORLD);
+      }
+    MPI_Barrier(PETSC_COMM_WORLD);
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g\n", 
-                af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)))
+                globalresnorm
                );
-    /*if (conditionIndices.elements() == 0)
+    if (globalNonConverged == 0)
     {
       break;
-      }*/
+    }
 
 
     /* Residual without explicit terms, for faster Jacobian assembly */
@@ -157,10 +191,10 @@ void timeStepper::solve(grid &primGuess)
         = stepLengthNoGhost*(1. - condition) + condition*nextStepLengthNoGhost;
       
       array conditionIndices = where(condition > 0);
-      /*if (conditionIndices.elements() == 0)
+      if (conditionIndices.elements() == 0)
       {
         break;
-	}*/
+      }
     }
 
     /* stepLength has now been set */

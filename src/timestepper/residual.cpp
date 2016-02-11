@@ -230,7 +230,7 @@ void timeStepper::computeResidual(const grid &primGuess,
   int numGhostX2 = residualGuess.numGhostX2;
   int numGhostX3 = residualGuess.numGhostX3;
 
-  for (int var=0; var<residual.numVars; var++) 
+  for (int var=0; var<residualGuess.numVars; var++) 
   {
     /* Left boundary */
     for(int i=0; i<numGhostX1; i++)

@@ -10,8 +10,8 @@ namespace vars
 
 namespace params
 {
-  int N1 = 256;
-  int N2 = 256;
+  int N1 = 128;
+  int N2 = 128;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
@@ -168,6 +168,10 @@ double computeLnOfh(double a, double r, double theta)
 
 void timeStepper::initialConditions(int &numReads,int &numWrites)
 {
+  int world_rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
   //Let's ignore ArrayFire here - it's only the initial
   //conditions...
   array xCoords[3];
@@ -187,6 +191,16 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   array& B3 = primOld->vars[vars::B3];
 
 
+  printf("Local size: %i x %i x %i\n",N1g,N2g,N3g);
+  if(world_rank==0)
+    printf("Running on %i procs\n",world_size);
+  for(int proc=0;proc<world_size;proc++)
+    {
+      if(world_rank==proc)
+	af_print(xCoords[directions::X1],5);
+      MPI_Barrier(PETSC_COMM_WORLD);
+    }
+  
   double aBH = params::blackHoleSpin;
   for(int k=0;k<N3g;k++)
     for(int j=0;j<N2g;j++)
@@ -337,10 +351,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   double rhoMax = rhoMax_af.host<double>()[0];
 
   /* Communicate rhoMax to all processors */
-  int world_rank;
-  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
-  int world_size;
-  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
   if (world_rank == 0) 
     {
       double temp; 
@@ -402,6 +412,10 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     (2.*dX1*g);
   primOld->vars[vars::B1].eval();
   primOld->vars[vars::B2].eval();
+
+  // We have used ghost zones in the previous steps -> need to communicate
+  // before computing global quantities
+  primOld->communicate();
 
   // Need to set fluid element to get b^2...
   {
