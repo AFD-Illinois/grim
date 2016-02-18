@@ -92,6 +92,10 @@ void setXCoords(const int location, grid &XCoords)
   int numGhostX2 = XCoords.numGhostX2;
   int numGhostX3 = XCoords.numGhostX3;
 
+  int iLocalStart = XCoords.iLocalStart;
+  int jLocalStart = XCoords.jLocalStart;
+  int kLocalStart = XCoords.kLocalStart;
+
   double dX1 = XCoords.dX1;
   double dX2 = XCoords.dX2;
   double dX3 = XCoords.dX3;
@@ -103,7 +107,7 @@ void setXCoords(const int location, grid &XCoords)
                 1,                /* number of variables */
                 directions::X1 ,  /* Vary indices in X1 direction */
                 f64               /* Double precision */
-               ) - numGhostX1;
+               ) - numGhostX1 + iLocalStart; /* Offsets for MPI */
 
   array indicesX2
     = af::range(N1Total, /* number of total zones in X1 */
@@ -112,7 +116,7 @@ void setXCoords(const int location, grid &XCoords)
                 1,                /* number of variables */
                 directions::X2 ,  /* Vary indices in X1 direction */
                 f64               /* Double precision */
-               ) - numGhostX2;
+               ) - numGhostX2 + jLocalStart; /* Offsets for MPI */
 
   array indicesX3
     = af::range(N1Total, /* number of total zones in X1 */
@@ -121,7 +125,7 @@ void setXCoords(const int location, grid &XCoords)
                 1,                /* number of variables */
                 directions::X3 ,  /* Vary indices in X1 direction */
                 f64               /* Double precision */
-               ) - numGhostX3;
+               ) - numGhostX3 + kLocalStart; /* Offsets for MPI */
 
 
   switch (location)
