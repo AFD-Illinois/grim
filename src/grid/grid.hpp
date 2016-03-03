@@ -21,6 +21,9 @@ class grid
     int boundaryLeft,  boundaryRight;
     int boundaryTop,   boundaryBottom;
     int boundaryFront, boundaryBack;
+    int periodicBoundariesX1;
+    int periodicBoundariesX2;
+    int periodicBoundariesX3;
 
     DMBoundaryType DMBoundaryLeft,  DMBoundaryRight;
     DMBoundaryType DMBoundaryTop,   DMBoundaryBottom;
@@ -35,24 +38,46 @@ class grid
 
     af::seq *domainX1, *domainX2, *domainX3;
 
-    double dX1, dX2, dX3;
-
     array *vars, varsSoA;
     array indices[3];
     double *hostPtr;
     bool hasHostPtrBeenAllocated;
 
     grid(int N1, int N2, int N3, 
-         int numGhost, int dim, int numVars,
-         int boundaryLeft,  int boundaryRight,
-         int boundaryTop,   int boundaryBottom,
-         int boundaryFront, int boundaryBack
+         int dim, 
+         int numVars,
+         int numGhost,
+         int periodicBoundariesX1,
+         int periodicBoundariesX2,
+         int periodicBoundariesX3
         );
     ~grid();
 
     void communicate();
     void copyVarsToHostPtr();
     void copyHostPtrToVars(const double *hostPtr);
+};
+
+class coordinatesGrid : public grid
+{
+  public:
+    double X1Start, X1End;
+    double X2Start, X2End;
+    double X3Start, X3End;
+
+    double dX1, dX2, dX3;
+
+    coordinatesGrid(int N1, int N2, int N3,
+                    int dim,
+                    int numGhost,
+                    double X1Start, double X1End,
+                    double X2Start, double X2End,
+                    double X3Start, double X3End
+                   );
+    ~coordinatesGrid();
+
+    void setXCoords(const int location);
+
 };
 
 #endif /* GRIM_GRID_H_ */

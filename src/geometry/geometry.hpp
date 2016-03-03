@@ -5,8 +5,6 @@
 #include "../grid/grid.hpp"
 #include <string>
 
-void setXCoords(const int location, grid &XCoords);
-
 class geometry
 {
   private:

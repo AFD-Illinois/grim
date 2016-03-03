@@ -24,9 +24,9 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
+#set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
 
 # Configuration for Stampede
 #set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
@@ -34,9 +34,9 @@ set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Configuration for Deathstar
-#set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_optimized")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build/package")
+set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_3.6.3")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build_with_mkl/package")
 
 # Double or float precision?
 set(REAL "double")
@@ -84,6 +84,7 @@ find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
 find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
+find_package(LAPACK REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
@@ -103,25 +104,145 @@ include_directories(${PETSC_INCLUDES}
                    )
 
 add_subdirectory(grid)
-add_subdirectory(geometry)
-add_subdirectory(physics)
-add_subdirectory(reconstruction)
+#add_subdirectory(geometry)
+#add_subdirectory(physics)
+#add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
-add_subdirectory(timestepper)
+#add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid geometry physics reconstruction
-                      timestepper problem
+target_link_libraries(grim grid #geometry physics reconstruction
+  #timestepper problem
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}
                       ${ArrayFire_LIBRARIES}
+                      ${LAPACK_LIBRARIES}
                      )
 
+set(NUM_PROCS 32)
+enable_testing()
+# 1D
+add_test(communication_1D_X1_left_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=128 --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k X1_left
+        )
+add_test(communication_1D_X1_right_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=128 --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k X1_right
+        )
+# 2D
+add_test(communication_2D_X1_left_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X1_left
+        )
+add_test(communication_2D_X1_right_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X1_right
+        )
+add_test(communication_2D_X2_top_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X2_top
+        )
+add_test(communication_2D_X2_bottom_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X2_bottom
+        )
+# 3D
+add_test(communication_3D_X1_left_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X1_left
+        )
+add_test(communication_3D_X1_right_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X1_right
+        )
+add_test(communication_3D_X2_top_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X2_top
+        )
+add_test(communication_3D_X2_bottom_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X2_bottom
+        )
+add_test(communication_3D_X3_front_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X3_front
+        )
+add_test(communication_3D_X3_back_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X3_back
+        )
+
+add_test(X1Coords_1D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=128 --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k X1Coords
+        )
+
+add_test(X1Coords_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X1Coords
+        )
+
+add_test(X2Coords_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k X2Coords
+        )
+
+add_test(X1Coords_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X1Coords
+        )
+
+add_test(X2Coords_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X2Coords
+        )
+
+add_test(X3Coords_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/grid/test_mpi.py
+         --N1=64 --N2=64 --N3=64 --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k X3Coords
+        )
 
 message("")
 message("#################")
@@ -137,4 +258,5 @@ message("CXX_FLAGS        : " ${CMAKE_CXX_FLAGS})
 message("PETSc dir        : " ${PETSC_DIR})
 message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
 message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
+message("Build dir        : " ${CMAKE_BINARY_DIR})
 message("")
