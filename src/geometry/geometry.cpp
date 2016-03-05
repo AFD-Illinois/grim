@@ -1,7 +1,21 @@
 #include "geometry.hpp"
 
-geometry::geometry(const grid &XCoordsGrid)
+geometry::geometry(const int metric,
+                   const double blackHoleSpin,
+                   const double hSlope,
+                   const coordinatesGrid &XCoordsGrid
+                  )
 {
+  N1        = XCoordsGrid.N1;
+  N2        = XCoordsGrid.N2;
+  N3        = XCoordsGrid.N3;
+  dim       = XCoordsGrid.dim;
+  numGhost  = XCoordsGrid.numGhost;
+
+  this->metric = metric;
+  this->blackHoleSpin = blackHoleSpin;
+  this->hSlope = hSlope;
+
   XCoords[directions::X1] = XCoordsGrid.vars[directions::X1];
   XCoords[directions::X2] = XCoordsGrid.vars[directions::X2];
   XCoords[directions::X3] = XCoordsGrid.vars[directions::X3];
@@ -207,7 +221,7 @@ void geometry::setgCovInXCoords(const array XCoords[3],
                                 array gCov[NDIM][NDIM]
                                )
 {
-  switch (params::metric)
+  switch (metric)
   {
     case metrics::MINKOWSKI:
       
@@ -235,10 +249,10 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       /* theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) 
          => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
       array dtheta_dX2 =  M_PI 
-                        + M_PI*(1 - params::hSlope)
+                        + M_PI*(1 - hSlope)
                               *af::cos(2*M_PI*XCoords[directions::X2]);
 
-      array sigma =  r*r + af::pow(params::blackHoleSpin * af::cos(theta), 2.);
+      array sigma =  r*r + af::pow(blackHoleSpin * af::cos(theta), 2.);
 
       /* -(1 - 2*r/sigma) dt^2 */
       gCov[0][0] = -(1. - 2.*r/sigma);     
@@ -250,7 +264,7 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       gCov[0][2] = 0.; 
 
       /* -(4*a*r*sin(theta)^2/sigma) dt dphi */
-      gCov[0][3] = -(2.*params::blackHoleSpin*r*af::pow(af::sin(theta), 2.)/sigma);
+      gCov[0][3] = -(2.*blackHoleSpin*r*af::pow(af::sin(theta), 2.)/sigma);
 
       /* (4*r/sigma * dr/dX1) dX1 dt */
       gCov[1][0] = gCov[0][1];
@@ -263,7 +277,7 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
       /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX1) dX1 dphi */
       gCov[1][3] =
-        -params::blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX1;
+        -blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX1;
 
       /* (0) dX2 dt */
       gCov[2][0] = gCov[0][2];
@@ -288,7 +302,7 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
       /* (sin(theta)^2*(sigma + a^2*(1. + 2*r/sigma)*sin(theta)^2) dphi dphi */
       gCov[3][3] = (  af::pow(af::sin(theta), 2.)
-                    * (sigma +   af::pow(params::blackHoleSpin*af::sin(theta), 2.)
+                    * (sigma +   af::pow(blackHoleSpin*af::sin(theta), 2.)
                                * (1. + 2*r/sigma)
                       )
                    );
@@ -303,7 +317,7 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
                                 array xCoords[3]
                                )
 {
-  switch (params::metric)
+  switch (metric)
   {
     case metrics::MINKOWSKI:
       
@@ -317,7 +331,7 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
       
       xCoords[directions::X1] = af::exp(XCoords[directions::X1]);
       xCoords[directions::X2] =   M_PI*XCoords[directions::X2] 
-                               + 0.5*(1 - params::hSlope)
+                               + 0.5*(1 - hSlope)
                                * af::sin(2.*M_PI*XCoords[directions::X2]);
   
       xCoords[directions::X3] = XCoords[directions::X3];
@@ -459,4 +473,76 @@ geometry::~geometry()
 {
 }
 
+void geometry::setgCovGrid()
+{
+  gCovGrid = new grid(N1, N2, N3, dim, 16, numGhost,
+                      false, false, false
+                     );
 
+//  for (int mu=0; mu<NDIM; mu++)
+//  {
+//    for (int nu=0; nu<NDIM; nu++)
+//    {
+//      gCovGrid->vars[nu + NDIM*mu] = gCov[mu][nu];
+//      gCovGrid->vars[nu + NDIM*mu].eval();
+//    }
+//  }
+//  af::sync();
+  gCovGrid->vars[0] = -1.;
+  af_print(gCovGrid->vars[0](0, 0, 0));
+  gCovGrid->vars[0].eval();
+  af::sync();
+}
+
+void geometry::setgConGrid()
+{
+  gConGrid = new grid(N1, N2, N3, dim, 16, numGhost,
+                      false, false, false
+                     );
+
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      gConGrid->vars[nu + NDIM*mu] = gCon[mu][nu];
+    }
+  }
+}
+
+void geometry::setgGrid()
+{
+  gGrid = new grid(N1, N2, N3, dim, 1, numGhost,
+                   false, false, false
+                  );
+
+  gGrid->vars[0] = g;
+}
+
+void geometry::setalphaGrid()
+{
+  alphaGrid = new grid(N1, N2, N3, dim, 1, numGhost,
+                       false, false, false
+                      );
+
+  alphaGrid->vars[0] = alpha;
+}
+
+void geometry::setgammaUpDownDownGrid()
+{
+  gammaUpDownDownGrid = new grid(N1, N2, N3, dim, 64, numGhost,
+                                 false, false, false
+                                );
+}
+
+void geometry::setxCoordsGrid()
+{
+  xCoordsGrid = new grid(N1, N2, N3, dim, 3, numGhost,
+                         false, false, false
+                        );
+  array xCoords[3];
+  XCoordsToxCoords(XCoords, xCoords);
+
+  xCoordsGrid->vars[directions::X1] = xCoords[directions::X1];
+  xCoordsGrid->vars[directions::X2] = xCoords[directions::X2];
+  xCoordsGrid->vars[directions::X3] = xCoords[directions::X3];
+}

@@ -43,7 +43,7 @@ class timeStepper
     int N1, N2, N3;
     int numVars;
 
-    grid *XCoords;
+    coordinatesGrid *XCoords;
     grid *prim, *primHalfStep, *primOld, *primIC;
     grid *cons, *consOld;
     grid *sourcesExplicit;
@@ -54,7 +54,7 @@ class timeStepper
     grid *fluxesX1, *fluxesX2, *fluxesX3;
     grid *divFluxes;
 
-    geometry *geomLeft, *geomRight;
+    geometry *geomLeft,   *geomRight;
     geometry *geomBottom, *geomTop;
     geometry *geomCenter;
 
@@ -68,24 +68,33 @@ class timeStepper
 
     int currentStep;
 
-    timeStepper(const int N1, const int N2, const int N3,
-                const int numGhost, const int dim, 
+    timeStepper(const int N1, 
+                const int N2,
+                const int N3,
+                const int dim,
                 const int numVars, 
+                const int numGhost,
                 const double time,
                 const double dt,
-                int boundaryLeft,  int boundaryRight,
-                int boundaryTop,   int boundaryBottom,
-                int boundaryFront, int boundaryBack
+                const int periodicBoundariesX1,
+                const int periodicBoundariesX2,
+                const int periodicBoundariesX3,
+                const int metric,
+                const double blackHoleSpin,
+                const double hSlope,
+                const double X1Start, const double X1End,
+                const double X2Start, const double X2End,
+                const double X3Start, const double X3End
                );
     ~timeStepper();
 
     void timeStep(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
-  void initialConditions(int &numReads,int &numWrites);
-  void halfStepDiagnostics(int &numReads,int &numWrites);
-  void fullStepDiagnostics(int &numReads,int &numWrites);
-  void setProblemSpecificBCs(int &numReads,int &numWrites);
+    void initialConditions(int &numReads, int &numWrites);
+    void halfStepDiagnostics(int &numReads, int &numWrites);
+    void fullStepDiagnostics(int &numReads, int &numWrites);
+    void setProblemSpecificBCs(int &numReads, int &numWrites);
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

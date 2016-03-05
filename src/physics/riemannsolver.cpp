@@ -12,32 +12,24 @@ riemannSolver::riemannSolver(const grid &prim,
   int dim      = prim.dim;
   int numVars  = prim.numVars;
 
-  fluxLeft = new grid(N1, N2, N3,
-                      numGhost, dim, numVars,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                     );
-
-  fluxRight = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+  fluxLeft  = new grid(N1, N2, N3, 
+                       dim, numVars, numGhost,
+                       false, false, false
                       );
 
-  consLeft = new grid(N1, N2, N3,
-                      numGhost, dim, numVars,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                      DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
-                     );
+  fluxRight = new grid(N1, N2, N3,
+                       dim, numVars, numGhost,
+                       false, false, false
+                      );
+
+  consLeft  = new grid(N1, N2, N3,
+                       dim, numVars, numGhost,
+                       false, false, false
+                      );
 
   consRight = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED,
-                       DM_BOUNDARY_GHOSTED, DM_BOUNDARY_GHOSTED
+                       dim, numVars, numGhost,
+                       false, false, false
                       );
 
   int numReads, numWrites;

@@ -34,7 +34,7 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     
-        array filterX1 = array(3, 1, 1, 1, filter1D)/(fluxesX1->dX1);
+        array filterX1 = array(3, 1, 1, 1, filter1D)/(XCoords->dX1);
 
         array dFluxX1_dX1 = convolve(fluxesX1->vars[var], filterX1);
 
@@ -84,8 +84,8 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     
-        array filterX1 = array(3, 1, 1, 1, filter1D)/(fluxesX1->dX1);
-        array filterX2 = array(1, 3, 1, 1, filter1D)/(fluxesX2->dX2);
+        array filterX1 = array(3, 1, 1, 1, filter1D)/(XCoords->dX1);
+        array filterX2 = array(1, 3, 1, 1, filter1D)/(XCoords->dX2);
 
         array dFluxX1_dX1 = convolve(fluxesX1->vars[var], filterX1);
         array dFluxX2_dX2 = convolve(fluxesX2->vars[var], filterX2);
@@ -152,9 +152,9 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
     
-        array filterX1 = array(3, 1, 1, 1, filter1D)/(fluxesX1->dX1);
-        array filterX2 = array(1, 3, 1, 1, filter1D)/(fluxesX2->dX2);
-        array filterX3 = array(1, 1, 3, 1, filter1D)/(fluxesX3->dX3);
+        array filterX1 = array(3, 1, 1, 1, filter1D)/(XCoords->dX1);
+        array filterX2 = array(1, 3, 1, 1, filter1D)/(XCoords->dX2);
+        array filterX3 = array(1, 1, 3, 1, filter1D)/(XCoords->dX3);
 
         array dFluxX1_dX1 = convolve(fluxesX1->vars[var], filterX1);
         array dFluxX2_dX2 = convolve(fluxesX2->vars[var], filterX2);

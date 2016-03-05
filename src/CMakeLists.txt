@@ -34,9 +34,9 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Configuration for Deathstar
-set(PETSC_DIR "/home/mc/data/mc/Downloads/petsc_3.6.3")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/home/mc/data/mc/Downloads/arrayfire/build_with_mkl/package")
+set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
 
 # Double or float precision?
 set(REAL "double")
@@ -100,15 +100,16 @@ include_directories(${PETSC_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
                     grid
+                    geometry
                     reconstruction
                    )
 
 add_subdirectory(grid)
-#add_subdirectory(geometry)
-#add_subdirectory(physics)
-#add_subdirectory(reconstruction)
+add_subdirectory(geometry)
+add_subdirectory(physics)
+add_subdirectory(reconstruction)
 #add_subdirectory(boundary)
-#add_subdirectory(timestepper)
+add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 add_subdirectory(problem)
@@ -124,7 +125,7 @@ target_link_libraries(grim grid #geometry physics reconstruction
                       ${LAPACK_LIBRARIES}
                      )
 
-set(NUM_PROCS 32)
+set(NUM_PROCS 2)
 enable_testing()
 # 1D
 add_test(communication_1D_X1_left_${NUM_PROCS}_procs

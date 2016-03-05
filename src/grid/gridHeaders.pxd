@@ -1,22 +1,23 @@
 cdef extern from "grid.hpp":
   cdef enum:
-      LOCATIONS_BACK   "locations::BACK"
-      LOCATIONS_CENTER "locations::CENTER"
-      LOCATIONS_LEFT   "locations::LEFT"
-      LOCATIONS_RIGHT  "locations::RIGHT"
-      LOCATIONS_TOP    "locations::TOP"
-      LOCATIONS_BOTTOM "locations::BOTTOM"
-      LOCATIONS_FRONT  "locations::FRONT"
+    LOCATIONS_BACK   "locations::BACK"
+    LOCATIONS_CENTER "locations::CENTER"
+    LOCATIONS_LEFT   "locations::LEFT"
+    LOCATIONS_RIGHT  "locations::RIGHT"
+    LOCATIONS_TOP    "locations::TOP"
+    LOCATIONS_BOTTOM "locations::BOTTOM"
+    LOCATIONS_FRONT  "locations::FRONT"
 
-cdef extern from "grid.hpp":
   cdef cppclass grid:
-    grid(int N1, int N2, int N3, 
-         int dim, 
-         int numVars,
-         int numGhost,
-         int periodicBoundariesX1,
-         int periodicBoundariesX2,
-         int periodicBoundariesX3
+    grid(const int N1,
+         const int N2,
+         const int N3, 
+         const int dim, 
+         const int numVars,
+         const int numGhost,
+         const int periodicBoundariesX1,
+         const int periodicBoundariesX2,
+         const int periodicBoundariesX3
         )
     int N1, N2, N3
     int numVars, numGhost, dim
@@ -38,12 +39,14 @@ cdef extern from "grid.hpp":
     void copyHostPtrToVars(const double *hostPtr)
 
   cdef cppclass coordinatesGrid:
-    coordinatesGrid(int N1, int N2, int N3, 
-                    int dim, 
-                    int numGhost,
-                    double X1Start, double X1End,
-                    double X2Start, double X2End,
-                    double X3Start, double X3End
+    coordinatesGrid(const int N1, 
+                    const int N2,
+                    const int N3, 
+                    const int dim, 
+                    const int numGhost,
+                    const double X1Start, const double X1End,
+                    const double X2Start, const double X2End,
+                    const double X3Start, const double X3End
                    )
     int N1, N2, N3
     int N1Total, N2Total, N3Total

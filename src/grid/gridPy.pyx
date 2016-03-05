@@ -43,7 +43,11 @@ cdef class gridPy(object):
                             periodicBoundariesX2,
                             periodicBoundariesX3
                            )
-    
+
+  # Empty constructor needed to create gridPy from an existing gridPtr
+  def __cinit__(self):
+    self.gridPtr = NULL
+
   def __dealloc__(self):
     del self.gridPtr
 
@@ -64,6 +68,9 @@ cdef class gridPy(object):
 
   cdef grid* getGridPtr(self):
     return self.gridPtr
+
+  cdef setGridPtr(self, grid *gridPtr):
+    self.gridPtr = gridPtr  
 
   property numVars:
     def __get__(self):
@@ -186,7 +193,8 @@ cdef class coordinatesGridPy(object):
     return coordinatesGridPy(self.coordGridPtr.N1,
                              self.coordGridPtr.N2,
                              self.coordGridPtr.N3,
-                             self.dim, self.numGhost,
+                             self.coordGridPtr.dim,
+                             self.coordGridPtr.numGhost,
                              self.coordGridPtr.X1Start, 
                              self.coordGridPtr.X1End,
                              self.coordGridPtr.X2Start,
@@ -194,6 +202,26 @@ cdef class coordinatesGridPy(object):
                              self.coordGridPtr.X3Start,
                              self.coordGridPtr.X3End 
                             )
+  property N1:
+    def __get__(self):
+      return self.coordGridPtr.N1
+
+  property N2:
+    def __get__(self):
+      return self.coordGridPtr.N2
+
+  property N3:
+    def __get__(self):
+      return self.coordGridPtr.N3
+
+  property numGhost:
+    def __get__(self):
+      return self.coordGridPtr.numGhost
+
+  property dim:
+    def __get__(self):
+      return self.coordGridPtr.dim
+
   property dX1:
     def __get__(self):
       return self.coordGridPtr.dX1
@@ -229,6 +257,9 @@ cdef class coordinatesGridPy(object):
   property X3End:
     def __get__(self):
       return self.coordGridPtr.X3End
+
+  cdef coordinatesGrid* getGridPtr(self):
+    return self.coordGridPtr
 
   def getCoords(self, int location):
     self.coordGridPtr.setXCoords(location)

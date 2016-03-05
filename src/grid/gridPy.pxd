@@ -8,6 +8,8 @@ from gridHeaders cimport grid, coordinatesGrid
 cdef class gridPy(object):
   cdef grid *gridPtr
   cdef grid* getGridPtr(self)
+  cdef setGridPtr(self, grid *gridPtr)
 
 cdef class coordinatesGridPy(object):
   cdef coordinatesGrid *coordGridPtr
+  cdef coordinatesGrid* getGridPtr(self)

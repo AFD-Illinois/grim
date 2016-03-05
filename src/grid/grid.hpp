@@ -43,13 +43,15 @@ class grid
     double *hostPtr;
     bool hasHostPtrBeenAllocated;
 
-    grid(int N1, int N2, int N3, 
-         int dim, 
-         int numVars,
-         int numGhost,
-         int periodicBoundariesX1,
-         int periodicBoundariesX2,
-         int periodicBoundariesX3
+    grid(const int N1, 
+         const int N2,
+         const int N3, 
+         const int dim, 
+         const int numVars,
+         const int numGhost,
+         const int periodicBoundariesX1,
+         const int periodicBoundariesX2,
+         const int periodicBoundariesX3
         );
     ~grid();
 
@@ -67,17 +69,18 @@ class coordinatesGrid : public grid
 
     double dX1, dX2, dX3;
 
-    coordinatesGrid(int N1, int N2, int N3,
-                    int dim,
-                    int numGhost,
-                    double X1Start, double X1End,
-                    double X2Start, double X2End,
-                    double X3Start, double X3End
+    coordinatesGrid(const int N1,
+                    const int N2,
+                    const int N3,
+                    const int dim,
+                    const int numGhost,
+                    const double X1Start, const double X1End,
+                    const double X2Start, const double X2End,
+                    const double X3Start, const double X3End
                    );
     ~coordinatesGrid();
 
     void setXCoords(const int location);
-
 };
 
 #endif /* GRIM_GRID_H_ */

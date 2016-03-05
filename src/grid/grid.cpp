@@ -1,12 +1,14 @@
 #include "grid.hpp"
 
-grid::grid(int N1, int N2, int N3,
-           int dim, 
-           int numVars,
-           int numGhost,
-           int periodicBoundariesX1,
-           int periodicBoundariesX2,
-           int periodicBoundariesX3
+grid::grid(const int N1,
+           const int N2,
+           const int N3,
+           const int dim, 
+           const int numVars,
+           const int numGhost,
+           const int periodicBoundariesX1,
+           const int periodicBoundariesX2,
+           const int periodicBoundariesX3
           )
 {
   this->numVars  = numVars;
@@ -14,6 +16,7 @@ grid::grid(int N1, int N2, int N3,
   this->N1 = N1;
   this->N2 = N2;
   this->N3 = N3;
+  this->dim = dim;
   this->periodicBoundariesX1 = periodicBoundariesX1;
   this->periodicBoundariesX2 = periodicBoundariesX2;
   this->periodicBoundariesX3 = periodicBoundariesX3;
@@ -130,12 +133,14 @@ grid::grid(int N1, int N2, int N3,
 }
 
 coordinatesGrid::coordinatesGrid
-  (int N1, int N2, int N3,
-   int dim,
-   int numGhost,
-   double X1Start, double X1End,
-   double X2Start, double X2End,
-   double X3Start, double X3End
+  (const int N1, 
+   const int N2,
+   const int N3,
+   const int dim,
+   const int numGhost,
+   const double X1Start, const double X1End,
+   const double X2Start, const double X2End,
+   const double X3Start, const double X3End
   ) : grid(N1, N2, N3, dim, 3, numGhost, false, false, false)
 {
   this->X1Start = X1Start; this->X1End = X1End;
@@ -260,6 +265,8 @@ void grid::copyVarsToHostPtr()
     varsSoA(span, span, span, var) = vars[var];
   }
 
+  /* TODO: Find out if I need to delete and then copy again or can I just copy
+   * directly */
   /* If already called once, free the existing memory */
   if (hasHostPtrBeenAllocated)
   {
