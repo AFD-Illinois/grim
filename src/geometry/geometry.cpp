@@ -479,19 +479,13 @@ void geometry::setgCovGrid()
                       false, false, false
                      );
 
-//  for (int mu=0; mu<NDIM; mu++)
-//  {
-//    for (int nu=0; nu<NDIM; nu++)
-//    {
-//      gCovGrid->vars[nu + NDIM*mu] = gCov[mu][nu];
-//      gCovGrid->vars[nu + NDIM*mu].eval();
-//    }
-//  }
-//  af::sync();
-  gCovGrid->vars[0] = -1.;
-  af_print(gCovGrid->vars[0](0, 0, 0));
-  gCovGrid->vars[0].eval();
-  af::sync();
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      gCovGrid->vars[nu + NDIM*mu] = gCov[mu][nu];
+    }
+  }
 }
 
 void geometry::setgConGrid()

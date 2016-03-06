@@ -1,4 +1,5 @@
 import mpi4py, petsc4py
+from petsc4py import PETSc
 import numpy as np
 import pytest
 import gridPy
@@ -9,6 +10,7 @@ petscComm  = petsc4py.PETSc.COMM_WORLD
 comm = petscComm.tompi4py()
 rank = comm.Get_rank()
 numProcs = comm.Get_size()
+PETSc.Sys.Print("Using %d procs" % numProcs)
 
 N1  = int(pytest.config.getoption('N1'))
 N2  = int(pytest.config.getoption('N2'))
@@ -30,11 +32,19 @@ XCoords = gridPy.coordinatesGridPy(N1, N2, N3,
                                   )
 X1Coords, X2Coords, X3Coords = XCoords.getCoords(gridPy.CENTER)
 
-geom = geometryPy.geometryPy(geometryPy.MINKOWSKI, 0., 0., 
-                             XCoords)
+geom = geometryPy.geometryPy(geometryPy.MINKOWSKI,
+                             0., 0.,
+                             XCoords
+                            )
 
-print geom.gCov[:, 0, 0, 0]
-print geom.gCov.shape
+PETSc.Sys.Print("gCov = ")
+PETSc.Sys.Print(geom.gCov[:, :, 0, 0, 0])
+PETSc.Sys.Print("gCon = ")
+PETSc.Sys.Print(geom.gCon[:, :, 0, 0, 0])
+PETSc.Sys.Print("g = ")
+PETSc.Sys.Print(geom.g[:, 0, 0, 0])
+PETSc.Sys.Print("alpha = ")
+PETSc.Sys.Print(geom.alpha[:, 0, 0, 0])
 
 #numGhostX1 = prim.numGhostX1
 #numGhostX2 = prim.numGhostX2

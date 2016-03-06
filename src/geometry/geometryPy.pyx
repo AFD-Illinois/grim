@@ -24,8 +24,8 @@ cdef class geometryPy(object):
                                     XCoordsGrid.getGridPtr()[0]
                                    )
     
-    self.geometryPtr.setgConGrid()
     self.geometryPtr.setgCovGrid()
+    self.geometryPtr.setgConGrid()
     self.geometryPtr.setgGrid()
     self.geometryPtr.setalphaGrid()
     self.geometryPtr.setxCoordsGrid()
@@ -53,12 +53,12 @@ cdef class geometryPy(object):
     xCoordsGridPy.setGridPtr(self.geometryPtr.xCoordsGrid)
 
     self.gCov = gCovGridPy.getVars()
-#    self.gCov = self.gCov.reshape([4, 4, 
-#                                   self.gCov.shape[1],
-#                                   self.gCov.shape[2],
-#                                   self.gCov.shape[3]
-#                                  ]
-#                                 )
+    self.gCov = self.gCov.reshape([4, 4, 
+                                   self.gCov.shape[1],
+                                   self.gCov.shape[2],
+                                   self.gCov.shape[3]
+                                  ]
+                                 )
                              
     self.gCon = gConGridPy.getVars()
     self.gCon = self.gCon.reshape([4, 4, 
@@ -68,9 +68,9 @@ cdef class geometryPy(object):
                                   ]
                                  )
 
-    self.g                = gGridPy.getVars()
-    self.alpha            = alphaGridPy.getVars()
-    self.xCoords          = xCoordsGridPy.getVars()
+    self.g       = gGridPy.getVars()
+    self.alpha   = alphaGridPy.getVars()
+    self.xCoords = xCoordsGridPy.getVars()
 
   property gCon:
     def __get__(self):
@@ -98,16 +98,12 @@ cdef class geometryPy(object):
 
   property metric:
     def __get__(self):
-      if (self.metric==METRICS_MINKOWSKI):
-        print "minkowski"
-      elif (self.metric==METRICS_MODIFIED_KERR_SCHILD):
-        print "modified_Kerr_Schild"
-      return self.metric
+      return self.geometryPtr.metric
 
   property blackHoleSpin:
     def __get__(self):
-      return self.blackHoleSpin
+      return self.geometryPtr.blackHoleSpin
 
   property hSlope:
     def __get__(self):
-      return self.hSlope
+      return self.geometryPtr.hSlope

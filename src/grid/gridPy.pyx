@@ -29,24 +29,25 @@ BACK   = LOCATIONS_BACK
 
 cdef class gridPy(object):
 
-  def __cinit__(self, int N1, int N2, int N3,
-                      int dim,
-                      int numVars,
-                      int numGhost,
-                      int periodicBoundariesX1,
-                      int periodicBoundariesX2,
-                      int periodicBoundariesX3
+  def __cinit__(self, const int N1 = 0,
+                      const int N2 = 0,
+                      const int N3 = 0,
+                      const int dim = 0,
+                      const int numVars = 0,
+                      const int numGhost = 0,
+                      const int periodicBoundariesX1 = 0,
+                      const int periodicBoundariesX2 = 0,
+                      const int periodicBoundariesX3 = 0
                ):
-    self.gridPtr = new grid(N1, N2, N3, 
-                            dim, numVars, numGhost, 
-                            periodicBoundariesX1,
-                            periodicBoundariesX2,
-                            periodicBoundariesX3
-                           )
-
-  # Empty constructor needed to create gridPy from an existing gridPtr
-  def __cinit__(self):
-    self.gridPtr = NULL
+    if (N1 == 0):
+      self.gridPtr = NULL
+    else:
+      self.gridPtr = new grid(N1, N2, N3, 
+                              dim, numVars, numGhost, 
+                              periodicBoundariesX1,
+                              periodicBoundariesX2,
+                              periodicBoundariesX3
+                             )
 
   def __dealloc__(self):
     del self.gridPtr
@@ -156,12 +157,27 @@ cdef class gridPy(object):
     cdef int N3Total = self.gridPtr.N3Total
     cdef int numVars = self.gridPtr.numVars
 
-    vars = \
-      np.PyArray_SimpleNewFromData(4,
-                                   [numVars, N3Total, N2Total, N1Total],
-                                   np.NPY_DOUBLE,
-                                   self.gridPtr.hostPtr
-                                  )
+    cdef np.ndarray[double, ndim=4] vars = \
+        np.zeros([numVars, N3Total, N2Total, N1Total])
+
+    cdef int i, j, k, var, hostIndex
+    for var in xrange(numVars):
+      for k in xrange(N3Total):
+        for j in xrange(N2Total):
+          for i in xrange(N1Total):
+            hostIndex = i + N1Total*(j + N2Total*(k + N3Total*var))
+            vars[var, k, j, i] = self.gridPtr.hostPtr[hostIndex]
+
+    # TODO: The following code creates a numpy array with an existing pointer.
+    # Unfortunately it segfaults when using geometryPy and hence the dumb way
+    # above where I create a numpy zeros array of the right size and copy data
+    # from the hostPtr
+    #vars = \
+    #  np.PyArray_SimpleNewFromData(4,
+    #                               [numVars, N3Total, N2Total, N1Total],
+    #                               np.NPY_DOUBLE,
+    #                               self.gridPtr.hostPtr
+    #                              )
 
     return vars
 
@@ -173,12 +189,14 @@ cdef class gridPy(object):
 
 cdef class coordinatesGridPy(object):
 
-  def __cinit__(self, int N1, int N2, int N3,
-                      int dim,
-                      int numGhost,
-                      double X1Start, double X1End,
-                      double X2Start, double X2End,
-                      double X3Start, double X3End
+  def __cinit__(self, const int N1,
+                      const int N2, 
+                      const int N3,
+                      const int dim,
+                      const int numGhost,
+                      const double X1Start, const double X1End,
+                      const double X2Start, const double X2End,
+                      const double X3Start, const double X3End
                ):
     self.coordGridPtr = new coordinatesGrid(N1, N2, N3, 
                                             dim, numGhost,

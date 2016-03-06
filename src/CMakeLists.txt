@@ -19,7 +19,7 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
+set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
@@ -125,7 +125,7 @@ target_link_libraries(grim grid #geometry physics reconstruction
                       ${LAPACK_LIBRARIES}
                      )
 
-set(NUM_PROCS 2)
+set(NUM_PROCS 32)
 enable_testing()
 # 1D
 add_test(communication_1D_X1_left_${NUM_PROCS}_procs
