@@ -14,8 +14,14 @@ def pytest_addoption(parser):
   parser.addoption("--N3", action="store", default=64,
                    help='grid zones in X3'
                   )
-  parser.addoption("--dim", action="store", default=64,
+  parser.addoption("--dim", action="store", default=3,
                    help='grid dimension'
+                  )
+  parser.addoption("--blackHoleSpin", action="store", default=0.5,
+                   help='black hole spin'
+                  )
+  parser.addoption("--hSlope", action="store", default=0.7,
+                   help='Refinement factor in theta: 1 - no refinement'
                   )
 
 

@@ -232,6 +232,18 @@ cdef class coordinatesGridPy(object):
     def __get__(self):
       return self.coordGridPtr.N3
 
+  property N1Total:
+    def __get__(self):
+      return self.coordGridPtr.N1Total
+
+  property N2Total:
+    def __get__(self):
+      return self.coordGridPtr.N2Total
+
+  property N3Total:
+    def __get__(self):
+      return self.coordGridPtr.N3Total
+
   property numGhost:
     def __get__(self):
       return self.coordGridPtr.numGhost

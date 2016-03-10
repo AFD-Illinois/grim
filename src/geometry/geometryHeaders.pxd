@@ -11,9 +11,12 @@ cdef extern from "geometry.hpp":
              const double hSlope,
              const coordinatesGrid &XCoordsGrid
             )
+    int N1, N2, N3, dim, numGhost
     int metric
     double blackHoleSpin
     double hSlope
+
+    void computeConnectionCoeffs()
 
     grid *gCovGrid
     grid *gConGrid

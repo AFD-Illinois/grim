@@ -330,11 +330,11 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
     case metrics::MODIFIED_KERR_SCHILD:
       
       xCoords[directions::X1] = af::exp(XCoords[directions::X1]);
-      xCoords[directions::X2] =   M_PI*XCoords[directions::X2] 
+      xCoords[directions::X2] =  M_PI*XCoords[directions::X2] 
                                + 0.5*(1 - hSlope)
                                * af::sin(2.*M_PI*XCoords[directions::X2]);
   
-      xCoords[directions::X3] = XCoords[directions::X3];
+      xCoords[directions::X3] = 2*M_PI*XCoords[directions::X3];
 
       break;
   }
@@ -346,7 +346,7 @@ void geometry::computeGammaDownDownDown(const int eta,
                                         array& out
                                        )
 {
-  const double GAMMA_EPS=1.e-8;
+  const double GAMMA_EPS=1.e-5;
   array XCoords_4D[NDIM];
   array XEpsilon[NDIM];
   array XEpsilonSpatial[3];
@@ -526,6 +526,18 @@ void geometry::setgammaUpDownDownGrid()
   gammaUpDownDownGrid = new grid(N1, N2, N3, dim, 64, numGhost,
                                  false, false, false
                                 );
+
+  for (int mu=0; mu<NDIM; mu++)
+  {
+    for (int nu=0; nu<NDIM; nu++)
+    {
+      for (int lamda = 0; lamda<NDIM; lamda++)
+      {
+        gammaUpDownDownGrid->vars[lamda + NDIM*(nu + NDIM*(mu))]
+          = gammaUpDownDown[mu][nu][lamda];
+      }
+    }
+  }
 }
 
 void geometry::setxCoordsGrid()

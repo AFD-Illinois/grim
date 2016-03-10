@@ -44,11 +44,6 @@ cdef class geometryPy(object):
     alphaGridPy = gridPy()
     alphaGridPy.setGridPtr(self.geometryPtr.alphaGrid)
 
-    #self.geometryPtr.setgammaUpDownDownGrid()
-    #gammaUpDownDownGridPy = gridPy()
-    #gammaUpDownDownGridPy.setGridPtr(self.geometryPtr.gammaUpDownDownGrid)
-    #self.gammaUpDownDown  = gammaUpDownDownGridPy.getVars()
-
     xCoordsGridPy = gridPy()
     xCoordsGridPy.setGridPtr(self.geometryPtr.xCoordsGrid)
 
@@ -68,9 +63,53 @@ cdef class geometryPy(object):
                                   ]
                                  )
 
-    self.g       = gGridPy.getVars()
-    self.alpha   = alphaGridPy.getVars()
+    self.g = gGridPy.getVars()
+    self.g = self.g.reshape([self.g.shape[1],
+                             self.g.shape[2],
+                             self.g.shape[3]
+                            ]
+                           )
+    self.alpha = alphaGridPy.getVars()
+    self.alpha = self.alpha.reshape([self.alpha.shape[1],
+                                     self.alpha.shape[2],
+                                     self.alpha.shape[3]
+                                    ]
+                                   )
     self.xCoords = xCoordsGridPy.getVars()
+
+  def computeConnectionCoeffs(self):
+    self.geometryPtr.computeConnectionCoeffs()
+    self.geometryPtr.setgammaUpDownDownGrid()
+    gammaUpDownDownGridPy = gridPy()
+    gammaUpDownDownGridPy.setGridPtr(self.geometryPtr.gammaUpDownDownGrid)
+    self.gammaUpDownDown = gammaUpDownDownGridPy.getVars()
+    self.gammaUpDownDown = \
+          self.gammaUpDownDown.reshape([4, 4, 4, 
+                                        self.gammaUpDownDown.shape[1],
+                                        self.gammaUpDownDown.shape[2],
+                                        self.gammaUpDownDown.shape[3]
+                                       ]
+                                      )
+
+  property N1:
+    def __get__(self):
+      return self.geometryPtr.N1
+
+  property N2:
+    def __get__(self):
+      return self.geometryPtr.N2
+
+  property N3:
+    def __get__(self):
+      return self.geometryPtr.N3
+
+  property dim:
+    def __get__(self):
+      return self.geometryPtr.dim
+
+  property numGhost:
+    def __get__(self):
+      return self.geometryPtr.numGhost
 
   property gCon:
     def __get__(self):
