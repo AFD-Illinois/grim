@@ -180,6 +180,7 @@ for k in xrange(N3Total):
       gConCheck[3][2][k, j, i] = gConPerZone[3, 2]
       gConCheck[3][3][k, j, i] = gConPerZone[3, 3]
 
+alphaCheck = 1./np.sqrt(-gConCheck[0][0])
 
 geomKerrSchild.computeConnectionCoeffs()
 
@@ -399,6 +400,9 @@ def test_modifiedKerrSchild_gCon():
   
 def test_modifiedKerrSchild_g():
   np.testing.assert_allclose(gCheck, geomKerrSchild.g)
+
+def test_modifiedKerrSchild_alpha():
+  np.testing.assert_allclose(alphaCheck, geomKerrSchild.alpha)
 
 def test_modifiedKerrSchild_gammaUpDownDown():
   np.testing.assert_allclose(          gammaUpDownDownCheck[0][0][0],
