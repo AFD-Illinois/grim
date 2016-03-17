@@ -50,7 +50,7 @@ void timeStepper::solve(grid &primGuess)
 	  {
 	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
 	    MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    globalresnorm+=localresnorm;
+	    globalresnorm+=temp;
 	    globalNonConverged+=Nel;
 	  }
       }
@@ -60,15 +60,14 @@ void timeStepper::solve(grid &primGuess)
 	MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
       }
     MPI_Barrier(PETSC_COMM_WORLD);
-    if (world_rank == 0)
-      {
-	MPI_Bcast(&globalresnorm,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-	MPI_Bcast(&globalNonConverged,1,MPI_INT,0,PETSC_COMM_WORLD);
-      }
+    MPI_Bcast(&globalresnorm,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+    MPI_Barrier(PETSC_COMM_WORLD);
+    MPI_Bcast(&globalNonConverged,1,MPI_INT,0,PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g\n", 
                 globalresnorm
                );
+
     if (globalNonConverged == 0)
     {
       break;

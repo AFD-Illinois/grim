@@ -191,15 +191,17 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   array& B3 = primOld->vars[vars::B3];
 
 
-  printf("Local size: %i x %i x %i\n",N1g,N2g,N3g);
   if(world_rank==0)
     printf("Running on %i procs\n",world_size);
-  for(int proc=0;proc<world_size;proc++)
+  /*for(int proc=0;proc<world_size;proc++)
     {
       if(world_rank==proc)
-	af_print(xCoords[directions::X1],5);
+	{
+	  printf("Local size on proc %i : %i x %i x %i\n",proc,N1g,N2g,N3g);
+	  af_print(xCoords[directions::X1],5);
+	}
       MPI_Barrier(PETSC_COMM_WORLD);
-    }
+      }*/
   
   double aBH = params::blackHoleSpin;
   for(int k=0;k<N3g;k++)
@@ -366,10 +368,11 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
         MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
       }
   MPI_Barrier(PETSC_COMM_WORLD);
-  if (world_rank == 0)
-    MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+  MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
   MPI_Barrier(PETSC_COMM_WORLD);
-  
+
+  PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e\n",rhoMax);
+
   Rho=Rho/rhoMax;
   U=U/rhoMax;
 
@@ -413,6 +416,32 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   primOld->vars[vars::B1].eval();
   primOld->vars[vars::B2].eval();
 
+  // Set fields to zero in ghost zones
+  // (Communication below only sets fields to correct value in inner GZ,
+  //  not on inner / outer boundary)
+  for(int i=0;i<params::numGhost;i++)
+    {
+      primOld->vars[vars::B1](i,span,span)=0.;
+      primOld->vars[vars::B2](i,span,span)=0.;
+      primOld->vars[vars::B1](N1g-1-i,span,span)=0.;
+      primOld->vars[vars::B2](N1g-1-i,span,span)=0.;
+      if(params::dim>1)
+	{
+	  primOld->vars[vars::B1](span,i,span)=0.;
+	  primOld->vars[vars::B2](span,i,span)=0.;
+	  primOld->vars[vars::B1](span,N2g-1-i,span)=0.;
+          primOld->vars[vars::B2](span,N2g-1-i,span)=0.;
+	}
+      if(params::dim>2)
+	{
+	  primOld->vars[vars::B1](span,span,i)=0.;
+	  primOld->vars[vars::B2](span,span,i)=0.;
+	  primOld->vars[vars::B1](span,span,N3g-1-i)=0.;
+          primOld->vars[vars::B2](span,span,N3g-1-i)=0.;
+	}
+   }
+  
+
   // We have used ghost zones in the previous steps -> need to communicate
   // before computing global quantities
   primOld->communicate();
@@ -443,10 +472,11 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
         MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
       }
     MPI_Barrier(PETSC_COMM_WORLD);
-    if (world_rank == 0)
-      MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+    MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
     
+    PetscPrintf(PETSC_COMM_WORLD,"Bfactor = %e\n",BFactor);
+
     primOld->vars[vars::B1] *= BFactor;
     primOld->vars[vars::B2] *= BFactor;
     primOld->vars[vars::B3] *= BFactor;
@@ -461,7 +491,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     const array& Pgas = elemOld->pressure;
     array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
     array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
-    af_print(BetaMin_af);
   }
 
   applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
@@ -500,7 +529,6 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
 void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 {
   applyFloor(primHalfStep,elemHalfStep,geomCenter,numReads,numWrites);
-  //printf("halfStepDiagnostics\n");
 }
 
 void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
