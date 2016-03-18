@@ -58,7 +58,7 @@ grid::grid(int N1, int N2, int N3,
       numGhostX2 = 0;
       numGhostX3 = 0;
 
-      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost);
       domainX2 = new af::seq(span);
       domainX3 = new af::seq(span);
 
@@ -83,8 +83,8 @@ grid::grid(int N1, int N2, int N3,
       numGhostX2 = numGhost;
       numGhostX3 = 0;
 
-      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
-      domainX2 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost);
+      domainX2 = new af::seq(numGhost, af::end - numGhost);
       domainX3 = new af::seq(span);
 
       DMDACreate2d(PETSC_COMM_WORLD, 
@@ -117,9 +117,9 @@ grid::grid(int N1, int N2, int N3,
       numGhostX2 = numGhost;
       numGhostX3 = numGhost;
 
-      domainX1 = new af::seq(numGhost, af::end - numGhost - 1);
-      domainX2 = new af::seq(numGhost, af::end - numGhost - 1);
-      domainX3 = new af::seq(numGhost, af::end - numGhost - 1);
+      domainX1 = new af::seq(numGhost, af::end - numGhost);
+      domainX2 = new af::seq(numGhost, af::end - numGhost);
+      domainX3 = new af::seq(numGhost, af::end - numGhost);
 
       DMDACreate3d(PETSC_COMM_WORLD, 
                    DMBoundaryLeft, DMBoundaryBottom, DMBoundaryBack,

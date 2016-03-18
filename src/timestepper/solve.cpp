@@ -34,7 +34,7 @@ void timeStepper::solve(grid &primGuess)
     array conditionIndices  = where(notConverged > 0);
 
     /* Communicate residual */
-    double localresnorm = af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)));
+    double localresnorm = af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)),AF_NORM_VECTOR_1);
     double globalresnorm = localresnorm;
     int localNonConverged = conditionIndices.elements();
     int globalNonConverged = localNonConverged;
@@ -64,10 +64,9 @@ void timeStepper::solve(grid &primGuess)
     MPI_Barrier(PETSC_COMM_WORLD);
     MPI_Bcast(&globalNonConverged,1,MPI_INT,0,PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
-    PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g\n", 
-                globalresnorm
+    PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
+                globalresnorm,globalNonConverged
                );
-
     if (globalNonConverged == 0)
     {
       break;
