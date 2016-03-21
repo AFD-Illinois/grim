@@ -104,9 +104,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   }
   /* Compute diagnostics */
   primOld->communicate();
+  time += dt;
   fullStepDiagnostics(numReads,numWrites);
 
-  time += dt;
   /* done */
 }
 

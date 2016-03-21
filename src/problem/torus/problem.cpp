@@ -10,18 +10,22 @@ namespace vars
 
 namespace params
 {
-  int N1 = 128;
-  int N2 = 128;
+  int N1 = 256;
+  int N2 = 256;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double dt = .01;
+  double CourantFactor = 0.9;
   double Time = 0.;
-  double finalTime = 0.5;
+  double finalTime = 50.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
   double hSlope = 0.3;
+
+  int ObserveEveryNSteps = 10;
+  int StepNumber = 0;
 
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
@@ -50,6 +54,16 @@ namespace params
   double uFloorInFluidElement           = 1e-20;
   double bSqrFloorInFluidElement        = 1e-20;
   double temperatureFloorInFluidElement = 1e-20;
+  
+  //Atmosphere parameters
+  // Floors are Ampl*pow(radius,power)
+  double RhoFloorAmpl = 1.e-3;
+  double UFloorAmpl = 1.e-5;
+  double RhoFloorSlope = -1.5;
+  double UFloorSlope = -2.5;
+  // Floors for magnetically dominated regions
+  double BsqrOverRhoMax = 10.;
+  double BsqrOverUMax = 500.;
 
   int conduction = 0;
   int viscosity  = 0;
@@ -396,7 +410,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
      +af::shift(Rho_af,0,0,1)+af::shift(Rho_af,0,0,-1))
     /6.;
   array zero = rhoAvg*0.;
-  array Avec = af::max(rhoAvg,zero)*
+  array Avec = af::max(rhoAvg-0.2,zero)*
     af::cos(xCoords[directions::X2]*
 	    (params::MagneticLoops-1));
   Avec.eval();
@@ -485,15 +499,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     primOld->vars[vars::B3].eval();
   }
 
-  {
-    elemOld->set(primOld->vars,*geomCenter,numReads,numWrites);
-    const array& bSqr = elemOld->bSqr;
-    const array& Pgas = elemOld->pressure;
-    array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
-    array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
-  }
-
-  applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
+  applyFloor(primOld,elemOld,geomCenter,XCoords,numReads,numWrites);
 
   for (int var=0; var<vars::dof; var++) 
     {
@@ -504,21 +510,28 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   af::sync();
 }
 
-void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,int &numWrites)
+void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, int &numReads,int &numWrites)
 {
-  array condition = prim->vars[vars::RHO]<1.e-5;
-  prim->vars[vars::RHO] = condition*1.e-5+(1.-condition)*prim->vars[vars::RHO];
+  array xCoords[3];
+  geom->XCoordsToxCoords(XCoords->vars,xCoords);
+  array Radius = xCoords[0];
 
-  condition = prim->vars[vars::U]<1.e-8;
-  prim->vars[vars::U] = condition*1.e-8+(1.-condition)*prim->vars[vars::U];
+  array minRho = af::pow(Radius,params::RhoFloorSlope)*params::RhoFloorAmpl;
+  array minU = af::pow(Radius,params::UFloorSlope)*params::UFloorAmpl;
+
+  array condition = prim->vars[vars::RHO]<minRho;
+  prim->vars[vars::RHO] = condition*minRho+(1.-condition)*prim->vars[vars::RHO];
+
+  condition = prim->vars[vars::U]<minU;
+  prim->vars[vars::U] = condition*minU+(1.-condition)*prim->vars[vars::U];
 
   elem->set(prim->vars,*geom,numReads,numWrites);
 
   const array& bSqr = elem->bSqr;
-  condition = bSqr>10.*prim->vars[vars::RHO];
-  prim->vars[vars::RHO] = prim->vars[vars::RHO]*(1.-condition)+condition*0.1*bSqr;
-  condition = bSqr>500.*prim->vars[vars::U];
-  prim->vars[vars::U] = prim->vars[vars::U]*(1.-condition)+condition*0.002*bSqr;
+  condition = bSqr>params::BsqrOverRhoMax*prim->vars[vars::RHO];
+  prim->vars[vars::RHO] = prim->vars[vars::RHO]*(1.-condition)+condition*bSqr/params::BsqrOverRhoMax;
+  condition = bSqr>params::BsqrOverUMax*prim->vars[vars::U];
+  prim->vars[vars::U] = prim->vars[vars::U]*(1.-condition)+condition*bSqr/params::BsqrOverUMax;
   
   prim->vars[vars::RHO].eval();
   prim->vars[vars::U].eval();
@@ -528,15 +541,178 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
 
 void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 {
-  applyFloor(primHalfStep,elemHalfStep,geomCenter,numReads,numWrites);
+  applyFloor(primHalfStep,elemHalfStep,geomCenter,XCoords,numReads,numWrites);
 }
 
 void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
-  applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
-  /* Compute the errors for the different modes */
-  //printf("fullStepDiagnostics: Time = %e\n",params::Time);
-  //af_print(primOld->vars[vars::RHO],8.);
+  applyFloor(primOld,elemOld,geomCenter,XCoords,numReads,numWrites);
+
+  int world_rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+  
+  // Time step control
+  array minSpeedTemp,maxSpeedTemp;
+  array minSpeed,maxSpeed;
+  elemOld->computeMinMaxCharSpeeds(*geomCenter,1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+  array dX = primOld->dX1*af::sqrt(geomCenter->gCov[1][1]);
+  minSpeedTemp = minSpeedTemp/dX;
+  maxSpeedTemp = maxSpeedTemp/dX;
+  minSpeed=minSpeedTemp;
+  maxSpeed=maxSpeedTemp;
+  if(params::dim>1)
+    {
+      elemOld->computeMinMaxCharSpeeds(*geomCenter,2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+      dX = primOld->dX2*af::sqrt(geomCenter->gCov[2][2]);
+      minSpeedTemp = minSpeedTemp/dX;
+      maxSpeedTemp = maxSpeedTemp/dX;
+      minSpeed=af::min(minSpeed,minSpeedTemp);
+      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
+    }
+  if(params::dim>2)
+    {
+      elemOld->computeMinMaxCharSpeeds(*geomCenter,3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+      dX = primOld->dX3*af::sqrt(geomCenter->gCov[3][3]);
+      minSpeedTemp = minSpeedTemp/dX;
+      maxSpeedTemp = maxSpeedTemp/dX;
+      minSpeed=af::min(minSpeed,minSpeedTemp);
+      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
+    }
+  maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
+  array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
+  double maxInvDt = maxInvDt_af.host<double>()[0];
+  /* Use MPI to find minimum over all processors */
+  if (world_rank == 0) 
+    {
+      double temp; 
+      for(int i=1;i<world_size;i++)
+	{
+	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	  if( maxInvDt < temp)
+	    maxInvDt = temp;
+	}
+    }
+  else
+    {
+      MPI_Send(&maxInvDt, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+    }
+  MPI_Barrier(PETSC_COMM_WORLD);
+  MPI_Bcast(&maxInvDt,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+  MPI_Barrier(PETSC_COMM_WORLD);
+  dt = params::CourantFactor/maxInvDt;
+  PetscPrintf(PETSC_COMM_WORLD,"New dt = %e\n",dt);
+
+  // On-the-fly observers
+  if((params::StepNumber%params::ObserveEveryNSteps)==0)
+    {
+      //Find maximum density
+      array rhoMax_af = af::max(af::max(af::max(primOld->vars[vars::RHO],2),1),0);
+      double rhoMax = rhoMax_af.host<double>()[0];
+      /* Communicate rhoMax to all processors */
+      if (world_rank == 0) 
+	{
+	  double temp; 
+	  for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      if(rhoMax < temp)
+		rhoMax = temp;
+	    }
+	}
+      else
+	{
+	  MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	}
+      MPI_Barrier(PETSC_COMM_WORLD);
+      MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+      MPI_Barrier(PETSC_COMM_WORLD);
+      
+      // Find minimum beta
+      const array& bSqr = elemOld->bSqr;
+      const array& Pgas = elemOld->pressure;
+      array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
+      array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
+      double betaMin = BetaMin_af.host<double>()[0];
+      /* Use MPI to find minimum over all processors */
+      if (world_rank == 0) 
+	{
+	  double temp; 
+	  for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      if( betaMin > temp)
+		betaMin = temp;
+	  }
+	}
+      else
+	{
+	  MPI_Send(&betaMin, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	}
+      MPI_Barrier(PETSC_COMM_WORLD);
+      MPI_Bcast(&betaMin,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+      MPI_Barrier(PETSC_COMM_WORLD);
+      
+      /* Get the domain of the bulk and volume element*/
+      af::seq domainX1 = *primOld->domainX1;
+      af::seq domainX2 = *primOld->domainX2;
+      af::seq domainX3 = *primOld->domainX3;
+      elemOld->computeFluxes(*geomCenter,0,consOld->vars,numReads,numWrites);
+      double volElem = primOld->dX1;
+      if(params::dim>1)
+	volElem*=primOld->dX2;
+      if(params::dim>2)
+	volElem*=primOld->dX3;
+
+      // Integrate baryon mass
+      array MassIntegrand = consOld->vars[vars::RHO]*volElem;
+      array BaryonMass_af = af::sum(af::flat(MassIntegrand(domainX1, domainX2, domainX3)),0);
+      double BaryonMass = BaryonMass_af.host<double>()[0];
+      /* Communicate to all processors */
+      if (world_rank == 0) 
+	{
+	  double temp; 
+	  for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      BaryonMass += temp;
+	    }
+	}
+      else
+	{
+	  MPI_Send(&BaryonMass, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	}
+      MPI_Barrier(PETSC_COMM_WORLD);
+      MPI_Bcast(&BaryonMass,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+      MPI_Barrier(PETSC_COMM_WORLD);
+      // Integrate magnetic energy
+      array EMagIntegrand = volElem*elemOld->bSqr*0.5*geomCenter->g;
+      array EMag_af = af::sum(af::flat(EMagIntegrand(domainX1, domainX2, domainX3)),0);
+      double EMag = EMag_af.host<double>()[0];
+      /* Communicate to all processors */
+      if (world_rank == 0) 
+	{
+	  double temp; 
+	  for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      EMag += temp;
+	    }
+	}
+      else
+	{
+	  MPI_Send(&EMag, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	}
+      MPI_Barrier(PETSC_COMM_WORLD);
+      MPI_Bcast(&EMag,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+      MPI_Barrier(PETSC_COMM_WORLD);
+
+      PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
+      PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e; betaMin = %e;\n",rhoMax,betaMin);
+      PetscPrintf(PETSC_COMM_WORLD,"Baryon Mass = %e; Magnetic Energy = %e\n",BaryonMass,EMag);
+    }
+  params::StepNumber++;
 }
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)

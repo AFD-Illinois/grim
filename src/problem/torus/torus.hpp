@@ -26,6 +26,6 @@ double computeSigma(double a, double r, double theta);
 
 double computeA(double a, double r, double theta);
 
-void applyFloor(grid* prim, fluidElement* elem, geometry* geom,int &numReads,int &numWrites);
+void applyFloor(grid* prim, fluidElement* elem, geometry* geom,grid* XCoords, int &numReads,int &numWrites);
 
 #endif
