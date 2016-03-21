@@ -61,40 +61,6 @@ void fluidElement::set(const array prim[vars::dof],
                          /(rho+params::adiabaticIndex*u)
                         );
   
-  // Note: this needs to be before setFluidElementParameters
-  // because the closure relation uses q, deltaP!
-  if (params::conduction==1)
-  {
-    qTilde = prim[vars::Q];
-
-    if (params::highOrderTermsConduction==1)
-    {
-      q = qTilde * temperature * af::sqrt(rho*params::ConductionAlpha*soundSpeed*soundSpeed);
-      q.eval();
-    }
-    else
-    {
-      q = qTilde;
-    }
-  }
-
-  if (params::viscosity==1)
-  {
-    deltaPTilde = prim[vars::DP];
-
-    if (params::highOrderTermsViscosity == 1)
-    {
-      deltaP = deltaPTilde * af::sqrt(temperature * rho * params::ViscosityAlpha*soundSpeed*soundSpeed);
-      deltaP.eval();
-    }
-    else
-    {
-      deltaP = deltaPTilde;
-    }
-  }
-
-  setFluidElementParameters(geom);
-
   gammaLorentzFactor =
     af::sqrt(1 + geom.gCov[1][1] * u1 * u1
                + geom.gCov[2][2] * u2 * u2
@@ -243,6 +209,41 @@ void fluidElement::set(const array prim[vars::dof],
    * bSqr : 1 */
 
   bNorm = af::sqrt(bSqr);
+
+  // Note: this needs to be before setFluidElementParameters
+  // because the closure relation uses q, deltaP!
+  if (params::conduction==1)
+  {
+    qTilde = prim[vars::Q];
+
+    if (params::highOrderTermsConduction==1)
+    {
+      q = qTilde * temperature * af::sqrt(rho*params::ConductionAlpha*soundSpeed*soundSpeed);
+      q.eval();
+    }
+    else
+    {
+      q = qTilde;
+    }
+  }
+
+  if (params::viscosity==1)
+  {
+    deltaPTilde = prim[vars::DP];
+
+    if (params::highOrderTermsViscosity == 1)
+    {
+      deltaP = deltaPTilde * af::sqrt(temperature * rho * params::ViscosityAlpha*soundSpeed*soundSpeed);
+      deltaP.eval();
+    }
+    else
+    {
+      deltaP = deltaPTilde;
+    }
+  }
+
+  // Note: this uses q, deltaP, bSqr!
+  setFluidElementParameters(geom);
 
   for (int mu=0; mu < NDIM; mu++)
   {

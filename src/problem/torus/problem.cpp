@@ -2,8 +2,8 @@
 
 namespace params
 {
-  int N1 = 128;
-  int N2 = 128;
+  int N1 = 256;
+  int N2 = 256;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
@@ -59,7 +59,7 @@ namespace params
   double BsqrOverUMax = 500.;
 
   int conduction = 1;
-  int viscosity  = 0;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;
@@ -95,6 +95,7 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   geom.XCoordsToxCoords(XCoords,xCoords);
   array Radius = xCoords[0];
   array DynamicalTimescale = af::pow(Radius,1.5);
+  DynamicalTimescale.eval();
   tau = DynamicalTimescale;
 
   if(params::conduction)
@@ -109,13 +110,15 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
     }
   if(params::viscosity)
     {
-      array dPmaxPlus = af::max(params::ViscosityClosureFactor*bSqr*0.5*(pressure-2./3.*deltaP)/(pressure+1./3.*deltaP),0.*deltaP);
-      array dPmaxMinus = af::max(af::min(-params::ViscosityClosureFactor*bSqr,0.*deltaP),-2.99*pressure/1.07);
+      array dPmod = (af::abs(pressure-2./3.*deltaP)+params::bSqrFloorInFluidElement)/(af::abs(pressure+1./3.*deltaP)+params::bSqrFloorInFluidElement);
+      array dPmaxPlus = af::max(params::ViscosityClosureFactor*bSqr*0.5*dPmod,0.01*deltaP);
+      array dPmaxMinus = af::max(af::min(-params::ViscosityClosureFactor*bSqr,0.01*deltaP),-2.99*pressure/1.07)-params::bSqrFloorInFluidElement;
+
       array condition = deltaP>0.;
       array dPmax = condition*dPmaxPlus + (1.-condition)*dPmaxMinus;
 
       double lambda = 0.01;
-      array yVis = deltaP/dPmax;
+      array yVis = af::abs(deltaP)/(af::abs(dPmax)+params::bSqrFloorInFluidElement);
       yVis = af::exp(-(yVis-1.)/lambda);
       yVis.eval();
       array fdVis = yVis/(yVis+1.)+1.e-5;
