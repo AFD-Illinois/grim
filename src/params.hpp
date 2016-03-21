@@ -109,6 +109,8 @@ namespace params
   extern int highOrderTermsConduction;
   extern int highOrderTermsViscosity;
   extern double adiabaticIndex;
+  extern double ConductionAlpha;
+  extern double ViscosityAlpha;
 
   extern double slopeLimTheta;
   extern int reconstruction;

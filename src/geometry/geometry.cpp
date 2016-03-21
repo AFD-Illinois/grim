@@ -401,7 +401,7 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
 void geometry::XCoordsToxCoords(const array XCoords[3], 
                                 array xCoords[3]
-                               )
+                               ) const
 {
   switch (params::metric)
   {

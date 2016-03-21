@@ -1,17 +1,9 @@
 #include "torus.hpp"
 
-namespace vars
-{
-  int dof = 8;
-  int Q = 8;
-  int DP = 9;
-};
-
-
 namespace params
 {
-  int N1 = 256;
-  int N2 = 256;
+  int N1 = 128;
+  int N2 = 128;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
@@ -27,6 +19,7 @@ namespace params
   int ObserveEveryNSteps = 10;
   int StepNumber = 0;
 
+  double adiabaticIndex = 4./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
   double PressureMaxRadius = 12.;
@@ -65,11 +58,14 @@ namespace params
   double BsqrOverRhoMax = 10.;
   double BsqrOverUMax = 500.;
 
-  int conduction = 0;
+  int conduction = 1;
   int viscosity  = 0;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
-  double adiabaticIndex = 4./3;
+  double ConductionAlpha = 1.;
+  double ViscosityAlpha = 1.;
+  double ConductionClosureFactor = 1.;
+  double ViscosityClosureFactor = 1.;
 
   double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::WENO5;
@@ -85,11 +81,52 @@ namespace params
   
 };
 
+namespace vars
+{
+  int dof = 8+params::conduction+params::viscosity;
+  int Q = 8;
+  int DP = 9;
+};
+
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
-  tau = one;
-  chi_emhd = soundSpeed*soundSpeed*tau;
-  nu_emhd  = soundSpeed*soundSpeed*tau;
+  array xCoords[3],XCoords[3];
+  geom.getXCoords(XCoords);
+  geom.XCoordsToxCoords(XCoords,xCoords);
+  array Radius = xCoords[0];
+  array DynamicalTimescale = af::pow(Radius,1.5);
+  tau = DynamicalTimescale;
+
+  if(params::conduction)
+    {
+      array Qmax = params::ConductionClosureFactor*rho*pow(soundSpeed,3.);
+      double lambda = 0.01;
+      array yCon = q/Qmax;
+      yCon = af::exp(-(yCon-1.)/lambda);
+      yCon.eval();
+      array fdCon = yCon/(yCon+1.)+1.e-5;
+      tau=af::min(tau,DynamicalTimescale*fdCon);
+    }
+  if(params::viscosity)
+    {
+      array dPmaxPlus = af::max(params::ViscosityClosureFactor*bSqr*0.5*(pressure-2./3.*deltaP)/(pressure+1./3.*deltaP),0.*deltaP);
+      array dPmaxMinus = af::max(af::min(-params::ViscosityClosureFactor*bSqr,0.*deltaP),-2.99*pressure/1.07);
+      array condition = deltaP>0.;
+      array dPmax = condition*dPmaxPlus + (1.-condition)*dPmaxMinus;
+
+      double lambda = 0.01;
+      array yVis = deltaP/dPmax;
+      yVis = af::exp(-(yVis-1.)/lambda);
+      yVis.eval();
+      array fdVis = yVis/(yVis+1.)+1.e-5;
+      tau=af::min(tau,DynamicalTimescale*fdVis);
+    }
+  tau.eval();
+  chi_emhd = params::ConductionAlpha*soundSpeed*soundSpeed*tau;
+  nu_emhd  = params::ViscosityAlpha*soundSpeed*soundSpeed*tau;
+  chi_emhd.eval();
+  nu_emhd.eval();
+  af::sync();
 }
 
 
@@ -498,6 +535,17 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     primOld->vars[vars::B2].eval();
     primOld->vars[vars::B3].eval();
   }
+
+  if(params::conduction)
+    {
+      primOld->vars[vars::Q] = zero;
+      primOld->vars[vars::Q].eval();
+    }
+  if(params::viscosity)
+    {
+      primOld->vars[vars::DP] = zero;
+      primOld->vars[vars::DP].eval();
+    }
 
   applyFloor(primOld,elemOld,geomCenter,XCoords,numReads,numWrites);
 

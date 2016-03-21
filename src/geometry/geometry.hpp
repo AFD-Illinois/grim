@@ -35,7 +35,11 @@ class geometry
     ~geometry();
 
     void computeConnectionCoeffs();
-    void XCoordsToxCoords(const array XCoords[3], array xCoords[3]);
+    void getXCoords(array tXCoords[3]) const
+    {
+      for(int d=0;d<3;d++) tXCoords[d]=XCoords[d];
+    }
+    void XCoordsToxCoords(const array XCoords[3], array xCoords[3]) const;
 };
 
 #endif /* GRIM_GEOMETRY_H_ */
