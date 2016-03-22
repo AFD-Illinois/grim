@@ -7,6 +7,11 @@ void timeStepper::solve(grid &primGuess)
   af::seq domainX2 = *residual->domainX2;
   af::seq domainX3 = *residual->domainX3;
 
+  int world_rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+
   for (int nonLinearIter=0;
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
@@ -38,10 +43,6 @@ void timeStepper::solve(grid &primGuess)
     double globalresnorm = localresnorm;
     int localNonConverged = conditionIndices.elements();
     int globalNonConverged = localNonConverged;
-    int world_rank;
-    MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
-    int world_size;
-    MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
     if (world_rank == 0)
       {
 	double temp;
@@ -195,6 +196,7 @@ void timeStepper::solve(grid &primGuess)
       }
     }
 
+
     /* stepLength has now been set */
     for (int var=0; var<vars::dof; var++)
     {
@@ -204,6 +206,31 @@ void timeStepper::solve(grid &primGuess)
   }
 
   
+  /* Diagnostics */
+  /*{
+    for (int var=0; var<vars::dof; var++)
+      {
+	array res = af::abs(residual->vars[var]((domainX1, domainX2, domainX3)));
+	array badPoints = where(res>1.);
+	if(badPoints.elements()>0)
+	  {
+	    printf("Found bad residual for variable %i on proc %i\n",var,world_rank);
+	    af_print(badPoints);
+	    array flatR = af::flat(XCoords->vars[0](domainX1, domainX2, domainX3));
+	    af_print(af::exp(flatR(badPoints)),12);
+	    array flatRho = af::flat(primGuess.vars[vars::RHO](domainX1, domainX2, domainX3));
+	    array flatU = af::flat(primGuess.vars[vars::U](domainX1, domainX2, domainX3));
+	    array flatDP = af::flat(primGuess.vars[vars::DP](domainX1, domainX2, domainX3));
+	    af_print(flatRho(badPoints),12);
+	    af_print(flatU(badPoints),12);
+	    af_print(flatDP(badPoints),12);
+	    array flatRes = af::flat(res);
+	    af_print(flatRes(badPoints),12);
+	    exit(1);
+	  }
+      }
+      }*/
+
   /* TODO: print out global l2Norms after solver iterations are complete */
   //VecNorm();
 //   double globalL2Norm = 

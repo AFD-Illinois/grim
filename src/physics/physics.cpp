@@ -582,7 +582,8 @@ void fluidElement::computeTimeDerivSources(const geometry &geom,
 
 
 void fluidElement::computeImplicitSources(const geometry &geom,
-					                                array sources[vars::dof],
+					  array sources[vars::dof],
+					  array tauDamp,
                                           int &numReads,
                                           int &numWrites
                                          )
@@ -602,7 +603,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
   {
     //Note on sign: we put the sources on the LHS when
     //computing the residual!
-    sources[vars::DP] = geom.g*(deltaPTilde)/tau;
+    sources[vars::DP] = geom.g*(deltaPTilde)/tauDamp;
     sources[vars::DP].eval();
     /* Reads:
      * -----
@@ -624,7 +625,7 @@ void fluidElement::computeImplicitSources(const geometry &geom,
   {
     //Note on sign: we put the sources on the LHS when
     //computing the residual!
-    sources[vars::Q] = geom.g*(qTilde)/tau;
+    sources[vars::Q] = geom.g*(qTilde)/tauDamp;
     sources[vars::Q].eval();
     /* Reads:
      * -----
@@ -740,6 +741,7 @@ void fluidElement::computeExplicitSources(const geometry &geom,
 	      sources[vars::DP] -= 0.5*geom.g*divuCov*deltaPTilde;
 	    }
       sources[vars::DP].eval();
+
       /* Reads:
        * -----
        *  divuCov(geom.gCon[mu][nu] : 16, graduCov[mu][nu] : 16): 32
@@ -832,6 +834,7 @@ void fluidElement::computeExplicitSources(const geometry &geom,
 
     } /* End of conduction */
   } /* End of EMHD: viscosity || conduction */
+
 }
 
 void fluidElement::computeEMHDGradients(const geometry &geom,

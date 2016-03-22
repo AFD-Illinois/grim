@@ -71,11 +71,11 @@ namespace params
   int reconstruction = reconstructionOptions::WENO5;
   int riemannSolver  = riemannSolvers::HLL;
 
-  int maxNonLinearIter = 10;
-  int maxLineSearchIters = 10;
+  int maxNonLinearIter = 3;
+  int maxLineSearchIters = 3;
 
   //Parameters controlling accuracy of nonlinear solver
-  double nonlinearsolve_atol = 1.e-10;
+  double nonlinearsolve_atol = 1.e-6;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
@@ -586,6 +586,30 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   
   prim->vars[vars::RHO].eval();
   prim->vars[vars::U].eval();
+
+  if(params::conduction)
+    {
+      const array& rho = prim->vars[vars::RHO];
+      const array& cs = elem->soundSpeed;
+      array Qmax = 1.07*params::ConductionClosureFactor*rho*pow(cs,3.);
+      array LimFac = af::max(af::abs(elem->q)/Qmax,1.);
+      prim->vars[vars::Q]=prim->vars[vars::Q]/LimFac;
+      prim->vars[vars::Q].eval();
+    }
+  if(params::viscosity)
+    {
+      const array& pressure = elem->pressure;
+      const array& deltaP = elem->deltaP;
+      array dPmod = af::abs(pressure-2./3.*deltaP)/(af::abs(pressure+1./3.*deltaP)+params::bSqrFloorInFluidElement);
+      array dPmaxPlus = 1.07*params::ViscosityClosureFactor*bSqr*0.5*dPmod+params::bSqrFloorInFluidElement;
+      array dPmaxMinus = -1.07*params::ViscosityClosureFactor*bSqr-params::bSqrFloorInFluidElement;
+
+      array condition = deltaP>0.;
+      array LimFac = condition*af::max(deltaP/dPmaxPlus,1.)
+	+(1.-condition)*af::max(deltaP/dPmaxMinus,1.);
+      prim->vars[vars::DP]=prim->vars[vars::DP]/LimFac;
+      prim->vars[vars::DP].eval();
+    }
 
   af::sync();
 }

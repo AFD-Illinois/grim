@@ -40,10 +40,12 @@ void timeStepper::computeResidual(const grid &primGuess,
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
     elemOld->computeImplicitSources(*geomCenter, sourcesImplicitOld->vars,
+				    elemOld->tau,
                                     numReadsImplicitSources,
                                     numWritesImplicitSources
                                    );
     elem->computeImplicitSources(*geomCenter, sourcesImplicit->vars,
+				 elemOld->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );
@@ -83,15 +85,15 @@ void timeStepper::computeResidual(const grid &primGuess,
     //  residualGuess.vars[var] = residualGuess.vars[var]/geomCenter->g;
     if (params::conduction)
     {
-	    if(params::highOrderTermsConduction)
+      if(params::highOrderTermsConduction)
       {
-	      residualGuess.vars[vars::Q] *=
+	residualGuess.vars[vars::Q] *=
           elemOld->temperature 
-        * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
+	  * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
 
         numReads += 4;
       }
-	    else
+      else
       {
 	      residualGuess.vars[vars::Q] *= elemOld->tau;
         numReads += 1;
@@ -100,15 +102,15 @@ void timeStepper::computeResidual(const grid &primGuess,
 
     if (params::viscosity)
     {
-	    if(params::highOrderTermsViscosity)
+      if(params::highOrderTermsViscosity)
       {
-	      residualGuess.vars[vars::DP] *=
+	residualGuess.vars[vars::DP] *=
           af::sqrt(   elemOld->rho*elemOld->nu_emhd
-                    * elemOld->temperature*elemOld->tau
-                  );
+		      * elemOld->temperature*elemOld->tau
+		      );
         numReads += 4;
       }
-	    else
+      else
       {
 	      residualGuess.vars[vars::DP] *= elemOld->tau;
         numReads += 1;
@@ -140,10 +142,12 @@ void timeStepper::computeResidual(const grid &primGuess,
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
     elemOld->computeImplicitSources(*geomCenter, sourcesImplicitOld->vars,
+				    elemHalfStep->tau,
                                     numReadsImplicitSources,
                                     numWritesImplicitSources
                                    );
     elem->computeImplicitSources(*geomCenter, sourcesImplicit->vars,
+				 elemHalfStep->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );

@@ -75,8 +75,9 @@ class fluidElement
 				                        );
 
     void computeImplicitSources(const geometry &geom,
-	  			                      array sources[vars::dof],
-                                int &numReads,
+				array sources[vars::dof],
+                                array tauDamp,
+				int &numReads,
                                 int &numWrites
 				                       );
 
