@@ -1,5 +1,6 @@
 #include "grim.hpp"
 #include "params.hpp"
+#include "boundary/boundary.hpp"
 
 /* Returns memory bandwidth in GB/sec */
 double memoryBandwidth(const double numReads,
@@ -8,24 +9,24 @@ double memoryBandwidth(const double numReads,
                        const double timeElapsed
                       )
 {
-//  switch (params::dim)
-//  {
-//    case 1:
-//    return   (double)(params::N1 + 2*params::numGhost) 
-//           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-//
-//    case 2:
-//    return   (double)(params::N1 + 2*params::numGhost) 
-//           * (double)(params::N2 + 2*params::numGhost)
-//           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-//
-//    case 3:
-//    return   (double)(params::N1 + 2*params::numGhost) 
-//           * (double)(params::N2 + 2*params::numGhost)
-//           * (double)(params::N3 + 2*params::numGhost)
-//           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-//
-//  }
+  switch (params::dim)
+  {
+    case 1:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 2:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * (double)(params::N2 + 2*params::numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 3:
+    return   (double)(params::N1 + 2*params::numGhost) 
+           * (double)(params::N2 + 2*params::numGhost)
+           * (double)(params::N3 + 2*params::numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+  }
 }
 
 void bandwidthTest()
@@ -90,15 +91,28 @@ int main(int argc, char **argv)
 
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
-//  {
-//    timeStepper ts(params::N1, params::N2, params::N3,
-//                   params::numGhost, params::dim,
-//                   vars::dof, params::Time, params::dt,
-//                   params::boundaryLeft,  params::boundaryRight,
-//                   params::boundaryTop,   params::boundaryBottom,
-//                   params::boundaryFront, params::boundaryBack
-//                  );
-//
+  {
+    timeStepper ts(params::N1, params::N2, params::N3,
+                   params::dim, vars::dof, params::numGhost,
+                   params::Time, params::dt,
+                   params::boundaryLeft,  params::boundaryRight,
+                   params::boundaryTop,   params::boundaryBottom,
+                   params::boundaryFront, params::boundaryBack,
+                   params::metric, params::blackHoleSpin, params::hSlope,
+                   params::X1Start, params::X1End,
+                   params::X2Start, params::X2End,
+                   params::X3Start, params::X3End
+                  );
+
+    boundaries::applyBoundaryConditions(params::boundaryLeft,
+                                        params::boundaryRight,
+                                        params::boundaryTop,
+                                        params::boundaryBottom,
+                                        params::boundaryFront,
+                                        params::boundaryBack,
+                                        *ts.primOld
+                                       );
+
 //    int numReads, numWrites;
 //    ts.timeStep(numReads, numWrites);
 //
@@ -118,8 +132,8 @@ int main(int argc, char **argv)
 //    PetscPrintf(PETSC_COMM_WORLD, "Time taken for %d time steps = %g\n",
 //               n, timeElapsed
 //		);
-//
-//  }
+
+  }
 
   PetscFinalize();  
   return(0);

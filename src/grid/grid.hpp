@@ -3,6 +3,7 @@
 
 #include "../params.hpp"
 #include <petsc.h>
+#include <petscviewerhdf5.h>
 #include <arrayfire.h>
 
 using af::array;
@@ -58,6 +59,7 @@ class grid
     void communicate();
     void copyVarsToHostPtr();
     void copyHostPtrToVars(const double *hostPtr);
+    void dump(const std::string varsName, const std::string filename);
 };
 
 class coordinatesGrid : public grid

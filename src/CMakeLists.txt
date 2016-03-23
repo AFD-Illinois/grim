@@ -102,13 +102,14 @@ include_directories(${PETSC_INCLUDES}
                     grid
                     geometry
                     reconstruction
+                    boundary
                    )
 
 add_subdirectory(grid)
 add_subdirectory(geometry)
 add_subdirectory(physics)
 add_subdirectory(reconstruction)
-#add_subdirectory(boundary)
+add_subdirectory(boundary)
 add_subdirectory(timestepper)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
@@ -116,8 +117,8 @@ add_subdirectory(problem)
 
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
-target_link_libraries(grim grid #geometry physics reconstruction
-  #timestepper problem
+target_link_libraries(grim grid geometry physics reconstruction
+                      timestepper problem boundary
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}
@@ -467,6 +468,154 @@ add_test(Kerr_connection_coeffs_3D_${NUM_PROCS}_procs
          --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
          --hSlope=${H_SLOPE} --blackHoleSpin=${BLACK_HOLE_SPIN}
          --build_path=${CMAKE_BINARY_DIR} -k modifiedKerrSchild_gammaUpDownDown
+        )
+
+# boundary tests
+add_test(X1_left_outflow_1D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Left
+        )
+add_test(X1_left_mirror_1D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Left
+        )
+add_test(X1_right_outflow_1D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Right
+        )
+add_test(X1_right_mirror_1D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=1
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Right
+        )
+# 2D
+add_test(X1_left_outflow_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Left
+        )
+add_test(X1_left_mirror_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Left
+        )
+add_test(X1_right_outflow_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Right
+        )
+add_test(X1_right_mirror_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Right
+        )
+add_test(X2_bottom_outflow_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X2Bottom
+        )
+add_test(X2_bottom_mirror_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X2Bottom
+        )
+add_test(X2_top_outflow_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X2Top
+        )
+add_test(X2_top_mirror_2D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=2
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X2Top
+        )
+# 3D
+add_test(X1_left_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Left
+        )
+add_test(X1_left_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Left
+        )
+add_test(X1_right_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X1Right
+        )
+add_test(X1_right_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X1Right
+        )
+add_test(X2_bottom_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X2Bottom
+        )
+add_test(X2_bottom_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X2Bottom
+        )
+add_test(X2_top_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X2Top
+        )
+add_test(X2_top_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X2Top
+        )
+add_test(X3_back_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X3Back
+        )
+add_test(X3_back_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X3Back
+        )
+add_test(X3_front_outflow_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k outflow_X3Front
+        )
+add_test(X3_front_mirror_3D_${NUM_PROCS}_procs
+         mpirun -np ${NUM_PROCS} 
+         py.test  ${CMAKE_SOURCE_DIR}/boundary/test_boundary.py
+         --N1=${N1_test} --N2=${N2_test} --N3=${N3_test} --dim=3
+         --build_path=${CMAKE_BINARY_DIR} -k mirror_X3Front
         )
 
 message("")

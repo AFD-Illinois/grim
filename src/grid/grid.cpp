@@ -346,6 +346,22 @@ coordinatesGrid::~coordinatesGrid()
 
 }
 
+void grid::dump(const std::string varsName, const std::string fileName)
+{
+  communicate();
+
+  PetscViewer viewer;
+  PetscViewerHDF5Open(PETSC_COMM_WORLD,
+                      fileName.c_str(), FILE_MODE_WRITE, &viewer
+                     );
+
+  /* Output the variables */
+  PetscObjectSetName((PetscObject) localVec, varsName.c_str());
+  VecView(localVec, viewer);
+
+  PetscViewerDestroy(&viewer);
+}
+
 grid::~grid()
 {
   if (hasHostPtrBeenAllocated)

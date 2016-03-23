@@ -77,6 +77,18 @@ cdef class gridPy(object):
     def __get__(self):
       return self.gridPtr.numVars
 
+  property N1:
+    def __get__(self):
+      return self.gridPtr.N1
+
+  property N2:
+    def __get__(self):
+      return self.gridPtr.N2
+
+  property N3:
+    def __get__(self):
+      return self.gridPtr.N3
+
   property iLocalStart:
     def __get__(self):
       return self.gridPtr.iLocalStart

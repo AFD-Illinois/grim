@@ -8,9 +8,9 @@ timeStepper::timeStepper(const int N1,
                          const int numGhost,
                          const double time,
                          const double dt,
-                         const int periodicBoundariesX1,
-                         const int periodicBoundariesX2,
-                         const int periodicBoundariesX3,
+                         const int boundaryLeft,  const int boundaryRight,
+                         const int boundaryTop,   const int boundaryBottom,
+                         const int boundaryFront, const int boundaryBack,
                          const int metric,
                          const double blackHoleSpin,
                          const double hSlope,
@@ -25,6 +25,31 @@ timeStepper::timeStepper(const int N1,
   this->N2 = N2;
   this->N3 = N3;
   this->numVars = numVars;
+
+  int periodicBoundariesX1;
+  int periodicBoundariesX2;
+  int periodicBoundariesX3;
+
+  if (   boundaryLeft  == boundaries::PERIODIC
+      || boundaryRight == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX1 = 1;
+  }
+
+  if (   boundaryTop    == boundaries::PERIODIC
+      || boundaryBottom == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX2 = 1;
+  }
+
+  if (   boundaryFront == boundaries::PERIODIC
+      || boundaryBack  == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX3 = 1;
+  }
 
   prim         = new grid(N1, N2, N3,
                           dim, numVars, numGhost,
