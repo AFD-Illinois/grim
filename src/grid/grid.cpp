@@ -1,10 +1,14 @@
 #include "grid.hpp"
 
-grid::grid(int N1, int N2, int N3, 
-           int numGhost, int dim, int numVars,
-           int boundaryLeft,  int boundaryRight,
-           int boundaryTop,   int boundaryBottom,
-           int boundaryFront, int boundaryBack
+grid::grid(const int N1,
+           const int N2,
+           const int N3,
+           const int dim, 
+           const int numVars,
+           const int numGhost,
+           const int periodicBoundariesX1,
+           const int periodicBoundariesX2,
+           const int periodicBoundariesX3
           )
 {
   this->numVars  = numVars;
@@ -12,12 +16,10 @@ grid::grid(int N1, int N2, int N3,
   this->N1 = N1;
   this->N2 = N2;
   this->N3 = N3;
-  this->boundaryLeft   = boundaryLeft;
-  this->boundaryRight  = boundaryRight;
-  this->boundaryTop    = boundaryTop;
-  this->boundaryBottom = boundaryBottom;
-  this->boundaryFront  = boundaryFront;
-  this->boundaryBack   = boundaryBack;
+  this->dim = dim;
+  this->periodicBoundariesX1 = periodicBoundariesX1;
+  this->periodicBoundariesX2 = periodicBoundariesX2;
+  this->periodicBoundariesX3 = periodicBoundariesX3;
 
   hasHostPtrBeenAllocated = 0;
 
@@ -27,31 +29,25 @@ grid::grid(int N1, int N2, int N3,
   DMBoundaryTop   = DM_BOUNDARY_GHOSTED; DMBoundaryBottom = DM_BOUNDARY_GHOSTED;
   DMBoundaryFront = DM_BOUNDARY_GHOSTED; DMBoundaryBack   = DM_BOUNDARY_GHOSTED;
 
-  if (   boundaryLeft  == boundaries::PERIODIC 
-      || boundaryRight == boundaries::PERIODIC
-     )
+  if (periodicBoundariesX1)
   {
     DMBoundaryLeft  = DM_BOUNDARY_PERIODIC;
     DMBoundaryRight = DM_BOUNDARY_PERIODIC;
   }
 
-  if (   boundaryTop    == boundaries::PERIODIC 
-      || boundaryBottom == boundaries::PERIODIC
-     )
+  if (periodicBoundariesX2)
   {
     DMBoundaryTop    = DM_BOUNDARY_PERIODIC;
     DMBoundaryBottom = DM_BOUNDARY_PERIODIC;
   }
 
-  if (   boundaryFront == boundaries::PERIODIC 
-      || boundaryBack  == boundaries::PERIODIC
-     )
+  if (periodicBoundariesX3)
   {
     DMBoundaryFront = DM_BOUNDARY_PERIODIC;
     DMBoundaryBack  = DM_BOUNDARY_PERIODIC;
   }
 
-  switch (params::dim)
+  switch (dim)
   {
     case 1:
       numGhostX1 = numGhost;
@@ -66,15 +62,6 @@ grid::grid(int N1, int N2, int N3,
                    N1, numVars, numGhostX1, NULL,
                    &dm
                   );
-
-      DMDAGetCorners
-      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
-           &N1Local,     &N2Local,     &N3Local
-      );
-
-      N1Total = N1Local + 2*numGhost;
-      N2Total = N2Local;
-      N3Total = N3Local;
 
       break;
   
@@ -97,22 +84,9 @@ grid::grid(int N1, int N2, int N3,
                    &dm
                   );
 
-      DMDAGetCorners
-      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
-           &N1Local,     &N2Local,     &N3Local
-      );
-
-      N1Total = N1Local + 2*numGhost;
-      N2Total = N2Local + 2*numGhost;
-      N3Total = N3Local;
-
       break;
 
     case 3:
-      N1Total = N1 + 2*numGhost;
-      N2Total = N2 + 2*numGhost;
-      N3Total = N3 + 2*numGhost;
-
       numGhostX1 = numGhost;
       numGhostX2 = numGhost;
       numGhostX3 = numGhost;
@@ -131,17 +105,17 @@ grid::grid(int N1, int N2, int N3,
                    &dm
                   );
 
-      DMDAGetCorners
-      (dm, &iLocalStart, &jLocalStart, &kLocalStart,
-           &N1Local,     &N2Local,     &N3Local
-      );
-
-      N1Total = N1Local + 2*numGhost;
-      N2Total = N2Local + 2*numGhost;
-      N3Total = N3Local + 2*numGhost;
-
       break;
   }
+
+  DMDAGetCorners
+  (dm, &iLocalStart, &jLocalStart, &kLocalStart,
+       &N1Local,     &N2Local,     &N3Local
+  );
+
+  N1Total = N1Local + 2*numGhostX1;
+  N2Total = N2Local + 2*numGhostX2;
+  N3Total = N3Local + 2*numGhostX3;
 
   DMCreateGlobalVector(dm, &globalVec);
   DMCreateLocalVector(dm, &localVec);
@@ -152,14 +126,113 @@ grid::grid(int N1, int N2, int N3,
   jLocalEnd = jLocalStart + N2Local;
   kLocalEnd = kLocalStart + N3Local;
 
-  dX1 = (params::X1End - params::X1Start)/params::N1;
-  dX2 = (params::X2End - params::X2Start)/params::N2;
-  dX3 = (params::X3End - params::X3Start)/params::N3;
-
   vars = new array[numVars];
 
   /* Initialize vars to localVec */
   copyLocalVecToVars();
+}
+
+coordinatesGrid::coordinatesGrid
+  (const int N1, 
+   const int N2,
+   const int N3,
+   const int dim,
+   const int numGhost,
+   const double X1Start, const double X1End,
+   const double X2Start, const double X2End,
+   const double X3Start, const double X3End
+  ) : grid(N1, N2, N3, dim, 3, numGhost, false, false, false)
+{
+  this->X1Start = X1Start; this->X1End = X1End;
+  this->X2Start = X2Start; this->X2End = X2End;
+  this->X3Start = X3Start; this->X3End = X3End;
+
+  dX1 = (X1End - X1Start)/N1;
+  dX2 = (X2End - X2Start)/N2;
+  dX3 = (X3End - X3Start)/N3;
+}
+
+void coordinatesGrid::setXCoords(const int location)
+{
+  array indicesX1
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X1 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX1 + iLocalStart; /* Offsets for MPI */
+
+  array indicesX2
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X2 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX2 + jLocalStart; /* Offsets for MPI */
+
+  array indicesX3
+    = af::range(N1Total, /* number of total zones in X1 */
+                N2Total, /* number of total zones in X2 */
+                N3Total, /* number of total zones in X3 */
+                1,                /* number of variables */
+                directions::X3 ,  /* Vary indices in X1 direction */
+                f64               /* Double precision */
+               ) - numGhostX3 + kLocalStart; /* Offsets for MPI */
+
+
+  switch (location)
+  {
+    case locations::CENTER:
+      vars[directions::X1] = X1Start + (indicesX1 + 0.5)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 + 0.5)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case locations::LEFT:
+      vars[directions::X1] = X1Start + (indicesX1      )*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 + 0.5)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case locations::RIGHT:
+      vars[directions::X1] = X1Start + (indicesX1 +   1)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 + 0.5)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case locations::BOTTOM:
+      vars[directions::X1] = X1Start + (indicesX1 + 0.5)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2      )*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case locations::TOP:
+      vars[directions::X1] = X1Start + (indicesX1 + 0.5)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 +   1)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 + 0.5)*dX3;
+
+      break;
+
+    case locations::FRONT:
+      vars[directions::X1] = X1Start + (indicesX1 + 0.5)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 + 0.5)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3 +   1)*dX3;
+
+      break;
+
+    case locations::BACK:
+      vars[directions::X1] = X1Start + (indicesX1 + 0.5)*dX1;
+      vars[directions::X2] = X2Start + (indicesX2 + 0.5)*dX2;
+      vars[directions::X3] = X3Start + (indicesX3      )*dX3;
+
+      break;
+  }
 }
 
 void grid::copyLocalVecToVars()
@@ -192,6 +265,8 @@ void grid::copyVarsToHostPtr()
     varsSoA(span, span, span, var) = vars[var];
   }
 
+  /* TODO: Find out if I need to delete and then copy again or can I just copy
+   * directly */
   /* If already called once, free the existing memory */
   if (hasHostPtrBeenAllocated)
   {
@@ -264,6 +339,27 @@ void grid::communicate()
 
   /* Now copy data from localVec to vars */
   copyLocalVecToVars();
+}
+
+coordinatesGrid::~coordinatesGrid()
+{
+
+}
+
+void grid::dump(const std::string varsName, const std::string fileName)
+{
+  communicate();
+
+  PetscViewer viewer;
+  PetscViewerHDF5Open(PETSC_COMM_WORLD,
+                      fileName.c_str(), FILE_MODE_WRITE, &viewer
+                     );
+
+  /* Output the variables */
+  PetscObjectSetName((PetscObject) localVec, varsName.c_str());
+  VecView(localVec, viewer);
+
+  PetscViewerDestroy(&viewer);
 }
 
 grid::~grid()

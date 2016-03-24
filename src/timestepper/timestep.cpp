@@ -24,7 +24,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   {
     int numReadsEMHDGradients, numWritesEMHDGradients;
     double dX[3];
-    dX[0] = prim->dX1; dX[1] = prim->dX2; dX[2] = prim->dX3;
+    dX[0] = XCoords->dX1;
+    dX[1] = XCoords->dX2;
+    dX[2] = XCoords->dX3;
     elemOld->computeEMHDGradients(*geomCenter, dX,
                                   numReadsEMHDGradients,
                                   numWritesEMHDGradients
@@ -79,7 +81,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   {
     int numReadsEMHDGradients, numWritesEMHDGradients;
     double dX[3];
-    dX[0] = prim->dX1; dX[1] = prim->dX2; dX[2] = prim->dX3;
+    dX[0] = XCoords->dX1;
+    dX[1] = XCoords->dX2;
+    dX[2] = XCoords->dX3;
     elemHalfStep->computeEMHDGradients(*geomCenter, dX,
                                        numReadsEMHDGradients,
                                        numWritesEMHDGradients

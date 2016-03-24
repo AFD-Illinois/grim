@@ -457,8 +457,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
  
   // Compute magnetic field 
   const array& g = geomCenter->g;
-  const double dX1 = primOld->dX1;
-  const double dX2 = primOld->dX2;
+  const double dX1 = XCoords->dX1;
+  const double dX2 = XCoords->dX2;
   primOld->vars[vars::B1] = 
     (af::shift(Avec,0,-1,0)-af::shift(Avec,0,0,0)
      +af::shift(Avec,-1,-1,0)-af::shift(Avec,-1,0,0))/
@@ -554,8 +554,9 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   for (int var=0; var<vars::dof; var++) 
     {
-      primIC->vars[var]=1.*primOld->vars[var];
-      primIC->vars[var].eval();
+//      primIC->vars[var]=1.*primOld->vars[var];
+//      primIC->vars[var].eval();
+        primOld->vars[var].eval();
     }
 
   af::sync();
@@ -632,7 +633,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   array minSpeedTemp,maxSpeedTemp;
   array minSpeed,maxSpeed;
   elemOld->computeMinMaxCharSpeeds(*geomCenter,1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-  array dX = primOld->dX1*af::sqrt(geomCenter->gCov[1][1]);
+  array dX = XCoords->dX1*af::sqrt(geomCenter->gCov[1][1]);
   minSpeedTemp = minSpeedTemp/dX;
   maxSpeedTemp = maxSpeedTemp/dX;
   minSpeed=minSpeedTemp;
@@ -640,7 +641,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if(params::dim>1)
     {
       elemOld->computeMinMaxCharSpeeds(*geomCenter,2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      dX = primOld->dX2*af::sqrt(geomCenter->gCov[2][2]);
+      dX = XCoords->dX2*af::sqrt(geomCenter->gCov[2][2]);
       minSpeedTemp = minSpeedTemp/dX;
       maxSpeedTemp = maxSpeedTemp/dX;
       minSpeed=af::min(minSpeed,minSpeedTemp);
@@ -649,7 +650,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if(params::dim>2)
     {
       elemOld->computeMinMaxCharSpeeds(*geomCenter,3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      dX = primOld->dX3*af::sqrt(geomCenter->gCov[3][3]);
+      dX = XCoords->dX3*af::sqrt(geomCenter->gCov[3][3]);
       minSpeedTemp = minSpeedTemp/dX;
       maxSpeedTemp = maxSpeedTemp/dX;
       minSpeed=af::min(minSpeed,minSpeedTemp);
@@ -734,11 +735,11 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       af::seq domainX2 = *primOld->domainX2;
       af::seq domainX3 = *primOld->domainX3;
       elemOld->computeFluxes(*geomCenter,0,consOld->vars,numReads,numWrites);
-      double volElem = primOld->dX1;
+      double volElem = XCoords->dX1;
       if(params::dim>1)
-	volElem*=primOld->dX2;
+	volElem*=XCoords->dX2;
       if(params::dim>2)
-	volElem*=primOld->dX3;
+	volElem*=XCoords->dX3;
 
       // Integrate baryon mass
       array MassIntegrand = consOld->vars[vars::RHO]*volElem;

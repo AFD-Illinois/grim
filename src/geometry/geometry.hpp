@@ -3,9 +3,6 @@
 
 #include "../params.hpp"
 #include "../grid/grid.hpp"
-#include <string>
-
-void setXCoords(const int location, grid &XCoords);
 
 class geometry
 {
@@ -22,7 +19,11 @@ class geometry
                                   array& out
                                  );
   public:
-    int numGhost;
+    int N1, N2, N3, dim, numGhost;
+
+    int metric;
+    double blackHoleSpin;
+    double hSlope;
 
     array alpha;
     array g;
@@ -31,7 +32,11 @@ class geometry
 
     array gammaUpDownDown[NDIM][NDIM][NDIM];
 
-    geometry(const grid &XCoordsGrid);
+    geometry(const int metric,
+             const double blackHoleSpin,
+             const double hSlope,
+             const coordinatesGrid &XCoordsGrid
+            );
     ~geometry();
 
     void computeConnectionCoeffs();
@@ -40,6 +45,21 @@ class geometry
       for(int d=0;d<3;d++) tXCoords[d]=XCoords[d];
     }
     void XCoordsToxCoords(const array XCoords[3], array xCoords[3]) const;
+
+    /* Pointers to data on host. Needed to get data into Numpy */
+    grid *gCovGrid;
+    grid *gConGrid;
+    grid *gGrid;
+    grid *alphaGrid;
+    grid *gammaUpDownDownGrid;
+    grid *xCoordsGrid;
+
+    void setgConGrid();
+    void setgCovGrid();
+    void setgGrid();
+    void setalphaGrid();
+    void setgammaUpDownDownGrid();
+    void setxCoordsGrid();
 };
 
 #endif /* GRIM_GEOMETRY_H_ */

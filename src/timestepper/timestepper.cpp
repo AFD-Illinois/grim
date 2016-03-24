@@ -1,13 +1,22 @@
 #include "timestepper.hpp"
 
-timeStepper::timeStepper(const int N1, const int N2, const int N3,
-                         const int numGhost, const int dim, 
+timeStepper::timeStepper(const int N1, 
+                         const int N2,
+                         const int N3,
+                         const int dim,
                          const int numVars, 
+                         const int numGhost,
                          const double time,
                          const double dt,
-                         int boundaryLeft,  int boundaryRight,
-                         int boundaryTop,   int boundaryBottom,
-                         int boundaryFront, int boundaryBack
+                         const int boundaryLeft,  const int boundaryRight,
+                         const int boundaryTop,   const int boundaryBottom,
+                         const int boundaryFront, const int boundaryBack,
+                         const int metric,
+                         const double blackHoleSpin,
+                         const double hSlope,
+                         const double X1Start, const double X1End,
+                         const double X2Start, const double X2End,
+                         const double X3Start, const double X3End
                         )
 {
   this->time = time;
@@ -17,139 +26,199 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
   this->N3 = N3;
   this->numVars = numVars;
 
-  XCoords = new grid(N1, N2, N3,
-                     numGhost, dim, 3,
-                     boundaryLeft,  boundaryRight,
-                     boundaryTop,   boundaryBottom,
-                     boundaryFront, boundaryBack
-                    );
+  int periodicBoundariesX1;
+  int periodicBoundariesX2;
+  int periodicBoundariesX3;
+
+  if (   boundaryLeft  == boundaries::PERIODIC
+      || boundaryRight == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX1 = 1;
+  }
+
+  if (   boundaryTop    == boundaries::PERIODIC
+      || boundaryBottom == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX2 = 1;
+  }
+
+  if (   boundaryFront == boundaries::PERIODIC
+      || boundaryBack  == boundaries::PERIODIC
+     )
+  {
+    periodicBoundariesX3 = 1;
+  }
 
   prim         = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
-                         );
-
-  primIC         = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
+                          dim, numVars, numGhost,
+                          periodicBoundariesX1,
+                          periodicBoundariesX2,
+                          periodicBoundariesX3
                          );
 
   primHalfStep = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
+                          dim, numVars, numGhost,
+                          periodicBoundariesX1,
+                          periodicBoundariesX2,
+                          periodicBoundariesX3
                          );
 
   primOld      = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
+                          dim, numVars, numGhost,
+                          periodicBoundariesX1,
+                          periodicBoundariesX2,
+                          periodicBoundariesX3
                          );
 
   cons         = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
+                          dim, numVars, numGhost,
+                          periodicBoundariesX1,
+                          periodicBoundariesX2,
+                          periodicBoundariesX3
                          );
 
   consOld      = new grid(N1, N2, N3,
-                          numGhost, dim, numVars,
-                          boundaryLeft,  boundaryRight,
-                          boundaryTop,   boundaryBottom,
-                          boundaryFront, boundaryBack
+                          dim, numVars, numGhost,
+                          periodicBoundariesX1,
+                          periodicBoundariesX2,
+                          periodicBoundariesX3
                          );
 
   sourcesExplicit    = new grid(N1, N2, N3,
-                                numGhost, dim, numVars,
-                                boundaryLeft,  boundaryRight,
-                                boundaryTop,   boundaryBottom,
-                                boundaryFront, boundaryBack
+                                dim, numVars, numGhost,
+                                periodicBoundariesX1,
+                                periodicBoundariesX2,
+                                periodicBoundariesX3
                                );
 
   sourcesImplicit    = new grid(N1, N2, N3,
-                                numGhost, dim, numVars,
-                                boundaryLeft,  boundaryRight,
-                                boundaryTop,   boundaryBottom,
-                                boundaryFront, boundaryBack
+                                dim, numVars, numGhost,
+                                periodicBoundariesX1,
+                                periodicBoundariesX2,
+                                periodicBoundariesX3
                                );
 
   sourcesImplicitOld = new grid(N1, N2, N3,
-                                numGhost, dim, numVars,
-                                boundaryLeft,  boundaryRight,
-                                boundaryTop,   boundaryBottom,
-                                boundaryFront, boundaryBack
+                                dim, numVars, numGhost,
+                                periodicBoundariesX1,
+                                periodicBoundariesX2,
+                                periodicBoundariesX3
                                );
 
   sourcesTimeDer     = new grid(N1, N2, N3,
-                                numGhost, dim, numVars,
-                                boundaryLeft,  boundaryRight,
-                                boundaryTop,   boundaryBottom,
-                                boundaryFront, boundaryBack
+                                dim, numVars, numGhost,
+                                periodicBoundariesX1,
+                                periodicBoundariesX2,
+                                periodicBoundariesX3
                                );
 
   primLeft  = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
 
   primRight = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
 
   fluxesX1  = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
 
   fluxesX2  = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
 
   fluxesX3  = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
+
+  emfX1  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
+
+  emfX2  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
+
+  emfX3  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
 
   divFluxes = new grid(N1, N2, N3,
-                       numGhost, dim, numVars,
-                       boundaryLeft,  boundaryRight,
-                       boundaryTop,   boundaryBottom,
-                       boundaryFront, boundaryBack
+                       dim, numVars, numGhost,
+                       periodicBoundariesX1,
+                       periodicBoundariesX2,
+                       periodicBoundariesX3
                       );
 
-  setXCoords(locations::LEFT,   *XCoords);
-  geomLeft    = new geometry(*XCoords);
 
-  setXCoords(locations::RIGHT,  *XCoords);
-  geomRight   = new geometry(*XCoords);
+  XCoords = new coordinatesGrid(N1, N2, N3,
+                                dim, numGhost,
+                                X1Start, X1End,
+                                X2Start, X2End,
+                                X3Start, X3End
+                               );
 
-  setXCoords(locations::BOTTOM, *XCoords);
-  geomBottom  = new geometry(*XCoords);
+  XCoords->setXCoords(locations::LEFT);
+  geomLeft    = new geometry(metric,
+                             blackHoleSpin,
+                             hSlope, 
+                             *XCoords
+                            );
 
-  setXCoords(locations::TOP,    *XCoords);
-  geomTop     = new geometry(*XCoords);
+  XCoords->setXCoords(locations::RIGHT);
+  geomRight   = new geometry(metric,
+                             blackHoleSpin,
+                             hSlope,
+                             *XCoords
+                            );
 
-  setXCoords(locations::CENTER, *XCoords);
-  geomCenter  = new geometry(*XCoords);
+  XCoords->setXCoords(locations::BOTTOM);
+  geomBottom  = new geometry(metric,
+                             blackHoleSpin,
+                             hSlope,
+                             *XCoords
+                            );
+
+  XCoords->setXCoords(locations::TOP);
+  geomTop     = new geometry(metric,
+                             blackHoleSpin,
+                             hSlope, 
+                             *XCoords
+                            );
+
+  XCoords->setXCoords(locations::CENTER);
+  geomCenter  = new geometry(metric,
+                             blackHoleSpin,
+                             hSlope,
+                             *XCoords
+                            );
   geomCenter->computeConnectionCoeffs();
   /* XCoords set to locations::CENTER */
 
@@ -169,31 +238,31 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
 
   /* Data structures needed for the nonlinear solver */
   residual        = new grid(N1, N2, N3,
-                             numGhost, dim, numVars,
-                             boundaryLeft,  boundaryRight,
-                             boundaryTop,   boundaryBottom,
-                             boundaryFront, boundaryBack
+                             dim, numVars, numGhost,
+                             periodicBoundariesX1,
+                             periodicBoundariesX2,
+                             periodicBoundariesX3
                             );
 
   residualPlusEps  = new grid(N1, N2, N3,
-                              numGhost, dim, numVars,
-                              boundaryLeft,  boundaryRight,
-                              boundaryTop,   boundaryBottom,
-                              boundaryFront, boundaryBack
+                              dim, numVars, numGhost,
+                              periodicBoundariesX1,
+                              periodicBoundariesX2,
+                              periodicBoundariesX3
                              );
 
   primGuessPlusEps = new grid(N1, N2, N3,
-                              numGhost, dim, numVars,
-                              boundaryLeft,  boundaryRight,
-                              boundaryTop,   boundaryBottom,
-                              boundaryFront, boundaryBack
+                              dim, numVars, numGhost,
+                              periodicBoundariesX1,
+                              periodicBoundariesX2,
+                              periodicBoundariesX3
                              );
 
   primGuessLineSearchTrial = new grid(N1, N2, N3,
-                                      numGhost, dim, numVars,
-                                      boundaryLeft,  boundaryRight,
-                                      boundaryTop,   boundaryBottom,
-                                      boundaryFront, boundaryBack
+                                      dim, numVars, numGhost,
+                                      periodicBoundariesX1,
+                                      periodicBoundariesX2,
+                                      periodicBoundariesX3
                                      );
 
   /* The grid data structure arranges data in Struct of Arrays format. Need to
@@ -222,7 +291,7 @@ timeStepper::timeStepper(const int N1, const int N2, const int N3,
                              );
 
   /* Steplength lambda in P_{k+1} = P_k + lambda*dP_k */ 
-  stepLength   = zero;
+  stepLength  = zero;
                      
   int N1Total = residual->N1Total;
   int N2Total = residual->N1Total;
@@ -243,6 +312,7 @@ timeStepper::~timeStepper()
   delete sourcesExplicit, sourcesImplicit, sourcesImplicitOld, sourcesTimeDer;
   delete primLeft, primRight;
   delete fluxesX1, fluxesX2, fluxesX3;
+  delete emfX1, emfX2, emfX3;
   delete elem, elemOld, elemHalfStep;
   delete riemann;
   delete geomLeft, geomRight, geomBottom, geomTop, geomCenter;
