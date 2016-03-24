@@ -123,6 +123,28 @@ namespace params
   extern double JacobianAssembleEpsilon;
   extern double linesearchfloor;
 
+  //Atmosphere parameters
+  // Floors are Ampl*pow(radius,power)
+  extern double RhoFloorAmpl;
+  extern double UFloorAmpl;
+  extern double RhoFloorSlope;
+  extern double UFloorSlope;
+  // Floors for magnetically dominated regions
+  extern double BsqrOverRhoMax;
+  extern double BsqrOverUMax;
+
+  extern double ConductionClosureFactor;
+  extern double ViscosityClosureFactor;
+
+  extern int ObserveEveryNSteps;
+  extern int StepNumber;
+
+  extern double InnerEdgeRadius ;
+  extern double PressureMaxRadius;
+  extern double MinPlasmaBeta;
+  extern double MagneticLoops;
+  extern double Adiabat;
+  extern double CourantFactor;
 };
 
 #endif /* GRIM_PARAMS_H_ */

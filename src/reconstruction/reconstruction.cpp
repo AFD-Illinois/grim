@@ -29,7 +29,7 @@ void reconstruction::reconstruct(const grid &prim,
 
 }
 
-array reconstruction::slope(const int dir,const double dX,
+array reconstruction::slope(const int dir, const double dX,
 			                      const array& in,
                             int &numReads,
                             int &numWrites

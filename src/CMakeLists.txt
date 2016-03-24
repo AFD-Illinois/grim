@@ -19,7 +19,7 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
+set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
@@ -103,6 +103,7 @@ include_directories(${PETSC_INCLUDES}
                     geometry
                     reconstruction
                     boundary
+                    timestepper
                    )
 
 add_subdirectory(grid)

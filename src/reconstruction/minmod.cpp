@@ -49,9 +49,11 @@ array reconstruction::slopeMM(const int dir,const double dX, const array& in,
   array backwardDiff = dvar_dX(span, span, span, 1);
   array centralDiff  = backwardDiff + forwardDiff;
   
-  array left   = params::slopeLimTheta * backwardDiff;
+  /* TODO: add an argument to slopeLimTheta.*/
+  double slopeLimTheta = 2.;
+  array left   = slopeLimTheta * backwardDiff;
   array center = 0.5 * centralDiff;
-  array right  = params::slopeLimTheta * forwardDiff;
+  array right  = slopeLimTheta * forwardDiff;
   
   int numReadsMinMod, numWritesMinMod;
   array result = minmod(left, center, right,

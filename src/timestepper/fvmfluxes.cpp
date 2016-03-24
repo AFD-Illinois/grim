@@ -8,7 +8,7 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
   int numReadsReconstruction, numWritesReconstruction;
   int numReadsRiemann, numWritesRiemann;
 
-  switch (params::dim)
+  switch (primFlux.dim)
   {
     case 1:
     /* Reconstruction gives, at a point of index i:

@@ -103,9 +103,7 @@ class timeStepper
                      grid &emfX1, grid &emfX2, grid &emfX3,
                      int &numReadsEMF, int &numWritesEMF
                     );
-    void computeDivB(const grid &fluxX1,
-                     const grid &fluxX2,
-                     const grid &fluxX3,
+    void computeDivB(const grid &prim,
                      grid &divB,
                      int &numReads,
                      int &numWrites

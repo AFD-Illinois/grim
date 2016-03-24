@@ -77,6 +77,9 @@ cdef class geometryPy(object):
                                    )
     self.xCoords = xCoordsGridPy.getVars()
 
+  def __dealloc__(self):
+    del self.geometryPtr
+
   def computeConnectionCoeffs(self):
     self.geometryPtr.computeConnectionCoeffs()
     self.geometryPtr.setgammaUpDownDownGrid()
