@@ -8,6 +8,7 @@
 
 using af::array;
 using af::span;
+using af::shift;
 
 class grid
 {
@@ -58,6 +59,7 @@ class grid
 
     void communicate();
     void copyVarsToHostPtr();
+    void copyVarsToGlobalVec();
     void copyHostPtrToVars(const double *hostPtr);
     void dump(const std::string varsName, const std::string filename);
 };

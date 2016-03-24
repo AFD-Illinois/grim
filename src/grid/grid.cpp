@@ -292,6 +292,17 @@ void grid::copyHostPtrToVars(const double *hostPtr)
 
 void grid::communicate()
 {
+  copyVarsToGlobalVec();
+
+  DMGlobalToLocalBegin(dm, globalVec, INSERT_VALUES, localVec);
+  DMGlobalToLocalEnd(dm, globalVec, INSERT_VALUES, localVec);
+
+  /* Now copy data from localVec to vars */
+  copyLocalVecToVars();
+}
+
+void grid::copyVarsToGlobalVec()
+{
   /* Get data into Array of Structs format as needed by Petsc */
   for (int var=0; var < numVars; var++)
   {
@@ -333,12 +344,6 @@ void grid::communicate()
 
   VecRestoreArray(localVec, &pointerToLocalVec);
   VecRestoreArray(globalVec, &pointerToGlobalVec);
-
-  DMGlobalToLocalBegin(dm, globalVec, INSERT_VALUES, localVec);
-  DMGlobalToLocalEnd(dm, globalVec, INSERT_VALUES, localVec);
-
-  /* Now copy data from localVec to vars */
-  copyLocalVecToVars();
 }
 
 coordinatesGrid::~coordinatesGrid()
@@ -348,7 +353,7 @@ coordinatesGrid::~coordinatesGrid()
 
 void grid::dump(const std::string varsName, const std::string fileName)
 {
-  communicate();
+  copyVarsToGlobalVec();
 
   PetscViewer viewer;
   PetscViewerHDF5Open(PETSC_COMM_WORLD,
@@ -356,8 +361,8 @@ void grid::dump(const std::string varsName, const std::string fileName)
                      );
 
   /* Output the variables */
-  PetscObjectSetName((PetscObject) localVec, varsName.c_str());
-  VecView(localVec, viewer);
+  PetscObjectSetName((PetscObject) globalVec, varsName.c_str());
+  VecView(globalVec, viewer);
 
   PetscViewerDestroy(&viewer);
 }
