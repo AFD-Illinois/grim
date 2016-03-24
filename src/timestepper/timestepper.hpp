@@ -52,6 +52,7 @@ class timeStepper
     grid *sourcesTimeDer;
     grid *primLeft, *primRight;
     grid *fluxesX1, *fluxesX2, *fluxesX3;
+    grid *emfX1, *emfX2, *emfX3;
     grid *divFluxes;
 
     geometry *geomLeft,   *geomRight;
@@ -89,6 +90,22 @@ class timeStepper
     ~timeStepper();
 
     void timeStep(int &numReads, int &numWrites);
+
+    void fluxCT(grid &fluxX1, grid &fluxX2, grid &fluxX3,
+                int &numReads, int &numWrites
+               );
+
+    void computeEMF(const grid &fluxX1, const grid &fluxX2, const grid &fluxX3,
+                     grid &emfX1, grid &emfX2, grid &emfX3,
+                     int &numReadsEMF, int &numWritesEMF
+                    );
+    void computeDivB(const grid &fluxX1,
+                     const grid &fluxX2,
+                     const grid &fluxX3,
+                     grid &divB,
+                     int &numReads,
+                     int &numWrites
+                    );
 
     /* Function definitions in the problem folder */
     void initialConditions(int &numReads, int &numWrites);

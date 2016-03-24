@@ -149,6 +149,27 @@ timeStepper::timeStepper(const int N1,
                        periodicBoundariesX3
                       );
 
+  emfX1  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
+
+  emfX2  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
+
+  emfX3  = new grid(N1, N2, N3,
+                    dim, 1, numGhost,
+                    periodicBoundariesX1,
+                    periodicBoundariesX2,
+                    periodicBoundariesX3
+                   );
+
   divFluxes = new grid(N1, N2, N3,
                        dim, numVars, numGhost,
                        periodicBoundariesX1,
@@ -270,7 +291,7 @@ timeStepper::timeStepper(const int N1,
                              );
 
   /* Steplength lambda in P_{k+1} = P_k + lambda*dP_k */ 
-  stepLength   = zero;
+  stepLength  = zero;
                      
   int N1Total = residual->N1Total;
   int N2Total = residual->N1Total;
@@ -291,6 +312,7 @@ timeStepper::~timeStepper()
   delete sourcesExplicit, sourcesImplicit, sourcesImplicitOld, sourcesTimeDer;
   delete primLeft, primRight;
   delete fluxesX1, fluxesX2, fluxesX3;
+  delete emfX1, emfX2, emfX3;
   delete elem, elemOld, elemHalfStep;
   delete riemann;
   delete geomLeft, geomRight, geomBottom, geomTop, geomCenter;
