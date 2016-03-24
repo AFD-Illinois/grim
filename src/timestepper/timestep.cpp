@@ -7,6 +7,11 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   currentStep = timeStepperSwitches::HALF_STEP;
   /* Apply boundary conditions on primOld */
+  boundaries::applyBoundaryConditions(boundaryLeft, boundaryRight,
+                                      boundaryTop,  boundaryBottom,
+                                      boundaryFront, boundaryBack,
+                                      *primOld
+                                     );
   setProblemSpecificBCs(numReads,numWrites);
 
   int numReadsElemSet, numWritesElemSet;
@@ -69,6 +74,11 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   currentStep = timeStepperSwitches::FULL_STEP;
   /* apply boundary conditions on primHalfStep */
+  boundaries::applyBoundaryConditions(boundaryLeft, boundaryRight,
+                                      boundaryTop,  boundaryBottom,
+                                      boundaryFront, boundaryBack,
+                                      *primHalfStep
+                                     );
   setProblemSpecificBCs(numReads,numWrites);
 
   elemHalfStep->set(primHalfStep->vars, *geomCenter,

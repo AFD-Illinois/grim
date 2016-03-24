@@ -26,6 +26,13 @@ timeStepper::timeStepper(const int N1,
   this->N3 = N3;
   this->numVars = numVars;
 
+  this->boundaryLeft   = boundaryLeft;
+  this->boundaryRight  = boundaryRight;
+  this->boundaryTop    = boundaryTop;
+  this->boundaryBottom = boundaryBottom;
+  this->boundaryFront  = boundaryFront;
+  this->boundaryBack   = boundaryBack;
+
   int periodicBoundariesX1;
   int periodicBoundariesX2;
   int periodicBoundariesX3;

@@ -43,6 +43,10 @@ class timeStepper
     int N1, N2, N3;
     int numVars;
 
+    int boundaryLeft, boundaryRight;
+    int boundaryTop,  boundaryBottom;
+    int boundaryFront, boundaryBack;
+
     coordinatesGrid *XCoords;
     grid *prim, *primHalfStep, *primOld, *primIC;
     grid *cons, *consOld;
