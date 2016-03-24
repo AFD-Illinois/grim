@@ -104,34 +104,25 @@ int main(int argc, char **argv)
                    params::X3Start, params::X3End
                   );
 
-    boundaries::applyBoundaryConditions(params::boundaryLeft,
-                                        params::boundaryRight,
-                                        params::boundaryTop,
-                                        params::boundaryBottom,
-                                        params::boundaryFront,
-                                        params::boundaryBack,
-                                        *ts.primOld
-                                       );
+    int numReads, numWrites;
+    ts.timeStep(numReads, numWrites);
 
-//    int numReads, numWrites;
-//    ts.timeStep(numReads, numWrites);
-//
-//    af::sync();
-//
-//    PetscPrintf(PETSC_COMM_WORLD, "\nKernel compilation complete\n");
-//
-//    af::timer::start();
-//    int n=0;
-//    while(ts.time<params::finalTime)
-//    {
-//      n++;
-//      PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|  t = %e\n", n,ts.time);
-//      ts.timeStep(numReads, numWrites);
-//    }
-//    double timeElapsed = af::timer::stop();
-//    PetscPrintf(PETSC_COMM_WORLD, "Time taken for %d time steps = %g\n",
-//               n, timeElapsed
-//		);
+    af::sync();
+
+    PetscPrintf(PETSC_COMM_WORLD, "\nKernel compilation complete\n");
+
+    af::timer::start();
+    int n=0;
+    while(ts.time<params::finalTime)
+    {
+      n++;
+      PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|  t = %e\n", n,ts.time);
+      ts.timeStep(numReads, numWrites);
+    }
+    double timeElapsed = af::timer::stop();
+    PetscPrintf(PETSC_COMM_WORLD, "Time taken for %d time steps = %g\n",
+               n, timeElapsed
+		);
 
   }
 
