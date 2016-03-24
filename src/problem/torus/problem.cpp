@@ -591,7 +591,9 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   PetscPrintf(PETSC_COMM_WORLD,"New dt = %e\n",dt);
 
   // On-the-fly observers
-  if((params::StepNumber%params::ObserveEveryNSteps)==0)
+  bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
+  bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
+  if(ObserveData)
     {
       //Find maximum density
       array rhoMax_af = af::max(af::max(af::max(primOld->vars[vars::RHO],2),1),0);
@@ -698,7 +700,24 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e; betaMin = %e;\n",rhoMax,betaMin);
       PetscPrintf(PETSC_COMM_WORLD,"Baryon Mass = %e; Magnetic Energy = %e\n",BaryonMass,EMag);
     }
-  params::StepNumber++;
+  if(WriteData)
+    {
+      const int WriteIdx = floor(time/params::WriteDataEveryDt);
+      if(WriteIdx==1)
+	{
+	  printf("Printing gCov\n");
+	  geomCenter->setgCovGrid();
+	  geomCenter->gCovGrid->dump("gCov","gCov.h5");
+	  geomCenter->setgConGrid();
+	  geomCenter->gConGrid->dump("gCon","gCon.h5");
+	  geomCenter->setgGrid();
+	  geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
+	  geomCenter->setxCoordsGrid();
+	  geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
+	}
+      std::string filename = "primVarsT"+std::to_string(WriteIdx)+".h5";
+      primOld->dump("primitives",filename);
+    }
 }
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
