@@ -894,6 +894,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
 	    {
 	      graduCov[nu][mu] -= geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
 	    }
+
       graduCov[nu][mu].eval();
       /* Reads:
        * -----
