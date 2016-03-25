@@ -22,9 +22,9 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
     }
   if(params::viscosity)
     {
-      array dPmod = (af::abs(pressure-2./3.*deltaP)+params::bSqrFloorInFluidElement)/(af::abs(pressure+1./3.*deltaP)+params::bSqrFloorInFluidElement);
-      array dPmaxPlus = af::max(params::ViscosityClosureFactor*bSqr*0.5*dPmod,0.01*deltaP);
-      array dPmaxMinus = af::max(af::min(-params::ViscosityClosureFactor*bSqr,0.01*deltaP),-2.99*pressure/1.07)-params::bSqrFloorInFluidElement;
+      array dPmod = af::max(pressure-2./3.*deltaP,params::bSqrFloorInFluidElement)/af::max(pressure+1./3.*deltaP,params::bSqrFloorInFluidElement);
+      array dPmaxPlus = af::min(params::ViscosityClosureFactor*bSqr*0.5*dPmod,1.49*pressure/1.07);
+      array dPmaxMinus = af::max(-params::ViscosityClosureFactor*bSqr,-2.99*pressure/1.07);
 
       array condition = deltaP>0.;
       array dPmax = condition*dPmaxPlus + (1.-condition)*dPmaxMinus;
@@ -138,6 +138,14 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
   int world_size;
   MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+
+  // Random number generator from PeTSC
+  double randNum;
+  PetscRandom randNumGen;
+  PetscRandomCreate(PETSC_COMM_WORLD, &randNumGen);
+  PetscRandomSetType(randNumGen, PETSCRAND48);
+
+
   //Let's ignore ArrayFire here - it's only the initial
   //conditions...
   array xCoords[3];
@@ -209,7 +217,9 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	       * here is the rest mass energy density and P = C * rho^Gamma */
 	      Rho(i,j,k) = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
 			       1./(Gamma-1.));
-	      U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.);
+	      PetscRandomGetValue(randNumGen, &randNum);
+	      U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.)
+		*(1. + params::InitialPerturbationAmplitude*(randNum-0.5));
 	  
 	      /* TODO: Should add random noise here */
 	  
@@ -498,6 +508,8 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   prim->vars[vars::RHO].eval();
   prim->vars[vars::U].eval();
 
+  elem->set(prim->vars,*geom,numReads,numWrites);
+
   if(params::conduction)
     {
       const array& rho = prim->vars[vars::RHO];
@@ -511,17 +523,17 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
     {
       const array& pressure = elem->pressure;
       const array& deltaP = elem->deltaP;
-      array dPmod = af::abs(pressure-2./3.*deltaP)/(af::abs(pressure+1./3.*deltaP)+params::bSqrFloorInFluidElement);
-      array dPmaxPlus = 1.07*params::ViscosityClosureFactor*bSqr*0.5*dPmod+params::bSqrFloorInFluidElement;
-      array dPmaxMinus = -1.07*params::ViscosityClosureFactor*bSqr-params::bSqrFloorInFluidElement;
+      array dPmod = af::max(pressure-2./3.*deltaP,0.01*params::bSqrFloorInFluidElement)/af::max(pressure+1./3.*deltaP,params::bSqrFloorInFluidElement);
+      array dPmaxPlus = af::min(1.07*params::ViscosityClosureFactor*bSqr*0.5*dPmod,1.49*pressure);
+      array dPmaxMinus = af::max(-1.07*params::ViscosityClosureFactor*bSqr,-2.99*pressure);
 
       array condition = deltaP>0.;
-      array LimFac = condition*af::max(deltaP/dPmaxPlus,1.)
-	+(1.-condition)*af::max(deltaP/dPmaxMinus,1.);
-      prim->vars[vars::DP]=prim->vars[vars::DP]/LimFac;
+      prim->vars[vars::DP] = prim->vars[vars::DP]*
+	(condition/af::max(deltaP/dPmaxPlus,1.)+(1.-condition)/af::max(deltaP/dPmaxMinus,1.));
       prim->vars[vars::DP].eval();
     }
 
+  elem->set(prim->vars,*geom,numReads,numWrites);
   af::sync();
 }
 
