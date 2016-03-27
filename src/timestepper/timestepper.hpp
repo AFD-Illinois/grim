@@ -48,7 +48,7 @@ class timeStepper
     int boundaryFront, boundaryBack;
 
     coordinatesGrid *XCoords;
-    grid *prim, *primHalfStep, *primOld, *primIC;
+    grid *prim, *primHalfStep, *primOld;
     grid *cons, *consOld;
     grid *sourcesExplicit;
     grid *sourcesImplicit;
@@ -95,14 +95,8 @@ class timeStepper
 
     void timeStep(int &numReads, int &numWrites);
 
-    void fluxCT(grid &fluxX1, grid &fluxX2, grid &fluxX3,
-                int &numReads, int &numWrites
-               );
-
-    void computeEMF(const grid &fluxX1, const grid &fluxX2, const grid &fluxX3,
-                     grid &emfX1, grid &emfX2, grid &emfX3,
-                     int &numReadsEMF, int &numWritesEMF
-                    );
+    void fluxCT(int &numReads, int &numWrites);
+    void computeEMF(int &numReadsEMF, int &numWritesEMF);
     void computeDivB(const grid &prim,
                      grid &divB,
                      int &numReads,

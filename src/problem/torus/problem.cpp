@@ -157,8 +157,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   array& B3 = primOld->vars[vars::B3];
 
 
-  if(world_rank==0)
-    printf("Running on %i procs\n",world_size);
+  PetscPrintf(PETSC_COMM_WORLD, "Running on %i procs\n", world_size);
   /*for(int proc=0;proc<world_size;proc++)
     {
       if(world_rank==proc)
@@ -170,6 +169,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
       }*/
   
   double aBH = params::blackHoleSpin;
+
   for(int k=0;k<N3g;k++)
     for(int j=0;j<N2g;j++)
       for(int i=0;i<N1g;i++)
@@ -466,8 +466,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   for (int var=0; var<vars::dof; var++) 
     {
-//      primIC->vars[var]=1.*primOld->vars[var];
-//      primIC->vars[var].eval();
         primOld->vars[var].eval();
     }
 

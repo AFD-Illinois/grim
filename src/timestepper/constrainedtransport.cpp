@@ -1,93 +1,78 @@
 #include "timestepper.hpp"
 
-void timeStepper::fluxCT(grid &fluxX1,
-                         grid &fluxX2,
-                         grid &fluxX3,
-                         int &numReads,
+void timeStepper::fluxCT(int &numReads,
                          int &numWrites
                         )
 {
-  if (fluxX1.dim >= 2)
+  if (fluxesX1->dim >= 2)
   {
     int numReadsEMF, numWritesEMF;
-    computeEMF(fluxX1, fluxX2, fluxX3,
-               *emfX1,  *emfX2,  *emfX3,
-               numReadsEMF, numWritesEMF
-              );
+    computeEMF(numReadsEMF, numWritesEMF);
 
-    fluxX1.vars[vars::B2] = 
+    fluxesX1->vars[vars::B2] = 
       0.5*(  emfX3->vars[0]
            + shift(emfX3->vars[0], 0, -1, 0)
           );
 
-    fluxX2.vars[vars::B1] =
+    fluxesX2->vars[vars::B1] =
       -0.5*(  emfX3->vars[0]
             + shift(emfX3->vars[0], -1, 0, 0)
            );
   
-    if (fluxX1.dim == 3)
+    if (fluxesX1->dim == 3)
     {
-      fluxX1.vars[vars::B3] =
+      fluxesX1->vars[vars::B3] =
         -0.5*(  emfX2->vars[0]
               + shift(emfX2->vars[0], 0, 0, -1)
              );
 
-      fluxX2.vars[vars::B3] =
+      fluxesX2->vars[vars::B3] =
         0.5*(  emfX1->vars[0]
              + shift(emfX1->vars[0], 0, 0, -1)
             );
       
-      fluxX3.vars[vars::B1] =
+      fluxesX3->vars[vars::B1] =
         0.5*(  emfX2->vars[0]
              + shift(emfX2->vars[0], -1, 0, 0)
             );
 
-      fluxX3.vars[vars::B2] =
+      fluxesX3->vars[vars::B2] =
         -0.5*(  emfX1->vars[0]
               + shift(emfX1->vars[0], 0, -1, 0)
              );
     }
   }
 
-
-
-
 }
 
-void timeStepper::computeEMF(const grid &fluxX1,
-                             const grid &fluxX2,
-                             const grid &fluxX3,
-                             grid &emfX1,
-                             grid &emfX2,
-                             grid &emfX3,
-                             int &numReadsEMF,
+void timeStepper::computeEMF(int &numReadsEMF,
                              int &numWritesEMF
                             )
 {
-  if (fluxX1.dim >= 2)
+  if (fluxesX1->dim >= 2)
   {
-    emfX3.vars[0] = 
-      0.25*(  fluxX1.vars[vars::B2] 
-            + shift(fluxX1.vars[vars::B2], 0, 1, 0)
-            - fluxX2.vars[vars::B1]
-            - shift(fluxX2.vars[vars::B1], 1, 0, 0)
+    emfX3->vars[0] = 
+      0.25*(  fluxesX1->vars[vars::B2] 
+            + shift(fluxesX1->vars[vars::B2], 0, 1, 0)
+            - fluxesX2->vars[vars::B1]
+            - shift(fluxesX2->vars[vars::B1], 1, 0, 0)
            );
 
 
-    if (fluxX1.dim == 3)
+    if (fluxesX1->dim == 3)
     {
-      emfX1.vars[0] =
-        0.25*(  fluxX2.vars[vars::B3]
-              + shift(fluxX2.vars[vars::B3], 0, 0, 1)
-              - fluxX3.vars[vars::B2]
-              - shift(fluxX3.vars[vars::B2], 0, 1, 0)
+      emfX1->vars[0] =
+        0.25*(  fluxesX2->vars[vars::B3]
+              + shift(fluxesX2->vars[vars::B3], 0, 0, 1)
+              - fluxesX3->vars[vars::B2]
+              - shift(fluxesX3->vars[vars::B2], 0, 1, 0)
              );
 
-      emfX2.vars[0] =
-        0.25*(  fluxX3.vars[vars::B1]
-              + shift(fluxX3.vars[vars::B1], 1, 0, 0)
-              - fluxX1.vars[vars::B3]
-              - shift(fluxX1.vars[vars::B3], 0, 0, 1)
+      emfX2->vars[0] =
+        0.25*(  fluxesX3->vars[vars::B1]
+              + shift(fluxesX3->vars[vars::B1], 1, 0, 0)
+              - fluxesX1->vars[vars::B3]
+              - shift(fluxesX1->vars[vars::B3], 0, 0, 1)
              );
     }
   }

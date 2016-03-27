@@ -9,7 +9,12 @@ cdef class gridPy(object):
   cdef grid *gridPtr
   cdef grid* getGridPtr(self)
   cdef setGridPtr(self, grid *gridPtr)
+  cdef int usingExternalPtr
+
+  @staticmethod
+  cdef createGridPyFromGridPtr(grid *gridPtr)
 
 cdef class coordinatesGridPy(object):
   cdef coordinatesGrid *coordGridPtr
   cdef coordinatesGrid* getGridPtr(self)
+  cdef setGridPtr(self, coordinatesGrid *coordGridPtr)

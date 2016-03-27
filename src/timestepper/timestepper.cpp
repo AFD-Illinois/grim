@@ -319,6 +319,7 @@ timeStepper::~timeStepper()
   delete sourcesExplicit, sourcesImplicit, sourcesImplicitOld, sourcesTimeDer;
   delete primLeft, primRight;
   delete fluxesX1, fluxesX2, fluxesX3;
+  delete divFluxes;
   delete emfX1, emfX2, emfX3;
   delete elem, elemOld, elemHalfStep;
   delete riemann;

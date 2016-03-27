@@ -42,6 +42,7 @@ cdef class gridPy(object):
     if (N1 == 0):
       self.gridPtr = NULL
     else:
+      self.usingExternalPtr = 0
       self.gridPtr = new grid(N1, N2, N3, 
                               dim, numVars, numGhost, 
                               periodicBoundariesX1,
@@ -50,6 +51,8 @@ cdef class gridPy(object):
                              )
 
   def __dealloc__(self):
+    if (self.usingExternalPtr):
+      return
     del self.gridPtr
 
   def __copy__(self):
@@ -72,6 +75,13 @@ cdef class gridPy(object):
 
   cdef setGridPtr(self, grid *gridPtr):
     self.gridPtr = gridPtr  
+
+  @staticmethod
+  cdef createGridPyFromGridPtr(grid *gridPtr):
+    cdef gridPy gridPyObject = gridPy()
+    gridPyObject.usingExternalPtr = 1
+    gridPyObject.setGridPtr(gridPtr)
+    return gridPyObject
 
   property numVars:
     def __get__(self):
@@ -201,21 +211,24 @@ cdef class gridPy(object):
 
 cdef class coordinatesGridPy(object):
 
-  def __cinit__(self, const int N1,
-                      const int N2, 
-                      const int N3,
-                      const int dim,
-                      const int numGhost,
-                      const double X1Start, const double X1End,
-                      const double X2Start, const double X2End,
-                      const double X3Start, const double X3End
+  def __cinit__(self, const int N1 = 0,
+                      const int N2 = 0, 
+                      const int N3 = 0,
+                      const int dim = 0,
+                      const int numGhost = 0,
+                      const double X1Start = 0, const double X1End = 0,
+                      const double X2Start = 0, const double X2End = 0,
+                      const double X3Start = 0, const double X3End = 0
                ):
-    self.coordGridPtr = new coordinatesGrid(N1, N2, N3, 
-                                            dim, numGhost,
-                                            X1Start, X1End,
-                                            X2Start, X2End,
-                                            X3Start, X3End
-                                           )
+    if (N1 == 0):
+      self.coordGridPtr = NULL
+    else:
+      self.coordGridPtr = new coordinatesGrid(N1, N2, N3, 
+                                              dim, numGhost,
+                                              X1Start, X1End,
+                                              X2Start, X2End,
+                                              X3Start, X3End
+                                             )
   def __dealloc__(self):
     del self.coordGridPtr
 
@@ -232,6 +245,10 @@ cdef class coordinatesGridPy(object):
                              self.coordGridPtr.X3Start,
                              self.coordGridPtr.X3End 
                             )
+
+  cdef setGridPtr(self, coordinatesGrid *coordGridPtr):
+    self.coordGridPtr = coordGridPtr
+
   property N1:
     def __get__(self):
       return self.coordGridPtr.N1
