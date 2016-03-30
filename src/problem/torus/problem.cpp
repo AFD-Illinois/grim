@@ -508,7 +508,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   prim->vars[vars::RHO].eval();
   prim->vars[vars::U].eval();
 
-  elem->set(prim->vars,*geom,numReads,numWrites);
+  elem->set(*prim, *geom, numReads,numWrites);
 
   if(params::conduction)
     {
@@ -533,7 +533,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
       prim->vars[vars::DP].eval();
     }
 
-  elem->set(prim->vars,*geom,numReads,numWrites);
+  elem->set(*prim, *geom, numReads,numWrites);
   af::sync();
 }
 

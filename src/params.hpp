@@ -145,6 +145,9 @@ namespace params
   extern double MagneticLoops;
   extern double Adiabat;
   extern double CourantFactor;
+  extern double InitialPerturbationAmplitude;
+  extern double ObserveEveryDt;
+  extern double WriteDataEveryDt;
 };
 
 #endif /* GRIM_PARAMS_H_ */
