@@ -7,6 +7,7 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
 {
   int numReadsReconstruction, numWritesReconstruction;
   int numReadsRiemann, numWritesRiemann;
+  int numReadsCT, numWritesCT;
 
   switch (primFlux.dim)
   {
@@ -80,6 +81,10 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
       numReads  += numReadsRiemann;
       numWrites += numWritesRiemann;
 
+      fluxCT(numReadsCT, numWritesCT);
+      numReads  += numReadsCT;
+      numWrites += numWritesCT;
+
       for (int var=0; var < primFlux.numVars; var++)
       {
         double filter1D[] = {1, -1, 0}; /* Forward difference */
@@ -147,6 +152,10 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
                     );
       numReads  += numReadsRiemann;
       numWrites += numWritesRiemann;
+
+      fluxCT(numReadsCT, numWritesCT);
+      numReads  += numReadsCT;
+      numWrites += numWritesCT;
 
       for (int var=0; var < primFlux.numVars; var++)
       {

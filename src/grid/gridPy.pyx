@@ -15,6 +15,9 @@ from gridHeaders cimport LOCATIONS_TOP
 from gridHeaders cimport LOCATIONS_BOTTOM
 from gridHeaders cimport LOCATIONS_FRONT
 from gridHeaders cimport LOCATIONS_BACK
+from gridHeaders cimport DIRECTIONS_X1
+from gridHeaders cimport DIRECTIONS_X2
+from gridHeaders cimport DIRECTIONS_X3
 
 np.import_array()
 
@@ -26,6 +29,9 @@ TOP    = LOCATIONS_TOP
 BOTTOM = LOCATIONS_BOTTOM
 FRONT  = LOCATIONS_FRONT
 BACK   = LOCATIONS_BACK
+X1     = DIRECTIONS_X1
+X2     = DIRECTIONS_X2
+X3     = DIRECTIONS_X3
 
 cdef class gridPy(object):
 
@@ -39,16 +45,21 @@ cdef class gridPy(object):
                       const int periodicBoundariesX2 = 0,
                       const int periodicBoundariesX3 = 0
                ):
+    # if N1 ==0, we want to set self.gridPtr to an external gridPtr. This
+    # constructor is called from createGridPyFromGridPtr()
     if (N1 == 0):
+      self.usingExternalPtr = 1
       self.gridPtr = NULL
-    else:
-      self.usingExternalPtr = 0
-      self.gridPtr = new grid(N1, N2, N3, 
-                              dim, numVars, numGhost, 
-                              periodicBoundariesX1,
-                              periodicBoundariesX2,
-                              periodicBoundariesX3
-                             )
+      return
+    
+    # If N1 != 0, make a gridPtr and assign it to self.gridPtr
+    self.usingExternalPtr = 0
+    self.gridPtr = new grid(N1, N2, N3, 
+                            dim, numVars, numGhost, 
+                            periodicBoundariesX1,
+                            periodicBoundariesX2,
+                            periodicBoundariesX3
+                           )
 
   def __dealloc__(self):
     if (self.usingExternalPtr):

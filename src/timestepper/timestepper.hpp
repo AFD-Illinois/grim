@@ -58,6 +58,7 @@ class timeStepper
     grid *fluxesX1, *fluxesX2, *fluxesX3;
     grid *emfX1, *emfX2, *emfX3;
     grid *divFluxes;
+    grid *divB;
 
     geometry *geomLeft,   *geomRight;
     geometry *geomBottom, *geomTop;
@@ -98,7 +99,6 @@ class timeStepper
     void fluxCT(int &numReads, int &numWrites);
     void computeEMF(int &numReadsEMF, int &numWritesEMF);
     void computeDivB(const grid &prim,
-                     grid &divB,
                      int &numReads,
                      int &numWrites
                     );

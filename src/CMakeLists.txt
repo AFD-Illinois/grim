@@ -103,6 +103,7 @@ include_directories(${PETSC_INCLUDES}
                     geometry
                     reconstruction
                     boundary
+                    physics
                     timestepper
                    )
 

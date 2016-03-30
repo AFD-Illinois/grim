@@ -27,13 +27,9 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
   buildPath =  config.getvalue('build_path')
-  gridPath        = buildPath + '/grid/'
-  geometryPath    = buildPath + '/geometry/'
-  boundaryPath    = buildPath + '/boundary/'
-  physicsPath     = buildPath + '/physics/'
-  timestepperPath = buildPath + '/timestepper/'
+  gridPath     = buildPath + '/grid/'
+  geometryPath = buildPath + '/geometry/'
+  physicsPath  = buildPath + '/physics/' 
   sys.path.append(gridPath)
   sys.path.append(geometryPath)
-  sys.path.append(boundaryPath)
   sys.path.append(physicsPath)
-  sys.path.append(timestepperPath)

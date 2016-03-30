@@ -9,6 +9,8 @@ void timeStepper::fluxCT(int &numReads,
     int numReadsEMF, numWritesEMF;
     computeEMF(numReadsEMF, numWritesEMF);
 
+    fluxesX1->vars[vars::B1] = 0.;
+
     fluxesX1->vars[vars::B2] = 
       0.5*(  emfX3->vars[0]
            + shift(emfX3->vars[0], 0, -1, 0)
@@ -18,6 +20,8 @@ void timeStepper::fluxCT(int &numReads,
       -0.5*(  emfX3->vars[0]
             + shift(emfX3->vars[0], -1, 0, 0)
            );
+
+    fluxesX2->vars[vars::B2] = 0.;
   
     if (fluxesX1->dim == 3)
     {
@@ -79,7 +83,6 @@ void timeStepper::computeEMF(int &numReadsEMF,
 }
 
 void timeStepper::computeDivB(const grid &prim,
-                              grid &divB,
                               int &numReads,
                               int &numWrites
                              )
@@ -90,12 +93,12 @@ void timeStepper::computeDivB(const grid &prim,
   array B3 = prim.vars[vars::B3];
   array g  = geomCenter->g;
 
-  divB.vars[0] = 
-      (  shift(g*B1, 0, -1, 0) + shift(g*B1, 0, -1, -1)
-       - g*B1 - shift(g*B1, 0, 0, 1)
-      )/(2.*XCoords->dX1)
-   + 
-      (  shift(g*B2, 0, 0, -1) + shift(g*B2, 0, -1, -1)
-       - g*B2 - shift(g*B2, 0, -1, 0)
-      );
+  divB->vars[0] =
+    (  g*B1 + shift(g*B1, 0, 1, 0) 
+     - shift(g*B1, 1, 0, 0) - shift(g*B1, 1, 1, 0)
+    )/(2.*XCoords->dX1)
+  +
+    (  g*B2 + shift(g*B2, 1, 0, 0)
+     - shift(g*B2, 0, 1, 0) - shift(g*B2, 1, 1, 0)
+    )/(2.*XCoords->dX2);
 }

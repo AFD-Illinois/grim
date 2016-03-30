@@ -184,6 +184,12 @@ timeStepper::timeStepper(const int N1,
                        periodicBoundariesX3
                       );
 
+  divB = new grid(N1, N2, N3,
+                  dim, 1, numGhost,
+                  periodicBoundariesX1,
+                  periodicBoundariesX2,
+                  periodicBoundariesX3
+                 );
 
   XCoords = new coordinatesGrid(N1, N2, N3,
                                 dim, numGhost,
@@ -231,13 +237,13 @@ timeStepper::timeStepper(const int N1,
 
 
   int numReads, numWrites;
-  elem          = new fluidElement(prim->vars, *geomCenter,
+  elem          = new fluidElement(*prim, *geomCenter,
                                    numReads, numWrites
                                   ); /* n+1   */
-  elemOld       = new fluidElement(primOld->vars, *geomCenter,
+  elemOld       = new fluidElement(*primOld, *geomCenter,
                                    numReads, numWrites
                                   ); /* n     */
-  elemHalfStep  = new fluidElement(primHalfStep->vars, *geomCenter,
+  elemHalfStep  = new fluidElement(*primHalfStep, *geomCenter,
                                    numReads, numWrites
                                   ); /* n+1/2 */
 
@@ -320,6 +326,7 @@ timeStepper::~timeStepper()
   delete primLeft, primRight;
   delete fluxesX1, fluxesX2, fluxesX3;
   delete divFluxes;
+  delete divB;
   delete emfX1, emfX2, emfX3;
   delete elem, elemOld, elemHalfStep;
   delete riemann;

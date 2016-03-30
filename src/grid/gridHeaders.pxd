@@ -7,6 +7,9 @@ cdef extern from "grid.hpp":
     LOCATIONS_TOP    "locations::TOP"
     LOCATIONS_BOTTOM "locations::BOTTOM"
     LOCATIONS_FRONT  "locations::FRONT"
+    DIRECTIONS_X1    "directions::X1"
+    DIRECTIONS_X2    "directions::X2"
+    DIRECTIONS_X3    "directions::X3"
 
   cdef cppclass grid:
     grid(const int N1,

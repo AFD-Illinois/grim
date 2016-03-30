@@ -13,39 +13,19 @@ MODIFIED_KERR_SCHILD  = METRICS_MODIFIED_KERR_SCHILD
 
 cdef class geometryPy(object):
 
-  def __cinit__(self, int metric, 
-                      double blackHoleSpin, 
-                      double hSlope,
-                      coordinatesGridPy XCoordsGrid
-               ):
-    self.geometryPtr = new geometry(metric,
-                                    blackHoleSpin,
-                                    hSlope,
-                                    XCoordsGrid.getGridPtr()[0]
-                                   )
-    
+  def setGeometryPy(self):
     self.geometryPtr.setgCovGrid()
     self.geometryPtr.setgConGrid()
     self.geometryPtr.setgGrid()
     self.geometryPtr.setalphaGrid()
     self.geometryPtr.setxCoordsGrid()
 
-    # TODO: make a function createGridPyFromGridPtr that will directly return a
-    # gridPy class given a grid *gridPtr
-    gCovGridPy = gridPy()
-    gCovGridPy.setGridPtr(self.geometryPtr.gCovGrid)
+    gCovGridPy  = gridPy.createGridPyFromGridPtr(self.geometryPtr.gCovGrid)
+    gConGridPy  = gridPy.createGridPyFromGridPtr(self.geometryPtr.gConGrid)
+    gGridPy     = gridPy.createGridPyFromGridPtr(self.geometryPtr.gGrid)
+    alphaGridPy = gridPy.createGridPyFromGridPtr(self.geometryPtr.alphaGrid)
 
-    gConGridPy = gridPy()
-    gConGridPy.setGridPtr(self.geometryPtr.gConGrid)
-
-    gGridPy = gridPy()
-    gGridPy.setGridPtr(self.geometryPtr.gGrid)
-
-    alphaGridPy = gridPy()
-    alphaGridPy.setGridPtr(self.geometryPtr.alphaGrid)
-
-    xCoordsGridPy = gridPy()
-    xCoordsGridPy.setGridPtr(self.geometryPtr.xCoordsGrid)
+    xCoordsGridPy = gridPy.createGridPyFromGridPtr(self.geometryPtr.xCoordsGrid)
 
     self.gCov = gCovGridPy.getVars()
     self.gCov = self.gCov.reshape([4, 4, 
@@ -77,8 +57,36 @@ cdef class geometryPy(object):
                                    )
     self.xCoords = xCoordsGridPy.getVars()
 
+  def __cinit__(self, int metric = 9999, 
+                      double blackHoleSpin = 9999, 
+                      double hSlope = 9999,
+                      coordinatesGridPy XCoordsGrid = coordinatesGridPy()
+               ):
+    if (metric == 9999):
+      self.usingExternalPtr = 1
+      self.geometryPtr = NULL
+      return 
+
+    self.usingExternalPtr = 0
+    self.geometryPtr = new geometry(metric,
+                                    blackHoleSpin,
+                                    hSlope,
+                                    XCoordsGrid.getGridPtr()[0]
+                                   )
+    self.setGeometryPy()
+    
   def __dealloc__(self):
+    if (self.usingExternalPtr):
+      return
     del self.geometryPtr
+
+  @staticmethod
+  cdef createGeometryPyFromGeometryPtr(geometry *geometryPtr):
+    cdef geometryPy geometryPyObject = geometryPy()
+    geometryPyObject.usingExternalPtr = 1
+    geometryPyObject.setGeometryPtr(geometryPtr)
+    geometryPyObject.setGeometryPy()
+    return geometryPyObject
 
   def computeConnectionCoeffs(self):
     self.geometryPtr.computeConnectionCoeffs()
@@ -93,6 +101,12 @@ cdef class geometryPy(object):
                                         self.gammaUpDownDown.shape[3]
                                        ]
                                       )
+
+  cdef geometry* getGeometryPtr(self):
+    return self.geometryPtr
+
+  cdef setGeometryPtr(self, geometry *geometryPtr):
+    self.geometryPtr = geometryPtr
 
   property N1:
     def __get__(self):

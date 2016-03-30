@@ -10,8 +10,8 @@ void timeStepper::computeResidual(const grid &primGuess,
   numReads = 0; numWrites = 0;
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
-  elem->set(primGuess.vars, *geomCenter, numReadsElemSet, numWritesElemSet);
-  elem->computeFluxes(*geomCenter, 0, cons->vars, 
+  elem->set(primGuess, *geomCenter, numReadsElemSet, numWritesElemSet);
+  elem->computeFluxes(*geomCenter, 0, *cons, 
                       numReadsComputeFluxes, numWritesComputeFluxes
                      );
   numReads  += numReadsElemSet  + numReadsComputeFluxes;
@@ -22,7 +22,7 @@ void timeStepper::computeResidual(const grid &primGuess,
     if (computeExplicitTerms)
     {
       int numReadsExplicitSouces, numWritesExplicitSouces;
-      elemOld->computeExplicitSources(*geomCenter, sourcesExplicit->vars,
+      elemOld->computeExplicitSources(*geomCenter, *sourcesExplicit,
                                       numReadsExplicitSouces, 
                                       numWritesExplicitSouces
                                      );
@@ -39,20 +39,20 @@ void timeStepper::computeResidual(const grid &primGuess,
 
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elemOld->computeImplicitSources(*geomCenter, sourcesImplicitOld->vars,
-				    elemOld->tau,
+    elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
+				                            elemOld->tau,
                                     numReadsImplicitSources,
                                     numWritesImplicitSources
                                    );
-    elem->computeImplicitSources(*geomCenter, sourcesImplicit->vars,
-				 elemOld->tau,
+    elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
+				                         elemOld->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );
     elemOld->computeTimeDerivSources(*geomCenter,
 				                             *elemOld, *elem,
 		                         		     dt/2,
-                        				     sourcesTimeDer->vars,
+                        				     *sourcesTimeDer,
                                      numReadsTimeDerivSources,
                                      numWritesTimeDerivSources
                                     );
@@ -87,9 +87,9 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       if(params::highOrderTermsConduction)
       {
-	residualGuess.vars[vars::Q] *=
-          elemOld->temperature 
-	  * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
+	      residualGuess.vars[vars::Q] *=
+           elemOld->temperature 
+	       * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
 
         numReads += 4;
       }
@@ -104,10 +104,10 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       if(params::highOrderTermsViscosity)
       {
-	residualGuess.vars[vars::DP] *=
+	      residualGuess.vars[vars::DP] *=
           af::sqrt(   elemOld->rho*elemOld->nu_emhd
-		      * elemOld->temperature*elemOld->tau
-		      );
+		                * elemOld->temperature*elemOld->tau
+		              );
         numReads += 4;
       }
       else
@@ -124,7 +124,7 @@ void timeStepper::computeResidual(const grid &primGuess,
     if (computeExplicitTerms)
     {
       int numReadsExplicitSouces, numWritesExplicitSouces;
-      elemHalfStep->computeExplicitSources(*geomCenter, sourcesExplicit->vars,
+      elemHalfStep->computeExplicitSources(*geomCenter, *sourcesExplicit,
                                            numReadsExplicitSouces,
                                            numWritesExplicitSouces
                                           );
@@ -141,20 +141,20 @@ void timeStepper::computeResidual(const grid &primGuess,
 
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elemOld->computeImplicitSources(*geomCenter, sourcesImplicitOld->vars,
-				    elemHalfStep->tau,
+    elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
+				                            elemHalfStep->tau,
                                     numReadsImplicitSources,
                                     numWritesImplicitSources
                                    );
-    elem->computeImplicitSources(*geomCenter, sourcesImplicit->vars,
-				 elemHalfStep->tau,
+    elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
+				                         elemHalfStep->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );
     elemHalfStep->computeTimeDerivSources(*geomCenter,
 	                                			  *elemOld, *elem,
 					                                params::dt,
-					                                sourcesTimeDer->vars,
+					                                *sourcesTimeDer,
                                           numReadsTimeDerivSources,
                                           numWritesTimeDerivSources
                                          );

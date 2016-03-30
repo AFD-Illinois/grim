@@ -33,7 +33,7 @@ riemannSolver::riemannSolver(const grid &prim,
                       );
 
   int numReads, numWrites;
-  elemFace  = new fluidElement(prim.vars, geom,
+  elemFace  = new fluidElement(prim, geom,
                                numReads, numWrites
                               );
 
@@ -244,13 +244,13 @@ void riemannSolver::solve(const grid &primLeft,
   int numReadsCharSpeeds, numWritesCharSpeeds;
 
   /* Compute fluxes and cons at i+1/2 - eps : left flux on right face */
-  elemFace->set(primRight.vars, geomRight,
+  elemFace->set(primRight, geomRight,
                 numReadsElemSet, numWritesElemSet
                );
-  elemFace->computeFluxes(geomRight, fluxDirection, fluxLeft->vars,
+  elemFace->computeFluxes(geomRight, fluxDirection, *fluxLeft,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeFluxes(geomRight, 0,             consLeft->vars,
+  elemFace->computeFluxes(geomRight, 0,             *consLeft,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
   elemFace->computeMinMaxCharSpeeds(geomRight, dir, 
@@ -259,13 +259,13 @@ void riemannSolver::solve(const grid &primLeft,
                                    );
 
   /* Compute fluxes and cons at i-1/2 + eps : right flux on left face */
-  elemFace->set(primLeft.vars, geomLeft,
+  elemFace->set(primLeft, geomLeft,
                 numReadsElemSet, numWritesElemSet
                );
-  elemFace->computeFluxes(geomLeft, fluxDirection, fluxRight->vars,
+  elemFace->computeFluxes(geomLeft, fluxDirection, *fluxRight,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeFluxes(geomLeft, 0,             consRight->vars,
+  elemFace->computeFluxes(geomLeft, 0,             *consRight,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
   elemFace->computeMinMaxCharSpeeds(geomLeft, dir, 

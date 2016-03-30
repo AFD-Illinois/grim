@@ -414,7 +414,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   // Need to set fluid element to get b^2...
   {
-    elemOld->set(primOld->vars,*geomCenter,numReads,numWrites);
+    elemOld->set(*primOld,*geomCenter,numReads,numWrites);
     const array& bSqr = elemOld->bSqr;
     const array& Pgas = elemOld->pressure;
     array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
@@ -487,7 +487,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   condition = prim->vars[vars::U]<minU;
   prim->vars[vars::U] = condition*minU+(1.-condition)*prim->vars[vars::U];
 
-  elem->set(prim->vars,*geom,numReads,numWrites);
+  elem->set(*prim,*geom,numReads,numWrites);
 
   const array& bSqr = elem->bSqr;
   condition = bSqr>params::BsqrOverRhoMax*prim->vars[vars::RHO];
@@ -644,7 +644,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       af::seq domainX1 = *primOld->domainX1;
       af::seq domainX2 = *primOld->domainX2;
       af::seq domainX3 = *primOld->domainX3;
-      elemOld->computeFluxes(*geomCenter,0,consOld->vars,numReads,numWrites);
+      elemOld->computeFluxes(*geomCenter,0, *consOld,numReads,numWrites);
       double volElem = XCoords->dX1;
       if(params::dim>1)
 	volElem*=XCoords->dX2;

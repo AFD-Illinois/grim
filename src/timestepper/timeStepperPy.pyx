@@ -7,6 +7,8 @@ Python interface to the timeStepper class.
 
 import numpy as np
 from gridPy cimport gridPy, coordinatesGridPy
+from geometryPy cimport geometryPy
+from physicsPy cimport fluidElementPy
 from timestepperHeaders cimport timeStepper
 from timestepperHeaders cimport STAGE_HALF_STEP
 from timestepperHeaders cimport STAGE_FULL_STEP
@@ -57,6 +59,33 @@ cdef class timeStepperPy(object):
     self.primHalfStep = \
         gridPy.createGridPyFromGridPtr(self.timeStepperPtr.primHalfStep)
 
+    self.fluxesX1 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.fluxesX1)
+    self.fluxesX2 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.fluxesX2)
+    self.fluxesX3 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.fluxesX3)
+
+    self.sourcesExplicit = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.sourcesExplicit)
+
+    self.divB = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.divB)
+
+    self.geomCenter = \
+        geometryPy.createGeometryPyFromGeometryPtr(self.timeStepperPtr.geomCenter)
+    self.geomLeft = \
+        geometryPy.createGeometryPyFromGeometryPtr(self.timeStepperPtr.geomLeft)
+    self.geomRight = \
+        geometryPy.createGeometryPyFromGeometryPtr(self.timeStepperPtr.geomRight)
+    self.geomBottom = \
+        geometryPy.createGeometryPyFromGeometryPtr(self.timeStepperPtr.geomBottom)
+    self.geomTop = \
+        geometryPy.createGeometryPyFromGeometryPtr(self.timeStepperPtr.geomTop)
+
+    self.elem = \
+        fluidElementPy.createFluidElementPyFromElemPtr(self.timeStepperPtr.elem)
+
 
   def __dealloc__(self):
     del self.timeStepperPtr
@@ -64,6 +93,30 @@ cdef class timeStepperPy(object):
   property XCoords:
     def __get__(self):
      return self.XCoords
+
+  property elem:
+    def __get__(self):
+     return self.elem
+
+  property geomCenter:
+    def __get__(self):
+     return self.geomCenter
+
+  property geomRight:
+    def __get__(self):
+     return self.geomRight
+
+  property geomLeft:
+    def __get__(self):
+     return self.geomLeft
+
+  property geomBottom:
+    def __get__(self):
+     return self.geomBottom
+
+  property geomTop:
+    def __get__(self):
+     return self.geomTop
 
   property prim:
     def __get__(self):
@@ -89,17 +142,25 @@ cdef class timeStepperPy(object):
     def __get__(self):
      return self.fluxesX3
 
+  property sourcesExplicit:
+    def __get__(self):
+     return self.sourcesExplicit
+
+  property divB:
+    def __get__(self):
+     return self.divB
+
+
   def fluxCT(self):
      cdef int numReads  = 0
      cdef int numWrites = 0
      self.timeStepperPtr.fluxCT(numReads, numWrites)
      return numReads, numWrites
 
-  def computeDivB(self, gridPy prim, gridPy divB):
+  def computeDivB(self, gridPy prim):
      cdef int numReads  = 0
      cdef int numWrites = 0
      self.timeStepperPtr.computeDivB(prim.getGridPtr()[0],
-                                     divB.getGridPtr()[0],
                                      numReads, numWrites
                                     )
      return numReads, numWrites
@@ -109,3 +170,11 @@ cdef class timeStepperPy(object):
       cdef int numWrites = 0
       self.timeStepperPtr.timeStep(numReads, numWrites)
       return numReads, numWrites
+
+  def computeDivOfFluxes(self, gridPy prim):
+    cdef int numReads  = 0
+    cdef int numWrites = 0
+    self.timeStepperPtr.computeDivOfFluxes(prim.getGridPtr()[0],
+                                           numReads, numWrites
+                                          )
+    return numReads, numWrites

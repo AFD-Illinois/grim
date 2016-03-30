@@ -39,12 +39,12 @@ class fluidElement
     array q0;
     array bNorm;
 
-    fluidElement(const array *prim,
+    fluidElement(const grid &prim,
                  const geometry &geom,
                  int &numReads,
                  int &numWrites
                 );
-    void set(const array *prim,
+    void set(const grid &prim,
              const geometry &geom,
              int &numReads,
              int &numWrites
@@ -52,7 +52,7 @@ class fluidElement
     void setFluidElementParameters(const geometry &geom);
     void computeFluxes(const geometry &geom, 
                        const int direction,
-                       array *flux,
+                       grid &flux,
                        int &numReads,
                        int &numWrites
                       );                                
@@ -69,20 +69,20 @@ class fluidElement
 		  		                       const fluidElement &elemOld,
                             		 const fluidElement &elemNew,
                              		 const double dt,
-                                 array *sources,
+                                 grid &sources,
                                  int &numReads,
                                  int &numWrites
 				                        );
 
     void computeImplicitSources(const geometry &geom,
-	  			                      array *sources,
-                                array tauDamp,
+	  			                      grid &sources,
+                                array &tauDamp,
                                 int &numReads,
                                 int &numWrites
 				                       );
 
     void computeExplicitSources(const geometry &geom,
-                      		      array *sources,
+                      		      grid &sources,
                                 int &numReads,
                                 int &numWrites
                                );

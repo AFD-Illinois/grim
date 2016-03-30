@@ -231,12 +231,6 @@ void timeStepper::solve(grid &primGuess)
       }
       }*/
 
-  /* TODO: print out global l2Norms after solver iterations are complete */
-  //VecNorm();
-//   double globalL2Norm = 
-//     af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)));
-//   PetscPrintf(PETSC_COMM_WORLD, "|Residual| = %e\n", globalL2Norm);
-
 }
 
 void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)

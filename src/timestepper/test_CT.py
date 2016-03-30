@@ -44,7 +44,7 @@ boundaryBack   = boundaryPy.PERIODIC
 
 time = 0.
 dt   = 0.01
-numVars = 10
+numVars = 8
 metric = geometryPy.MODIFIED_KERR_SCHILD
 ts = timeStepperPy.timeStepperPy(N1, N2, N3,
                                  dim, numVars, numGhost,
@@ -57,7 +57,23 @@ ts = timeStepperPy.timeStepperPy(N1, N2, N3,
                                  X2Start, X2End,
                                  X3Start, X3End
                                 )
-ts.timeStep()
-#print ts.XCoords.getCoords(gridPy.LEFT)
-#print ts.primOld.getVars()
+ts.computeDivB(ts.primOld)
+print "divB.shape = ", ts.divB.shape
+print "Div B = ", np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost,
+  numGhost:N1+numGhost]))
 
+import pylab as pl
+for n in xrange(1000):
+  print "Time step = ", n
+  ts.timeStep()
+  ts.computeDivB(ts.primHalfStep)
+  print "Div B primHalfStep = ", \
+    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
+  ts.computeDivB(ts.primOld)
+  print "Div B primOld = ", \
+    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
+
+  pl.contourf((np.abs(ts.divB.getVars()[0, 0, :, :])), 100)
+  pl.colorbar()
+  pl.savefig("divB_" + str(n) + ".png")
+  pl.clf()

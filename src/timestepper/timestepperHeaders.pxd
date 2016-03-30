@@ -1,4 +1,6 @@
 from gridHeaders cimport grid, coordinatesGrid
+from geometryHeaders cimport geometry
+from physicsHeaders cimport fluidElement
 
 cdef extern from "timestepper.hpp":
   cdef enum:
@@ -31,6 +33,7 @@ cdef extern from "timestepper.hpp":
     grid *fluxesX1
     grid *fluxesX2
     grid *fluxesX3
+    grid *divB
     grid *cons
     grid *consOld
     grid *sourcesExplicit
@@ -38,12 +41,25 @@ cdef extern from "timestepper.hpp":
     grid *sourcesImplicitOld
     grid *sourcesTimeDer
 
+    fluidElement *elem
+    fluidElement *elemOld
+    fluidElement *elemHalfStep
+
+    geometry *geomCenter
+    geometry *geomLeft
+    geometry *geomRight
+    geometry *geomBottom
+    geometry *geomTop
+
     void timeStep(int &numReads, int &numWrites)
 
     void fluxCT(int &numReads, int &numWrites)
     void computeEMF(int &numReadsEMF, int &numWritesEMF)
     void computeDivB(const grid &prim,
-                     grid &divB,
                      int &numReads,
                      int &numWrites
                     )
+
+    void computeDivOfFluxes(const grid &prim,
+                            int &numReads, int &numWrites
+                           )

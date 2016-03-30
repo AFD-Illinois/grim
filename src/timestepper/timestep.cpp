@@ -16,10 +16,10 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
-  elemOld->set(primOld->vars, *geomCenter,
+  elemOld->set(*primOld, *geomCenter,
                numReadsElemSet, numWritesElemSet
               );
-  elemOld->computeFluxes(*geomCenter, 0, consOld->vars, 
+  elemOld->computeFluxes(*geomCenter, 0, *consOld, 
                          numReadsComputeFluxes, numWritesComputeFluxes
                         );
   numReads  = numReadsElemSet  + numReadsComputeFluxes;
@@ -81,7 +81,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                      );
   setProblemSpecificBCs(numReads,numWrites);
 
-  elemHalfStep->set(primHalfStep->vars, *geomCenter,
+  elemHalfStep->set(*primHalfStep, *geomCenter,
                     numReadsElemSet, numWritesElemSet
                    );
   numReads  += numReadsElemSet;
