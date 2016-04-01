@@ -6,8 +6,8 @@
 #include "../physics/physics.hpp"
 #include "../geometry/geometry.hpp"
 #include "../boundary/boundary.hpp"
-//#include "mkl.h"
-#include "lapacke.h"
+#include "mkl.h"
+//#include "lapacke.h"
 
 namespace timeStepperSwitches
 {
