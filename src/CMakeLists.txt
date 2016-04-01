@@ -24,9 +24,9 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
+#set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
 
 # Configuration for Stampede
 #set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
@@ -34,9 +34,9 @@ set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Configuration for Deathstar
-#set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
+set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
 
 # Double or float precision?
 set(REAL "double")
@@ -56,7 +56,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "orzag_tang")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

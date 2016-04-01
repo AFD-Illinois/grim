@@ -717,7 +717,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       const int WriteIdx = floor(time/params::WriteDataEveryDt);
       if(WriteIdx==1)
 	{
-	  printf("Printing gCov\n");
+	  PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
 	  geomCenter->setgCovGrid();
 	  geomCenter->gCovGrid->dump("gCov","gCov.h5");
 	  geomCenter->setgConGrid();

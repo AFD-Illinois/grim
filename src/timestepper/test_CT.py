@@ -27,17 +27,24 @@ numGhost = 3
 Rin = 0.98*(1.+np.sqrt(1.-blackHoleSpin*blackHoleSpin));
 Rout = 40.
 
-X1Start = np.log(Rin); X1End = np.log(Rout)
-X2Start = 1e-8; X2End = 1.-1e-8
-X3Start = 0.; X3End = 2.*np.pi
-periodicBoundariesX1 = False
-periodicBoundariesX2 = False
-periodicBoundariesX3 = False
+#X1Start = np.log(Rin); X1End = np.log(Rout)
+#X2Start = 1e-8; X2End = 1.-1e-8
+#X3Start = 0.; X3End = 2.*np.pi
+#boundaryLeft   = boundaryPy.OUTFLOW
+#boundaryRight  = boundaryPy.OUTFLOW
+#boundaryTop    = boundaryPy.OUTFLOW
+#boundaryBottom = boundaryPy.OUTFLOW
+#boundaryFront  = boundaryPy.PERIODIC
+#boundaryBack   = boundaryPy.PERIODIC
 
-boundaryLeft   = boundaryPy.OUTFLOW
-boundaryRight  = boundaryPy.OUTFLOW
-boundaryTop    = boundaryPy.OUTFLOW
-boundaryBottom = boundaryPy.OUTFLOW
+X1Start = 0.; X1End = 1.
+X2Start = 0.; X2End = 1.
+X3Start = 0.; X3End = 1.
+
+boundaryLeft   = boundaryPy.PERIODIC
+boundaryRight  = boundaryPy.PERIODIC
+boundaryTop    = boundaryPy.PERIODIC
+boundaryBottom = boundaryPy.PERIODIC
 boundaryFront  = boundaryPy.PERIODIC
 boundaryBack   = boundaryPy.PERIODIC
 
@@ -45,7 +52,8 @@ boundaryBack   = boundaryPy.PERIODIC
 time = 0.
 dt   = 0.01
 numVars = 8
-metric = geometryPy.MODIFIED_KERR_SCHILD
+#metric = geometryPy.MODIFIED_KERR_SCHILD
+metric = geometryPy.MINKOWSKI
 ts = timeStepperPy.timeStepperPy(N1, N2, N3,
                                  dim, numVars, numGhost,
                                  time, dt,
@@ -66,14 +74,16 @@ import pylab as pl
 for n in xrange(1000):
   print "Time step = ", n
   ts.timeStep()
-  ts.computeDivB(ts.primHalfStep)
-  print "Div B primHalfStep = ", \
-    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
-  ts.computeDivB(ts.primOld)
-  print "Div B primOld = ", \
-    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
+  #ts.computeDivB(ts.primHalfStep)
+  #print "Div B primHalfStep = ", \
+  #  np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
+  #ts.computeDivB(ts.primOld)
+  #print "Div B primOld = ", \
+  #  np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
 
-  pl.contourf((np.abs(ts.divB.getVars()[0, 0, :, :])), 100)
-  pl.colorbar()
-  pl.savefig("divB_" + str(n) + ".png")
-  pl.clf()
+  #pl.contourf(np.log10(np.abs(ts.divB.getVars()[0, 0, :, :])), 100)
+  pl.contourf(ts.primOld.getVars()[0, 0, :, :], 100)
+  pl.savefig("rho_" + str(n) + ".png")
+  #pl.colorbar()
+  #pl.savefig("divB_" + str(n) + ".png")
+  #pl.clf()

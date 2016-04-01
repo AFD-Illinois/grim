@@ -148,6 +148,13 @@ namespace params
   extern double InitialPerturbationAmplitude;
   extern double ObserveEveryDt;
   extern double WriteDataEveryDt;
+
+  /* Linear modes parameters */
+  extern double Aw;
+  extern double k1;
+  extern double k2;
+  extern double Gamma;
+  extern double Omega;
 };
 
 #endif /* GRIM_PARAMS_H_ */
