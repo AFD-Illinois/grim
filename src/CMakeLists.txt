@@ -37,6 +37,7 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
+set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
@@ -84,7 +85,7 @@ find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
 find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
-find_package(LAPACK REQUIRED)
+find_package(LAPACKE REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
@@ -99,6 +100,7 @@ include_directories(${PETSC_INCLUDES}
                     ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
+                    ${LAPACKE_INCLUDES}
                     grid
                     geometry
                     reconstruction
@@ -633,6 +635,7 @@ message("C_FLAGS          : " ${CMAKE_C_FLAGS})
 message("CXX_FLAGS        : " ${CMAKE_CXX_FLAGS})
 message("PETSc dir        : " ${PETSC_DIR})
 message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
+message("MKL dir          : " ${LAPACKE_INCLUDES})
 message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
 message("Build dir        : " ${CMAKE_BINARY_DIR})
 message("")
