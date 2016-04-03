@@ -1,6 +1,7 @@
 import mpi4py, petsc4py
 from petsc4py import PETSc
 import numpy as np
+import pylab as pl
 import pytest
 import gridPy
 import geometryPy
@@ -50,7 +51,7 @@ boundaryBack   = boundaryPy.PERIODIC
 
 
 time = 0.
-dt   = 0.01
+dt   = 0.002
 numVars = 8
 #metric = geometryPy.MODIFIED_KERR_SCHILD
 metric = geometryPy.MINKOWSKI
@@ -65,25 +66,54 @@ ts = timeStepperPy.timeStepperPy(N1, N2, N3,
                                  X2Start, X2End,
                                  X3Start, X3End
                                 )
-ts.computeDivB(ts.primOld)
-print "divB.shape = ", ts.divB.shape
-print "Div B = ", np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost,
-  numGhost:N1+numGhost]))
+#ts.computeDivB(ts.primOld)
+#print "divB.shape = ", ts.divB.shape
+#print "Div B = ", np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost,
+#  numGhost:N1+numGhost]))
+#pl.contourf(np.log10(np.abs(ts.divB.getVars()[0, 0,numGhost:N2+numGhost,
+#                                              numGhost:N1+numGhost])), 100)
+#pl.colorbar()
+#pl.savefig("divB_initial_conditions.png")
+#pl.clf()
+#ts.timeStep()
+#ts.computeDivB(ts.primOld)
+#pl.contourf(np.log10(np.abs(ts.divB.getVars()[0, 0,numGhost:N2+numGhost,
+#                                              numGhost:N1+numGhost])), 100)
+#pl.colorbar()
+#pl.savefig("divB_timestepped.png")
 
-import pylab as pl
+#for n in xrange(10):
+#    ts.timeStep()
+#ts.computeDivOfFluxes(ts.primHalfStep)
+#pl.contourf(ts.emfX3.getVars()[0, 0,numGhost:N2+numGhost,
+#                                               numGhost:N1+numGhost], 100)
+#pl.colorbar()
+#pl.savefig("EMF_initial_conditions.png")
+#np.savetxt("emf.txt", ts.divFluxes.getVars()[5, 0, numGhost:N2+numGhost,
+#                                             numGhost:N1+numGhost
+#                                      ]
+#          )
+
+
 for n in xrange(1000):
   print "Time step = ", n
   ts.timeStep()
-  #ts.computeDivB(ts.primHalfStep)
-  #print "Div B primHalfStep = ", \
-  #  np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
-  #ts.computeDivB(ts.primOld)
-  #print "Div B primOld = ", \
-  #  np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
+  ts.computeDivB(ts.primHalfStep)
+  print "Div B primHalfStep = ", \
+    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost,
+                                          numGhost:N1+numGhost]
+                 )
+          )
+  ts.computeDivB(ts.primOld)
+  print "Div B primOld = ", \
+    np.max(np.abs(ts.divB.getVars()[0, 0, numGhost:N2+numGhost, numGhost:N1+numGhost]))
 
-  #pl.contourf(np.log10(np.abs(ts.divB.getVars()[0, 0, :, :])), 100)
+  pl.contourf(np.log10(np.abs(ts.divB.getVars()[0, 0,numGhost:N2+numGhost,
+                                                numGhost:N1+numGhost])), 100)
+  pl.colorbar()
+  pl.savefig("divB_" + str(n) + ".png")
+  pl.clf()
+
   pl.contourf(ts.primOld.getVars()[0, 0, :, :], 100)
   pl.savefig("rho_" + str(n) + ".png")
-  #pl.colorbar()
-  #pl.savefig("divB_" + str(n) + ".png")
-  #pl.clf()
+  pl.clf()

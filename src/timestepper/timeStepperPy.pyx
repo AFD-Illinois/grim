@@ -66,6 +66,16 @@ cdef class timeStepperPy(object):
     self.fluxesX3 = \
         gridPy.createGridPyFromGridPtr(self.timeStepperPtr.fluxesX3)
 
+    self.divFluxes = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.divFluxes)
+
+    self.emfX1 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.emfX1)
+    self.emfX2 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.emfX2)
+    self.emfX3 = \
+        gridPy.createGridPyFromGridPtr(self.timeStepperPtr.emfX3)
+
     self.sourcesExplicit = \
         gridPy.createGridPyFromGridPtr(self.timeStepperPtr.sourcesExplicit)
 
@@ -142,6 +152,22 @@ cdef class timeStepperPy(object):
     def __get__(self):
      return self.fluxesX3
 
+  property divFluxes:
+    def __get__(self):
+     return self.divFluxes
+
+  property emfX1:
+    def __get__(self):
+     return self.emfX1
+
+  property emfX2:
+    def __get__(self):
+     return self.emfX2
+
+  property emfX3:
+    def __get__(self):
+     return self.emfX3
+
   property sourcesExplicit:
     def __get__(self):
      return self.sourcesExplicit
@@ -163,6 +189,12 @@ cdef class timeStepperPy(object):
      self.timeStepperPtr.computeDivB(prim.getGridPtr()[0],
                                      numReads, numWrites
                                     )
+     return numReads, numWrites
+
+  def computeEMF(self):
+     cdef int numReads  = 0
+     cdef int numWrites = 0
+     self.timeStepperPtr.computeEMF(numReads, numWrites)
      return numReads, numWrites
 
   def timeStep(self):

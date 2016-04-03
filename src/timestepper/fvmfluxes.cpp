@@ -94,7 +94,7 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
 
         array dFluxX1_dX1 = convolve(fluxesX1->vars[var], filterX1);
         array dFluxX2_dX2 = convolve(fluxesX2->vars[var], filterX2);
-
+        
         divFluxes->vars[var] = dFluxX1_dX1 + dFluxX2_dX2;
         divFluxes->vars[var].eval();
       }

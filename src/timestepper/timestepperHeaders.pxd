@@ -33,6 +33,10 @@ cdef extern from "timestepper.hpp":
     grid *fluxesX1
     grid *fluxesX2
     grid *fluxesX3
+    grid *divFluxes
+    grid *emfX1
+    grid *emfX2
+    grid *emfX3
     grid *divB
     grid *cons
     grid *consOld

@@ -10,7 +10,7 @@ namespace params
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = .01;
+  double dt = .002;
   double CourantFactor = 0.9;
   double Time = 0.;
   double finalTime = 50.;
@@ -20,7 +20,7 @@ namespace params
   int ObserveEveryNSteps = 10;
   int StepNumber = 0;
 
-  double adiabaticIndex = 4./3;
+  double adiabaticIndex = 5./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
   double PressureMaxRadius = 12.;
@@ -65,15 +65,15 @@ namespace params
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
 
-  double slopeLimTheta = 2;
-  int reconstruction = reconstructionOptions::WENO5;
-  int riemannSolver  = riemannSolvers::HLL;
+  double slopeLimTheta = 2.;
+  int reconstruction = reconstructionOptions::MINMOD;
+  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
-  int maxNonLinearIter = 3;
+  int maxNonLinearIter = 5;
   int maxLineSearchIters = 3;
 
   //Parameters controlling accuracy of nonlinear solver
-  double nonlinearsolve_atol = 1.e-6;
+  double nonlinearsolve_atol = 1.e-12;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   

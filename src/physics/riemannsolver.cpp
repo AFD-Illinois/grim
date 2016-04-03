@@ -310,12 +310,14 @@ void riemannSolver::solve(const grid &primLeft,
     }
     else if (params::riemannSolver == riemannSolvers::LOCAL_LAX_FRIEDRICH)
     {
-      flux.vars[var] = 
-        0.5*(af::shift(fluxLeft->vars[var], shiftX1, shiftX2, shiftX3)
-	     + fluxRight->vars[var])
-	- af::max(maxSpeedLeft,-minSpeedLeft)*
-	(consRight->vars[var] 
-	 - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3));
+      flux.vars[var] =
+       0.5*(af::shift(fluxLeft->vars[var], shiftX1, shiftX2, shiftX3)
+	          + fluxRight->vars[var]
+	          - af::max(maxSpeedLeft,-minSpeedLeft)*
+     	      (  consRight->vars[var] 
+	           - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
+            )
+           );
     }
 
     flux.vars[var].eval();

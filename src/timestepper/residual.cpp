@@ -153,7 +153,7 @@ void timeStepper::computeResidual(const grid &primGuess,
                                 );
     elemHalfStep->computeTimeDerivSources(*geomCenter,
 	                                			  *elemOld, *elem,
-					                                params::dt,
+					                                dt,
 					                                *sourcesTimeDer,
                                           numReadsTimeDerivSources,
                                           numWritesTimeDerivSources
@@ -164,7 +164,7 @@ void timeStepper::computeResidual(const grid &primGuess,
     for (int var=0; var<vars::dof; var++)
     {
       residualGuess.vars[var] = 
-        (cons->vars[var] - consOld->vars[var])/params::dt
+        (cons->vars[var] - consOld->vars[var])/dt
     	+ divFluxes->vars[var]
 	    + sourcesExplicit->vars[var]
 	    + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])

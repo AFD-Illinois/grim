@@ -2,6 +2,7 @@
 
 void timeStepper::timeStep(int &numReads, int &numWrites)
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Time = %f, dt = %f\n", time, dt);
   /* First take a half step */
   PetscPrintf(PETSC_COMM_WORLD, "  ---Half step--- \n");
 
