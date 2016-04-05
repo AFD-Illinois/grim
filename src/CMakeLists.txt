@@ -24,9 +24,10 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-#set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
+set(PETSC_DIR "/global/home/users/foucart/petsc_installation")
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build_opencl_new/package")
+set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
 # Configuration for Stampede
 #set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
@@ -34,10 +35,10 @@ set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 
 # Configuration for Deathstar
-set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
-set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+#set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
