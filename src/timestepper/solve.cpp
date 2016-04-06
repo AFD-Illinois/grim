@@ -37,9 +37,11 @@ void timeStepper::solve(grid &primGuess)
     l2Norm.eval();
     array notConverged      = l2Norm > params::nonlinearsolve_atol;
     array conditionIndices  = where(notConverged > 0);
+    //af_print(l2Norm);
 
     /* Communicate residual */
-    double localresnorm = af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)),AF_NORM_VECTOR_1);
+    double localresnorm = 
+      af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)),AF_NORM_VECTOR_1);
     double globalresnorm = localresnorm;
     int localNonConverged = conditionIndices.elements();
     int globalNonConverged = localNonConverged;
@@ -127,7 +129,6 @@ void timeStepper::solve(grid &primGuess)
      * Currently inverting locally by looping over individual zones. Need to
      * call the batch function magma_dgesv_batched() from the MAGMA library
      * for optimal use on NVIDIA cards */
-
     batchLinearSolve(jacobianAoS, bAoS, deltaPrimAoS);
 
     /* Done with the solve. Now rearrange from AoS -> SoA */
@@ -240,35 +241,32 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
   x.host(xHostPtr);
 
   int numVars = residual->numVars;
-  int numGhostX1 = residual->numGhostX1;
-  int numGhostX2 = residual->numGhostX2;
-  int numGhostX3 = residual->numGhostX3;
   int N1Total = residual->N1Total;
   int N2Total = residual->N2Total;
   int N3Total = residual->N3Total;
 
-  double ALocal[numVars*numVars];
-  double bLocal[numVars];
-  int pivot[numVars];
-
   #pragma omp parallel for
-  for (int k=0; k<residual->vars[0].dims(2); k++)
+  for (int k=0; k<N3Total; k++)
   {
-    for (int j=0; j<residual->vars[0].dims(1); j++)
+    for (int j=0; j<N2Total; j++)
     {
-      for (int i=0; i<residual->vars[0].dims(0); i++)
+      for (int i=0; i<N1Total; i++)
       {
+        double ALocal[numVars*numVars];
+        double bLocal[numVars];
+        int pivot[numVars];
+
         const int spatialIndex = 
-          i +  N1Total*(j + N2Total*k);
+          i +  N1Total*(j + (N2Total*k) );
 
         /* Assemble ALocal */
         for (int row=0; row < numVars; row++)
         {
           for (int column=0; column < numVars; column++)
           {
-            const int indexALocal = column + numVars*row;
+            const int indexALocal = column + (numVars*row);
             const int indexAHost  = 
-              column + numVars*(row + numVars*spatialIndex);
+              column + numVars*(row + (numVars*spatialIndex) );
 
             ALocal[indexALocal] = AHostPtr[indexAHost];
           }

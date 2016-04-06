@@ -2,10 +2,10 @@
 
 namespace params
 {
-  int N1 = 256;
-  int N2 = 256;
-  int N3 = 1;
-  int dim = 2;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 64;
+  int dim = 3;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;

@@ -307,8 +307,8 @@ timeStepper::timeStepper(const int N1,
   stepLength  = zero;
                      
   int N1Total = residual->N1Total;
-  int N2Total = residual->N1Total;
-  int N3Total = residual->N1Total;
+  int N2Total = residual->N2Total;
+  int N3Total = residual->N3Total;
 
   AHostPtr = new double [numVars*numVars*N1Total*N2Total*N3Total];
   bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
