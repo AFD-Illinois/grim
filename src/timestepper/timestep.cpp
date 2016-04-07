@@ -57,6 +57,20 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
   solve(*prim);
 
+  cons->vars[vars::B1] = 
+    consOld->vars[vars::B1] - 0.5*dt*divFluxes->vars[vars::B1];
+  cons->vars[vars::B2] = 
+    consOld->vars[vars::B2] - 0.5*dt*divFluxes->vars[vars::B2];
+  cons->vars[vars::B3] = 
+    consOld->vars[vars::B3] - 0.5*dt*divFluxes->vars[vars::B3];
+
+  prim->vars[vars::B1] = cons->vars[vars::B1]/geomCenter->g;
+  prim->vars[vars::B1].eval();
+  prim->vars[vars::B2] = cons->vars[vars::B2]/geomCenter->g;
+  prim->vars[vars::B2].eval();
+  prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
+  prim->vars[vars::B3].eval();
+
   /* Copy solution to primHalfStepGhosted. WARNING: Right now
    * primHalfStep->vars[var] points to prim->vars[var]. Might need to do a deep
    * copy. */
@@ -109,6 +123,20 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
    * primHalfStep as a guess */
   solve(*prim);
+
+  cons->vars[vars::B1] = 
+    consOld->vars[vars::B1] - dt*divFluxes->vars[vars::B1];
+  cons->vars[vars::B2] = 
+    consOld->vars[vars::B2] - dt*divFluxes->vars[vars::B2];
+  cons->vars[vars::B3] = 
+    consOld->vars[vars::B3] - dt*divFluxes->vars[vars::B3];
+
+  prim->vars[vars::B1] = cons->vars[vars::B1]/geomCenter->g;
+  prim->vars[vars::B1].eval();
+  prim->vars[vars::B2] = cons->vars[vars::B2]/geomCenter->g;
+  prim->vars[vars::B2].eval();
+  prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
+  prim->vars[vars::B3].eval();
 
   /* Copy solution to primOldGhosted */
   for (int var=0; var < prim->numVars; var++)

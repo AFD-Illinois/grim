@@ -37,7 +37,6 @@ void timeStepper::solve(grid &primGuess)
     l2Norm.eval();
     array notConverged      = l2Norm > params::nonlinearsolve_atol;
     array conditionIndices  = where(notConverged > 0);
-    //af_print(l2Norm);
 
     /* Communicate residual */
     double localresnorm = 
@@ -70,10 +69,10 @@ void timeStepper::solve(grid &primGuess)
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
                 globalresnorm,globalNonConverged
                );
-//    if (globalNonConverged == 0)
-//    {
-//      break;
-//    }
+    if (globalNonConverged == 0)
+    {
+      break;
+    }
 
 
     /* Residual without explicit terms, for faster Jacobian assembly */
@@ -196,7 +195,6 @@ void timeStepper::solve(grid &primGuess)
         break;
       }
     }
-
 
     /* stepLength has now been set */
     for (int var=0; var<vars::dof; var++)
