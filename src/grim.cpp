@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   {
     timeStepper ts(params::N1, params::N2, params::N3,
                    params::dim, vars::dof, params::numGhost,
-                   params::Time, params::dt,
+                   params::Time, params::InitialDt,
                    params::boundaryLeft,  params::boundaryRight,
                    params::boundaryTop,   params::boundaryBottom,
                    params::boundaryFront, params::boundaryBack,

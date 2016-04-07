@@ -79,7 +79,7 @@ namespace params
   extern int numGhost;
 
   extern int timeStepper;
-  extern double dt;
+  extern double InitialDt;
   extern double Time;
   extern double finalTime;
   extern int metric;

@@ -10,7 +10,7 @@ namespace params
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = .002;
+  double InitialDt = .002;
   double CourantFactor = 0.9;
   double Time = 0.;
   double finalTime = 50.;

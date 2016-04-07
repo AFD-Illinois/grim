@@ -17,7 +17,7 @@ namespace params
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = .2/N1;
+  double InitialDt = .2/N1;
   double Time = 0.;
   double finalTime = 0.5;
   int metric = metrics::MODIFIED_KERR_SCHILD;

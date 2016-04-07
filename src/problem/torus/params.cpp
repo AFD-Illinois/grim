@@ -9,7 +9,7 @@ namespace params
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = .01;
+  double InitialDt = .01;
   double CourantFactor = 0.9;
   double Time = 0.;
   double finalTime = 50.;
@@ -80,8 +80,8 @@ namespace params
   double linesearchfloor = 1.e-24;
   
   double InitialPerturbationAmplitude = 4e-2;
-  double ObserveEveryDt = 1.;
-  double WriteDataEveryDt = 100.;
+  double ObserveEveryDt = .1;
+  double WriteDataEveryDt = 1.;
 };
 
 namespace vars
