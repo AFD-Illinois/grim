@@ -491,22 +491,120 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   array minRho = af::pow(Radius,params::RhoFloorSlope)*params::RhoFloorAmpl;
   array minU = af::pow(Radius,params::UFloorSlope)*params::UFloorAmpl;
 
+  // Save pre-floor values for later
+  array rho_prefloor = prim->vars[vars::RHO];
+  array u_prefloor   = prim->vars[vars::U];
+  rho_prefloor.eval();
+  u_prefloor.eval();
+
+  // Apply floors when needed
   array condition = prim->vars[vars::RHO]<minRho;
+  array usefloor  = condition;
   prim->vars[vars::RHO] = condition*minRho+(1.-condition)*prim->vars[vars::RHO];
 
   condition = prim->vars[vars::U]<minU;
+  usefloor = af::max(condition,usefloor);
   prim->vars[vars::U] = condition*minU+(1.-condition)*prim->vars[vars::U];
 
   elem->set(*prim,*geom,numReads,numWrites);
-
   const array& bSqr = elem->bSqr;
   condition = bSqr>params::BsqrOverRhoMax*prim->vars[vars::RHO];
+  usefloor = af::max(condition,usefloor);
   prim->vars[vars::RHO] = prim->vars[vars::RHO]*(1.-condition)+condition*bSqr/params::BsqrOverRhoMax;
   condition = bSqr>params::BsqrOverUMax*prim->vars[vars::U];
+  usefloor = af::max(condition,usefloor);
   prim->vars[vars::U] = prim->vars[vars::U]*(1.-condition)+condition*bSqr/params::BsqrOverUMax;
   
   prim->vars[vars::RHO].eval();
   prim->vars[vars::U].eval();
+  usefloor.eval();
+
+  array zero = usefloor*0.;
+  array trans = af::max(af::min(zero+1.,(bSqr-0.1*prim->vars[vars::RHO])/prim->vars[vars::RHO]),zero)
+    *(usefloor>zero);
+  trans.eval();
+  
+  // Sasha's floor method
+  array betapar = -elem->bCon[0]/bSqr/elem->uCon[0];
+  array betasqr = betapar*betapar*bSqr;
+  // TODO: use proper maximum lorentz factor
+  array betasqrmax = zero+1. - 0.01;
+  betasqr = af::min(betasqr,betasqrmax);
+  array gamma = 1./af::sqrt(1.-betasqr);
+  gamma.eval();
+  array ucondr[NDIM];
+  for(int m=0;m<NDIM;m++)
+    {
+      ucondr[m]=gamma*(elem->uCon[m]+betapar*elem->bCon[m]);
+      ucondr[m].eval();
+    }
+  // Need b-field in the inertial frame
+  array Bcon[NDIM];
+  Bcon[0]= zero;
+  Bcon[1] = prim->vars[vars::B1];
+  Bcon[2] = prim->vars[vars::B2];
+  Bcon[3] = prim->vars[vars::B3];
+  array Bcov[NDIM];
+  for(int m=0;m<NDIM;m++)
+    {
+      Bcov[m]=zero;
+      for(int n=1;n<NDIM;n++)
+	Bcov[m]+=geom->gCov[n][m]*Bcon[n];
+      Bcov[m].eval();
+    }
+  array udotB = zero;
+  array bSqr_fl  = zero;
+  for(int n=1;n<NDIM;n++)
+    {
+      udotB += Bcov[n]*elem->uCon[n];
+      bSqr_fl += Bcov[n]*Bcon[n];
+    }
+  udotB.eval();
+  array bNorm = af::sqrt(bSqr_fl);
+  double bMin = sqrt(params::bSqrFloorInFluidElement);
+  bNorm = af::max(bNorm,zero+bMin);
+  bNorm.eval();
+
+  //New velocity
+  array wold = rho_prefloor+u_prefloor*params::adiabaticIndex;
+  array QdotB = udotB*wold*elem->uCon[0];
+  array wnew = prim->vars[vars::RHO]+prim->vars[vars::U]*params::adiabaticIndex;
+  array x = 2.*QdotB/(bNorm*wnew*ucondr[0]);
+  x.eval();
+  array vpar = x/( ucondr[0]*(1.+af::sqrt(1.+x*x)) );
+  vpar.eval();
+  array one_over_ucondr_t = 1./ucondr[0];
+  //new contravariant 3-velocity, v^i
+  array vcon[NDIM];
+  vcon[0] = zero + 1.;
+  for (int m=1; m<NDIM; m++) {
+    //parallel (to B) plus perpendicular (to B) velocities
+    vcon[m] = vpar*Bcon[m]/bNorm + ucondr[m]*one_over_ucondr_t;
+    vcon[m].eval();
+  }
+  array vsqr=zero;
+  for(int m=0;m<NDIM;m++)
+    for(int n=0;n<NDIM;n++)
+      vsqr+=geom->gCov[m][n]*vcon[m]*vcon[n];
+  vsqr.eval();
+  array condition_v = (vsqr>=0.|| vsqr<1./geom->gCon[0][0]);
+  vsqr=(1.-condition_v)*vsqr+condition_v/geom->gCon[0][0];
+  vsqr.eval();
+  array ut = af::sqrt(-1./vsqr);
+  ut.eval();
+  array utcon[NDIM];
+  utcon[0]=zero;
+  for(int m=1;m<NDIM;m++) {
+    utcon[m] = ut*(vcon[m]-geom->gCon[0][m]/geom->gCon[0][0]);
+    utcon[m].eval();
+  }
+
+  prim->vars[vars::U1] = prim->vars[vars::U1]*(1.-trans)+trans*utcon[1];
+  prim->vars[vars::U2] = prim->vars[vars::U2]*(1.-trans)+trans*utcon[2];
+  prim->vars[vars::U3] = prim->vars[vars::U3]*(1.-trans)+trans*utcon[3];
+  prim->vars[vars::U1].eval();
+  prim->vars[vars::U2].eval();
+  prim->vars[vars::U3].eval();
 
   elem->set(*prim, *geom, numReads,numWrites);
 
@@ -734,4 +832,39 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
+  // 1) Choose which primitive variables are corrected.
+  grid* primBC;
+  if(currentStep == timeStepperSwitches::HALF_STEP)
+    {
+      primBC = primOld;
+    }
+  else
+    {
+      primBC = primHalfStep;
+    }
+  const int numGhost = primBC->numGhost;
+
+  // 2) Check that there is no inflow at the radial boundaries
+  if(primBC->iLocalEnd == primBC->N1)
+    {
+      af::seq domainX1RightBoundary(primBC->N1Local+numGhost,
+				    primBC->N1Local+2*numGhost-1
+				    );
+      primBC->vars[vars::U1](domainX1RightBoundary,span,span)
+	= af::max(geomCenter->gCon[0][1]*geomCenter->alpha,
+		  primBC->vars[vars::U1])
+	(domainX1RightBoundary,span,span);
+    }
+  if(primBC->iLocalStart == 0)
+    {
+      af::seq domainX1LeftBoundary(0,
+                                    numGhost-1
+                                    );
+      primBC->vars[vars::U1](domainX1LeftBoundary,span,span)
+        = af::min(geomCenter->gCon[0][1]*geomCenter->alpha,
+                  primBC->vars[vars::U1])
+	(domainX1LeftBoundary,span,span);
+    }
+
+  // 3) Excise polar region in 3D?
 };

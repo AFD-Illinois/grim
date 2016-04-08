@@ -2,17 +2,17 @@
 
 namespace params
 {
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 64;
-  int dim = 3;
+  int N1 = 128;
+  int N2 = 128;
+  int N3 = 1;
+  int dim = 2;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = .01;
   double CourantFactor = 0.9;
   double Time = 0.;
-  double finalTime = 50.;
+  double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
   double hSlope = 0.3;
 
@@ -79,7 +79,7 @@ namespace params
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
-  double InitialPerturbationAmplitude = 4e-2;
+  double InitialPerturbationAmplitude = 4.e-2;
   double ObserveEveryDt = .1;
   double WriteDataEveryDt = 1.;
 };
