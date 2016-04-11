@@ -14,7 +14,7 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
     {
       array Qmax = params::ConductionClosureFactor*rho*pow(soundSpeed,3.);
       double lambda = 0.01;
-      array yCon = q/Qmax;
+      array yCon = af::abs(q)/Qmax;
       yCon = af::exp(-(yCon-1.)/lambda);
       yCon.eval();
       array fdCon = yCon/(yCon+1.)+1.e-5;

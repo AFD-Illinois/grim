@@ -58,8 +58,8 @@ namespace params
   double BsqrOverRhoMax = 10.;
   double BsqrOverUMax = 500.;
 
-  int conduction = 0;
-  int viscosity  = 0;
+  int conduction = 1;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;
