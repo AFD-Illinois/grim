@@ -79,7 +79,7 @@ namespace params
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
-  double InitialPerturbationAmplitude = 0.e-2;
+  double InitialPerturbationAmplitude = 4.e-2;
   double ObserveEveryDt = .1;
   double WriteDataEveryDt = 1.;
 };

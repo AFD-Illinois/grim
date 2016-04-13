@@ -728,7 +728,6 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   // On-the-fly observers
   bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
-  ObserveData = true;
   if(ObserveData)
     {
       //Find maximum density
