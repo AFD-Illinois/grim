@@ -16,6 +16,8 @@ namespace params
   int metric = metrics::MODIFIED_KERR_SCHILD;
   double hSlope = 0.3;
 
+  int restart = 0;
+  std::string restartFile = "restartFile.h5";
   int ObserveEveryNSteps = 10;
   int StepNumber = 0;
 

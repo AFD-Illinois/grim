@@ -1,5 +1,6 @@
 #ifndef GRIM_PARAMS_H_
 #define GRIM_PARAMS_H_
+#include <string>
 
 const int NDIM = 4;
 const int LOCATIONS = 7;
@@ -85,6 +86,9 @@ namespace params
   extern int metric;
   extern double hSlope;
   extern double blackHoleSpin;
+
+  extern int restart;
+  extern std::string restartFile;
 
   extern double X1Start, X1End;
   extern double X2Start, X2End;

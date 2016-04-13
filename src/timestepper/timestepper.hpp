@@ -1,6 +1,7 @@
 #ifndef GRIM_TIMESTEPPER_H_
 #define GRIM_TIMESTEPPER_H_
 
+#include <sys/stat.h>
 #include "../params.hpp"
 #include "../grid/grid.hpp"
 #include "../physics/physics.hpp"

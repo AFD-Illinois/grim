@@ -367,6 +367,25 @@ void grid::dump(const std::string varsName, const std::string fileName)
   PetscViewerDestroy(&viewer);
 }
 
+void grid::load(const std::string varsName, const std::string fileName)
+{
+  PetscViewer viewer;
+  PetscViewerHDF5Open(PETSC_COMM_WORLD, 
+                      fileName.c_str(), FILE_MODE_READ, &viewer
+                     );
+
+  PetscObjectSetName((PetscObject) globalVec, varsName.c_str());
+  VecLoad(globalVec, viewer);
+
+  PetscViewerDestroy(&viewer);
+
+  DMGlobalToLocalBegin(dm, globalVec, INSERT_VALUES, localVec);
+  DMGlobalToLocalEnd(dm, globalVec, INSERT_VALUES, localVec);
+
+  /* Now copy data from localVec to vars */
+  copyLocalVecToVars();
+}
+
 grid::~grid()
 {
   if (hasHostPtrBeenAllocated)

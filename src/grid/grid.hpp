@@ -62,6 +62,7 @@ class grid
     void copyVarsToGlobalVec();
     void copyHostPtrToVars(const double *hostPtr);
     void dump(const std::string varsName, const std::string filename);
+    void load(const std::string varsName, const std::string filename);
 };
 
 class coordinatesGrid : public grid

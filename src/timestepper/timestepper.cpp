@@ -314,8 +314,39 @@ timeStepper::timeStepper(const int N1,
   bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
   xHostPtr = new double [numVars*N1Total*N2Total*N3Total];
 
-  int a,b;
-  initialConditions(a,b);
+  if (params::restart)
+  {
+    struct stat fileInfo;
+    int rank;
+    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
+
+    if (rank==0)
+    {
+      if (stat(params::restartFile.c_str(), &fileInfo) == 0)
+      {
+        /* File exists */
+        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", 
+                    params::restartFile.c_str()
+                   ); 
+      }
+      else
+      {
+        /* File does not exist */
+        PetscPrintf(PETSC_COMM_WORLD, "\n");
+        PetscPrintf(PETSC_COMM_WORLD, "Restart file %s does not exist\n",
+                    params::restartFile.c_str()
+                   );
+        MPI_Abort(PETSC_COMM_WORLD, 1);
+      }
+    }
+
+    primOld->load("primVars", params::restartFile);
+  }
+  else
+  {
+    int numReads, numWrites;
+    initialConditions(numReads, numWrites);
+  }
 }
 
 timeStepper::~timeStepper()
