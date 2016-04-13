@@ -79,7 +79,7 @@ namespace params
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
-  double InitialPerturbationAmplitude = 4.e-2;
+  double InitialPerturbationAmplitude = 0.e-2;
   double ObserveEveryDt = .1;
   double WriteDataEveryDt = 1.;
 };
@@ -88,6 +88,6 @@ namespace vars
 {
   int dof = 8+params::conduction+params::viscosity;
   int Q = 8;
-  int DP = 9;
+  int DP = 8+params::conduction;
 };
 

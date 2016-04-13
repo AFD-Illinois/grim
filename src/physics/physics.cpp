@@ -255,6 +255,7 @@ void fluidElement::set(const grid &prim,
                         + (pressure + 0.5*bSqr)*DELTA(mu, nu)
                         - bCon[mu] * bCov[nu];
 
+      /*
       if (params::conduction==1)
       {
         TUpDown[mu][nu] += q/bNorm * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
@@ -267,6 +268,7 @@ void fluidElement::set(const grid &prim,
                               - (1./3.)*(DELTA(mu, nu) + uCon[mu]*uCov[nu])
                              );
       }
+      */
       TUpDown[mu][nu].eval();
       /* Reads:
        * -----
@@ -870,6 +872,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
     numReads  += numReadsTmp;
     numWrites += numWritesTmp;
 
+    graduCov[2][mu] = 0.;
     if(params::dim>1)
     {
       graduCov[2][mu] = reconstruction::slope(directions::X2,dX2,uCov[mu],
@@ -879,6 +882,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
       numWrites += numWritesTmp;
     }
   
+    graduCov[3][mu] = 0.;
     if(params::dim>2)
     {
       graduCov[3][mu] = reconstruction::slope(directions::X3,dX3,uCov[mu],
@@ -921,6 +925,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
     numReads  += numReadsTmp;
     numWrites += numWritesTmp;
 
+    gradT[2] = 0.;
     if(params::dim>1)
     {
       gradT[2] = reconstruction::slope(directions::X2,dX2,temperature,
@@ -930,6 +935,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
       numWrites += numWritesTmp;
     }  
 
+    gradT[3] = 0.;
     if(params::dim>2)
     {
       gradT[3] = reconstruction::slope(directions::X3,dX3,temperature,

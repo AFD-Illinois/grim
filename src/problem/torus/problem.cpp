@@ -166,15 +166,15 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
 
   PetscPrintf(PETSC_COMM_WORLD, "Running on %i procs\n", world_size);
-  /*for(int proc=0;proc<world_size;proc++)
+  for(int proc=0;proc<world_size;proc++)
     {
       if(world_rank==proc)
 	{
 	  printf("Local size on proc %i : %i x %i x %i\n",proc,N1g,N2g,N3g);
-	  af_print(xCoords[directions::X1],5);
+	  //af_print(xCoords[directions::X1],5);
 	}
       MPI_Barrier(PETSC_COMM_WORLD);
-      }*/
+    }
   
   double aBH = params::blackHoleSpin;
 
@@ -348,7 +348,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   MPI_Barrier(PETSC_COMM_WORLD);
 
   PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e\n",rhoMax);
-
   Rho=Rho/rhoMax;
   U=U/rhoMax;
 
@@ -368,9 +367,16 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   const array& Rho_af = primOld->vars[vars::RHO];
   array rhoAvg = 
     (af::shift(Rho_af,1,0,0)+af::shift(Rho_af,-1,0,0)
-    +af::shift(Rho_af,0,1,0)+af::shift(Rho_af,0,-1,0)
-     +af::shift(Rho_af,0,0,1)+af::shift(Rho_af,0,0,-1))
-    /6.;
+     +af::shift(Rho_af,0,1,0)+af::shift(Rho_af,0,-1,0));
+  if(params::dim>2)
+    {
+      rhoAvg = (rhoAvg
+		+af::shift(Rho_af,0,0,1)+af::shift(Rho_af,0,0,-1))/6.;
+    }
+  else
+    {
+      rhoAvg = rhoAvg/4.;
+    }
   array zero = rhoAvg*0.;
   array Avec = af::max(rhoAvg-0.2,zero)*
     af::cos(xCoords[directions::X2]*
@@ -381,6 +387,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   const array& g = geomCenter->g;
   const double dX1 = XCoords->dX1;
   const double dX2 = XCoords->dX2;
+
   primOld->vars[vars::B1] = 
     (af::shift(Avec,0,-1,0)-af::shift(Avec,0,0,0)
      +af::shift(Avec,-1,-1,0)-af::shift(Avec,-1,0,0))/
@@ -418,6 +425,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
    }
   
 
+
   // We have used ghost zones in the previous steps -> need to communicate
   // before computing global quantities
   primOld->communicate();
@@ -431,6 +439,18 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
     double BFactor = BetaMin_af.host<double>()[0];
     BFactor = sqrt(BFactor/params::MinPlasmaBeta);
+
+    /*for(int proc=0;proc<world_size;proc++)
+      {
+	if(world_rank==proc)
+	  {
+	    printf("BFactor on proc %i = %e\n",proc,BFactor);
+	    af_print(bSqr,5);
+	    af_print(Pgas,5);
+	    af_print(PlasmaBeta,5);
+	  }
+	MPI_Barrier(PETSC_COMM_WORLD);
+	}*/
 
     /* Use MPI to find minimum over all processors */
     if (world_rank == 0) 
@@ -480,6 +500,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     }
 
   af::sync();
+  fullStepDiagnostics(numReads,numWrites);
 }
 
 void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, int &numReads,int &numWrites)
@@ -648,6 +669,10 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
   int world_size;
   MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+
+  af::seq domainX1 = *primOld->domainX1;
+  af::seq domainX2 = *primOld->domainX2;
+  af::seq domainX3 = *primOld->domainX3;
   
   // Time step control
   array minSpeedTemp,maxSpeedTemp;
@@ -703,10 +728,11 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   // On-the-fly observers
   bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
+  ObserveData = true;
   if(ObserveData)
     {
       //Find maximum density
-      array rhoMax_af = af::max(af::max(af::max(primOld->vars[vars::RHO],2),1),0);
+      array rhoMax_af = af::max(af::max(af::max(primOld->vars[vars::RHO](domainX1,domainX2,domainX3),2),1),0);
       double rhoMax = rhoMax_af.host<double>()[0];
       /* Communicate rhoMax to all processors */
       if (world_rank == 0) 
@@ -731,7 +757,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       const array& bSqr = elemOld->bSqr;
       const array& Pgas = elemOld->pressure;
       array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
-      array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
+      array BetaMin_af = af::min(af::min(af::min(PlasmaBeta(domainX1,domainX2,domainX3),2),1),0);
       double betaMin = BetaMin_af.host<double>()[0];
       /* Use MPI to find minimum over all processors */
       if (world_rank == 0) 
@@ -753,9 +779,6 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       MPI_Barrier(PETSC_COMM_WORLD);
       
       /* Get the domain of the bulk and volume element*/
-      af::seq domainX1 = *primOld->domainX1;
-      af::seq domainX2 = *primOld->domainX2;
-      af::seq domainX3 = *primOld->domainX3;
       elemOld->computeFluxes(*geomCenter,0, *consOld,numReads,numWrites);
       double volElem = XCoords->dX1;
       if(params::dim>1)
