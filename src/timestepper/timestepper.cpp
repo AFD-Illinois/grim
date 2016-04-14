@@ -340,7 +340,7 @@ timeStepper::timeStepper(const int N1,
       }
     }
 
-    primOld->load("primVars", params::restartFile);
+    primOld->load("primitives", params::restartFile);
   }
   else
   {

@@ -870,7 +870,12 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 	  geomCenter->setxCoordsGrid();
 	  geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
 	}
-      std::string filename = "primVarsT"+std::to_string(WriteIdx)+".h5";
+      std::string filename = "primVarsT";
+      std::string s_idx = std::to_string(WriteIdx);
+      for(int i=0;i<6-s_idx.size();i++)
+	filename=filename+"0";
+      filename=filename+s_idx;
+      filename=filename+".h5";
       primOld->dump("primitives",filename);
     }
 }

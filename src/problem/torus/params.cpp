@@ -2,25 +2,35 @@
 
 namespace params
 {
+  // Grid size options
   int N1 = 128;
   int N2 = 128;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
 
+  // (Re)start options
+  double Time = 140.;
+  int restart = 1;
+  std::string restartFile = "primVarsT140.h5";
+
+  // Observation / checkpointing intervals
+  double ObserveEveryDt = .1;
+  double WriteDataEveryDt = 1.;
+
+  // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = .01;
   double CourantFactor = 0.9;
-  double Time = 0.;
   double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
+
+  // Grid shape options
+  double Rin = 0.98*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
+  double Rout = 40.;
   double hSlope = 0.3;
 
-  int restart = 0;
-  std::string restartFile = "restartFile.h5";
-  int ObserveEveryNSteps = 10;
-  int StepNumber = 0;
-
+  // Initial conditions
   double adiabaticIndex = 4./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
@@ -28,28 +38,18 @@ namespace params
   double MinPlasmaBeta  = 15.;
   double MagneticLoops = 1;
   double Adiabat = 0.001;
+  double InitialPerturbationAmplitude = 4.e-2;
 
-  double Rin = 0.98*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 40.;
-  
-  double X1Start = log(Rin), X1End = log(Rout);
-  double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI*2.;
+  // EMHD model
+  int conduction = 1;
+  int viscosity  = 1;
+  int highOrderTermsConduction = 1.;
+  int highOrderTermsViscosity = 1.;
+  double ConductionAlpha = 1.;
+  double ViscosityAlpha = 1.;
+  double ConductionClosureFactor = 1.;
+  double ViscosityClosureFactor = 1.;
 
-  int boundaryLeft   = boundaries::OUTFLOW;
-  int boundaryRight  = boundaries::OUTFLOW;
-
-  int boundaryTop    = boundaries::OUTFLOW;
-  int boundaryBottom = boundaries::OUTFLOW;
-
-  int boundaryFront  = boundaries::PERIODIC;
-  int boundaryBack   = boundaries::PERIODIC;
-
-  double rhoFloorInFluidElement         = 1e-20;
-  double uFloorInFluidElement           = 1e-20;
-  double bSqrFloorInFluidElement        = 1e-20;
-  double temperatureFloorInFluidElement = 1e-20;
-  
   //Atmosphere parameters
   double MaxLorentzFactor = 10.;
   // Floors are Ampl*pow(radius,power)
@@ -61,30 +61,41 @@ namespace params
   double BsqrOverRhoMax = 10.;
   double BsqrOverUMax = 500.;
 
-  int conduction = 1;
-  int viscosity  = 1;
-  int highOrderTermsConduction = 1.;
-  int highOrderTermsViscosity = 1.;
-  double ConductionAlpha = 1.;
-  double ViscosityAlpha = 1.;
-  double ConductionClosureFactor = 1.;
-  double ViscosityClosureFactor = 1.;
+  // Automatic grid boundaries - do not change
+  double X1Start = log(Rin), X1End = log(Rout);
+  double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
+  double X3Start = 0., X3End = M_PI*2.;
 
+  // Boundary Conditions
+  // Radial
+  int boundaryLeft   = boundaries::OUTFLOW;
+  int boundaryRight  = boundaries::OUTFLOW;
+  // Theta
+  int boundaryTop    = boundaries::OUTFLOW;
+  int boundaryBottom = boundaries::OUTFLOW;
+  // Phi
+  int boundaryFront  = boundaries::PERIODIC;
+  int boundaryBack   = boundaries::PERIODIC;
+
+  // Basic thresholds in fluid element
+  double rhoFloorInFluidElement         = 1e-20;
+  double uFloorInFluidElement           = 1e-20;
+  double bSqrFloorInFluidElement        = 1e-20;
+  double temperatureFloorInFluidElement = 1e-20;
+  
+  // Reconstruction options
   double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::WENO5;
   int riemannSolver  = riemannSolvers::HLL;
 
-  int maxNonLinearIter = 3;
-  int maxLineSearchIters = 3;
 
   //Parameters controlling accuracy of nonlinear solver
+  int maxNonLinearIter = 3;
+  int maxLineSearchIters = 3;
   double nonlinearsolve_atol = 1.e-6;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   
-  double InitialPerturbationAmplitude = 4.e-2;
-  double ObserveEveryDt = .1;
-  double WriteDataEveryDt = 1.;
 };
 
 namespace vars
