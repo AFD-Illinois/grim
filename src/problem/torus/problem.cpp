@@ -627,6 +627,29 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   prim->vars[vars::U2].eval();
   prim->vars[vars::U3].eval();
 
+  // Directly compute Lorentz factor, to avoid full call to elem->set...
+  array lorentzFactorSqr = prim->vars[vars::U1]*0.+1.;
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+      {
+	lorentzFactorSqr+=geom->gCov[i+1][j+1]*prim->vars[vars::U+i]*prim->vars[vars::U+j];
+      }
+  lorentzFactorSqr.eval();
+  // Now, we impose the maximum lorentz factor...
+  condition = (lorentzFactorSqr>params::MaxLorentzFactor*params::MaxLorentzFactor);
+  array conditionIndices = where(condition > 0);
+  if(conditionIndices.elements()>0)
+    {
+      array MultFac = af::sqrt(af::max((lorentzFactorSqr-1.)/(params::MaxLorentzFactor*params::MaxLorentzFactor-1.),1.));
+      MultFac.eval();
+      prim->vars[vars::U1]*=MultFac;
+      prim->vars[vars::U2]*=MultFac;
+      prim->vars[vars::U3]*=MultFac;
+      prim->vars[vars::U1].eval();
+      prim->vars[vars::U2].eval();
+      prim->vars[vars::U3].eval();
+    }  
+
   elem->set(*prim, *geom, numReads,numWrites);
 
   if(params::conduction)
@@ -646,7 +669,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
       array dPmaxPlus = af::min(1.07*params::ViscosityClosureFactor*bSqr*0.5*dPmod,1.49*pressure);
       array dPmaxMinus = af::max(-1.07*params::ViscosityClosureFactor*bSqr,-2.99*pressure);
 
-      array condition = deltaP>0.;
+      condition = deltaP>0.;
       prim->vars[vars::DP] = prim->vars[vars::DP]*
 	(condition/af::max(deltaP/dPmaxPlus,1.)+(1.-condition)/af::max(deltaP/dPmaxMinus,1.));
       prim->vars[vars::DP].eval();

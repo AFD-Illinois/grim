@@ -51,6 +51,7 @@ namespace params
   double temperatureFloorInFluidElement = 1e-20;
   
   //Atmosphere parameters
+  double MaxLorentzFactor = 10.;
   // Floors are Ampl*pow(radius,power)
   double RhoFloorAmpl = 1.e-3;
   double UFloorAmpl = 1.e-5;

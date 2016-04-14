@@ -128,6 +128,7 @@ namespace params
   extern double linesearchfloor;
 
   //Atmosphere parameters
+  extern double MaxLorentzFactor;
   // Floors are Ampl*pow(radius,power)
   extern double RhoFloorAmpl;
   extern double UFloorAmpl;
