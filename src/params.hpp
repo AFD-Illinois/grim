@@ -73,6 +73,8 @@ namespace riemannSolvers
 
 namespace params
 {
+  extern int numDevices;
+
   extern int N1;
   extern int N2;
   extern int N3;

@@ -1,6 +1,5 @@
 #include "grim.hpp"
 #include "params.hpp"
-#include "boundary/boundary.hpp"
 
 /* Returns memory bandwidth in GB/sec */
 double memoryBandwidth(const double numReads,
@@ -81,13 +80,13 @@ int main(int argc, char **argv)
   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 
   PetscPrintf(PETSC_COMM_WORLD, 
-              "#### System info ####\n"
+              "#### Rank %d of %d: System info ####\n",
+              rank, size
              );
-  if (rank==0)
-  {
-    //af::setDevice(1);
-    af::info();
-  };
+  #if (ARCH == OpenCL)
+    af::setDevice(rank%params::numDevices);
+  #endif
+  af::info();
 
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
@@ -111,7 +110,6 @@ int main(int argc, char **argv)
 
     PetscPrintf(PETSC_COMM_WORLD, "\nKernel compilation complete\n");
 
-    af::timer::start();
     int n=0;
     while(ts.time<params::finalTime)
     {
@@ -119,10 +117,6 @@ int main(int argc, char **argv)
       PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|  t = %e\n", n,ts.time);
       ts.timeStep(numReads, numWrites);
     }
-    double timeElapsed = af::timer::stop();
-    PetscPrintf(PETSC_COMM_WORLD, "Time taken for %d time steps = %g\n",
-               n, timeElapsed
-		);
 
   }
 

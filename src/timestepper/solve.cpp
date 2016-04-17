@@ -40,27 +40,29 @@ void timeStepper::solve(grid &primGuess)
 
     /* Communicate residual */
     double localresnorm = 
-      af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)),AF_NORM_VECTOR_1);
+      af::norm(af::flat(residualSoA(domainX1, domainX2, domainX3)),
+               AF_NORM_VECTOR_1
+              );
     double globalresnorm = localresnorm;
     int localNonConverged = conditionIndices.elements();
     int globalNonConverged = localNonConverged;
     if (world_rank == 0)
-      {
-	double temp;
-	int Nel;
-	for(int i=1;i<world_size;i++)
-	  {
-	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    globalresnorm+=temp;
-	    globalNonConverged+=Nel;
-	  }
-      }
+    {
+	    double temp;
+	    int Nel;
+	    for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      globalresnorm+=temp;
+	      globalNonConverged+=Nel;
+	    }
+    }
     else
-      {
-	MPI_Send(&localresnorm, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
-      }
+    {
+	    MPI_Send(&localresnorm, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	    MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
+    }
     MPI_Barrier(PETSC_COMM_WORLD);
     MPI_Bcast(&globalresnorm,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
@@ -73,7 +75,6 @@ void timeStepper::solve(grid &primGuess)
     {
       break;
     }
-
 
     /* Residual without explicit terms, for faster Jacobian assembly */
     computeResidual(primGuess, *residual, false,
@@ -133,7 +134,7 @@ void timeStepper::solve(grid &primGuess)
     /* Done with the solve. Now rearrange from AoS -> SoA */
     array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
 
-    /* Quartic backtracking :
+    /* Quadratic backtracking :
      We minimize f(u+stepLength*du) = 0.5*sqr(residual[u+stepLength*du]).
      We use
        f0 = f(u)

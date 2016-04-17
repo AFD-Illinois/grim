@@ -2,16 +2,19 @@
 
 namespace params
 {
+  // 4 GPUs on SAVIO
+  int numDevices = 4;
+
   // Grid size options
-  int N1 = 128;
-  int N2 = 128;
-  int N3 = 1;
-  int dim = 2;
+  int N1 = 256;
+  int N2 = 256;
+  int N3 = 256;
+  int dim = 3;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 140.;
-  int restart = 1;
+  double Time = 0.;
+  int restart = 0;
   std::string restartFile = "primVarsT140.h5";
 
   // Observation / checkpointing intervals
