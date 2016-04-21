@@ -13,9 +13,10 @@ namespace params
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 0.;
-  int restart = 0;
-  std::string restartFile = "primVarsT140.h5";
+  double Time = 1.640081e+02;
+  double InitialDt = 1.875749e-02;
+  int restart = 1;
+  std::string restartFile = "primVarsT000164.h5";
 
   // Observation / checkpointing intervals
   double ObserveEveryDt = .1;
@@ -23,7 +24,6 @@ namespace params
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
-  double InitialDt = .01;
   double CourantFactor = 0.9;
   double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;

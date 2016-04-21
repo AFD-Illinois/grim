@@ -182,7 +182,9 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
   array A = (BDotU*BDotU)   - (BSqr + BDotU*BDotU)*csSqr;
   array B = 2.*(ADotU*BDotU - (ADotB + ADotU*BDotU)*csSqr);
   array C = ADotU*ADotU     - (ASqr + ADotU*ADotU)*csSqr;
-  array discr = af::sqrt(B*B - 4.*A*C);
+  // Note: in theory, the discriminant is guaranteed to be real.
+  // In practice, round-off calculation can lead to NaNs when u is very small...
+  array discr = af::sqrt(af::max(B*B - 4.*A*C,1.e-16));
 
   minSpeed = -(-B + discr)/2./A;
   maxSpeed = -(-B - discr)/2./A;
