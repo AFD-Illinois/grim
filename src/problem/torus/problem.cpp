@@ -627,20 +627,18 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   prim->vars[vars::U2].eval();
   prim->vars[vars::U3].eval();
 
-  // Directly compute Lorentz factor, to avoid full call to elem->set...
-  array lorentzFactorSqr = prim->vars[vars::U1]*0.+1.;
-  for(int i=0;i<3;i++)
-    for(int j=0;j<3;j++)
-      {
-	lorentzFactorSqr+=geom->gCov[i+1][j+1]*prim->vars[vars::U+i]*prim->vars[vars::U+j];
-      }
-  lorentzFactorSqr.eval();
+  // Reset element to get Lorentz factor
+  elem->set(*prim, *geom, numReads,numWrites);
+  const array& lorentzFactor = elem->gammaLorentzFactor;
+  array lorentzFactorSqr = lorentzFactor*lorentzFactor;
+
   // Now, we impose the maximum lorentz factor...
   condition = (lorentzFactorSqr>params::MaxLorentzFactor*params::MaxLorentzFactor);
   array conditionIndices = where(condition > 0);
   if(conditionIndices.elements()>0)
     {
       array MultFac = af::sqrt(af::max((lorentzFactorSqr-1.)/(params::MaxLorentzFactor*params::MaxLorentzFactor-1.),1.));
+      MultFac = 1./MultFac;
       MultFac.eval();
       prim->vars[vars::U1]*=MultFac;
       prim->vars[vars::U2]*=MultFac;

@@ -6,17 +6,17 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 256;
-  int N2 = 256;
-  int N3 = 256;
-  int dim = 3;
+  int N1 = 128;
+  int N2 = 128;
+  int N3 = 1;
+  int dim = 2;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 1.640081e+02;
-  double InitialDt = 1.875749e-02;
+  double Time = 276.003170;
+  double InitialDt = 1.295137e-02;
   int restart = 1;
-  std::string restartFile = "primVarsT000164.h5";
+  std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
   double ObserveEveryDt = .1;
