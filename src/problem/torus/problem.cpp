@@ -549,7 +549,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   array betapar = -elem->bCon[0]/bSqr/elem->uCon[0];
   array betasqr = betapar*betapar*bSqr;
   // TODO: use proper maximum lorentz factor
-  array betasqrmax = zero+1. - 0.01;
+  array betasqrmax = zero+1. - 1./params::MaxLorentzFactor/params::MaxLorentzFactor;
   betasqr = af::min(betasqr,betasqrmax);
   array gamma = 1./af::sqrt(1.-betasqr);
   gamma.eval();
@@ -698,31 +698,29 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   // Time step control
   array minSpeedTemp,maxSpeedTemp;
   array minSpeed,maxSpeed;
-  elemOld->computeMinMaxCharSpeeds(*geomCenter,1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-  array dX = XCoords->dX1*af::sqrt(geomCenter->gCov[1][1]);
-  minSpeedTemp = minSpeedTemp/dX;
-  maxSpeedTemp = maxSpeedTemp/dX;
+  elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+  minSpeedTemp = minSpeedTemp/XCoords->dX1;
+  maxSpeedTemp = maxSpeedTemp/XCoords->dX1;
   minSpeed=minSpeedTemp;
   maxSpeed=maxSpeedTemp;
   if(params::dim>1)
     {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      dX = XCoords->dX2*af::sqrt(geomCenter->gCov[2][2]);
-      minSpeedTemp = minSpeedTemp/dX;
-      maxSpeedTemp = maxSpeedTemp/dX;
+      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+      minSpeedTemp = minSpeedTemp/XCoords->dX2;
+      maxSpeedTemp = maxSpeedTemp/XCoords->dX2;
       minSpeed=af::min(minSpeed,minSpeedTemp);
       maxSpeed=af::max(maxSpeed,maxSpeedTemp);
     }
   if(params::dim>2)
     {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      dX = XCoords->dX3*af::sqrt(geomCenter->gCov[3][3]);
-      minSpeedTemp = minSpeedTemp/dX;
-      maxSpeedTemp = maxSpeedTemp/dX;
+      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
+      minSpeedTemp = minSpeedTemp/XCoords->dX3;
+      maxSpeedTemp = maxSpeedTemp/XCoords->dX3;
       minSpeed=af::min(minSpeed,minSpeedTemp);
       maxSpeed=af::max(maxSpeed,maxSpeedTemp);
     }
   maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
+  maxSpeed.eval();
   array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
   double maxInvDt = maxInvDt_af.host<double>()[0];
   /* Use MPI to find minimum over all processors */

@@ -13,9 +13,9 @@ namespace params
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 276.003170;
-  double InitialDt = 1.295137e-02;
-  int restart = 1;
+  double Time = 0.;
+  double InitialDt = 0.01;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -88,8 +88,8 @@ namespace params
   
   // Reconstruction options
   double slopeLimTheta = 2;
-  int reconstruction = reconstructionOptions::WENO5;
-  int riemannSolver  = riemannSolvers::HLL;
+  int reconstruction = reconstructionOptions::MINMOD;
+  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
 
   //Parameters controlling accuracy of nonlinear solver
