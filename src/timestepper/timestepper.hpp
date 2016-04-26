@@ -109,6 +109,7 @@ class timeStepper
     void halfStepDiagnostics(int &numReads, int &numWrites);
     void fullStepDiagnostics(int &numReads, int &numWrites);
     void setProblemSpecificBCs(int &numReads, int &numWrites);
+    void applyProblemSpecificFluxFilter(int &numReads, int &numWrites);
 };
 
 #endif /* GRIM_TIMESTEPPER_H_ */

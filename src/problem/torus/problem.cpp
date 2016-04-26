@@ -876,41 +876,289 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     }
 }
 
-void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
-{
-  // 1) Choose which primitive variables are corrected.
-  grid* primBC;
-  if(currentStep == timeStepperSwitches::HALF_STEP)
-    {
-      primBC = primOld;
-    }
-  else
-    {
-      primBC = primHalfStep;
-    }
-  const int numGhost = primBC->numGhost;
 
-  // 2) Check that there is no inflow at the radial boundaries
-  if(primBC->iLocalEnd == primBC->N1)
+void inflowCheck(grid& primBC,fluidElement& elemBC,
+		 const geometry& geom, int &numReads,int &numWrites)
+{
+  const int numGhost = params::numGhost;
+  if(primBC.iLocalEnd == primBC.N1)
     {
-      af::seq domainX1RightBoundary(primBC->N1Local+numGhost,
-				    primBC->N1Local+2*numGhost-1
+      af::seq domainX1RightBoundary(primBC.N1Local+numGhost,
+				    primBC.N1Local+2*numGhost-1
 				    );
-      primBC->vars[vars::U1](domainX1RightBoundary,span,span)
-	= af::max(geomCenter->gCon[0][1]*geomCenter->alpha,
-		  primBC->vars[vars::U1])
+      elemBC.set(primBC,geom,numReads,numWrites);
+      
+      // Prefactor the lorentz factor
+      primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+	= primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+      primBC.vars[vars::U2](domainX1RightBoundary,span,span)
+	= primBC.vars[vars::U2](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+      primBC.vars[vars::U3](domainX1RightBoundary,span,span)
+	= primBC.vars[vars::U3](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+      // Reset radial velocity if it is too small (i.e. incoming)
+      primBC.vars[vars::U1].eval();
+      primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+	= af::max(geom.gCon[0][1]*geom.alpha,
+		  primBC.vars[vars::U1])
 	(domainX1RightBoundary,span,span);
+      primBC.vars[vars::U1].eval();
+      primBC.vars[vars::U2].eval();
+      primBC.vars[vars::U3].eval();
+      // Recompute lorentz factor
+      array vSqr = primBC.vars[vars::U1](domainX1RightBoundary,span,span)*0.;
+      for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	  vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
+      double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
+      double vSqrMin = 1.e-13;
+      vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
+      array newLorentzFactor = 1./sqrt(1.-vSqr);
+      newLorentzFactor.eval();
+      for(int i=0;i<3;i++)
+	{
+	  primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)=
+	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)
+	    *newLorentzFactor;
+	  primBC.vars[vars::U1+i].eval();
+	}
+      elemBC.set(primBC,geom,numReads,numWrites);
     }
-  if(primBC->iLocalStart == 0)
+  if(primBC.iLocalStart == 0)
     {
       af::seq domainX1LeftBoundary(0,
                                     numGhost-1
                                     );
-      primBC->vars[vars::U1](domainX1LeftBoundary,span,span)
-        = af::min(geomCenter->gCon[0][1]*geomCenter->alpha,
-                  primBC->vars[vars::U1])
-	(domainX1LeftBoundary,span,span);
-    }
+      elemBC.set(primBC,geom,numReads,numWrites);
 
-  // 3) Excise polar region in 3D?
+      // Prefactor the lorentz factor
+      primBC.vars[vars::U1](domainX1LeftBoundary,span,span)
+        = primBC.vars[vars::U1](domainX1LeftBoundary,span,span)
+        /elemBC.gammaLorentzFactor(domainX1LeftBoundary,span,span);
+      primBC.vars[vars::U2](domainX1LeftBoundary,span,span)
+        = primBC.vars[vars::U2](domainX1LeftBoundary,span,span)
+        /elemBC.gammaLorentzFactor(domainX1LeftBoundary,span,span);
+      primBC.vars[vars::U3](domainX1LeftBoundary,span,span)
+        = primBC.vars[vars::U3](domainX1LeftBoundary,span,span)
+        /elemBC.gammaLorentzFactor(domainX1LeftBoundary,span,span);
+      // Reset radial velocity if it is too small (i.e. incoming)
+      primBC.vars[vars::U1].eval();
+      primBC.vars[vars::U1](domainX1LeftBoundary,span,span)
+        = af::min(geom.gCon[0][1]*geom.alpha,
+                  primBC.vars[vars::U1])
+        (domainX1LeftBoundary,span,span);
+      primBC.vars[vars::U1].eval();
+      primBC.vars[vars::U2].eval();
+      primBC.vars[vars::U3].eval();
+      // Recompute lorentz factor
+      array vSqr = primBC.vars[vars::U1](domainX1LeftBoundary,span,span)*0.;
+      for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	  vSqr += geom.gCov[i+1][j+1](domainX1LeftBoundary,span,span)*
+	    primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)*
+	    primBC.vars[vars::U1+j](domainX1LeftBoundary,span,span);
+      double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
+      double vSqrMin = 1.e-13;
+      vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
+      array newLorentzFactor = 1./sqrt(1.-vSqr);
+      newLorentzFactor.eval();
+      for(int i=0;i<3;i++)
+	{
+	  primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
+	    =primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
+	    *newLorentzFactor;
+	  primBC.vars[vars::U1+i].eval();
+	}
+      elemBC.set(primBC,geom,numReads,numWrites);
+    }
+}
+
+
+void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
+{
+  // 1) Choose which primitive variables are corrected.
+  grid* primBC;
+  fluidElement* elemBC;
+  if(currentStep == timeStepperSwitches::HALF_STEP)
+    {
+      primBC = primOld;
+      elemBC = elemOld;
+    }
+  else
+    {
+      primBC = primHalfStep;
+      elemBC = elemHalfStep;
+    }
+  // 2) Check that there is no inflow at the radial boundaries
+  inflowCheck(*primBC,*elemBC,*geomCenter,
+  	      numReads,numWrites);
+
+  // 3) 'Fix' the polar regions by correcting the firs
+  // two active zones
+  const int numGhost = params::numGhost;
+  if(primBC->jLocalStart == 0)
+    {
+      int idx0 = numGhost;
+      int idx1 = numGhost+1;
+      int idx2 = numGhost+2;
+      double ic0 = 0.2;
+      double ic1 = 0.6;
+      primBC->vars[vars::RHO](span,idx0,span)=
+	primBC->vars[vars::RHO](span,idx2,span);
+      primBC->vars[vars::U](span,idx0,span)=
+	primBC->vars[vars::U](span,idx2,span);
+      primBC->vars[vars::U1](span,idx0,span)=
+	primBC->vars[vars::U1](span,idx2,span);
+      primBC->vars[vars::U2](span,idx0,span)=
+        primBC->vars[vars::U2](span,idx2,span)*ic0;
+      primBC->vars[vars::U3](span,idx0,span)=
+        primBC->vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+	{
+	  primBC->vars[vars::Q](span,idx0,span)=
+	    primBC->vars[vars::Q](span,idx2,span)*ic0;
+	}
+      if(params::viscosity)
+	{
+	  primBC->vars[vars::DP](span,idx0,span)=
+	    primBC->vars[vars::DP](span,idx2,span)*ic0;
+	}
+
+      primBC->vars[vars::RHO](span,idx1,span)=
+	primBC->vars[vars::RHO](span,idx2,span);
+      primBC->vars[vars::U](span,idx1,span)=
+	primBC->vars[vars::U](span,idx2,span);
+      primBC->vars[vars::U1](span,idx1,span)=
+	primBC->vars[vars::U1](span,idx2,span);
+      primBC->vars[vars::U2](span,idx1,span)=
+        primBC->vars[vars::U2](span,idx2,span)*ic1;
+      primBC->vars[vars::U3](span,idx1,span)=
+        primBC->vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+	{
+	  primBC->vars[vars::Q](span,idx1,span)=
+	    primBC->vars[vars::Q](span,idx2,span)*ic1;
+	}
+      if(params::viscosity)
+        {
+	  primBC->vars[vars::DP](span,idx1,span)=
+	    primBC->vars[vars::DP](span,idx2,span)*ic1;
+	}
+
+      af::seq domainX2LeftBoundary(0,
+                                    numGhost-1
+				   );
+      primBC->vars[vars::U2](span,domainX2LeftBoundary,span)
+	= primBC->vars[vars::U2](span,domainX2LeftBoundary,span)*(-1.0);
+      primBC->vars[vars::B2](span,domainX2LeftBoundary,span)
+	= primBC->vars[vars::B2](span,domainX2LeftBoundary,span)*(-1.0);
+
+      for(int var=0;var<vars::dof;var++)
+	primBC->vars[var].eval();
+    }
+  if(primBC->jLocalEnd == primBC->N2)
+    {
+      int idx2 = primBC->N2Local+numGhost;
+      int idx0 = idx2-2;
+      int idx1 = idx2-1;
+      double ic0 = 0.2;
+      double ic1 = 0.6;
+      primBC->vars[vars::RHO](span,idx0,span)=
+	primBC->vars[vars::RHO](span,idx2,span);
+      primBC->vars[vars::U](span,idx0,span)=
+	primBC->vars[vars::U](span,idx2,span);
+      primBC->vars[vars::U1](span,idx0,span)=
+	primBC->vars[vars::U1](span,idx2,span);
+      primBC->vars[vars::U2](span,idx0,span)=
+        primBC->vars[vars::U2](span,idx2,span)*ic0;
+      primBC->vars[vars::U3](span,idx0,span)=
+        primBC->vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+        {
+          primBC->vars[vars::Q](span,idx0,span)=
+            primBC->vars[vars::Q](span,idx2,span)*ic1;
+        }
+      if(params::viscosity)
+        {
+          primBC->vars[vars::DP](span,idx0,span)=
+            primBC->vars[vars::DP](span,idx2,span)*ic1;
+        }
+
+      primBC->vars[vars::RHO](span,idx1,span)=
+	primBC->vars[vars::RHO](span,idx2,span);
+      primBC->vars[vars::U](span,idx1,span)=
+	primBC->vars[vars::U](span,idx2,span);
+      primBC->vars[vars::U1](span,idx1,span)=
+	primBC->vars[vars::U1](span,idx2,span);
+      primBC->vars[vars::U2](span,idx1,span)=
+        primBC->vars[vars::U2](span,idx2,span)*ic1;
+      primBC->vars[vars::U3](span,idx1,span)=
+        primBC->vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+        {
+          primBC->vars[vars::Q](span,idx1,span)=
+            primBC->vars[vars::Q](span,idx2,span)*ic1;
+        }
+      if(params::viscosity)
+        {
+          primBC->vars[vars::DP](span,idx1,span)=
+            primBC->vars[vars::DP](span,idx2,span)*ic1;
+        }
+
+      af::seq domainX2RightBoundary(primBC->N2Local+numGhost,
+                                    primBC->N2Local+2*numGhost-1
+				   );
+      primBC->vars[vars::U2](span,domainX2RightBoundary,span)
+	= primBC->vars[vars::U2](span,domainX2RightBoundary,span)*(-1.0);
+      primBC->vars[vars::B2](span,domainX2RightBoundary,span)
+	= primBC->vars[vars::B2](span,domainX2RightBoundary,span)*(-1.0);
+
+      for(int var=0;var<vars::dof;var++)
+	primBC->vars[var].eval();
+    }
+  af::sync();
 };
+
+void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
+{
+  const int numGhost = params::numGhost;
+  // Prevents matter from flowing into the computational domain
+  if(primOld->iLocalStart == 0)
+    {
+      int idx = numGhost;
+      fluxesX1->vars[vars::RHO](idx,span,span)=
+	af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
+      fluxesX1->vars[vars::RHO].eval();
+    }
+  if(primOld->iLocalEnd == primOld->N1)
+    {
+      int idx = primOld->N1Local+numGhost;
+      fluxesX1->vars[vars::RHO](idx,span,span)=
+        af::max(fluxesX1->vars[vars::RHO](idx,span,span),0.);
+      fluxesX1->vars[vars::RHO].eval();
+    }
+  
+  // Set fluxes to 0 on the polar axis
+  if(primOld->jLocalStart == 0)
+    {
+      int idx = numGhost;
+      for(int var=0;var<vars::dof;var++)
+	{
+	  fluxesX2->vars[var](span,idx,span)=0.;
+	  fluxesX2->vars[var].eval();
+	}
+    }
+  if(primOld->jLocalEnd == primOld->N2)
+    {
+      int idx = primOld->N2Local+numGhost;
+      for(int var=0;var<vars::dof;var++)
+	{
+	  fluxesX2->vars[var](span,idx,span)=0.;
+	  fluxesX2->vars[var].eval();
+	}
+    }
+}

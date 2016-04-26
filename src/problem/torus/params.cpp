@@ -6,16 +6,16 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 128;
-  int N2 = 128;
+  int N1 = 256;
+  int N2 = 256;
   int N3 = 1;
   int dim = 2;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 0.;
-  double InitialDt = 0.01;
-  int restart = 0;
+  double Time = 8.300600e+01;
+  double InitialDt = 1.591565e-02;
+  int restart = 1;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -44,8 +44,8 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 1;
-  int viscosity  = 1;
+  int conduction = 0;
+  int viscosity  = 0;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;
