@@ -13,9 +13,9 @@ namespace params
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 8.300600e+01;
-  double InitialDt = 1.591565e-02;
-  int restart = 1;
+  double Time = 0.;
+  double InitialDt = 0.01;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -24,13 +24,13 @@ namespace params
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
-  double CourantFactor = 0.9;
+  double CourantFactor = 0.5;
   double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid shape options
   double Rin = 0.98*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 40.;
+  double Rout = 60.;
   double hSlope = 0.3;
 
   // Initial conditions
@@ -44,8 +44,8 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 0;
-  int viscosity  = 0;
+  int conduction = 1;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;

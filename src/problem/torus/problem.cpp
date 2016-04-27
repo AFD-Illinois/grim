@@ -440,18 +440,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     double BFactor = BetaMin_af.host<double>()[0];
     BFactor = sqrt(BFactor/params::MinPlasmaBeta);
 
-    /*for(int proc=0;proc<world_size;proc++)
-      {
-	if(world_rank==proc)
-	  {
-	    printf("BFactor on proc %i = %e\n",proc,BFactor);
-	    af_print(bSqr,5);
-	    af_print(Pgas,5);
-	    af_print(PlasmaBeta,5);
-	  }
-	MPI_Barrier(PETSC_COMM_WORLD);
-	}*/
-
     /* Use MPI to find minimum over all processors */
     if (world_rank == 0) 
       {
@@ -513,8 +501,8 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   array minU = af::pow(Radius,params::UFloorSlope)*params::UFloorAmpl;
 
   // Save pre-floor values for later
-  array rho_prefloor = prim->vars[vars::RHO];
-  array u_prefloor   = prim->vars[vars::U];
+  array rho_prefloor = prim->vars[vars::RHO]*1.;
+  array u_prefloor   = prim->vars[vars::U]*1.;
   rho_prefloor.eval();
   u_prefloor.eval();
 
@@ -548,8 +536,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   // Sasha's floor method
   array betapar = -elem->bCon[0]/bSqr/elem->uCon[0];
   array betasqr = betapar*betapar*bSqr;
-  // TODO: use proper maximum lorentz factor
-  array betasqrmax = zero+1. - 1./params::MaxLorentzFactor/params::MaxLorentzFactor;
+  double betasqrmax = 1. - 1./params::MaxLorentzFactor/params::MaxLorentzFactor;
   betasqr = af::min(betasqr,betasqrmax);
   array gamma = 1./af::sqrt(1.-betasqr);
   gamma.eval();
@@ -569,13 +556,13 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   for(int m=0;m<NDIM;m++)
     {
       Bcov[m]=zero;
-      for(int n=1;n<NDIM;n++)
+      for(int n=0;n<NDIM;n++)
 	Bcov[m]+=geom->gCov[n][m]*Bcon[n];
       Bcov[m].eval();
     }
   array udotB = zero;
   array bSqr_fl  = zero;
-  for(int n=1;n<NDIM;n++)
+  for(int n=0;n<NDIM;n++)
     {
       udotB += Bcov[n]*elem->uCon[n];
       bSqr_fl += Bcov[n]*Bcon[n];
@@ -583,7 +570,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   udotB.eval();
   array bNorm = af::sqrt(bSqr_fl);
   double bMin = sqrt(params::bSqrFloorInFluidElement);
-  bNorm = af::max(bNorm,zero+bMin);
+  bNorm = af::max(bNorm,bMin);
   bNorm.eval();
 
   //New velocity
@@ -626,6 +613,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
   prim->vars[vars::U1].eval();
   prim->vars[vars::U2].eval();
   prim->vars[vars::U3].eval();
+  
 
   // Reset element to get Lorentz factor
   elem->set(*prim, *geom, numReads,numWrites);
@@ -649,7 +637,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
     }  
 
   elem->set(*prim, *geom, numReads,numWrites);
-
+  
   if(params::conduction)
     {
       const array& rho = prim->vars[vars::RHO];
@@ -672,8 +660,8 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
 	(condition/af::max(deltaP/dPmaxPlus,1.)+(1.-condition)/af::max(deltaP/dPmaxMinus,1.));
       prim->vars[vars::DP].eval();
     }
+  if(params::conduction || params::viscosity) elem->set(*prim, *geom, numReads,numWrites);
 
-  elem->set(*prim, *geom, numReads,numWrites);
   af::sync();
 }
 
@@ -977,6 +965,130 @@ void inflowCheck(grid& primBC,fluidElement& elemBC,
     }
 }
 
+void fixPoles(grid& primBC, int &numReads,int &numWrites)
+{
+  const int numGhost = params::numGhost;
+  if(primBC.jLocalStart == 0)
+    {
+      int idx0 = numGhost;
+      int idx1 = numGhost+1;
+      int idx2 = numGhost+2;
+      double ic0 = 0.2;
+      double ic1 = 0.6;
+      primBC.vars[vars::RHO](span,idx0,span)=
+	primBC.vars[vars::RHO](span,idx2,span);
+      primBC.vars[vars::U](span,idx0,span)=
+	primBC.vars[vars::U](span,idx2,span);
+      primBC.vars[vars::U1](span,idx0,span)=
+	primBC.vars[vars::U1](span,idx2,span);
+      primBC.vars[vars::U2](span,idx0,span)=
+        primBC.vars[vars::U2](span,idx2,span)*ic0;
+      primBC.vars[vars::U3](span,idx0,span)=
+        primBC.vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+	{
+	  primBC.vars[vars::Q](span,idx0,span)=
+	    primBC.vars[vars::Q](span,idx2,span)*ic0;
+	}
+      if(params::viscosity)
+	{
+	  primBC.vars[vars::DP](span,idx0,span)=
+	    primBC.vars[vars::DP](span,idx2,span)*ic0;
+	}
+
+      primBC.vars[vars::RHO](span,idx1,span)=
+	primBC.vars[vars::RHO](span,idx2,span);
+      primBC.vars[vars::U](span,idx1,span)=
+	primBC.vars[vars::U](span,idx2,span);
+      primBC.vars[vars::U1](span,idx1,span)=
+	primBC.vars[vars::U1](span,idx2,span);
+      primBC.vars[vars::U2](span,idx1,span)=
+        primBC.vars[vars::U2](span,idx2,span)*ic1;
+      primBC.vars[vars::U3](span,idx1,span)=
+        primBC.vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+	{
+	  primBC.vars[vars::Q](span,idx1,span)=
+	    primBC.vars[vars::Q](span,idx2,span)*ic1;
+	}
+      if(params::viscosity)
+        {
+	  primBC.vars[vars::DP](span,idx1,span)=
+	    primBC.vars[vars::DP](span,idx2,span)*ic1;
+	}
+
+      af::seq domainX2LeftBoundary(0,
+                                    numGhost-1
+				   );
+      primBC.vars[vars::U2](span,domainX2LeftBoundary,span)
+	= primBC.vars[vars::U2](span,domainX2LeftBoundary,span)*(-1.0);
+      primBC.vars[vars::B2](span,domainX2LeftBoundary,span)
+	= primBC.vars[vars::B2](span,domainX2LeftBoundary,span)*(-1.0);
+
+      for(int var=0;var<vars::dof;var++)
+	primBC.vars[var].eval();
+    }
+  if(primBC.jLocalEnd == primBC.N2)
+    {
+      int idx0 = primBC.N2Local+numGhost-1;
+      int idx1 = idx0-1;
+      int idx2 = idx0-2;
+      double ic0 = 0.2;
+      double ic1 = 0.6;
+      primBC.vars[vars::RHO](span,idx0,span)=
+	primBC.vars[vars::RHO](span,idx2,span);
+      primBC.vars[vars::U](span,idx0,span)=
+	primBC.vars[vars::U](span,idx2,span);
+      primBC.vars[vars::U1](span,idx0,span)=
+	primBC.vars[vars::U1](span,idx2,span);
+      primBC.vars[vars::U2](span,idx0,span)=
+        primBC.vars[vars::U2](span,idx2,span)*ic0;
+      primBC.vars[vars::U3](span,idx0,span)=
+        primBC.vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+        {
+          primBC.vars[vars::Q](span,idx0,span)=
+            primBC.vars[vars::Q](span,idx2,span)*ic1;
+        }
+      if(params::viscosity)
+        {
+          primBC.vars[vars::DP](span,idx0,span)=
+            primBC.vars[vars::DP](span,idx2,span)*ic1;
+        }
+
+      primBC.vars[vars::RHO](span,idx1,span)=
+	primBC.vars[vars::RHO](span,idx2,span);
+      primBC.vars[vars::U](span,idx1,span)=
+	primBC.vars[vars::U](span,idx2,span);
+      primBC.vars[vars::U1](span,idx1,span)=
+	primBC.vars[vars::U1](span,idx2,span);
+      primBC.vars[vars::U2](span,idx1,span)=
+        primBC.vars[vars::U2](span,idx2,span)*ic1;
+      primBC.vars[vars::U3](span,idx1,span)=
+        primBC.vars[vars::U3](span,idx2,span);
+      if(params::conduction)
+        {
+          primBC.vars[vars::Q](span,idx1,span)=
+            primBC.vars[vars::Q](span,idx2,span)*ic1;
+        }
+      if(params::viscosity)
+        {
+          primBC.vars[vars::DP](span,idx1,span)=
+            primBC.vars[vars::DP](span,idx2,span)*ic1;
+        }
+
+      af::seq domainX2RightBoundary(primBC.N2Local+numGhost,
+                                    primBC.N2Local+2*numGhost-1
+				   );
+      primBC.vars[vars::U2](span,domainX2RightBoundary,span)
+	= primBC.vars[vars::U2](span,domainX2RightBoundary,span)*(-1.0);
+      primBC.vars[vars::B2](span,domainX2RightBoundary,span)
+	= primBC.vars[vars::B2](span,domainX2RightBoundary,span)*(-1.0);
+
+      for(int var=0;var<vars::dof;var++)
+	primBC.vars[var].eval();
+    }
+}
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
@@ -999,127 +1111,7 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 
   // 3) 'Fix' the polar regions by correcting the firs
   // two active zones
-  const int numGhost = params::numGhost;
-  if(primBC->jLocalStart == 0)
-    {
-      int idx0 = numGhost;
-      int idx1 = numGhost+1;
-      int idx2 = numGhost+2;
-      double ic0 = 0.2;
-      double ic1 = 0.6;
-      primBC->vars[vars::RHO](span,idx0,span)=
-	primBC->vars[vars::RHO](span,idx2,span);
-      primBC->vars[vars::U](span,idx0,span)=
-	primBC->vars[vars::U](span,idx2,span);
-      primBC->vars[vars::U1](span,idx0,span)=
-	primBC->vars[vars::U1](span,idx2,span);
-      primBC->vars[vars::U2](span,idx0,span)=
-        primBC->vars[vars::U2](span,idx2,span)*ic0;
-      primBC->vars[vars::U3](span,idx0,span)=
-        primBC->vars[vars::U3](span,idx2,span);
-      if(params::conduction)
-	{
-	  primBC->vars[vars::Q](span,idx0,span)=
-	    primBC->vars[vars::Q](span,idx2,span)*ic0;
-	}
-      if(params::viscosity)
-	{
-	  primBC->vars[vars::DP](span,idx0,span)=
-	    primBC->vars[vars::DP](span,idx2,span)*ic0;
-	}
-
-      primBC->vars[vars::RHO](span,idx1,span)=
-	primBC->vars[vars::RHO](span,idx2,span);
-      primBC->vars[vars::U](span,idx1,span)=
-	primBC->vars[vars::U](span,idx2,span);
-      primBC->vars[vars::U1](span,idx1,span)=
-	primBC->vars[vars::U1](span,idx2,span);
-      primBC->vars[vars::U2](span,idx1,span)=
-        primBC->vars[vars::U2](span,idx2,span)*ic1;
-      primBC->vars[vars::U3](span,idx1,span)=
-        primBC->vars[vars::U3](span,idx2,span);
-      if(params::conduction)
-	{
-	  primBC->vars[vars::Q](span,idx1,span)=
-	    primBC->vars[vars::Q](span,idx2,span)*ic1;
-	}
-      if(params::viscosity)
-        {
-	  primBC->vars[vars::DP](span,idx1,span)=
-	    primBC->vars[vars::DP](span,idx2,span)*ic1;
-	}
-
-      af::seq domainX2LeftBoundary(0,
-                                    numGhost-1
-				   );
-      primBC->vars[vars::U2](span,domainX2LeftBoundary,span)
-	= primBC->vars[vars::U2](span,domainX2LeftBoundary,span)*(-1.0);
-      primBC->vars[vars::B2](span,domainX2LeftBoundary,span)
-	= primBC->vars[vars::B2](span,domainX2LeftBoundary,span)*(-1.0);
-
-      for(int var=0;var<vars::dof;var++)
-	primBC->vars[var].eval();
-    }
-  if(primBC->jLocalEnd == primBC->N2)
-    {
-      int idx2 = primBC->N2Local+numGhost;
-      int idx0 = idx2-2;
-      int idx1 = idx2-1;
-      double ic0 = 0.2;
-      double ic1 = 0.6;
-      primBC->vars[vars::RHO](span,idx0,span)=
-	primBC->vars[vars::RHO](span,idx2,span);
-      primBC->vars[vars::U](span,idx0,span)=
-	primBC->vars[vars::U](span,idx2,span);
-      primBC->vars[vars::U1](span,idx0,span)=
-	primBC->vars[vars::U1](span,idx2,span);
-      primBC->vars[vars::U2](span,idx0,span)=
-        primBC->vars[vars::U2](span,idx2,span)*ic0;
-      primBC->vars[vars::U3](span,idx0,span)=
-        primBC->vars[vars::U3](span,idx2,span);
-      if(params::conduction)
-        {
-          primBC->vars[vars::Q](span,idx0,span)=
-            primBC->vars[vars::Q](span,idx2,span)*ic1;
-        }
-      if(params::viscosity)
-        {
-          primBC->vars[vars::DP](span,idx0,span)=
-            primBC->vars[vars::DP](span,idx2,span)*ic1;
-        }
-
-      primBC->vars[vars::RHO](span,idx1,span)=
-	primBC->vars[vars::RHO](span,idx2,span);
-      primBC->vars[vars::U](span,idx1,span)=
-	primBC->vars[vars::U](span,idx2,span);
-      primBC->vars[vars::U1](span,idx1,span)=
-	primBC->vars[vars::U1](span,idx2,span);
-      primBC->vars[vars::U2](span,idx1,span)=
-        primBC->vars[vars::U2](span,idx2,span)*ic1;
-      primBC->vars[vars::U3](span,idx1,span)=
-        primBC->vars[vars::U3](span,idx2,span);
-      if(params::conduction)
-        {
-          primBC->vars[vars::Q](span,idx1,span)=
-            primBC->vars[vars::Q](span,idx2,span)*ic1;
-        }
-      if(params::viscosity)
-        {
-          primBC->vars[vars::DP](span,idx1,span)=
-            primBC->vars[vars::DP](span,idx2,span)*ic1;
-        }
-
-      af::seq domainX2RightBoundary(primBC->N2Local+numGhost,
-                                    primBC->N2Local+2*numGhost-1
-				   );
-      primBC->vars[vars::U2](span,domainX2RightBoundary,span)
-	= primBC->vars[vars::U2](span,domainX2RightBoundary,span)*(-1.0);
-      primBC->vars[vars::B2](span,domainX2RightBoundary,span)
-	= primBC->vars[vars::B2](span,domainX2RightBoundary,span)*(-1.0);
-
-      for(int var=0;var<vars::dof;var++)
-	primBC->vars[var].eval();
-    }
+  fixPoles(*primBC,numReads,numWrites);
   af::sync();
 };
 
