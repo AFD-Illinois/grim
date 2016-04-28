@@ -435,7 +435,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     elemOld->set(*primOld,*geomCenter,numReads,numWrites);
     const array& bSqr = elemOld->bSqr;
     const array& Pgas = elemOld->pressure;
-    array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
+    array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
     array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
     double BFactor = BetaMin_af.host<double>()[0];
     BFactor = sqrt(BFactor/params::MinPlasmaBeta);
@@ -762,7 +762,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       // Find minimum beta
       const array& bSqr = elemOld->bSqr;
       const array& Pgas = elemOld->pressure;
-      array PlasmaBeta = (Pgas+1.e-13)/(bSqr+1.e-18);
+      array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
       array BetaMin_af = af::min(af::min(af::min(PlasmaBeta(domainX1,domainX2,domainX3),2),1),0);
       double betaMin = BetaMin_af.host<double>()[0];
       /* Use MPI to find minimum over all processors */
