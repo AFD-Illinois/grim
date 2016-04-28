@@ -6,7 +6,7 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 256;
+  int N1 = 280;
   int N2 = 256;
   int N3 = 1;
   int dim = 2;
@@ -30,7 +30,7 @@ namespace params
 
   // Grid shape options
   double Rin = 0.98*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 60.;
+  double Rout = 63.;
   double hSlope = 0.3;
 
   // Initial conditions

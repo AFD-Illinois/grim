@@ -255,7 +255,7 @@ void fluidElement::set(const grid &prim,
                         + (pressure + 0.5*bSqr)*DELTA(mu, nu)
                         - bCon[mu] * bCov[nu];
 
-      /*
+      
       if (params::conduction==1)
       {
         TUpDown[mu][nu] += q/bNorm * (uCon[mu]*bCov[nu] + bCon[mu]*uCov[nu]);
@@ -268,7 +268,7 @@ void fluidElement::set(const grid &prim,
                               - (1./3.)*(DELTA(mu, nu) + uCon[mu]*uCov[nu])
                              );
       }
-      */
+      
       TUpDown[mu][nu].eval();
       /* Reads:
        * -----
