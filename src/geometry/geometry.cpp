@@ -414,7 +414,11 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
       xCoords[directions::X2].eval();
       xCoords[directions::X3].eval();
       
-      // Sasha's cylindrified grid
+      // 'Cylindrify' the coordinates, following a slightly
+      // adapted version of Sasha Tchekhovskoy's HARM code.
+      // This modifies the map Theta(X1,X2) so that X2=cst surfaces
+      // close to the pole axis and the black hole are wide
+      // cylinders instead of cones.
       if(params::DoCylindrify)
 	{
 	  // We cylindrify the region with 
@@ -474,82 +478,6 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
 	      xCoords[d]=xcyl[d];
 	      xCoords[d].eval();
 	    }
-
-	  // Loop manually, to reuse Sasha's code
-	  /*grid* mGrid = new grid(N1, N2, N3, dim, 1, numGhost,
-				 false, false, false
-				 );
-	  const int N1g = mGrid->N1Total;
-	  const int N2g = mGrid->N2Total;
-	  const int N3g = mGrid->N3Total;
-	  delete mGrid;
-
-	  for(int k=0;k<N3g;k++)
-	    for(int j=0;j<N2g;j++)
-	      for(int i=0;i<N1g;i++)
-		{
-		  double xGam[3],xCyl[3],xGrid[3],Xtr[3],xIn[3];
-		  // Get 'Gammie' coordinates
-		  for(int d=0;d<3;d++)
-		    {
-		      xGam[d]=xCoords[d](i,j,k).scalar<double>();
-		      xGrid[d]=XCoords[d](i,j,k).scalar<double>();
-		      xCyl[d]=xGam[d];
-		      Xtr[d]=xGrid[d];
-		      xIn[d]=xGrid[d];
-		    }
-		  Xtr[directions::X1]=X1_tr;
-		  
-		  // Cylindrification - use adapted version of Sasha's code
-
-		  // Bring theta coord into the first quadrant
-		  bool IsMirrored = xGrid[directions::X2]>0.5;
-		  if(IsMirrored)
-		    {
-		      xGrid[directions::X2]=1.-xGrid[directions::X2];
-		      xGam[directions::X2]=M_PI-xGam[directions::X2];
-		    }
-		  bool IsGhost = xGrid[directions::X2]<0.;
-		  if(IsGhost)
-		    {
-		      xGrid[directions::X2] = - xGrid[directions::X2];
-		      xGam[directions::X2] = - xGam[directions::X2];
-		    }
-
-		  double f1 = func1(x0,xGrid);
-		  double f2 = func2(x0,xGrid);
-		  double dftr = func2( x0, Xtr) - func1( x0, Xtr);
-
-		  // Compute new theta
-		  double sinth = maxs( xGam[directions::X1]*f1, xGam[directions::X1]*f2, GammieRadius(Xtr[directions::X1])*fabs(dftr)+1.e-20 ) / xGam[directions::X1];
-		  double th = asin( sinth );
-		  
-		  // Undo mirroring operation if needed
-		  if(IsGhost)
-		    {
-		      xGrid[directions::X2] = - xGrid[directions::X2];
-		      xGam[directions::X2] = - xGam[directions::X2];
-		      th = -th;
-		    }
-		  if(IsMirrored)
-		    {
-		      xCyl[directions::X2] = M_PI-th;
-		      xGrid[directions::X2] = 1.-xGrid[directions::X2];
-		    }
-		  else
-		    {
-		      xCyl[directions::X2] = th;
-		    }
-
-		  // Copy cylindrified coordinates into the Arrayfire array
-		  for(int d=0;d<3;d++)
-                    {
-		      xCoords[d](i,j,k)=xCyl[d];
-		    }
-		    }
-	  xCoords[directions::X1].eval();
-	  xCoords[directions::X2].eval();
-	  xCoords[directions::X3].eval();*/
 	}
       
       break;

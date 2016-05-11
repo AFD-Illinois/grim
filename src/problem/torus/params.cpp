@@ -8,7 +8,7 @@ namespace params
   // Grid size options
   int N1 = 280;
   int N2 = 256;
-  int N3 = 128;
+  int N3 = 32;
   int dim = 3;
   int numGhost = 3;
 
@@ -44,8 +44,8 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 0;
-  int viscosity  = 0;
+  int conduction = 1;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;
@@ -67,11 +67,11 @@ namespace params
   // Automatic grid boundaries - do not change
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI*2.;
+  double X3Start = 0., X3End = M_PI*1.;
 
   // Grid parameters
   int DoCylindrify = 1;
-  double X1cyl = log(2.*Rin);
+  double X1cyl = log(7.*Rin);
   double X2cyl = 3./N2;
 
   // Boundary Conditions

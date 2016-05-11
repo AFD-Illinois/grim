@@ -1,3 +1,5 @@
+// Original HARM coordinate map R(X1), Theta(X2)
+// from Charles Gammie
 
 array GammieRadius(const array X1)
 {
@@ -15,7 +17,7 @@ array GammieTheta(const array X2)
 
 /**************************************
 // The following code is largely copied
-// from Sasha's version of HARM,
+// from Sasha Tchekhovskoy's version of HARM,
 // adapted to arrayFire (and without the generic mapping)
 ***************************************/
 
