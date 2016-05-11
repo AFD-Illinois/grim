@@ -2,9 +2,8 @@
 
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
-  array xCoords[3],XCoords[3];
-  geom.getXCoords(XCoords);
-  geom.XCoordsToxCoords(XCoords,xCoords);
+  array xCoords[3];
+  geom.getxCoords(xCoords);
   array Radius = xCoords[0];
   array DynamicalTimescale = af::pow(Radius,1.5);
   DynamicalTimescale.eval();
@@ -149,7 +148,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   //Let's ignore ArrayFire here - it's only the initial
   //conditions...
   array xCoords[3];
-  geomCenter->XCoordsToxCoords(XCoords->vars, xCoords);
+  geomCenter->getxCoords(xCoords);
 
   const int N1g = primOld->N1Total;
   const int N2g = primOld->N2Total;
@@ -480,7 +479,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
       primOld->vars[vars::DP].eval();
     }
 
-  applyFloor(primOld,elemOld,geomCenter,XCoords,numReads,numWrites);
+  applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
 
   for (int var=0; var<vars::dof; var++) 
     {
@@ -491,10 +490,10 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   fullStepDiagnostics(numReads,numWrites);
 }
 
-void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, int &numReads,int &numWrites)
+void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,int &numWrites)
 {
   array xCoords[3];
-  geom->XCoordsToxCoords(XCoords->vars,xCoords);
+  geom->getxCoords(xCoords);
   array Radius = xCoords[0];
 
   array minRho = af::pow(Radius,params::RhoFloorSlope)*params::RhoFloorAmpl;
@@ -667,12 +666,12 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, grid* XCoords, i
 
 void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 {
-  applyFloor(primHalfStep,elemHalfStep,geomCenter,XCoords,numReads,numWrites);
+  applyFloor(primHalfStep,elemHalfStep,geomCenter,numReads,numWrites);
 }
 
 void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
-  applyFloor(primOld,elemOld,geomCenter,XCoords,numReads,numWrites);
+  applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
 
   int world_rank;
   MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
@@ -842,7 +841,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if(WriteData)
     {
       const int WriteIdx = floor(time/params::WriteDataEveryDt);
-      if(WriteIdx==1)
+      if(WriteIdx==0)
 	{
 	  PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
 	  geomCenter->setgCovGrid();
@@ -1048,12 +1047,12 @@ void fixPoles(grid& primBC, int &numReads,int &numWrites)
       if(params::conduction)
         {
           primBC.vars[vars::Q](span,idx0,span)=
-            primBC.vars[vars::Q](span,idx2,span)*ic1;
+            primBC.vars[vars::Q](span,idx2,span)*ic0;
         }
       if(params::viscosity)
         {
           primBC.vars[vars::DP](span,idx0,span)=
-            primBC.vars[vars::DP](span,idx2,span)*ic1;
+            primBC.vars[vars::DP](span,idx2,span)*ic0;
         }
 
       primBC.vars[vars::RHO](span,idx1,span)=
@@ -1143,6 +1142,8 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
 	  fluxesX2->vars[var](span,idx,span)=0.;
 	  fluxesX2->vars[var].eval();
 	}
+      fluxesX1->vars[vars::B2](span,idx-1,span)=fluxesX1->vars[vars::B2](span,idx,span)*(-1.0);
+      fluxesX1->vars[vars::B2].eval();
     }
   if(primOld->jLocalEnd == primOld->N2)
     {
@@ -1152,5 +1153,7 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
 	  fluxesX2->vars[var](span,idx,span)=0.;
 	  fluxesX2->vars[var].eval();
 	}
+      fluxesX1->vars[vars::B2](span,idx,span)=fluxesX1->vars[vars::B2](span,idx-1,span)*(-1.0);
+      fluxesX1->vars[vars::B2].eval();
     }
 }

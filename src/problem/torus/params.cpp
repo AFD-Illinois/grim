@@ -6,10 +6,10 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 280;
-  int N2 = 256;
-  int N3 = 1;
-  int dim = 2;
+  int N1 = 140;
+  int N2 = 128;
+  int N3 = 32;
+  int dim = 3;
   int numGhost = 3;
 
   // (Re)start options
@@ -20,7 +20,7 @@ namespace params
 
   // Observation / checkpointing intervals
   double ObserveEveryDt = .1;
-  double WriteDataEveryDt = 1.;
+  double WriteDataEveryDt = 10.;
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
@@ -34,7 +34,7 @@ namespace params
   double hSlope = 0.3;
 
   // Initial conditions
-  double adiabaticIndex = 4./3;
+  double adiabaticIndex = 5./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
   double PressureMaxRadius = 12.;
@@ -44,8 +44,8 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 1;
-  int viscosity  = 1;
+  int conduction = 0;
+  int viscosity  = 0;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   double ConductionAlpha = 1.;
@@ -68,6 +68,11 @@ namespace params
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
   double X3Start = 0., X3End = M_PI*2.;
+
+  // Grid parameters
+  int DoCylindrify = 1;
+  double X1cyl = log(2.*Rin);
+  double X2cyl = 3./N2;
 
   // Boundary Conditions
   // Radial

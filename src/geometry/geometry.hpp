@@ -9,6 +9,7 @@ class geometry
   private:
     array zero;
     array XCoords[3];
+    array xCoords[3];
     void setgCovInXCoords(const array XCoords[NDIM], array gCov[NDIM][NDIM]);
     void setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
                                 array &gDet, array gCon[NDIM][NDIM]
@@ -16,8 +17,13 @@ class geometry
     void computeGammaDownDownDown(const int eta,
                                   const int mu,
                                   const int nu,
-                                  array& out
+                                  array& out,
+				  const array gCovPlus[NDIM-1][NDIM][NDIM],
+				  const array gCovMinus[NDIM-1][NDIM][NDIM]
                                  );
+    // Change in coord value when computing metric derivatives
+    double GAMMA_EPS;
+  
   public:
     int N1, N2, N3, dim, numGhost;
 
@@ -43,6 +49,10 @@ class geometry
     void getXCoords(array tXCoords[3]) const
     {
       for(int d=0;d<3;d++) tXCoords[d]=XCoords[d];
+    }
+    void getxCoords(array txCoords[3]) const
+    {
+      for(int d=0;d<3;d++) txCoords[d]=xCoords[d];
     }
     void XCoordsToxCoords(const array XCoords[3], array xCoords[3]) const;
 

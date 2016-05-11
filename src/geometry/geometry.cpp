@@ -1,4 +1,5 @@
 #include "geometry.hpp"
+#include "CoordinateChangeFunctionsArray.hpp"
 
 geometry::geometry(const int metric,
                    const double blackHoleSpin,
@@ -6,6 +7,8 @@ geometry::geometry(const int metric,
                    const coordinatesGrid &XCoordsGrid
                   )
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Setup metric\n");   
+  GAMMA_EPS = 1.e-5;
   N1        = XCoordsGrid.N1;
   N2        = XCoordsGrid.N2;
   N3        = XCoordsGrid.N3;
@@ -19,6 +22,8 @@ geometry::geometry(const int metric,
   XCoords[directions::X1] = XCoordsGrid.vars[directions::X1];
   XCoords[directions::X2] = XCoordsGrid.vars[directions::X2];
   XCoords[directions::X3] = XCoordsGrid.vars[directions::X3];
+
+  XCoordsToxCoords(XCoords,xCoords);
 
   /* Allocate space */
   zero       = 0.*XCoords[0];
@@ -34,29 +39,39 @@ geometry::geometry(const int metric,
   }
   
   setgCovInXCoords(XCoords, gCov);
-
   setgDetAndgConFromgCov(gCov, gDet, gCon);
+
   g = af::sqrt(-gDet);
-
   alpha = 1./af::sqrt(-gCon[0][0]);
-
   g.eval();
   alpha.eval();
-  for (int mu=0; mu<NDIM; mu++)
-  {
-    for (int nu=0; nu<NDIM; nu++)
-    {
-      gCov[mu][nu].eval();
-      gCon[mu][nu].eval();
-    }
-  }
 
   af::sync();
+  PetscPrintf(PETSC_COMM_WORLD, "Done initializing geometry!\n");   
 }
 
 void geometry::computeConnectionCoeffs()
 {
+  PetscPrintf(PETSC_COMM_WORLD, "Compute connections\n");
   array gammaDownDownDown[NDIM][NDIM][NDIM];
+  array gCovPlus[NDIM-1][NDIM][NDIM];
+  array gCovMinus[NDIM-1][NDIM][NDIM];
+  {
+    array XCoordsPlus[NDIM-1];
+    array XCoordsMinus[NDIM-1];
+    for (int d = 0; d<NDIM-1; d++)
+      {
+	for(int dd=0;dd<NDIM-1;dd++)
+	  {
+	    XCoordsPlus[dd] = this->XCoords[dd];
+	    XCoordsMinus[dd] = this->XCoords[dd];
+	  }
+	XCoordsPlus[d]+=GAMMA_EPS;
+	XCoordsMinus[d]-=GAMMA_EPS;
+	setgCovInXCoords(XCoordsPlus,gCovPlus[d]);
+	setgCovInXCoords(XCoordsMinus,gCovMinus[d]);
+      }
+  }
 
   for (int mu=0; mu<NDIM; mu++)
   {
@@ -66,7 +81,8 @@ void geometry::computeConnectionCoeffs()
       {
       	gammaDownDownDown[mu][nu][lamda] = zero;
         computeGammaDownDownDown(mu,nu,lamda,
-                                 gammaDownDownDown[mu][nu][lamda]
+                                 gammaDownDownDown[mu][nu][lamda],
+				 gCovPlus,gCovMinus
                                 );
       }
     }
@@ -93,7 +109,7 @@ void geometry::computeConnectionCoeffs()
   }
 
   af::sync();
-
+  PetscPrintf(PETSC_COMM_WORLD, "Done with connections\n");
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
@@ -126,6 +142,8 @@ void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
       - gCov[0][3]*gCov[1][0]*gCov[2][1]*gCov[3][2]
       - gCov[0][3]*gCov[1][1]*gCov[2][2]*gCov[3][0]
       - gCov[0][3]*gCov[1][2]*gCov[2][0]*gCov[3][1];
+
+  gDet.eval();
 
   gCon[0][0] = 
       (  gCov[1][1]*gCov[2][2]*gCov[3][3]
@@ -215,6 +233,11 @@ void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
        - gCov[0][0]*gCov[1][2]*gCov[2][1]  
        - gCov[0][1]*gCov[1][0]*gCov[2][2]  
        - gCov[0][2]*gCov[1][1]*gCov[2][0])/gDet;
+
+  for(int d=0;d<4;d++)
+    for(int dd=0;dd<4;dd++)
+      gCon[d][dd].eval();
+
 }
 
 void geometry::setgCovInXCoords(const array XCoords[3], 
@@ -245,14 +268,57 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
       /* r = exp(X1) => dr/dX = exp(X1) = r */
       array dr_dX1 = r;
-
+      array dr_dX2 = zero;
       /* theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) 
-         => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
+	  -         => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
       array dtheta_dX2 =  M_PI 
-                        + M_PI*(1 - hSlope)
-                              *af::cos(2*M_PI*XCoords[directions::X2]);
+	+ M_PI*(1 - hSlope)
+	*af::cos(2*M_PI*XCoords[directions::X2]);
+      array dtheta_dX1 = zero;
+      
+      if(params::DoCylindrify)
+	{
+	  array XCoordsPlusEps[3];
+	  array xCoordsPlusEps[3];
+	  array XCoordsMinusEps[3];
+	  array xCoordsMinusEps[3];
+	  
+	  for(int d=0;d<3;d++)
+	    {
+	      XCoordsPlusEps[d] = XCoords[d];
+	      xCoordsPlusEps[d] = xCoords[d];
+	      XCoordsMinusEps[d] = XCoords[d];
+	      xCoordsMinusEps[d] = xCoords[d];
+	    }
+	  XCoordsPlusEps[directions::X1]+=GAMMA_EPS;
+	  XCoordsMinusEps[directions::X1]-=GAMMA_EPS;
+	  XCoordsToxCoords(XCoordsPlusEps,xCoordsPlusEps);      
+	  XCoordsToxCoords(XCoordsMinusEps,xCoordsMinusEps);      
+	  dr_dX1 = (xCoordsPlusEps[directions::X1]-xCoordsMinusEps[directions::X1])/(2.*GAMMA_EPS);
+	  dtheta_dX1 = (xCoordsPlusEps[directions::X2]-xCoordsMinusEps[directions::X2])/(2.*GAMMA_EPS);
+
+	  for(int d=0;d<3;d++)
+	    {
+	      XCoordsPlusEps[d] = XCoords[d];
+	      xCoordsPlusEps[d] = xCoords[d];
+	      XCoordsMinusEps[d] = XCoords[d];
+              xCoordsMinusEps[d] = xCoords[d];
+	    }
+	  XCoordsPlusEps[directions::X2]+=GAMMA_EPS;
+	  XCoordsMinusEps[directions::X2]-=GAMMA_EPS;
+	  XCoordsToxCoords(XCoordsPlusEps,xCoordsPlusEps);      
+	  XCoordsToxCoords(XCoordsMinusEps,xCoordsMinusEps);
+	  dr_dX2 = (xCoordsPlusEps[directions::X1]-xCoordsMinusEps[directions::X1])/(2.*GAMMA_EPS);
+	  dtheta_dX2 = (xCoordsPlusEps[directions::X2]-xCoordsMinusEps[directions::X2])/(2.*GAMMA_EPS);
+	}
+
+      dr_dX1.eval();
+      dtheta_dX1.eval();
+      dr_dX2.eval();
+      dtheta_dX2.eval();
 
       array sigma =  r*r + af::pow(blackHoleSpin * af::cos(theta), 2.);
+      sigma.eval();
 
       /* -(1 - 2*r/sigma) dt^2 */
       gCov[0][0] = -(1. - 2.*r/sigma);     
@@ -260,8 +326,8 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       /* (4*r/sigma * dr/dX1) dt dX1 */
       gCov[0][1] = (2.*r/sigma) * dr_dX1; 
 
-      /* (0) dt dX2 */
-      gCov[0][2] = 0.; 
+      /* (4*r/sigma * dr/dX2) dt dX2 */
+      gCov[0][2] = (2.*r/sigma) * dr_dX2;
 
       /* -(4*a*r*sin(theta)^2/sigma) dt dphi */
       gCov[0][3] = -(2.*blackHoleSpin*r*af::pow(af::sin(theta), 2.)/sigma);
@@ -269,11 +335,13 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       /* (4*r/sigma * dr/dX1) dX1 dt */
       gCov[1][0] = gCov[0][1];
 
-      /* ( (1 + 2*r/sigma)*dr/dX1*dr/dX1) dX1 dX1 */
-      gCov[1][1] = (1. + 2*r/sigma) * dr_dX1 * dr_dX1;
+      /* ( (1 + 2*r/sigma)*dr/dX1*dr/dX1 + sigma*dtheta_dX1*dtheta_dX1) dX1 dX1 */
+      gCov[1][1] = (1. + 2*r/sigma) * dr_dX1 * dr_dX1
+	+ (sigma) * dtheta_dX1 * dtheta_dX1;
   
-      /* (0) dX1 dX2 */
-      gCov[1][2] = 0.;
+      /* 2*((1 + 2*r/sigma)*dr/dX1*dr/dX2 + sigma * dtheta_dX1 * dtheta_dX2) dX1 dX2 */
+      gCov[1][2] = (1. + 2*r/sigma) * dr_dX1 * dr_dX2
+	+ (sigma) * dtheta_dX1 * dtheta_dX2;
 
       /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX1) dX1 dphi */
       gCov[1][3] =
@@ -285,11 +353,13 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       /* (0) dX2 dX1 */
       gCov[2][1] = gCov[1][2];
 
-      /* (sigma*dtheta/dX2*dtheta/dX2) dX2 dX2 */
-      gCov[2][2] = sigma*dtheta_dX2*dtheta_dX2;
+      /* (sigma*dtheta/dX2*dtheta/dX2 + (1 + 2*r/sigma)*dr/dX2*dr/dX2) dX2 dX2 */
+      gCov[2][2] = sigma*dtheta_dX2*dtheta_dX2
+	+ (1. + 2*r/sigma) * dr_dX2 * dr_dX2;
 
-      /* (0) dX2 dphi */
-      gCov[2][3] = 0.;
+      /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX2) dX2 dphi */
+      gCov[2][3] = 
+	-blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX2;
 
       /* -(4*a*r*sin(theta)^2/sigma) dphi dt */
       gCov[3][0] = gCov[0][3];
@@ -306,12 +376,17 @@ void geometry::setgCovInXCoords(const array XCoords[3],
                                * (1. + 2*r/sigma)
                       )
                    );
+
+      for(int d=0;d<4;d++)
+	for(int dd=0;dd<4;dd++)
+	  gCov[d][dd].eval();
       
       break;
   }
 
 
 }
+
 
 void geometry::XCoordsToxCoords(const array XCoords[3], 
                                 array xCoords[3]
@@ -333,9 +408,150 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
       xCoords[directions::X2] =  M_PI*XCoords[directions::X2] 
                                + 0.5*(1 - hSlope)
                                * af::sin(2.*M_PI*XCoords[directions::X2]);
-  
-      xCoords[directions::X3] = 2*M_PI*XCoords[directions::X3];
+      xCoords[directions::X3] = XCoords[directions::X3];
 
+      xCoords[directions::X1].eval();
+      xCoords[directions::X2].eval();
+      xCoords[directions::X3].eval();
+      
+      // Sasha's cylindrified grid
+      if(params::DoCylindrify)
+	{
+	  // We cylindrify the region with 
+	  // X1 < params::X1cyl
+	  // X2 < params::X2cyl
+	  array X0[3];
+	  for(int d=0;d<3;d++)
+	    X0[d] = XCoords[d]*1.;
+	  X0[directions::X1] = params::X1cyl;
+	  X0[directions::X2] = params::X2cyl;
+	  X0[directions::X3]=0.;
+	  array R_cyl = GammieRadius(X0[directions::X1]);
+	  array Theta_cyl = GammieTheta(X0[directions::X2]);
+	  array X1_tr = af::log(0.5*(R_cyl+exp(params::X1Start)));
+	  
+	  array Xtr[3];
+	  array Xgrid[3];
+	  array xcyl[3];
+	  array xGam[3];
+	  for(int d=0;d<3;d++)
+	    {
+	      Xtr[d]=XCoords[d];
+	      Xgrid[d]=XCoords[d];
+	      xcyl[d]=xCoords[d];
+	      xGam[d]=xCoords[d];
+	    }
+	  Xtr[directions::X1]=X1_tr;
+	  
+	  // Transform lower hemisphere and ghost zones
+	  // to upper hemisphere, 0<theta<pi/2
+	  array IsMirrored = Xgrid[directions::X2]>0.5;
+	  Xgrid[directions::X2] = Xgrid[directions::X2]*(1-IsMirrored)
+	    + IsMirrored*(1.-Xgrid[directions::X2]);
+	  xGam[directions::X2] = xGam[directions::X2]*(1-IsMirrored)
+	    + IsMirrored* (M_PI-xGam[directions::X2]);
+	  array IsGhost = Xgrid[directions::X2]<0.;
+	  Xgrid[directions::X2] = Xgrid[directions::X2]*(1-IsGhost)
+            + IsGhost*(-(1.0)*Xgrid[directions::X2]);
+	  xGam[directions::X2] = xGam[directions::X2]*(1-IsGhost)
+            + IsGhost* (-(1.0)*xGam[directions::X2]);
+
+	  // Sasha's new theta
+	  array f1 = func1(X0,Xgrid);
+	  array f2 = func2(X0,Xgrid);
+	  array dftr = func2(X0,Xtr)-func1(X0,Xtr);
+	  array sinth = maxs( xGam[directions::X1]*f1, xGam[directions::X1]*f2, GammieRadius(Xtr[directions::X1])*af::abs(dftr)+1.e-20 ) / xGam[directions::X1]; 
+	  array th = af::asin(sinth);
+	  th.eval();
+
+	  // Move ghost zones and lower hemisphere points
+	  // back to their correct theta
+	  th = th*(1-IsGhost*2);
+	  xcyl[directions::X2] = IsMirrored*(M_PI-th)
+	    +(1-IsMirrored)*th;
+	  for(int d=0;d<3;d++)
+	    {
+	      xCoords[d]=xcyl[d];
+	      xCoords[d].eval();
+	    }
+
+	  // Loop manually, to reuse Sasha's code
+	  /*grid* mGrid = new grid(N1, N2, N3, dim, 1, numGhost,
+				 false, false, false
+				 );
+	  const int N1g = mGrid->N1Total;
+	  const int N2g = mGrid->N2Total;
+	  const int N3g = mGrid->N3Total;
+	  delete mGrid;
+
+	  for(int k=0;k<N3g;k++)
+	    for(int j=0;j<N2g;j++)
+	      for(int i=0;i<N1g;i++)
+		{
+		  double xGam[3],xCyl[3],xGrid[3],Xtr[3],xIn[3];
+		  // Get 'Gammie' coordinates
+		  for(int d=0;d<3;d++)
+		    {
+		      xGam[d]=xCoords[d](i,j,k).scalar<double>();
+		      xGrid[d]=XCoords[d](i,j,k).scalar<double>();
+		      xCyl[d]=xGam[d];
+		      Xtr[d]=xGrid[d];
+		      xIn[d]=xGrid[d];
+		    }
+		  Xtr[directions::X1]=X1_tr;
+		  
+		  // Cylindrification - use adapted version of Sasha's code
+
+		  // Bring theta coord into the first quadrant
+		  bool IsMirrored = xGrid[directions::X2]>0.5;
+		  if(IsMirrored)
+		    {
+		      xGrid[directions::X2]=1.-xGrid[directions::X2];
+		      xGam[directions::X2]=M_PI-xGam[directions::X2];
+		    }
+		  bool IsGhost = xGrid[directions::X2]<0.;
+		  if(IsGhost)
+		    {
+		      xGrid[directions::X2] = - xGrid[directions::X2];
+		      xGam[directions::X2] = - xGam[directions::X2];
+		    }
+
+		  double f1 = func1(x0,xGrid);
+		  double f2 = func2(x0,xGrid);
+		  double dftr = func2( x0, Xtr) - func1( x0, Xtr);
+
+		  // Compute new theta
+		  double sinth = maxs( xGam[directions::X1]*f1, xGam[directions::X1]*f2, GammieRadius(Xtr[directions::X1])*fabs(dftr)+1.e-20 ) / xGam[directions::X1];
+		  double th = asin( sinth );
+		  
+		  // Undo mirroring operation if needed
+		  if(IsGhost)
+		    {
+		      xGrid[directions::X2] = - xGrid[directions::X2];
+		      xGam[directions::X2] = - xGam[directions::X2];
+		      th = -th;
+		    }
+		  if(IsMirrored)
+		    {
+		      xCyl[directions::X2] = M_PI-th;
+		      xGrid[directions::X2] = 1.-xGrid[directions::X2];
+		    }
+		  else
+		    {
+		      xCyl[directions::X2] = th;
+		    }
+
+		  // Copy cylindrified coordinates into the Arrayfire array
+		  for(int d=0;d<3;d++)
+                    {
+		      xCoords[d](i,j,k)=xCyl[d];
+		    }
+		    }
+	  xCoords[directions::X1].eval();
+	  xCoords[directions::X2].eval();
+	  xCoords[directions::X3].eval();*/
+	}
+      
       break;
   }
 }
@@ -343,29 +559,11 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
 void geometry::computeGammaDownDownDown(const int eta,
                                         const int mu,
                                         const int nu,
-                                        array& out
+                                        array& out,
+					const array gCovPlus[NDIM-1][NDIM][NDIM],
+					const array gCovMinus[NDIM-1][NDIM][NDIM]
                                        )
 {
-  const double GAMMA_EPS=1.e-5;
-  array XCoords_4D[NDIM];
-  array XEpsilon[NDIM];
-  array XEpsilonSpatial[3];
-  array gCovEpsilon[NDIM][NDIM];
-
-  XCoords_4D[0] = zero;
-  XCoords_4D[1] = this->XCoords[directions::X1];
-  XCoords_4D[2] = this->XCoords[directions::X2];
-  XCoords_4D[3] = this->XCoords[directions::X3];
-
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha]=zero;
-      
-    for (int beta=0; beta<NDIM; beta++)
-    {
-      gCovEpsilon[alpha][beta]=zero;
-    }
-  }
   out = zero;
 
   /* First, take care of d(g_eta_mu)/dX^nu. To compute this numerically we
@@ -377,94 +575,34 @@ void geometry::computeGammaDownDownDown(const int eta,
    * centered difference around X^alpha. By doing the computations seperately
    * for +EPS and -EPS, we cut storage requirements by half.*/
 
-  /* Handle +EPS first */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha]=XCoords_4D[alpha];
-  }
-  XEpsilon[nu] += GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out += 0.5*gCovEpsilon[eta][mu]/(2.*GAMMA_EPS); 
-
-  /* Now do -EPS */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha] = XCoords_4D[alpha];
-  }
-  XEpsilon[nu] -= GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out -= 0.5*gCovEpsilon[eta][mu]/(2.*GAMMA_EPS);
-  /* End of d(g_eta_mu)/dX^nu */
+  if(nu>0)
+    {
+      /* Handle +EPS first */
+      out += 0.5*gCovPlus[nu-1][eta][mu]/(2.*GAMMA_EPS); 
+      /* Now do -EPS */
+      out -= 0.5*gCovMinus[nu-1][eta][mu]/(2.*GAMMA_EPS);
+      /* End of d(g_eta_mu)/dX^nu */
+    }
 
   /* Now, d(g_eta_nu)/dX^mu */
-  /* +EPS first */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha] = XCoords_4D[alpha];
-  }
-  XEpsilon[mu] += GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out += 0.5*(gCovEpsilon[eta][nu])/(2.*GAMMA_EPS);
-
-  /* Now do -EPS */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha] = XCoords_4D[alpha];
-  }
-  XEpsilon[mu] -= GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out -= 0.5*gCovEpsilon[eta][nu]/(2.*GAMMA_EPS);
-  /* End of d(g_eta_nu)/dX^mu */
+  if(mu>0)
+    {
+      /* +EPS first */
+      out += 0.5*gCovPlus[mu-1][eta][nu]/(2.*GAMMA_EPS);
+      /* Now do -EPS */
+      out -= 0.5*gCovMinus[mu-1][eta][nu]/(2.*GAMMA_EPS);
+      /* End of d(g_eta_nu)/dX^mu */
+    }
 
   /* Finally, d(g_mu_nu)/dX^eta */
-  /* +EPS first */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha] = XCoords_4D[alpha];
-  }
-  XEpsilon[eta] += GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out -= 0.5*(gCovEpsilon[mu][nu])/(2.*GAMMA_EPS);
-
-  /* Now do -EPS */
-  for (int alpha=0; alpha<NDIM; alpha++)
-  {
-    XEpsilon[alpha] = XCoords_4D[alpha];
-  }
-  XEpsilon[eta] -= GAMMA_EPS;
-  /* setgCovInXCoords takes in spatial XCoords. Hence the following piece of code */
-  for (int dir=directions::X1; dir<=directions::X3; dir++)
-  {
-    XEpsilonSpatial[dir] = XEpsilon[dir+1];
-  }
-  setgCovInXCoords(XEpsilonSpatial,gCovEpsilon);
-  out += 0.5*gCovEpsilon[mu][nu]/(2.*GAMMA_EPS);
-  /* End of d(g_mu_nu)/dX^eta */
+  if(eta>0)
+    {
+      /* +EPS first */
+      out -= 0.5*gCovPlus[eta-1][mu][nu]/(2.*GAMMA_EPS);
+      /* Now do -EPS */
+      out += 0.5*gCovMinus[eta-1][mu][nu]/(2.*GAMMA_EPS);
+      /* End of d(g_mu_nu)/dX^eta */
+    }
 
   out.eval();
 }

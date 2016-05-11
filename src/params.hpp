@@ -96,6 +96,9 @@ namespace params
   extern double X2Start, X2End;
   extern double X3Start, X3End;
 
+  extern int DoCylindrify;
+  extern double X1cyl, X2cyl;
+
   extern int boundaryLeft;
   extern int boundaryRight;
 

@@ -37,6 +37,7 @@ void timeStepper::solve(grid &primGuess)
     l2Norm.eval();
     array notConverged      = l2Norm > params::nonlinearsolve_atol;
     array conditionIndices  = where(notConverged > 0);
+    int localNonConverged = conditionIndices.elements();
 
     /* Communicate residual */
     double localresnorm = 
@@ -44,7 +45,6 @@ void timeStepper::solve(grid &primGuess)
                AF_NORM_VECTOR_1
               );
     double globalresnorm = localresnorm;
-    int localNonConverged = conditionIndices.elements();
     int globalNonConverged = localNonConverged;
     if (world_rank == 0)
     {
@@ -70,7 +70,7 @@ void timeStepper::solve(grid &primGuess)
     MPI_Barrier(PETSC_COMM_WORLD);
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
                 globalresnorm,globalNonConverged
-               );
+		);
     if (globalNonConverged == 0)
     {
       break;
@@ -230,7 +230,6 @@ void timeStepper::solve(grid &primGuess)
 	  }
       }
       }*/
-
 }
 
 void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
