@@ -19,21 +19,22 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
+set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
 # Configuration for SAVIO
-set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
+#set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
 #set(PETSC_DIR "/global/scratch/manic/petsc_installation")
-set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
-set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
+#set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
 # Configuration for Stampede
-#set(PETSC_DIR "/work/03669/tg829690/petsc_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
+set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 
 # Configuration for Deathstar
 #set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
