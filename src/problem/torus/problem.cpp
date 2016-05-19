@@ -840,7 +840,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     }
   if(WriteData)
     {
-      const int WriteIdx = floor(time/params::WriteDataEveryDt);
+      long long int WriteIdx = floor(time/params::WriteDataEveryDt);
       if(WriteIdx==0)
 	{
 	  PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");

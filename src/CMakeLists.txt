@@ -25,16 +25,20 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 # 
 # Configuration for SAVIO
 #set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
-#set(PETSC_DIR "/global/scratch/manic/petsc_installation")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
 #set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
 #set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
+# Configuration for Maverick
+set(PETSC_DIR "/home/03669/tg829690/petsc_installation_3.7.0")
+set(ArrayFire_ROOT_DIR "/home/03669/tg829690/arrayfire/build/package")
+set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
+
 # Configuration for Stampede
-set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
-set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+#set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
+#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 
 # Configuration for Deathstar
 #set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
@@ -86,7 +90,7 @@ find_library(MATH_LIBRARIES m REQUIRED)
 find_package(PETSc REQUIRED)
 find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
-find_package(YAML REQUIRED)
+#find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 find_package(LAPACKE REQUIRED)
 
