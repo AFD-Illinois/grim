@@ -79,14 +79,14 @@ int main(int argc, char **argv)
   MPI_Comm_size(PETSC_COMM_WORLD, &size);
   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 
-  PetscPrintf(PETSC_COMM_WORLD, 
-              "#### Rank %d of %d: System info ####\n",
-              rank, size
-             );
-  #if (ARCH == OpenCL)
-    af::setDevice(rank%params::numDevices);
-  #endif
-  af::info();
+  af::setDevice(rank%params::numDevices);
+
+  std::string deviceInfo = af::infoString();
+  PetscSynchronizedPrintf(PETSC_COMM_WORLD, 
+                          "#### Rank %d of %d: System info ####\n %s \n",
+                          rank, size, deviceInfo.c_str()
+                         );  
+  PetscSynchronizedFlush(PETSC_COMM_WORLD, PETSC_STDOUT);
 
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
