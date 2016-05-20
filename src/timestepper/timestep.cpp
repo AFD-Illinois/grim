@@ -61,17 +61,12 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   double divFluxTime = af::timer::stop(divFluxTimer);
 
   /* Set a guess for prim */
-  for (int var=0; var < prim->numVars; var++)
+  for (int var=0; var < vars::numFluidVars; var++)
   {
     prim->vars[var] = primOld->vars[var];
     numReads  += 1;
     numWrites += 1;
   }
-
-  /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
-  af::timer solverTimer = af::timer::start();
-  solve(*prim);
-  double solverTime = af::timer::stop(solverTimer);
 
   af::timer inductionEqnTimer = af::timer::start();
   cons->vars[vars::B1] = 
@@ -88,6 +83,19 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
   prim->vars[vars::B3].eval();
   double inductionEqnTime = af::timer::stop(inductionEqnTimer);
+
+  primGuessPlusEps->vars[vars::B1] = prim->vars[vars::B1];
+  primGuessPlusEps->vars[vars::B2] = prim->vars[vars::B2];
+  primGuessPlusEps->vars[vars::B3] = prim->vars[vars::B3];
+
+  primGuessLineSearchTrial->vars[vars::B1] = prim->vars[vars::B1];
+  primGuessLineSearchTrial->vars[vars::B2] = prim->vars[vars::B2];
+  primGuessLineSearchTrial->vars[vars::B3] = prim->vars[vars::B3];
+
+  /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
+  af::timer solverTimer = af::timer::start();
+  solve(*prim);
+  double solverTime = af::timer::stop(solverTimer);
 
   /* Copy solution to primHalfStepGhosted. WARNING: Right now
    * primHalfStep->vars[var] points to prim->vars[var]. Might need to do a deep
@@ -196,12 +204,6 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numWrites += numWritesDivFluxes;
   divFluxTime = af::timer::stop(divFluxTimer);
 
-  /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
-   * primHalfStep as a guess */
-  solverTimer = af::timer::start();
-  solve(*prim);
-  solverTime = af::timer::stop(solverTimer);
-
   inductionEqnTimer = af::timer::start();
   cons->vars[vars::B1] = 
     consOld->vars[vars::B1] - dt*divFluxes->vars[vars::B1];
@@ -217,6 +219,20 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
   prim->vars[vars::B3].eval();
   inductionEqnTime = af::timer::stop(inductionEqnTimer);
+
+  primGuessPlusEps->vars[vars::B1] = prim->vars[vars::B1];
+  primGuessPlusEps->vars[vars::B2] = prim->vars[vars::B2];
+  primGuessPlusEps->vars[vars::B3] = prim->vars[vars::B3];
+
+  primGuessLineSearchTrial->vars[vars::B1] = prim->vars[vars::B1];
+  primGuessLineSearchTrial->vars[vars::B2] = prim->vars[vars::B2];
+  primGuessLineSearchTrial->vars[vars::B3] = prim->vars[vars::B3];
+
+  /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
+   * primHalfStep as a guess */
+  solverTimer = af::timer::start();
+  solve(*prim);
+  solverTime = af::timer::stop(solverTimer);
 
   /* Copy solution to primOldGhosted */
   for (int var=0; var < prim->numVars; var++)

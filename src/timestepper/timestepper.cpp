@@ -249,16 +249,17 @@ timeStepper::timeStepper(const int N1,
 
   riemann = new riemannSolver(*prim, *geomCenter);
 
+  int numFluidVars = vars::numFluidVars;
   /* Data structures needed for the nonlinear solver */
   residual        = new grid(N1, N2, N3,
-                             dim, numVars, numGhost,
+                             dim, numFluidVars, numGhost,
                              periodicBoundariesX1,
                              periodicBoundariesX2,
                              periodicBoundariesX3
                             );
 
   residualPlusEps  = new grid(N1, N2, N3,
-                              dim, numVars, numGhost,
+                              dim, numFluidVars, numGhost,
                               periodicBoundariesX1,
                               periodicBoundariesX2,
                               periodicBoundariesX3
@@ -290,13 +291,13 @@ timeStepper::timeStepper(const int N1,
   jacobianSoA  = af::constant(1., residual->vars[0].dims(0),
                                   residual->vars[0].dims(1),
                                   residual->vars[0].dims(2),
-                                  numVars * numVars,
+                                  numFluidVars * numFluidVars,
                                   f64
                              );
 
   /* Correction dP_k in P_{k+1} = P_k + lambda*dP_k in Array of Structs format */
   deltaPrimAoS = af::constant(0., 
-                              numVars,
+                              numFluidVars,
                               residual->vars[0].dims(0),
                               residual->vars[0].dims(1),
                               residual->vars[0].dims(2),
@@ -310,9 +311,9 @@ timeStepper::timeStepper(const int N1,
   int N2Total = residual->N2Total;
   int N3Total = residual->N3Total;
 
-  AHostPtr = new double [numVars*numVars*N1Total*N2Total*N3Total];
-  bHostPtr = new double [numVars*N1Total*N2Total*N3Total];
-  xHostPtr = new double [numVars*N1Total*N2Total*N3Total];
+  AHostPtr = new double [numFluidVars*numFluidVars*N1Total*N2Total*N3Total];
+  bHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
+  xHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
 
   if (params::restart)
   {

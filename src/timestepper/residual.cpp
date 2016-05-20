@@ -161,7 +161,7 @@ void timeStepper::computeResidual(const grid &primGuess,
     numReads  += 2*numReadsImplicitSources  + numReadsTimeDerivSources;
     numWrites += 2*numWritesImplicitSources + numWritesTimeDerivSources; 
 
-    for (int var=0; var<vars::dof; var++)
+    for (int var=0; var < residualGuess.numVars; var++)
     {
       residualGuess.vars[var] = 
         (cons->vars[var] - consOld->vars[var])/dt

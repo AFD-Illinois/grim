@@ -21,7 +21,7 @@ void timeStepper::solve(grid &primGuess)
     computeResidual(primGuess, *residual, true, 
                     numReadsResidual, numWritesResidual
                    );
-    for (int var=0; var < vars::dof; var++)
+    for (int var=0; var < vars::numFluidVars; var++)
     {
       /* Need residualSoA to compute norms */
       residualSoA(span, span, span, var) = residual->vars[var];
@@ -83,7 +83,7 @@ void timeStepper::solve(grid &primGuess)
 
     /* Assemble the Jacobian in Struct of Arrays format where the physics
      * operations are all vectorized */
-    for (int row=0; row < vars::dof; row++)
+    for (int row=0; row < vars::numFluidVars; row++)
     {
       /* Recommended value of Jacobian differencing parameter to achieve fp64
        * machine precision */
@@ -99,9 +99,9 @@ void timeStepper::solve(grid &primGuess)
                       numReadsResidual, numWritesResidual
                      );
 
-      for (int column=0; column < vars::dof; column++)
+      for (int column=0; column < vars::numFluidVars; column++)
       {
-        jacobianSoA(span, span, span, column + vars::dof*row)
+        jacobianSoA(span, span, span, column + vars::numFluidVars*row)
           = (  residualPlusEps->vars[column] 
              - residual->vars[column]
             )
@@ -156,7 +156,7 @@ void timeStepper::solve(grid &primGuess)
         )
     {
       /* 1) First take current step stepLength */
-      for (int var=0; var<vars::dof; var++)
+      for (int var=0; var<vars::numFluidVars; var++)
       {
         primGuessLineSearchTrial->vars[var] =  
           primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
@@ -166,7 +166,7 @@ void timeStepper::solve(grid &primGuess)
       computeResidual(*primGuessLineSearchTrial, *residual, true,
                       numReadsResidual, numWritesResidual
                      );
-      for (int var=0; var<vars::dof; var++)
+      for (int var=0; var<vars::numFluidVars; var++)
       {
         residualSoA(span, span, span, var) = residual->vars[var];
       }
@@ -198,7 +198,7 @@ void timeStepper::solve(grid &primGuess)
     }
 
     /* stepLength has now been set */
-    for (int var=0; var<vars::dof; var++)
+    for (int var=0; var<vars::numFluidVars; var++)
     {
       primGuess.vars[var] = 
         primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
@@ -258,9 +258,9 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
           i +  N1Total*(j + (N2Total*k) );
 
         /* Assemble ALocal */
-        for (int row=0; row < numVars; row++)
+        for (int row=0; row < vars::numFluidVars; row++)
         {
-          for (int column=0; column < numVars; column++)
+          for (int column=0; column < vars::numFluidVars; column++)
           {
             const int indexALocal = column + (numVars*row);
             const int indexAHost  = 

@@ -3,7 +3,7 @@
 namespace params
 {
   // 4 GPUs on SAVIO
-  int numDevices = 4;
+  int numDevices = 1;
 
   // Grid size options
   int N1 = 140;
@@ -33,7 +33,7 @@ namespace params
   double Rout = 63.;
 
   // Initial conditions
-  double adiabaticIndex = 5./3;
+  double adiabaticIndex = 4./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
   double PressureMaxRadius = 12.;
@@ -113,8 +113,14 @@ namespace params
 
 namespace vars
 {
-  int dof = 8+params::conduction+params::viscosity;
-  int Q = 8;
-  int DP = 8+params::conduction;
+  int Q   = 5;
+  int DP  = 5 + params::conduction;
+  int numFluidVars = 5 + params::conduction + params::viscosity;
+
+  int B1  = 5 + params::conduction + params::viscosity;
+  int B2  = 6 + params::conduction + params::viscosity;
+  int B3  = 7 + params::conduction + params::viscosity;
+  int dof = 8 + params::conduction + params::viscosity;
+
 };
 
