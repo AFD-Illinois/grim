@@ -399,7 +399,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if(WriteData)
   {
     const int WriteIdx = floor(time/params::WriteDataEveryDt);
-    if(WriteIdx==1)
+    if(WriteIdx==0)
 	  {
 	    PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
 	    geomCenter->gCovGrid->dump("gCov","gCovCenter.h5");
@@ -419,6 +419,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 	  }
       
     std::string filename   = "primVarsT";
+    std::string filenameVTS= "primVarsT";
     std::string B1filename = "B1Left";
     std::string B2filename = "B2Bottom";
     std::string B3filename = "B3Back";
@@ -433,8 +434,30 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     }
       
     filename=filename+s_idx;
+    filenameVTS=filename;
     filename=filename+".h5";
     primOld->dump("primitives",filename);
+
+    filenameVTS=filenameVTS+".vts";
+    std::string varNames[vars::dof];
+    varNames[vars::RHO] = "rho";
+    varNames[vars::U]   = "u";
+    varNames[vars::U1]  = "u1";
+    varNames[vars::U2]  = "u2";
+    varNames[vars::U3]  = "u3";
+    varNames[vars::B1]  = "B1";
+    varNames[vars::B2]  = "B2";
+    varNames[vars::B3]  = "B3";
+    if (params::conduction)
+    {
+      varNames[vars::Q]   = "q";
+    }
+    if (params::viscosity)
+    {
+      varNames[vars::DP]  = "dP";
+    }
+
+    primOld->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
 
   }
 
