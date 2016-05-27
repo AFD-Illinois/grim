@@ -402,32 +402,19 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     if(WriteIdx==1)
 	  {
 	    PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
-	    geomCenter->setgCovGrid();
 	    geomCenter->gCovGrid->dump("gCov","gCovCenter.h5");
-	    geomCenter->setgConGrid();
 	    geomCenter->gConGrid->dump("gCon","gConCenter.h5");
-	    geomCenter->setgGrid();
 	    geomCenter->gGrid->dump("sqrtDetg","sqrtDetgCenter.h5");
-	    geomCenter->setxCoordsGrid();
 	    geomCenter->xCoordsGrid->dump("xCoords","xCoordsCenter.h5");
 
-	    geomLeft->setgCovGrid();
 	    geomLeft->gCovGrid->dump("gCov","gCovLeft.h5");
-	    geomLeft->setgConGrid();
 	    geomLeft->gConGrid->dump("gCon","gConLeft.h5");
-	    geomLeft->setgGrid();
 	    geomLeft->gGrid->dump("sqrtDetg","sqrtDetgLeft.h5");
-	    geomLeft->setxCoordsGrid();
 	    geomLeft->xCoordsGrid->dump("xCoords","xCoordsLeft.h5");
 
-
-	    geomBottom->setgCovGrid();
 	    geomBottom->gCovGrid->dump("gCov","gCovBottom.h5");
-	    geomBottom->setgConGrid();
 	    geomBottom->gConGrid->dump("gCon","gConBottom.h5");
-	    geomBottom->setgGrid();
 	    geomBottom->gGrid->dump("sqrtDetg","sqrtDetgBottom.h5");
-	    geomBottom->setxCoordsGrid();
 	    geomBottom->xCoordsGrid->dump("xCoords","xCoordsBottom.h5");
 	  }
       
