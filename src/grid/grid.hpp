@@ -15,8 +15,8 @@ class grid
   void copyLocalVecToVars();
 
   public:
-    DM dm;
-    Vec globalVec, localVec;
+    DM dm, coordDM;
+    Vec globalVec, localVec, coordVec;
 
     int numGhost, numVars, dim;
          
@@ -44,6 +44,7 @@ class grid
     array indices[3];
     double *hostPtr;
     bool hasHostPtrBeenAllocated;
+    bool havexCoordsBeenSet;
 
     grid(const int N1, 
          const int N2,
@@ -62,6 +63,10 @@ class grid
     void copyVarsToGlobalVec();
     void copyHostPtrToVars(const double *hostPtr);
     void dump(const std::string varsName, const std::string filename);
+    void dumpVTS(const grid &xCoords,
+                 const std::string *varNames,
+                 const std::string filename
+                );
     void load(const std::string varsName, const std::string filename);
 };
 

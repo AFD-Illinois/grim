@@ -6,10 +6,10 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 140;
-  int N2 = 128;
+  int N1 = 64;
+  int N2 = 64;
   int N3 = 16;
-  int dim = 3;
+  int dim = 2;
   int numGhost = 3;
 
   // (Re)start options
@@ -74,8 +74,8 @@ namespace params
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 1;
-  int DoCylindrify = 1;
+  int DerefineThetaHorizon = 0;
+  int DoCylindrify = 0;
   double X1cyl = log(7.*Rin);
   double X2cyl = 3./N2;
 

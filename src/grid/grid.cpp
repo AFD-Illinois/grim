@@ -22,6 +22,7 @@ grid::grid(const int N1,
   this->periodicBoundariesX3 = periodicBoundariesX3;
 
   hasHostPtrBeenAllocated = 0;
+  havexCoordsBeenSet = 0; // Needed for VTS output
 
   /* Implementations for MIRROR, OUTFLOW in boundary.cpp and DIRICHLET in
    * problem.cpp */
@@ -362,6 +363,96 @@ void grid::dump(const std::string varsName, const std::string fileName)
 
   /* Output the variables */
   PetscObjectSetName((PetscObject) globalVec, varsName.c_str());
+  VecView(globalVec, viewer);
+
+  PetscViewerDestroy(&viewer);
+}
+
+void grid::dumpVTS(const grid &xCoords,
+                   const std::string *varNames,
+                   const std::string fileName
+                  )
+{
+  if (havexCoordsBeenSet == 0)
+  {
+    PetscPrintf(PETSC_COMM_WORLD, "Setting coordinates for VTS output...");
+    DMDASetUniformCoordinates(dm,0.0,1.0,0.0,1.0,0.0,1.0);
+    DMGetCoordinateDM(dm, &coordDM);
+    DMGetCoordinates(dm, &coordVec);
+
+    double *x1HostPtr =  xCoords.vars[directions::X1].host<double>();
+    double *x2HostPtr =  xCoords.vars[directions::X2].host<double>();
+    double *x3HostPtr =  xCoords.vars[directions::X3].host<double>();
+
+    DMDACoor2d **coord2D;
+    DMDACoor3d ***coord3D;
+    if (dim==2)
+    {
+      DMDAVecGetArray(coordDM, coordVec, &coord2D);
+    }
+    else if (dim==3)
+    {
+      DMDAVecGetArray(coordDM, coordVec, &coord3D);
+    }
+
+    for (int k=0; k<N3Local; k++)
+    {
+      for (int j=0; j<N2Local; j++)
+      {
+        for (int i=0; i<N1Local; i++)
+        {
+          const int index  = (i + numGhostX1 
+                                + N1Total*(j + numGhostX2
+                                             + N2Total*(k + numGhostX3)
+                                          ) 
+                             );
+
+          if (dim==2)
+          {
+            coord2D[j][i].x = x1HostPtr[index];
+            coord2D[j][i].y = x2HostPtr[index];
+          }
+          else if (dim==3)
+          {
+            coord3D[k][j][i].x = x1HostPtr[index];
+            coord3D[k][j][i].y = x2HostPtr[index];
+            coord3D[k][j][i].z = x3HostPtr[index];
+          }
+        }
+      }
+    }
+    if (dim==2)
+    {
+      DMDAVecRestoreArray(coordDM, coordVec, &coord2D);
+    }
+    else if (dim==3)
+    {
+      DMDAVecRestoreArray(coordDM, coordVec, &coord3D);
+    }
+    delete x1HostPtr;
+    delete x2HostPtr;
+    delete x3HostPtr;
+
+    DMSetCoordinates(dm, coordVec);
+    havexCoordsBeenSet = 1;
+
+    for (int var=0; var<numVars; var++)
+    {
+      DMDASetFieldName(dm, var, varNames[var].c_str());
+    }
+
+    PetscPrintf(PETSC_COMM_WORLD, "done.\n");
+  }
+
+  copyVarsToGlobalVec();
+
+  PetscViewer viewer;
+  PetscViewerVTKOpen(PETSC_COMM_WORLD,
+                      fileName.c_str(), FILE_MODE_WRITE, &viewer
+                     );
+
+  /* Output the variables */
+  PetscObjectSetName((PetscObject) globalVec, "");
   VecView(globalVec, viewer);
 
   PetscViewerDestroy(&viewer);

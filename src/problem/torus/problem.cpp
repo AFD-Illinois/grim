@@ -40,7 +40,7 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   nu_emhd  = params::ViscosityAlpha*soundSpeed*soundSpeed*tau;
   chi_emhd.eval();
   nu_emhd.eval();
-  af::sync();
+  //af::sync();
 }
 
 
@@ -487,6 +487,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     }
 
   af::sync();
+
   fullStepDiagnostics(numReads,numWrites);
 }
 
@@ -661,7 +662,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
     }
   if(params::conduction || params::viscosity) elem->set(*prim, *geom, numReads,numWrites);
 
-  af::sync();
+  //af::sync();
 }
 
 void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
@@ -854,12 +855,35 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 	  geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
 	}
       std::string filename = "primVarsT";
+      std::string filenameVTS = "primVarsT";
       std::string s_idx = std::to_string(WriteIdx);
       for(int i=0;i<6-s_idx.size();i++)
 	filename=filename+"0";
       filename=filename+s_idx;
+      filenameVTS = filename;
       filename=filename+".h5";
+
+      filenameVTS=filenameVTS+".vts";
       primOld->dump("primitives",filename);
+      std::string varNames[vars::dof];
+      varNames[vars::RHO] = "rho";
+      varNames[vars::U]   = "u";
+      varNames[vars::U1]  = "u1";
+      varNames[vars::U2]  = "u2";
+      varNames[vars::U3]  = "u3";
+      varNames[vars::B1]  = "B1";
+      varNames[vars::B2]  = "B2";
+      varNames[vars::B3]  = "B3";
+      if (params::conduction)
+      {
+        varNames[vars::Q]   = "q";
+      }
+      if (params::viscosity)
+      {
+        varNames[vars::DP]  = "dP";
+      }
+
+      primOld->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
     }
 }
 
@@ -1111,7 +1135,7 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
   // 3) 'Fix' the polar regions by correcting the firs
   // two active zones
   fixPoles(*primBC,numReads,numWrites);
-  af::sync();
+  //af::sync();
 };
 
 void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
