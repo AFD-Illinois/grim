@@ -845,13 +845,9 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       if(WriteIdx==0)
 	{
 	  PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
-	  geomCenter->setgCovGrid();
 	  geomCenter->gCovGrid->dump("gCov","gCov.h5");
-	  geomCenter->setgConGrid();
 	  geomCenter->gConGrid->dump("gCon","gCon.h5");
-	  geomCenter->setgGrid();
 	  geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
-	  geomCenter->setxCoordsGrid();
 	  geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
 	}
       std::string filename = "primVarsT";
@@ -882,7 +878,6 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       {
         varNames[vars::DP]  = "dP";
       }
-
       primOld->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
     }
 }

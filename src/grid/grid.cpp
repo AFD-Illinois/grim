@@ -407,16 +407,20 @@ void grid::dumpVTS(const grid &xCoords,
                                           ) 
                              );
 
+          const int iPetsc = i + iLocalStart;
+          const int jPetsc = j + jLocalStart;
+          const int kPetsc = k + kLocalStart;
+
           if (dim==2)
           {
-            coord2D[j][i].x = x1HostPtr[index];
-            coord2D[j][i].y = x2HostPtr[index];
+            coord2D[jPetsc][iPetsc].x = x1HostPtr[index];
+            coord2D[jPetsc][iPetsc].y = x2HostPtr[index];
           }
           else if (dim==3)
           {
-            coord3D[k][j][i].x = x1HostPtr[index];
-            coord3D[k][j][i].y = x2HostPtr[index];
-            coord3D[k][j][i].z = x3HostPtr[index];
+            coord3D[kPetsc][jPetsc][iPetsc].x = x1HostPtr[index];
+            coord3D[kPetsc][jPetsc][iPetsc].y = x2HostPtr[index];
+            coord3D[kPetsc][jPetsc][iPetsc].z = x3HostPtr[index];
           }
         }
       }

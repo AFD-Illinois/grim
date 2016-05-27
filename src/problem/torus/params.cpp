@@ -3,19 +3,19 @@
 namespace params
 {
   // 4 GPUs on SAVIO
-  int numDevices = 1;
+  int numDevices = 4;
 
   // Grid size options
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 16;
-  int dim = 2;
+  int N1 = 140;
+  int N2 = 128;
+  int N3 = 48;
+  int dim = 3;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 0.0;
+  double Time = 540.0;
   double InitialDt = 0.01;
-  int restart = 0;
+  int restart = 1;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -24,7 +24,7 @@ namespace params
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
-  double CourantFactor = 0.4;
+  double CourantFactor = 0.3;
   double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
@@ -33,7 +33,7 @@ namespace params
   double Rout = 63.;
 
   // Initial conditions
-  double adiabaticIndex = 4./3;
+  double adiabaticIndex = 5./3;
   double blackHoleSpin = 0.9375;
   double InnerEdgeRadius = 6.;
   double PressureMaxRadius = 12.;
@@ -70,13 +70,13 @@ namespace params
   // Automatic grid boundaries - do not change
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI*1.;
+  double X3Start = 0., X3End = M_PI*2.;
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 0;
-  int DoCylindrify = 0;
-  double X1cyl = log(7.*Rin);
+  int DerefineThetaHorizon = 1;
+  int DoCylindrify = 1;
+  double X1cyl = log(3.*Rin);
   double X2cyl = 3./N2;
 
   // Boundary Conditions
@@ -84,8 +84,8 @@ namespace params
   int boundaryLeft   = boundaries::OUTFLOW;
   int boundaryRight  = boundaries::OUTFLOW;
   // Theta
-  int boundaryTop    = boundaries::OUTFLOW;
-  int boundaryBottom = boundaries::OUTFLOW;
+  int boundaryTop    = boundaries::MIRROR;
+  int boundaryBottom = boundaries::MIRROR;
   // Phi
   int boundaryFront  = boundaries::PERIODIC;
   int boundaryBack   = boundaries::PERIODIC;
@@ -105,7 +105,7 @@ namespace params
   //Parameters controlling accuracy of nonlinear solver
   int maxNonLinearIter = 3;
   int maxLineSearchIters = 3;
-  double nonlinearsolve_atol = 1.e-6;
+  double nonlinearsolve_atol = 1.e-3;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
   

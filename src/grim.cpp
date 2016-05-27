@@ -79,7 +79,7 @@ int main(int argc, char **argv)
   MPI_Comm_size(PETSC_COMM_WORLD, &size);
   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 
-  af::setDevice(rank%params::numDevices);
+  //af::setDevice(rank%params::numDevices);
 
   std::string deviceInfo = af::infoString();
   PetscSynchronizedPrintf(PETSC_COMM_WORLD, 

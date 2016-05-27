@@ -14,12 +14,6 @@ MODIFIED_KERR_SCHILD  = METRICS_MODIFIED_KERR_SCHILD
 cdef class geometryPy(object):
 
   def setGeometryPy(self):
-    self.geometryPtr.setgCovGrid()
-    self.geometryPtr.setgConGrid()
-    self.geometryPtr.setgGrid()
-    self.geometryPtr.setalphaGrid()
-    self.geometryPtr.setxCoordsGrid()
-
     gCovGridPy  = gridPy.createGridPyFromGridPtr(self.geometryPtr.gCovGrid)
     gConGridPy  = gridPy.createGridPyFromGridPtr(self.geometryPtr.gConGrid)
     gGridPy     = gridPy.createGridPyFromGridPtr(self.geometryPtr.gGrid)

@@ -46,6 +46,12 @@ geometry::geometry(const int metric,
   g.eval();
   alpha.eval();
 
+  setgCovGrid();
+  setgConGrid();
+  setgGrid();
+  setalphaGrid();
+  setxCoordsGrid();
+
   af::sync();
   PetscPrintf(PETSC_COMM_WORLD, "Done initializing geometry!\n");   
 }
