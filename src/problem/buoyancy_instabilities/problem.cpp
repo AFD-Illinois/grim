@@ -27,6 +27,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
 {
   PetscPrintf(PETSC_COMM_WORLD, "Setting up atmosphere...");
 
+  int numGhost = params::numGhost;
   double rho1D[N1+2*numGhost];
   double u1D[N1+2*numGhost];
   double phi1D[N1+2*numGhost];
@@ -194,8 +195,8 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   }
   PetscRandomDestroy(&randNumGen);
 
-  //B2BottomOld->vars[0] = 1e-5/geomBottom->g;
-  B1LeftOld->vars[0] = 1e-5/geomLeft->g;
+  //B2 = 1e-5/geomCenter->g;
+  B3 = 1e-5/geomCenter->g;
 
   af::seq leftBoundary(0, numGhost);
   af::seq rightBoundary(primOld->N1Local + numGhost, 
@@ -222,7 +223,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   af::seq domainX2 = *primOld->domainX2;
   af::seq domainX3 = *primOld->domainX3;
   
-  computeDivB(*B1LeftOld, *B2BottomOld, *B3BackOld, numReads, numWrites);
+  computeDivB(*primOld, numReads, numWrites);
   double divBNorm = 
     af::norm(af::flat(divB->vars[0](domainX1, domainX2, domainX3)), AF_NORM_VECTOR_1);
   printf("divB = %g\n", divBNorm);
@@ -230,14 +231,23 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
 
 
 
-void timeStepper::setProblemSpecificBCs(grid &prim,
-                                        grid &B1Left,
-                                        grid &B2Bottom,
-                                        grid &B3Back,
+void timeStepper::setProblemSpecificBCs(
                                         int &numReads, 
                                         int &numWrites
                                        )
 {
+  int numGhost = params::numGhost;
+  // 1) Choose which primitive variables are corrected.
+  grid* primBC;
+  fluidElement* elemBC;
+  if(currentStep == timeStepperSwitches::HALF_STEP)
+    {
+      primBC = primOld;
+    }
+  else
+    {
+      primBC = primHalfStep;
+    }
   af::seq leftBoundary(0, numGhost);
   af::seq rightBoundary(primOld->N1Local + numGhost, 
                         primOld->N1Local + 2*numGhost-1
@@ -250,63 +260,73 @@ void timeStepper::setProblemSpecificBCs(grid &prim,
 
   if (primOld->iLocalStart == 0)
   {
-    prim.vars[vars::RHO](leftBoundary, span, span) = problemParams::rhoLeft;
-    prim.vars[vars::U](leftBoundary,   span, span) = problemParams::uLeft; 
-    prim.vars[vars::U1](leftBoundary,  span, span) = problemParams::u1Left;
-    B1Left.vars[0](leftBoundary, span, span)   =1e-5/geomLeft->g(leftBoundary, span, span) ;
-    B2Bottom.vars[0](leftBoundary, span, span) = 0e-5/geomBottom->g(leftBoundary, span, span);
-    B3Back.vars[0](leftBoundary, span, span)   = 
-      0e-5/geomCenter->g(leftBoundary, span, span);
+    primBC->vars[vars::RHO](leftBoundary, span, span) = problemParams::rhoLeft;
+    primBC->vars[vars::U](leftBoundary,   span, span) = problemParams::uLeft; 
+    primBC->vars[vars::U1](leftBoundary,  span, span) = problemParams::u1Left;
+    primBC->vars[vars::U2](leftBoundary,  span, span) = 0.;
+    primBC->vars[vars::U3](leftBoundary,  span, span) = 0.;
+
+    primBC->vars[vars::B1](leftBoundary, span, span)  = 
+      0e-5/geomCenter->g(leftBoundary, span, span) ;
+    primBC->vars[vars::B2](leftBoundary, span, span)  = 
+      0e-5/geomCenter->g(leftBoundary, span, span) ;
+    primBC->vars[vars::B3](leftBoundary, span, span)  = 
+      0e-5/geomCenter->g(leftBoundary, span, span) ;
     
     if (params::conduction)
     {
-      prim.vars[vars::Q](leftBoundary, span, span) = 0.;
+      primBC->vars[vars::Q](leftBoundary, span, span) = 0.;
     }
   }
 
   if (primOld->iLocalEnd == N1)
   {
-    prim.vars[vars::RHO](rightBoundary, span, span) =  problemParams::rhoRight;
-    prim.vars[vars::U](rightBoundary,   span, span) =  problemParams::uRight;
-    prim.vars[vars::U1](rightBoundary,  span, span) =  problemParams::u1Right;
-    B1Left.vars[0](rightBoundary, span, span)   = 1e-5/geomLeft->g(rightBoundary, span, span);
-    B2Bottom.vars[0](rightBoundary, span, span) = 0e-5/geomBottom->g(rightBoundary, span, span);
-    B3Back.vars[0](rightBoundary, span, span)   =
-      0e-5/geomCenter->g(rightBoundary, span, span);
+    primBC->vars[vars::RHO](rightBoundary, span, span) =  problemParams::rhoRight;
+    primBC->vars[vars::U](rightBoundary,   span, span) =  problemParams::uRight;
+    primBC->vars[vars::U1](rightBoundary,  span, span) =  problemParams::u1Right;
+    primBC->vars[vars::U2](rightBoundary, span, span) = 0.;
+    primBC->vars[vars::U3](rightBoundary, span, span) = 0.;
+
+    primBC->vars[vars::B1](rightBoundary, span, span)  = 
+      0e-5/geomCenter->g(rightBoundary, span, span) ;
+    primBC->vars[vars::B2](rightBoundary, span, span)  = 
+      0e-5/geomCenter->g(rightBoundary, span, span) ;
+    primBC->vars[vars::B3](rightBoundary, span, span)  = 
+      0e-5/geomCenter->g(rightBoundary, span, span) ;
 
     if (params::conduction)
     {
-      prim.vars[vars::Q](rightBoundary, span, span) = 0.;
+      primBC->vars[vars::Q](rightBoundary, span, span) = 0.;
     }
   }
 
-  if (primOld->jLocalStart == 0)
-  {
-    B1Left.vars[0](span, bottomBoundary, span) = 0.;
-    B2Bottom.vars[0](span, bottomBoundary, span) =
-      0.*1e-5/geomBottom->g(span, bottomBoundary, span); ;
-    B3Back.vars[0](span, bottomBoundary, span) =
-      0e-5/geomCenter->g(span, bottomBoundary, span);
-
-    if (params::conduction)
-    {
-      prim.vars[vars::Q](rightBoundary, span, span) = 0.;
-    }
-  }
-
-  if (primOld->jLocalEnd == N2)
-  {
-    B1Left.vars[0](span, topBoundary, span) = 0.;
-    B2Bottom.vars[0](span, topBoundary, span) =
-      0.*1e-5/geomBottom->g(span, topBoundary, span);
-    B3Back.vars[0](span, topBoundary, span) =
-      0e-5/geomCenter->g(span, topBoundary, span);
-
-    if (params::conduction)
-    {
-      prim.vars[vars::Q](rightBoundary, span, span) = 0.;
-    }
-  }
+//  if (primOld->jLocalStart == 0)
+//  {
+//    B1Left.vars[0](span, bottomBoundary, span) = 0.;
+//    B2Bottom.vars[0](span, bottomBoundary, span) =
+//      0.*1e-5/geomBottom->g(span, bottomBoundary, span); ;
+//    B3Back.vars[0](span, bottomBoundary, span) =
+//      0e-5/geomCenter->g(span, bottomBoundary, span);
+//
+//    if (params::conduction)
+//    {
+//      prim.vars[vars::Q](rightBoundary, span, span) = 0.;
+//    }
+//  }
+//
+//  if (primOld->jLocalEnd == N2)
+//  {
+//    B1Left.vars[0](span, topBoundary, span) = 0.;
+//    B2Bottom.vars[0](span, topBoundary, span) =
+//      0.*1e-5/geomBottom->g(span, topBoundary, span);
+//    B3Back.vars[0](span, topBoundary, span) =
+//      0e-5/geomCenter->g(span, topBoundary, span);
+//
+//    if (params::conduction)
+//    {
+//      prim.vars[vars::Q](rightBoundary, span, span) = 0.;
+//    }
+//  }
 
 }
 
@@ -429,24 +449,16 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     filename=filename+".h5";
     primOld->dump("primitives",filename);
 
-    B1filename=B1filename+s_idx;
-    B1filename=B1filename+".h5";
-    B1LeftOld->dump("B1", B1filename);
-
-    B2filename=B2filename+s_idx;
-    B2filename=B2filename+".h5";
-    B2BottomOld->dump("B2", B2filename);
-
-    B3filename=B3filename+s_idx;
-    B3filename=B3filename+".h5";
-    B3BackOld->dump("B3", B3filename);
-
-
   }
 
-  computeDivB(*B1LeftOld, *B2BottomOld, *B3BackOld, numReads, numWrites);
+  computeDivB(*primOld, numReads, numWrites);
   double divBNorm = 
     af::norm(af::flat(divB->vars[0](domainX1, domainX2, domainX3)), AF_NORM_VECTOR_1);
   printf("divB = %g\n", divBNorm);
+
+}
+
+void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
+{
 
 }

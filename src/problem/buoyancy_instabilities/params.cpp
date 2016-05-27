@@ -3,19 +3,22 @@
 
 namespace params
 {
-  int N1 = 128;
-  int N2 = 128;
-  int N3 = 1;
-  int dim = 2;
+  int numDevices = 1;
+
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 64;
+  int dim = 3;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
-  double dt = .01;
-  double CourantFactor = 0.9;
-  double Time = 0.;
-  double finalTime = 15000.;
-  int metric = metrics::MODIFIED_KERR_SCHILD;
-  double hSlope = 1.;
+  double InitialDt = 0.01;
+  double CourantFactor = 0.5;
+  double Time = 0;
+  double finalTime = 100000.;
+
+  int restart = 0;
+  std::string restartFile = "restartFile.h5";
 
   int ObserveEveryNSteps = 100;
   int StepNumber = 0;
@@ -31,9 +34,18 @@ namespace params
   double Rin = 100*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
   double Rout = 300.;
   
+  // Grid parameters
+  int metric = metrics::MODIFIED_KERR_SCHILD;
+  double hSlope = 1.;
+  int DerefineThetaHorizon = 0;
+  int DoCylindrify = 0;
+  double X1cyl = log(7.*Rin);
+  double X2cyl = 3./N2;
+
+  
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI*2.;
+  double X3Start = 0., X3End = M_PI*1.;
 
   int boundaryLeft   = boundaries::OUTFLOW;
   int boundaryRight  = boundaries::OUTFLOW;
@@ -87,7 +99,13 @@ namespace params
 
 namespace vars
 {
-  int dof = 5+params::conduction+params::viscosity;
   int Q   = 5;
-  int DP  = 6;
+  int DP  = 5 + params::conduction;
+  int numFluidVars = 5 + params::conduction + params::viscosity;
+
+  int B1  = 5 + params::conduction + params::viscosity;
+  int B2  = 6 + params::conduction + params::viscosity;
+  int B3  = 7 + params::conduction + params::viscosity;
+  int dof = 8 + params::conduction + params::viscosity;
+
 };
