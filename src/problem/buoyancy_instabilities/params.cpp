@@ -3,11 +3,11 @@
 
 namespace params
 {
-  int numDevices = 1;
+  int numDevices = 4;
 
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 64;
+  int N1 = 128;
+  int N2 = 128;
+  int N3 = 128;
   int dim = 3;
   int numGhost = 3;
 
@@ -37,9 +37,9 @@ namespace params
   // Grid parameters
   int metric = metrics::MODIFIED_KERR_SCHILD;
   double hSlope = 1.;
-  int DerefineThetaHorizon = 0;
-  int DoCylindrify = 0;
-  double X1cyl = log(7.*Rin);
+  int DerefineThetaHorizon = 1;
+  int DoCylindrify = 1;
+  double X1cyl = log(4.*Rin);
   double X2cyl = 3./N2;
 
   
@@ -94,7 +94,7 @@ namespace params
   
   double InitialPerturbationAmplitude = 4e-2;
   double ObserveEveryDt = 1.;
-  double WriteDataEveryDt = 100.;
+  double WriteDataEveryDt = 20.;
 };
 
 namespace vars

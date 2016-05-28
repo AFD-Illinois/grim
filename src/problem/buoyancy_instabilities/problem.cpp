@@ -25,6 +25,24 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
 
 void timeStepper::initialConditions(int &numReads, int &numWrites)
 {
+  int world_rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+
+  const int N1g = primOld->N1Total;
+  const int N2g = primOld->N2Total;
+  const int N3g = primOld->N3Total;
+
+  PetscPrintf(PETSC_COMM_WORLD, "Running on %i procs\n", world_size);
+  for(int proc=0;proc<world_size;proc++)
+  {
+    if(world_rank==proc)
+	  {
+	    printf("Local size on proc %i : %i x %i x %i\n",proc,N1g,N2g,N3g);
+	  }
+    MPI_Barrier(PETSC_COMM_WORLD);
+  }
   PetscPrintf(PETSC_COMM_WORLD, "Setting up atmosphere...");
 
   int numGhost = params::numGhost;
@@ -103,6 +121,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
     fclose(rCoordsFile);
   }
 
+  MPI_Barrier(PETSC_COMM_WORLD);
   PetscPrintf(PETSC_COMM_WORLD, "file read complete\n");
 
   /* Broadcast the data from rank 0 proc to all other procs */
@@ -110,6 +129,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   MPI_Bcast(&u1D[0]       , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&phi1D[0]     , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&rCoords1D[0] , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  MPI_Barrier(PETSC_COMM_WORLD);
   /* Broadcast complete */
   PetscPrintf(PETSC_COMM_WORLD, "Broadcast complete\n");
 
@@ -129,21 +149,23 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
 
   for (int i=0; i<primOld->N1Total; i++)
   {
-    if (fabs(r(i, 0, 0).scalar<double>() - rCoords1D[i]) > 1e-10)
+    int iGlobal = i + primOld->iLocalStart;
+
+    if (fabs(r(i, 0, 0).scalar<double>() - rCoords1D[iGlobal]) > 1e-10)
     {
       PetscPrintf(PETSC_COMM_WORLD,
                  "Mismatch in rCoords! Check r coords in python script. r = %.18f, rCoords = %.18f, i = %d\n",
-                 r(i, 0, 0).scalar<double>(), rCoords1D[i], i
+                 r(i, 0, 0).scalar<double>(), rCoords1D[iGlobal], i
                  );
       exit(1);
     }
-    rho(i, span, span) = rho1D[i];
-    u(i, span, span)   = u1D[i];
+    rho(i, span, span) = rho1D[iGlobal];
+    u(i, span, span)   = u1D[iGlobal];
 
     if (params::conduction)
     {
       array &q = primOld->vars[vars::Q];
-      q(i, span, span) = phi1D[i];
+      q(i, span, span) = phi1D[iGlobal];
     }
   }
 
@@ -461,10 +483,10 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 
   }
 
-  computeDivB(*primOld, numReads, numWrites);
-  double divBNorm = 
-    af::norm(af::flat(divB->vars[0](domainX1, domainX2, domainX3)), AF_NORM_VECTOR_1);
-  printf("divB = %g\n", divBNorm);
+//  computeDivB(*primOld, numReads, numWrites);
+//  double divBNorm = 
+//    af::norm(af::flat(divB->vars[0](domainX1, domainX2, domainX3)), AF_NORM_VECTOR_1);
+//  printf("divB = %g\n", divBNorm);
 
 }
 
