@@ -315,6 +315,7 @@ timeStepper::timeStepper(const int N1,
   bHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
   xHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
 
+  initialConditions(numReads, numWrites);
   if (params::restart)
   {
     struct stat fileInfo;
@@ -342,11 +343,6 @@ timeStepper::timeStepper(const int N1,
     }
 
     primOld->load("primitives", params::restartFile);
-  }
-  else
-  {
-    int numReads, numWrites;
-    initialConditions(numReads, numWrites);
   }
 }
 
