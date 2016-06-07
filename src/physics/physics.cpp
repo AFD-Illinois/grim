@@ -54,6 +54,20 @@ void fluidElement::set(const grid &prim,
 {
   af::setInternalEvalFlag(false);
 
+  std::vector<af::array *> varsThatNeedEval{prim.vars + vars::DP,
+          prim.vars + vars::Q,
+          prim.vars + vars::RHO,
+          prim.vars + vars::U,
+          prim.vars + vars::U1,
+          prim.vars + vars::U2,
+          prim.vars + vars::U3,
+          prim.vars + vars::B1,
+          prim.vars + vars::B2,
+          prim.vars + vars::B3
+          };
+
+  af::eval(varsThatNeedEval.size(), &varsThatNeedEval[0]);
+
   rho = af::max(prim.vars[vars::RHO],params::rhoFloorInFluidElement);
   u   = af::max(prim.vars[vars::U  ],params::uFloorInFluidElement);
   u1  = prim.vars[vars::U1 ];
