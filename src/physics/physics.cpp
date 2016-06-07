@@ -16,24 +16,31 @@ fluidElement::fluidElement(const grid &prim,
 
   array zero = 0.*one;
   gammaLorentzFactor = zero;
+  gammaLorentzFactor.eval();
 
   /* Allocate memory for gradients used in EMHD */
   if (params::conduction || params::viscosity)
   {
     divuCov = zero;
+    divuCov.eval();
     
     for(int mu=0;mu<NDIM;mu++)
     {
 	    gradT[mu] = zero;
+	    gradT[mu].eval();
 	    dtuCov[mu] = zero;
+	    dtuCov[mu].eval();
 	    for(int nu=0;nu<NDIM;nu++)
 	    {
 	      graduCov[nu][mu] = zero;
+	      graduCov[nu][mu].eval();
 	    }
     }
     
     deltaP0 = zero;
+    deltaP0.eval();
     q0 = zero;
+    q0.eval();
   }
 
   set(prim, geom, numReads, numWrites);
