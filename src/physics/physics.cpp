@@ -45,6 +45,8 @@ void fluidElement::set(const grid &prim,
                        int &numWrites
                       )
 {
+  af::setInternalEvalFlag(false);
+
   rho = af::max(prim.vars[vars::RHO],params::rhoFloorInFluidElement);
   u   = af::max(prim.vars[vars::U  ],params::uFloorInFluidElement);
   u1  = prim.vars[vars::U1 ];
@@ -71,7 +73,7 @@ void fluidElement::set(const grid &prim,
                   + geom.gCov[2][3] * u2 * u3
                  )
             );
-  gammaLorentzFactor.eval(); 
+  //gammaLorentzFactor.eval(); 
   /* Reads:
    * -----
    * gCov[1][1], gCov[2][2], gCov[3][3], gCov[1][2], gCov[1][3], gCov[2][3]: 6
@@ -82,7 +84,7 @@ void fluidElement::set(const grid &prim,
    * gammaLorentzFactor : 1 */
 
   uCon[0] = gammaLorentzFactor/geom.alpha;
-  uCon[0].eval(); 
+  //uCon[0].eval(); 
   /* Reads:
    * -----
    * gammaLorentzFactor, alpha : 2
@@ -93,7 +95,7 @@ void fluidElement::set(const grid &prim,
 
 
   uCon[1] = u1 - gammaLorentzFactor*geom.gCon[0][1]*geom.alpha;
-  uCon[1].eval(); 
+  //uCon[1].eval(); 
   /* Reads:
    * -----
    * u1, gammaLorentzFactor, gCon[0][1], alpha : 4
@@ -103,7 +105,7 @@ void fluidElement::set(const grid &prim,
    * uCon[1] : 1 */
 
   uCon[2] = u2 - gammaLorentzFactor*geom.gCon[0][2]*geom.alpha;
-  uCon[2].eval(); 
+  //uCon[2].eval(); 
   /* Reads:
    * -----
    * u2, gammaLorentzFactor, gCon[0][2], alpha : 4
@@ -113,7 +115,7 @@ void fluidElement::set(const grid &prim,
    * uCon[2] : 1 */
 
   uCon[3] = u3 - gammaLorentzFactor*geom.gCon[0][3]*geom.alpha;
-  uCon[3].eval();
+  //uCon[3].eval();
   /* Reads:
    * -----
    * u3, gammaLorentzFactor, gCon[0][3], alpha : 4
@@ -128,7 +130,7 @@ void fluidElement::set(const grid &prim,
               + geom.gCov[mu][1] * uCon[1]
               + geom.gCov[mu][2] * uCon[2]
               + geom.gCov[mu][3] * uCon[3];
-    uCov[mu].eval(); 
+    //uCov[mu].eval(); 
   } 
   /* Reads:
    * -----
@@ -140,7 +142,7 @@ void fluidElement::set(const grid &prim,
    * uCov[mu] : 4 */
 
   bCon[0] =  B1*uCov[1] + B2*uCov[2] + B3*uCov[3];
-  bCon[0].eval();
+  //bCon[0].eval();
   /* Reads:
    * -----
    * B1, B2, B3, uCov[1], uCov[2], uCov[3] : 6
@@ -150,7 +152,7 @@ void fluidElement::set(const grid &prim,
    * bCon[0] : 1 */
 
   bCon[1] = (B1 + bCon[0] * uCon[1])/uCon[0];
-  bCon[1].eval();
+  //bCon[1].eval();
   /* Reads:
    * -----
    * B1, bCon[0], uCon[1], uCon[0]: 4
@@ -160,7 +162,7 @@ void fluidElement::set(const grid &prim,
    * bCon[1] : 1 */
 
   bCon[2] = (B2 + bCon[0] * uCon[2])/uCon[0];
-  bCon[2].eval();
+  //bCon[2].eval();
   /* Reads:
    * -----
    * B2, bCon[0], uCon[2], uCon[0]: 4
@@ -170,7 +172,7 @@ void fluidElement::set(const grid &prim,
    * bCon[2] : 1 */
 
   bCon[3] = (B3 + bCon[0] * uCon[3])/uCon[0];
-  bCon[3].eval();
+  //bCon[3].eval();
   /* Reads:
    * -----
    * B3, bCon[0], uCon[3], uCon[0]: 4
@@ -185,7 +187,7 @@ void fluidElement::set(const grid &prim,
               + geom.gCov[mu][1] * bCon[1]
               + geom.gCov[mu][2] * bCon[2]
               + geom.gCov[mu][3] * bCon[3];
-    bCov[mu].eval();
+    //bCov[mu].eval();
   }
   /* Reads:
    * -----
@@ -198,7 +200,7 @@ void fluidElement::set(const grid &prim,
 
   bSqr =  bCon[0]*bCov[0] + bCon[1]*bCov[1]
         + bCon[2]*bCov[2] + bCon[3]*bCov[3] + params::bSqrFloorInFluidElement;
-  bSqr.eval();
+  //bSqr.eval();
   /* Reads:
    * -----
    * bCon[0], bCon[1], bCon[2], bCon[3]: 4
@@ -219,7 +221,7 @@ void fluidElement::set(const grid &prim,
     if (params::highOrderTermsConduction==1)
     {
       q = qTilde * temperature * af::sqrt(rho*params::ConductionAlpha*soundSpeed*soundSpeed);
-      q.eval();
+      //q.eval();
     }
     else
     {
@@ -234,7 +236,7 @@ void fluidElement::set(const grid &prim,
     if (params::highOrderTermsViscosity == 1)
     {
       deltaP = deltaPTilde * af::sqrt(temperature * rho * params::ViscosityAlpha*soundSpeed*soundSpeed);
-      deltaP.eval();
+      //deltaP.eval();
     }
     else
     {
@@ -269,7 +271,7 @@ void fluidElement::set(const grid &prim,
                              );
       }
       
-      TUpDown[mu][nu].eval();
+      //TUpDown[mu][nu].eval();
       /* Reads:
        * -----
        * rho, u, bSqr, q, deltaP: 5 x 16 = 80
@@ -279,7 +281,7 @@ void fluidElement::set(const grid &prim,
        * ------
        * TUpDown[mu][nu] : 16 */
     }
-    NUp[mu].eval();
+    //NUp[mu].eval();
     /* Reads:
      * -----
      * rho : 1 x 4 = 4
@@ -306,6 +308,27 @@ void fluidElement::set(const grid &prim,
     numReads  += 1;
     numWrites += 1;
   }
+
+  std::vector<af::array *> arraysThatNeedEval{
+      &gammaLorentzFactor,
+          &uCon[0], &uCon[1], &uCon[2], &uCon[3],
+          &uCov[0], &uCov[1], &uCov[2], &uCov[3],
+          &bCon[0], &bCon[1], &bCon[2], &bCon[3],
+          &bCov[0], &bCov[1], &bCov[2], &bCov[3],
+          &bSqr, &bNorm, &q, &deltaP,
+          &TUpDown[0][0], &TUpDown[0][1],
+          &TUpDown[0][2], &TUpDown[0][3],
+          &TUpDown[1][0], &TUpDown[1][1],
+          &TUpDown[1][2], &TUpDown[1][3],
+          &TUpDown[2][0], &TUpDown[2][1],
+          &TUpDown[2][2], &TUpDown[2][3],
+          &TUpDown[3][0], &TUpDown[3][1],
+          &TUpDown[3][2], &TUpDown[3][3],
+          &NUp[0], &NUp[1], &NUp[2], &NUp[3]
+          };
+  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
+
+  af::setInternalEvalFlag(true);
 }
 
 void fluidElement::computeFluxes(const geometry &geom, 
