@@ -26,7 +26,7 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 # Configuration for SAVIO
 set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
 set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire/build/package")
+set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire_new/arrayfire/build/package")
 set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
 # Configuration for lmc

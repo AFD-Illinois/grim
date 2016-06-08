@@ -29,7 +29,7 @@ class timeStepper
   array deltaPrimAoS;
   array stepLength;
 
-  double *AHostPtr, *bHostPtr, *xHostPtr;
+  double *AHostPtr, *bHostPtr;
 
   void solve(grid &primGuess);
   void computeResidual(const grid &prim, grid &residual,

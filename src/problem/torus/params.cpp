@@ -6,16 +6,16 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 140;
+  int N1 = 128;
   int N2 = 128;
-  int N3 = 48;
-  int dim = 3;
+  int N3 = 64;
+  int dim = 2;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 540.0;
+  double Time = 0.0;
   double InitialDt = 0.01;
-  int restart = 1;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals

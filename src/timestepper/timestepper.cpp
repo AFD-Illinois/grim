@@ -313,7 +313,6 @@ timeStepper::timeStepper(const int N1,
 
   AHostPtr = new double [numFluidVars*numFluidVars*N1Total*N2Total*N3Total];
   bHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
-  xHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
 
   initialConditions(numReads, numWrites);
   if (params::restart)
@@ -367,5 +366,4 @@ timeStepper::~timeStepper()
 
   delete[] AHostPtr;
   delete[] bHostPtr;
-  delete[] xHostPtr;
 }
