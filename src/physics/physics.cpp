@@ -16,31 +16,25 @@ fluidElement::fluidElement(const grid &prim,
 
   array zero = 0.*one;
   gammaLorentzFactor = zero;
-  gammaLorentzFactor.eval();
 
   /* Allocate memory for gradients used in EMHD */
   if (params::conduction || params::viscosity)
   {
     divuCov = zero;
-    divuCov.eval();
     
     for(int mu=0;mu<NDIM;mu++)
     {
 	    gradT[mu] = zero;
-	    gradT[mu].eval();
 	    dtuCov[mu] = zero;
-	    dtuCov[mu].eval();
+
 	    for(int nu=0;nu<NDIM;nu++)
 	    {
 	      graduCov[nu][mu] = zero;
-	      graduCov[nu][mu].eval();
 	    }
     }
     
     deltaP0 = zero;
-    deltaP0.eval();
     q0 = zero;
-    q0.eval();
   }
 
   set(prim, geom, numReads, numWrites);
@@ -190,25 +184,13 @@ void fluidElement::set(const grid &prim,
   numReads  = 42;
   numWrites = 38;
   
-  if (params::conduction)
-  {
-    numReads  += 1;
-    numWrites += 1;
-  }
-
-  if (params::viscosity)
-  {
-    numReads  += 1;
-    numWrites += 1;
-  }
-
   std::vector<af::array *> arraysThatNeedEval{
       &gammaLorentzFactor,
           &uCon[0], &uCon[1], &uCon[2], &uCon[3],
           &uCov[0], &uCov[1], &uCov[2], &uCov[3],
           &bCon[0], &bCon[1], &bCon[2], &bCon[3],
           &bCov[0], &bCov[1], &bCov[2], &bCov[3],
-          &bSqr, &bNorm, &q, &deltaP,
+          &bSqr, &bNorm,
           &TUpDown[0][0], &TUpDown[0][1],
           &TUpDown[0][2], &TUpDown[0][3],
           &TUpDown[1][0], &TUpDown[1][1],
@@ -219,6 +201,23 @@ void fluidElement::set(const grid &prim,
           &TUpDown[3][2], &TUpDown[3][3],
           &NUp[0], &NUp[1], &NUp[2], &NUp[3]
           };
+
+  if (params::conduction)
+  {
+    arraysThatNeedEval.push_back(&q);
+
+    numReads  += 1;
+    numWrites += 1;
+  }
+
+  if (params::viscosity)
+  {
+    arraysThatNeedEval.push_back(&deltaP);
+
+    numReads  += 1;
+    numWrites += 1;
+  }
+
   af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 
   af::setInternalEvalFlag(true);
@@ -446,7 +445,7 @@ void fluidElement::computeExplicitSources(const geometry &geom,
                                           int &numWrites
                              					   )
 {
-  af::setInternalEvalFlag(false);
+  //af::setInternalEvalFlag(false);
 
   for (int var=0; var<vars::dof; var++)
   {
@@ -471,19 +470,20 @@ void fluidElement::computeExplicitSources(const geometry &geom,
           * geom.gammaUpDownDown[lamda][kappa][nu];
         }
       }
+      sources.vars[vars::U + nu].eval();
     }
   }
 
-  std::vector<af::array *> arraysThatNeedEval{
-                &sources.vars[vars::RHO],  
-                &sources.vars[vars::U],  
-                &sources.vars[vars::U1],  
-                &sources.vars[vars::U2],  
-                &sources.vars[vars::U3],  
-                &sources.vars[vars::B1],  
-                &sources.vars[vars::B2],  
-                &sources.vars[vars::B3]  
-              };
+//  std::vector<af::array *> arraysThatNeedEval{
+//                &sources.vars[vars::RHO],  
+//                &sources.vars[vars::U],  
+//                &sources.vars[vars::U1],  
+//                &sources.vars[vars::U2],  
+//                &sources.vars[vars::U3],  
+//                &sources.vars[vars::B1],  
+//                &sources.vars[vars::B2],  
+//                &sources.vars[vars::B3]  
+//              };
 
   if (params::conduction || params::viscosity)
   {
@@ -542,8 +542,9 @@ void fluidElement::computeExplicitSources(const geometry &geom,
 	    {
 	      sources.vars[vars::DP] -= 0.5*geom.g*divuCov*deltaPTilde;
 	    }
+    	sources.vars[vars::DP].eval();
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::DP]);
+      //arraysThatNeedEval.push_back(&sources.vars[vars::DP]);
     } /* End of viscosity specific terms */
     
     // -------------------------------------
@@ -583,15 +584,16 @@ void fluidElement::computeExplicitSources(const geometry &geom,
       {
     	  sources.vars[vars::Q] -= 0.5*geom.g*divuCov*qTilde;
       }
+    	sources.vars[vars::Q].eval();
     } /* End of conduction */
 
-    arraysThatNeedEval.push_back(&sources.vars[vars::Q]);
+    //arraysThatNeedEval.push_back(&sources.vars[vars::Q]);
 
   } /* End of EMHD: viscosity || conduction */
 
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
+  //af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 
-  af::setInternalEvalFlag(true);
+  //af::setInternalEvalFlag(true);
 }
 
 void fluidElement::computeEMHDGradients(const geometry &geom,
@@ -600,7 +602,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
                                         int &numWrites
                                        )
 {
-  af::setInternalEvalFlag(false);
+  //af::setInternalEvalFlag(false);
 
   double dX1 = dX[directions::X1];
   double dX2 = dX[directions::X2];
@@ -646,19 +648,21 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
 	    {
 	      graduCov[nu][mu] -= geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
 	    }
+
+      graduCov[nu][mu].eval();
     }
   }
-  std::vector<af::array *> arraysThatNeedEval{
-          &graduCov[0][0], &graduCov[0][1],
-          &graduCov[0][2], &graduCov[0][3],
-          &graduCov[1][0], &graduCov[1][1],
-          &graduCov[1][2], &graduCov[1][3],
-          &graduCov[2][0], &graduCov[2][1],
-          &graduCov[2][2], &graduCov[2][3],
-          &graduCov[3][0], &graduCov[3][1],
-          &graduCov[3][2], &graduCov[3][3]
-          };
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
+//  std::vector<af::array *> arraysThatNeedEval{
+//          &graduCov[0][0], &graduCov[0][1],
+//          &graduCov[0][2], &graduCov[0][3],
+//          &graduCov[1][0], &graduCov[1][1],
+//          &graduCov[1][2], &graduCov[1][3],
+//          &graduCov[2][0], &graduCov[2][1],
+//          &graduCov[2][2], &graduCov[2][3],
+//          &graduCov[3][0], &graduCov[3][1],
+//          &graduCov[3][2], &graduCov[3][3]
+//          };
+//  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   
   if(params::conduction)
   {
@@ -693,5 +697,5 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
     }
   } /* End of conduction specific terms */
 
-  af::setInternalEvalFlag(true);
+  //af::setInternalEvalFlag(true);
 }
