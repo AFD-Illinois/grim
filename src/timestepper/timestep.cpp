@@ -142,6 +142,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   PetscPrintf(PETSC_COMM_WORLD, "     Nonlinear solver    : %g secs, %g %\n",
                                  solverTime, solverTime/halfStepTime * 100
              );
+  PetscPrintf(PETSC_COMM_WORLD, "     -- CPU linear solver: %g secs, %g %\n",
+                                 linearSolverTime, linearSolverTime/halfStepTime * 100
+             );
   PetscPrintf(PETSC_COMM_WORLD, "     Induction equation  : %g secs, %g %\n",
                                  inductionEqnTime,
                                  inductionEqnTime/halfStepTime * 100
@@ -276,6 +279,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Nonlinear solver    : %g secs, %g %\n",
                                  solverTime, solverTime/fullStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     CPU linear solver   : %g secs, %g %\n",
+                                 linearSolverTime, linearSolverTime/fullStepTime * 100
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Induction equation  : %g secs, %g %\n",
                                  inductionEqnTime,

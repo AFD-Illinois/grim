@@ -234,6 +234,8 @@ void timeStepper::solve(grid &primGuess)
 
 void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
 {
+  af::timer linearSolverTimer = af::timer::start();
+
   A.host(AHostPtr);
   b.host(bHostPtr);
 
@@ -265,4 +267,6 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
 
   /* Copy solution to x on device */
   x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
+
+  linearSolverTime = af::timer::stop(linearSolverTimer);
 }

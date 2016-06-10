@@ -38,6 +38,7 @@ class timeStepper
                        int &numWrites
                       );
   void batchLinearSolve(const array &A, const array &b, array &x);
+  double linearSolverTime;
 
   public:
     double dt, time;
