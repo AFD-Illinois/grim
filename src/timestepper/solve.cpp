@@ -161,7 +161,6 @@ void timeStepper::solve(grid &primGuess)
         primGuessLineSearchTrial->vars[var] =  
           primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
       } 
-
       /* ...and then compute the norm */
       computeResidual(*primGuessLineSearchTrial, *residual, true,
                       numReadsResidual, numWritesResidual
@@ -204,32 +203,6 @@ void timeStepper::solve(grid &primGuess)
         primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
     }
   }
-
-  
-  /* Diagnostics */
-  /*{
-    for (int var=0; var<vars::dof; var++)
-      {
-	array res = af::abs(residual->vars[var]((domainX1, domainX2, domainX3)));
-	array badPoints = where(res>1.);
-	if(badPoints.elements()>0)
-	  {
-	    printf("Found bad residual for variable %i on proc %i\n",var,world_rank);
-	    af_print(badPoints);
-	    array flatR = af::flat(XCoords->vars[0](domainX1, domainX2, domainX3));
-	    af_print(af::exp(flatR(badPoints)),12);
-	    array flatRho = af::flat(primGuess.vars[vars::RHO](domainX1, domainX2, domainX3));
-	    array flatU = af::flat(primGuess.vars[vars::U](domainX1, domainX2, domainX3));
-	    array flatDP = af::flat(primGuess.vars[vars::DP](domainX1, domainX2, domainX3));
-	    af_print(flatRho(badPoints),12);
-	    af_print(flatU(badPoints),12);
-	    af_print(flatDP(badPoints),12);
-	    array flatRes = af::flat(res);
-	    af_print(flatRes(badPoints),12);
-	    exit(1);
-	  }
-      }
-      }*/
 }
 
 void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)

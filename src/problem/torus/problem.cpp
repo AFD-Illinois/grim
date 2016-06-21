@@ -36,8 +36,15 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
       tau=af::min(tau,DynamicalTimescale*fdVis);
     }
   tau.eval();
-  chi_emhd = params::ConductionAlpha*soundSpeed*soundSpeed*tau;
-  nu_emhd  = params::ViscosityAlpha*soundSpeed*soundSpeed*tau;
+  
+  // maxAlpha is an upper bound on the value of ConductionAlpha,ViscosityAlpha
+  // which guarantees that the approximate characteristic speeds are not 
+  // superluminal. The approximate speeds are themselves upper bounds on the true
+  // speeds. Using maxAlpha, we can choose large parameters of ConductionAlpha,ViscosityAlpha 
+  // in high density regions, without running into instabilities in low-density regions (hopefully?).
+  array maxAlpha = (one-soundSpeed*soundSpeed)/(2.*soundSpeed*soundSpeed+1.e-12);
+  chi_emhd = af::min(maxAlpha,params::ConductionAlpha)*soundSpeed*soundSpeed*tau;
+  nu_emhd  = af::min(maxAlpha,params::ViscosityAlpha)*soundSpeed*soundSpeed*tau;
   chi_emhd.eval();
   nu_emhd.eval();
   //af::sync();
@@ -424,7 +431,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
    }
   
 
-
   // We have used ghost zones in the previous steps -> need to communicate
   // before computing global quantities
   primOld->communicate();
@@ -467,6 +473,18 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     primOld->vars[vars::B2].eval();
     primOld->vars[vars::B3].eval();
   }
+
+  /*{
+    primOld->vars[vars::RHO](span,span,span)=1.e-20;
+    primOld->vars[vars::U](span,span,span)=1.e-20;
+    primOld->vars[vars::U1](span,span,span)=0.;
+    primOld->vars[vars::U2](span,span,span)=0.;
+    primOld->vars[vars::U3](span,span,span)=0.;
+    array Rl = xCoords[0];
+    primOld->vars[vars::B1](span,span,span)=1./Rl/Rl/Rl;
+    primOld->vars[vars::B2](span,span,span)=0.;
+    primOld->vars[vars::B3](span,span,span)=0.;
+    }*/
 
   if(params::conduction)
     {
@@ -882,6 +900,37 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     }
 }
 
+void dampedOutflowBC(grid& primBC, 
+		     const geometry& geom, int &numReads,int &numWrites)
+{
+  const int numGhost = params::numGhost;
+  if(primBC.iLocalStart == 0)
+    {
+      const array& g = geom.g;
+
+      for(int i=0;i<numGhost;i++)
+	{
+	  primBC.vars[vars::RHO](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::RHO](numGhost,span,span);
+	  primBC.vars[vars::U](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::U](numGhost,span,span);
+	  primBC.vars[vars::B1](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::B1](numGhost,span,span);
+	  if(params::conduction)
+	    {
+	      primBC.vars[vars::Q](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::Q](numGhost,span,span);
+	    }
+	  if(params::viscosity)
+	    {
+	      primBC.vars[vars::DP](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::DP](numGhost,span,span);
+	    }
+	  double fac = (params::X1End-params::X1Start)/(params::N1-1.);
+	  fac = exp(fac*i);
+	  primBC.vars[vars::U1](i,span,span)=primBC.vars[vars::U1](numGhost,span,span)*fac;
+	  primBC.vars[vars::U2](i,span,span)=primBC.vars[vars::U2](numGhost,span,span)*(2.-fac);
+	  primBC.vars[vars::U3](i,span,span)=primBC.vars[vars::U3](numGhost,span,span)*(2.-fac);
+	  primBC.vars[vars::B2](i,span,span)=primBC.vars[vars::B2](numGhost,span,span)*(2.-fac);
+	  primBC.vars[vars::B3](i,span,span)=primBC.vars[vars::B3](numGhost,span,span)*(2.-fac);
+	}
+    }
+}
 
 void inflowCheck(grid& primBC,fluidElement& elemBC,
 		 const geometry& geom, int &numReads,int &numWrites)
@@ -983,16 +1032,17 @@ void inflowCheck(grid& primBC,fluidElement& elemBC,
     }
 }
 
-void fixPoles(grid& primBC, int &numReads,int &numWrites)
+void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
 {
   const int numGhost = params::numGhost;
   if(primBC.jLocalStart == 0)
     {
+      array xCoords[3];
+      geom.getxCoords(xCoords);
+      array Theta = xCoords[1];
       int idx0 = numGhost;
       int idx1 = numGhost+1;
       int idx2 = numGhost+2;
-      double ic0 = 0.2;
-      double ic1 = 0.6;
       primBC.vars[vars::RHO](span,idx0,span)=
 	primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx0,span)=
@@ -1000,18 +1050,18 @@ void fixPoles(grid& primBC, int &numReads,int &numWrites)
       primBC.vars[vars::U1](span,idx0,span)=
 	primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx0,span)=
-        primBC.vars[vars::U2](span,idx2,span)*ic0;
+        primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx0,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
 	{
 	  primBC.vars[vars::Q](span,idx0,span)=
-	    primBC.vars[vars::Q](span,idx2,span)*ic0;
+	    primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
 	}
       if(params::viscosity)
 	{
 	  primBC.vars[vars::DP](span,idx0,span)=
-	    primBC.vars[vars::DP](span,idx2,span)*ic0;
+	    primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
 	}
 
       primBC.vars[vars::RHO](span,idx1,span)=
@@ -1021,38 +1071,39 @@ void fixPoles(grid& primBC, int &numReads,int &numWrites)
       primBC.vars[vars::U1](span,idx1,span)=
 	primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx1,span)=
-        primBC.vars[vars::U2](span,idx2,span)*ic1;
+        primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx1,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
 	{
 	  primBC.vars[vars::Q](span,idx1,span)=
-	    primBC.vars[vars::Q](span,idx2,span)*ic1;
+	    primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
 	}
       if(params::viscosity)
         {
 	  primBC.vars[vars::DP](span,idx1,span)=
-	    primBC.vars[vars::DP](span,idx2,span)*ic1;
+	    primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
 	}
 
-      af::seq domainX2LeftBoundary(0,
-                                    numGhost-1
-				   );
-      primBC.vars[vars::U2](span,domainX2LeftBoundary,span)
-	= primBC.vars[vars::U2](span,domainX2LeftBoundary,span)*(-1.0);
-      primBC.vars[vars::B2](span,domainX2LeftBoundary,span)
-	= primBC.vars[vars::B2](span,domainX2LeftBoundary,span)*(-1.0);
 
+      for(int i=0;i<numGhost;i++)
+	{
+	  primBC.vars[vars::U2](span,numGhost-1-i,span)=
+	    primBC.vars[vars::U2](span,numGhost+i,span)*(-1.0);
+	  primBC.vars[vars::B2](span,numGhost-1-i,span)=
+            primBC.vars[vars::B2](span,numGhost+i,span)*(-1.0);
+	}
       for(int var=0;var<vars::dof;var++)
 	primBC.vars[var].eval();
     }
   if(primBC.jLocalEnd == primBC.N2)
     {
+      array xCoords[3];
+      geom.getxCoords(xCoords);
+      array Theta = xCoords[1]*(-1.)+M_PI;
       int idx0 = primBC.N2Local+numGhost-1;
       int idx1 = idx0-1;
       int idx2 = idx0-2;
-      double ic0 = 0.2;
-      double ic1 = 0.6;
       primBC.vars[vars::RHO](span,idx0,span)=
 	primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx0,span)=
@@ -1060,18 +1111,18 @@ void fixPoles(grid& primBC, int &numReads,int &numWrites)
       primBC.vars[vars::U1](span,idx0,span)=
 	primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx0,span)=
-        primBC.vars[vars::U2](span,idx2,span)*ic0;
+        primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx0,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
         {
           primBC.vars[vars::Q](span,idx0,span)=
-            primBC.vars[vars::Q](span,idx2,span)*ic0;
+            primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
         }
       if(params::viscosity)
         {
           primBC.vars[vars::DP](span,idx0,span)=
-            primBC.vars[vars::DP](span,idx2,span)*ic0;
+            primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
         }
 
       primBC.vars[vars::RHO](span,idx1,span)=
@@ -1081,28 +1132,27 @@ void fixPoles(grid& primBC, int &numReads,int &numWrites)
       primBC.vars[vars::U1](span,idx1,span)=
 	primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx1,span)=
-        primBC.vars[vars::U2](span,idx2,span)*ic1;
+        primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx1,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
         {
           primBC.vars[vars::Q](span,idx1,span)=
-            primBC.vars[vars::Q](span,idx2,span)*ic1;
+            primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
         }
       if(params::viscosity)
         {
           primBC.vars[vars::DP](span,idx1,span)=
-            primBC.vars[vars::DP](span,idx2,span)*ic1;
+            primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
         }
 
-      af::seq domainX2RightBoundary(primBC.N2Local+numGhost,
-                                    primBC.N2Local+2*numGhost-1
-				   );
-      primBC.vars[vars::U2](span,domainX2RightBoundary,span)
-	= primBC.vars[vars::U2](span,domainX2RightBoundary,span)*(-1.0);
-      primBC.vars[vars::B2](span,domainX2RightBoundary,span)
-	= primBC.vars[vars::B2](span,domainX2RightBoundary,span)*(-1.0);
-
+      for(int i=0;i<numGhost;i++)
+	{
+	  primBC.vars[vars::U2](span,primBC.N2Local+numGhost+i,span)=
+	    primBC.vars[vars::U2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	  primBC.vars[vars::B2](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::B2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	}
       for(int var=0;var<vars::dof;var++)
 	primBC.vars[var].eval();
     }
@@ -1123,14 +1173,16 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
       primBC = primHalfStep;
       elemBC = elemHalfStep;
     }
+  //dampedOutflowBC(*primBC,*geomCenter,
+  //		  numReads,numWrites);
   // 2) Check that there is no inflow at the radial boundaries
   inflowCheck(*primBC,*elemBC,*geomCenter,
   	      numReads,numWrites);
 
   // 3) 'Fix' the polar regions by correcting the firs
   // two active zones
-  fixPoles(*primBC,numReads,numWrites);
-  //af::sync();
+  fixPoles(*primBC,*geomCenter,numReads,numWrites);
+  af::sync();
 };
 
 void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)

@@ -8,14 +8,14 @@ namespace params
   // Grid size options
   int N1 = 140;
   int N2 = 128;
-  int N3 = 48;
+  int N3 = 32;
   int dim = 3;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 540.0;
-  double InitialDt = 0.01;
-  int restart = 1;
+  double Time = 0.0;
+  double InitialDt = 0.005;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -29,8 +29,8 @@ namespace params
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid size options
-  double Rin = 0.98*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 63.;
+  double Rin = 0.85*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
+  double Rout = 55.;
 
   // Initial conditions
   double adiabaticIndex = 5./3;
@@ -43,16 +43,16 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 1;
-  int viscosity  = 1;
+  int conduction = 0;
+  int viscosity  = 0;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   // Phi and Psi from Chandra et al. 2015
   // Note that when using Phi=Psi, approximate
   // limits for the characteristic speeds to remain
   // subluminal are 0.29 (Gamma=5/3) and 1.3 (Gamma=4/3).
-  double ConductionAlpha = 0.25;
-  double ViscosityAlpha = 0.25;
+  double ConductionAlpha = .25;
+  double ViscosityAlpha = .25;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
 
@@ -76,8 +76,8 @@ namespace params
   double hSlope = 0.3;
   int DerefineThetaHorizon = 1;
   int DoCylindrify = 1;
-  double X1cyl = log(3.*Rin);
-  double X2cyl = 3./N2;
+  double X1cyl = log(4.*Rin);
+  double X2cyl = 1./N2;
 
   // Boundary Conditions
   // Radial
