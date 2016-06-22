@@ -279,6 +279,13 @@ timeStepper::timeStepper(const int N1,
                                       periodicBoundariesX3
                                      );
 
+  primIC = new grid(N1, N2, N3,
+		    dim, numVars, numGhost,
+		    periodicBoundariesX1,
+		    periodicBoundariesX2,
+		    periodicBoundariesX3
+		    );
+
   /* The grid data structure arranges data in Struct of Arrays format. Need to
    * rearrange to Array of Structs format in order to solve the linear system Ax
    * = b */

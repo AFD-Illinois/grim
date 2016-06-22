@@ -168,6 +168,11 @@ namespace params
   extern double k2;
   extern double Gamma;
   extern double Omega;
+
+  /* For bondi_inflow */
+  extern double sonicRadius;
+  extern double mDot;
+  extern double bMag;
 };
 
 #endif /* GRIM_PARAMS_H_ */

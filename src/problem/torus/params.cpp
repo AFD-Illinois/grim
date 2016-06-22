@@ -20,12 +20,12 @@ namespace params
 
   // Observation / checkpointing intervals
   double ObserveEveryDt = .1;
-  double WriteDataEveryDt = 10.;
+  double WriteDataEveryDt = 2.;
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double CourantFactor = 0.3;
-  double finalTime = 2000.;
+  double finalTime = 200.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid size options
@@ -70,7 +70,7 @@ namespace params
   // Automatic grid boundaries - do not change
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI*2.;
+  double X3Start = 0., X3End = M_PI;
 
   // Grid parameters
   double hSlope = 0.3;

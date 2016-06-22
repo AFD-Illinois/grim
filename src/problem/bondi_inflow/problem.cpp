@@ -1,71 +1,5 @@
 #include "../problem.hpp"
 
-namespace vars
-{
-  int dof = 8;
-  int Q = 8;
-  int DP = 9;
-};
-
-
-namespace params
-{
-  int N1 = 20;
-  int N2 = 20;
-  int N3 = 1;
-  int dim = 2;
-  int numGhost = 3;
-
-  int timeStepper = timeStepping::EXPLICIT;
-  double InitialDt = .2/N1;
-  double Time = 0.;
-  double finalTime = 0.5;
-  int metric = metrics::MODIFIED_KERR_SCHILD;
-  double hSlope = 1.0;
-  double blackHoleSpin = 0.0;
-
-  double sonicRadius = 8.;
-  double mDot = 2.;
-  double bMag = 1.;
-
-  double X1Start = log(3.1), X1End = log(35.);
-  double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI/10.;
-
-  int boundaryLeft   = boundaries::DIRICHLET;
-  int boundaryRight  = boundaries::DIRICHLET;
-
-  int boundaryTop    = boundaries::DIRICHLET;
-  int boundaryBottom = boundaries::DIRICHLET;
-
-  int boundaryFront  = boundaries::DIRICHLET;
-  int boundaryBack   = boundaries::DIRICHLET;
-
-  double rhoFloorInFluidElement         = 1e-20;
-  double uFloorInFluidElement           = 1e-20;
-  double bSqrFloorInFluidElement        = 1e-20;
-  double temperatureFloorInFluidElement = 1e-20;
-
-  int conduction = 0;
-  int viscosity  = 0;
-  int highOrderTermsConduction = 0.;
-  int highOrderTermsViscosity = 0.;
-  double adiabaticIndex = 4./3;
-
-  double slopeLimTheta = 2;
-  int reconstruction = reconstructionOptions::WENO5;
-  int riemannSolver  = riemannSolvers::HLL;
-
-  int maxNonLinearIter = 10;
-  int maxLineSearchIters = 10;
-
-  //Parameters controlling accuracy of nonlinear solver
-  double nonlinearsolve_atol = 1.e-16;
-  double JacobianAssembleEpsilon = 4.e-8;
-  double linesearchfloor = 1.e-24;
-  
-};
-
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
   tau = one;
@@ -73,6 +7,9 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   nu_emhd  = soundSpeed*soundSpeed*tau;
 }
 
+void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
+{
+}
 
 double FuncT(const double T, const double R, const double C1, const double C2)
 {

@@ -21,6 +21,7 @@ class timeStepper
 {
   grid *primGuessLineSearchTrial;
   grid *primGuessPlusEps;
+  grid *primIC;
   grid *residual;
   grid *residualPlusEps;
 
