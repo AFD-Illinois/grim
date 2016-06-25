@@ -72,10 +72,10 @@ void timeStepper::solve(grid &primGuess)
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
                 globalresnorm,globalNonConverged
 		);
-    if (globalNonConverged == 0)
-    {
-      break;
-    }
+//    if (globalNonConverged == 0)
+//    {
+//      break;
+//    }
 
     /* Residual without explicit terms, for faster Jacobian assembly */
     computeResidual(primGuess, *residual, false,
@@ -193,10 +193,10 @@ void timeStepper::solve(grid &primGuess)
         = stepLengthNoGhost*(1. - condition) + condition*nextStepLengthNoGhost;
       
       array conditionIndices = where(condition > 0);
-      if (conditionIndices.elements() == 0)
-      {
-        break;
-      }
+//      if (conditionIndices.elements() == 0)
+//      {
+//        break;
+//      }
     }
 
     /* stepLength has now been set */
