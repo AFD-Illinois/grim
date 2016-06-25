@@ -605,7 +605,7 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
                                         int &numWrites
                                        )
 {
-  //af::setManualEvalFlag(true);
+  af::setManualEvalFlag(true);
 
   double dX1 = dX[directions::X1];
   double dX2 = dX[directions::X2];
@@ -652,20 +652,20 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
 	      graduCov[nu][mu] -= geom.gammaUpDownDown[lambda][nu][mu]*uCov[lambda];
 	    }
 
-      graduCov[nu][mu].eval();
+      //graduCov[nu][mu].eval();
     }
   }
-//  std::vector<af::array *> arraysThatNeedEval{
-//          &graduCov[0][0], &graduCov[0][1],
-//          &graduCov[0][2], &graduCov[0][3],
-//          &graduCov[1][0], &graduCov[1][1],
-//          &graduCov[1][2], &graduCov[1][3],
-//          &graduCov[2][0], &graduCov[2][1],
-//          &graduCov[2][2], &graduCov[2][3],
-//          &graduCov[3][0], &graduCov[3][1],
-//          &graduCov[3][2], &graduCov[3][3]
-//          };
-//  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
+  std::vector<af::array *> arraysThatNeedEval{
+          &graduCov[0][0], &graduCov[0][1],
+          &graduCov[0][2], &graduCov[0][3],
+          &graduCov[1][0], &graduCov[1][1],
+          &graduCov[1][2], &graduCov[1][3],
+          &graduCov[2][0], &graduCov[2][1],
+          &graduCov[2][2], &graduCov[2][3],
+          &graduCov[3][0], &graduCov[3][1],
+          &graduCov[3][2], &graduCov[3][3]
+          };
+  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   
   if(params::conduction)
   {
@@ -700,5 +700,5 @@ void fluidElement::computeEMHDGradients(const geometry &geom,
     }
   } /* End of conduction specific terms */
 
-  //af::setManualEvalFlag(false);
+  af::setManualEvalFlag(false);
 }
