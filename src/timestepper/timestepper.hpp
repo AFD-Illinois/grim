@@ -29,7 +29,7 @@ class timeStepper
   array deltaPrimAoS;
   array stepLength;
 
-  double *AHostPtr, *bHostPtr, *xHostPtr;
+  double *AHostPtr, *bHostPtr;
 
   void solve(grid &primGuess);
   void computeResidual(const grid &prim, grid &residual,
@@ -38,6 +38,9 @@ class timeStepper
                        int &numWrites
                       );
   void batchLinearSolve(const array &A, const array &b, array &x);
+  double linearSolverTime;
+  double lineSearchTime;
+  double jacobianAssemblyTime;
 
   public:
     double dt, time;

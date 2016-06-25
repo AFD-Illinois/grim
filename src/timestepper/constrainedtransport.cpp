@@ -50,6 +50,8 @@ void timeStepper::fluxCT(int &numReads,
               + shift(emfX1->vars[0], 0, -1, 0)
              );
       fluxesX3->vars[vars::B2].eval();
+
+      fluxesX3->vars[vars::B3] = 0.;
     }
   }
 }

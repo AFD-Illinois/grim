@@ -93,6 +93,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   primGuessLineSearchTrial->vars[vars::B3] = prim->vars[vars::B3];
 
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2 */
+  jacobianAssemblyTime = 0.;
+  lineSearchTime       = 0.;
+  linearSolverTime     = 0.;
   af::timer solverTimer = af::timer::start();
   solve(*prim);
   double solverTime = af::timer::stop(solverTimer);
@@ -141,6 +144,18 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Nonlinear solver    : %g secs, %g %\n",
                                  solverTime, solverTime/halfStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Jacobian assembly: %g secs, %g %\n",
+                                 jacobianAssemblyTime,
+                                 jacobianAssemblyTime/halfStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- CPU linear solver: %g secs, %g %\n",
+                                 linearSolverTime, 
+                                 linearSolverTime/halfStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Linesearch       : %g secs, %g %\n",
+                                 lineSearchTime,
+                                 lineSearchTime/halfStepTime * 100
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Induction equation  : %g secs, %g %\n",
                                  inductionEqnTime,
@@ -230,6 +245,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
 
   /* Solve dU/dt + div.F - S = 0 to get prim at n+1/2. NOTE: prim already has
    * primHalfStep as a guess */
+  jacobianAssemblyTime = 0.;
+  lineSearchTime       = 0.;
+  linearSolverTime     = 0.;
   solverTimer = af::timer::start();
   solve(*prim);
   solverTime = af::timer::stop(solverTimer);
@@ -276,6 +294,18 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Nonlinear solver    : %g secs, %g %\n",
                                  solverTime, solverTime/fullStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Jacobian assembly: %g secs, %g %\n",
+                                 jacobianAssemblyTime,
+                                 jacobianAssemblyTime/fullStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- CPU linear solver: %g secs, %g %\n",
+                                 linearSolverTime, 
+                                 linearSolverTime/fullStepTime * 100
+             );
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Linesearch       : %g secs, %g %\n",
+                                 lineSearchTime,
+                                 lineSearchTime/fullStepTime * 100
              );
   PetscPrintf(PETSC_COMM_WORLD, "     Induction equation  : %g secs, %g %\n",
                                  inductionEqnTime,

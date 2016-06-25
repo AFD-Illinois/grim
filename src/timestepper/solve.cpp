@@ -17,6 +17,7 @@ void timeStepper::solve(grid &primGuess)
       )
   {
     /* True residual, with explicit terms (not needed for Jacobian) */
+    af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
     computeResidual(primGuess, *residual, true, 
                     numReadsResidual, numWritesResidual
@@ -110,6 +111,7 @@ void timeStepper::solve(grid &primGuess)
       /* reset */
       primGuessPlusEps->vars[row]  = primGuess.vars[row]; 
     }
+    jacobianAssemblyTime += af::timer::stop(jacobianAssemblyTimer);
     /* Jacobian assembly complete */
 
     /* Solve the linear system Jacobian * deltaPrim = -residual for the
@@ -146,6 +148,7 @@ void timeStepper::solve(grid &primGuess)
      which has a minimum at the new value of stepLength,
        stepLength = -fPrime0*stepLength0^2 / (f1-f0-fPrime0*stepLength0)/2
      */
+    af::timer lineSearchTimer = af::timer::start();
     array f0      = 0.5 * l2Norm;
     array fPrime0 = -2.*f0;
     
@@ -202,14 +205,16 @@ void timeStepper::solve(grid &primGuess)
       primGuess.vars[var] = 
         primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
     }
+    lineSearchTime += af::timer::stop(lineSearchTimer);
   }
 }
 
 void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
 {
+  af::timer linearSolverTimer = af::timer::start();
+
   A.host(AHostPtr);
   b.host(bHostPtr);
-  x.host(xHostPtr);
 
   int numVars = residual->numVars;
   int N1Total = residual->N1Total;
@@ -223,52 +228,22 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
     {
       for (int i=0; i<N1Total; i++)
       {
-        double ALocal[numVars*numVars];
-        double bLocal[numVars];
         int pivot[numVars];
 
         const int spatialIndex = 
           i +  N1Total*(j + (N2Total*k) );
 
-        /* Assemble ALocal */
-        for (int row=0; row < vars::numFluidVars; row++)
-        {
-          for (int column=0; column < vars::numFluidVars; column++)
-          {
-            const int indexALocal = column + (numVars*row);
-            const int indexAHost  = 
-              column + numVars*(row + (numVars*spatialIndex) );
-
-            ALocal[indexALocal] = AHostPtr[indexAHost];
-          }
-        }
-
-        /* Assemble bLocal */
-        for (int column=0; column < numVars; column++)
-        {
-          const int indexbLocal = column;
-          const int indexbHost  = column + numVars*spatialIndex;
-
-          bLocal[indexbLocal] = bHostPtr[indexbHost];
-        }
-
-        LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, ALocal, numVars, 
-                      pivot, bLocal, numVars
+        LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, 
+                      &AHostPtr[numVars*numVars*spatialIndex], numVars, 
+                      pivot, &bHostPtr[numVars*spatialIndex], numVars
                      );
-
-        /* Copy solution to xHost */
-        for (int column=0; column < numVars; column++)
-        {
-          const int indexbLocal = column;
-          const int indexbHost  = column + numVars*spatialIndex;
-
-          xHostPtr[indexbHost] = bLocal[indexbLocal];
-        }
 
       }
     }
   }
 
   /* Copy solution to x on device */
-  x = array(numVars, N1Total, N2Total, N3Total, xHostPtr);
+  x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
+
+  linearSolverTime += af::timer::stop(linearSolverTimer);
 }
