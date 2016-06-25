@@ -50,7 +50,7 @@ array reconstruction::slopeMM(const int dir,const double dX, const array& in,
   array centralDiff  = backwardDiff + forwardDiff;
   
   /* TODO: add an argument to slopeLimTheta.*/
-  double slopeLimTheta = 2.;
+  double slopeLimTheta = params::slopeLimTheta;
   array left   = slopeLimTheta * backwardDiff;
   array center = 0.5 * centralDiff;
   array right  = slopeLimTheta * forwardDiff;

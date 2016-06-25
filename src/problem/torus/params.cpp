@@ -13,9 +13,9 @@ namespace params
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 0.0;
-  double InitialDt = 0.005;
-  int restart = 0;
+  double Time = 774.0001;
+  double InitialDt = 0.003;
+  int restart = 1;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -25,7 +25,7 @@ namespace params
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double CourantFactor = 0.3;
-  double finalTime = 200.;
+  double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid size options
@@ -51,8 +51,8 @@ namespace params
   // Note that when using Phi=Psi, approximate
   // limits for the characteristic speeds to remain
   // subluminal are 0.29 (Gamma=5/3) and 1.3 (Gamma=4/3).
-  double ConductionAlpha = .25;
-  double ViscosityAlpha = .25;
+  double ConductionAlpha = 1.;
+  double ViscosityAlpha = 1.;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
 
@@ -97,7 +97,7 @@ namespace params
   double temperatureFloorInFluidElement = 1e-20;
   
   // Reconstruction options
-  double slopeLimTheta = 2;
+  double slopeLimTheta = 2.;
   int reconstruction = reconstructionOptions::MINMOD;
   int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
