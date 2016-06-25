@@ -39,6 +39,8 @@ class timeStepper
                       );
   void batchLinearSolve(const array &A, const array &b, array &x);
   double linearSolverTime;
+  double lineSearchTime;
+  double jacobianAssemblyTime;
 
   public:
     double dt, time;

@@ -17,6 +17,7 @@ void timeStepper::solve(grid &primGuess)
       )
   {
     /* True residual, with explicit terms (not needed for Jacobian) */
+    af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
     computeResidual(primGuess, *residual, true, 
                     numReadsResidual, numWritesResidual
@@ -110,6 +111,7 @@ void timeStepper::solve(grid &primGuess)
       /* reset */
       primGuessPlusEps->vars[row]  = primGuess.vars[row]; 
     }
+    jacobianAssemblyTime += af::timer::stop(jacobianAssemblyTimer);
     /* Jacobian assembly complete */
 
     /* Solve the linear system Jacobian * deltaPrim = -residual for the
@@ -146,6 +148,7 @@ void timeStepper::solve(grid &primGuess)
      which has a minimum at the new value of stepLength,
        stepLength = -fPrime0*stepLength0^2 / (f1-f0-fPrime0*stepLength0)/2
      */
+    af::timer lineSearchTimer = af::timer::start();
     array f0      = 0.5 * l2Norm;
     array fPrime0 = -2.*f0;
     
@@ -203,6 +206,7 @@ void timeStepper::solve(grid &primGuess)
       primGuess.vars[var] = 
         primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
     }
+    lineSearchTime += af::timer::stop(lineSearchTimer);
   }
 
   
@@ -268,5 +272,5 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
   /* Copy solution to x on device */
   x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
 
-  linearSolverTime = af::timer::stop(linearSolverTimer);
+  linearSolverTime += af::timer::stop(linearSolverTimer);
 }
