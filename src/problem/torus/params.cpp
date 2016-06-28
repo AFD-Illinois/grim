@@ -6,15 +6,15 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 128;
+  int N1 = 140;
   int N2 = 128;
-  int N3 = 64;
+  int N3 = 32;
   int dim = 3;
   int numGhost = 3;
 
   // (Re)start options
-  double Time = 774.0001;
-  double InitialDt = 0.003;
+  double Time = 504.0001;
+  double InitialDt = 0.005;
   int restart = 1;
   std::string restartFile = "restartFile.h5";
 
@@ -43,16 +43,16 @@ namespace params
   double InitialPerturbationAmplitude = 4.e-2;
 
   // EMHD model
-  int conduction = 0;
-  int viscosity  = 0;
+  int conduction = 1;
+  int viscosity  = 1;
   int highOrderTermsConduction = 1.;
   int highOrderTermsViscosity = 1.;
   // Phi and Psi from Chandra et al. 2015
   // Note that when using Phi=Psi, approximate
   // limits for the characteristic speeds to remain
   // subluminal are 0.29 (Gamma=5/3) and 1.3 (Gamma=4/3).
-  double ConductionAlpha = 1.;
-  double ViscosityAlpha = 1.;
+  double ConductionAlpha = .25;
+  double ViscosityAlpha = .25;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
 

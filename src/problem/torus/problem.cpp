@@ -1088,10 +1088,32 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
 
       for(int i=0;i<numGhost;i++)
 	{
+	  primBC.vars[vars::RHO](span,numGhost-1-i,span)=
+	    primBC.vars[vars::RHO](span,numGhost+i,span);
+	  primBC.vars[vars::U](span,numGhost-1-i,span)=
+            primBC.vars[vars::U](span,numGhost+i,span);
+	  primBC.vars[vars::U1](span,numGhost-1-i,span)=
+            primBC.vars[vars::U1](span,numGhost+i,span);
+	  primBC.vars[vars::U3](span,numGhost-1-i,span)=
+            primBC.vars[vars::U3](span,numGhost+i,span);
 	  primBC.vars[vars::U2](span,numGhost-1-i,span)=
 	    primBC.vars[vars::U2](span,numGhost+i,span)*(-1.0);
+	  primBC.vars[vars::B1](span,numGhost-1-i,span)=
+            primBC.vars[vars::B1](span,numGhost+i,span);
+	  primBC.vars[vars::B3](span,numGhost-1-i,span)=
+            primBC.vars[vars::B3](span,numGhost+i,span);
 	  primBC.vars[vars::B2](span,numGhost-1-i,span)=
             primBC.vars[vars::B2](span,numGhost+i,span)*(-1.0);
+	  if(params::conduction)
+	    {
+	      primBC.vars[vars::Q](span,numGhost-1-i,span)=
+		primBC.vars[vars::Q](span,numGhost+i,span)*(-1.0);
+	    }
+	  if(params::viscosity)
+	    {
+	      primBC.vars[vars::DP](span,numGhost-1-i,span)=
+                primBC.vars[vars::DP](span,numGhost+i,span)*(-1.0);
+	    }
 	}
       for(int var=0;var<vars::dof;var++)
 	primBC.vars[var].eval();
@@ -1148,11 +1170,34 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
 
       for(int i=0;i<numGhost;i++)
 	{
+	  primBC.vars[vars::RHO](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::RHO](span,primBC.N2Local+numGhost-1-i,span);
+	  primBC.vars[vars::U](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::U](span,primBC.N2Local+numGhost-1-i,span);
+	  primBC.vars[vars::U1](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::U1](span,primBC.N2Local+numGhost-1-i,span);
+	  primBC.vars[vars::U3](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::U3](span,primBC.N2Local+numGhost-1-i,span);
 	  primBC.vars[vars::U2](span,primBC.N2Local+numGhost+i,span)=
 	    primBC.vars[vars::U2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	  primBC.vars[vars::B1](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::B1](span,primBC.N2Local+numGhost-1-i,span);
+	  primBC.vars[vars::B3](span,primBC.N2Local+numGhost+i,span)=
+            primBC.vars[vars::B3](span,primBC.N2Local+numGhost-1-i,span);
 	  primBC.vars[vars::B2](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::B2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	  if(params::conduction)
+	    {
+	      primBC.vars[vars::Q](span,primBC.N2Local+numGhost+i,span)=
+		primBC.vars[vars::Q](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	    }
+	  if(params::viscosity)
+	    {
+	      primBC.vars[vars::DP](span,primBC.N2Local+numGhost+i,span)=
+                primBC.vars[vars::DP](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+	    }
 	}
+
       for(int var=0;var<vars::dof;var++)
 	primBC.vars[var].eval();
     }
