@@ -349,6 +349,8 @@ timeStepper::timeStepper(const int N1,
     }
 
     primOld->load("primitives", params::restartFile);
+    // Need to call the diagnostics to reset the time step !!!
+    fullStepDiagnostics(numReads, numWrites);
   }
 }
 
