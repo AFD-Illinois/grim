@@ -119,7 +119,9 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
   
   array condition = csSqr > one;
   csSqr = csSqr*(one-condition)+condition;
-  
+
+  //csSqr = one;
+
   int sdir = 0;
   switch(dir)
   {

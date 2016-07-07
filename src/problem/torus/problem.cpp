@@ -707,25 +707,25 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
   minSpeedTemp = minSpeedTemp/XCoords->dX1;
   maxSpeedTemp = maxSpeedTemp/XCoords->dX1;
-  minSpeed=minSpeedTemp;
-  maxSpeed=maxSpeedTemp;
+  //minSpeed=minSpeedTemp;
+  maxSpeed=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
   if(params::dim>1)
     {
       elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
       minSpeedTemp = minSpeedTemp/XCoords->dX2;
       maxSpeedTemp = maxSpeedTemp/XCoords->dX2;
-      minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
+      //minSpeed=af::min(minSpeed,minSpeedTemp);
+      maxSpeed+=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
     }
   if(params::dim>2)
     {
       elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
       minSpeedTemp = minSpeedTemp/XCoords->dX3;
       maxSpeedTemp = maxSpeedTemp/XCoords->dX3;
-      minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
+      //minSpeed=af::min(minSpeed,minSpeedTemp);
+      maxSpeed+=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
     }
-  maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
+  //maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
   maxSpeed.eval();
   array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
   double maxInvDt = maxInvDt_af.host<double>()[0];

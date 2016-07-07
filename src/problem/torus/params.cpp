@@ -6,16 +6,17 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 140;
-  int N2 = 128;
-  int N3 = 32;
+  int N1 = 256;
+  int N2 = 256;
+  int N3 = 8;
+  int N3Full = 128;
   int dim = 3;
   int numGhost = 3;
-
+ 
   // (Re)start options
-  double Time = 504.0001;
+  double Time = 0.0;
   double InitialDt = 0.005;
-  int restart = 1;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -24,7 +25,7 @@ namespace params
 
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
-  double CourantFactor = 0.3;
+  double CourantFactor = 0.9;
   double finalTime = 2000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
@@ -51,8 +52,8 @@ namespace params
   // Note that when using Phi=Psi, approximate
   // limits for the characteristic speeds to remain
   // subluminal are 0.29 (Gamma=5/3) and 1.3 (Gamma=4/3).
-  double ConductionAlpha = .25;
-  double ViscosityAlpha = .25;
+  double ConductionAlpha = 1.;
+  double ViscosityAlpha = 1.;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
 
@@ -70,13 +71,13 @@ namespace params
   // Automatic grid boundaries - do not change
   double X1Start = log(Rin), X1End = log(Rout);
   double X2Start = 0.+1.e-8, X2End = 1.-1.e-8;
-  double X3Start = 0., X3End = M_PI;
+  double X3Start = 0., X3End = 2.*M_PI*N3/N3Full;
 
   // Grid parameters
   double hSlope = 0.3;
   int DerefineThetaHorizon = 1;
   int DoCylindrify = 1;
-  double X1cyl = log(4.*Rin);
+  double X1cyl = log(8.*Rin);
   double X2cyl = 1./N2;
 
   // Boundary Conditions
