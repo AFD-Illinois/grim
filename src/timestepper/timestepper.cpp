@@ -19,11 +19,21 @@ timeStepper::timeStepper(const int N1,
                          const double X3Start, const double X3End
                         )
 {
+  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
+  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
+
+  PetscPrintf(PETSC_COMM_WORLD, "   _____ _____  _____ __  __ \n");
+  PetscPrintf(PETSC_COMM_WORLD, "  / ____|  __ \\|_   _|  \\/  |\n");
+  PetscPrintf(PETSC_COMM_WORLD,  " | |  __| |__) | | | | \\  / |\n");
+  PetscPrintf(PETSC_COMM_WORLD,  " | | |_ |  _  /  | | | |\\/| |\n");
+  PetscPrintf(PETSC_COMM_WORLD,  " | |__| | | \\ \\ _| |_| |  | |\n");
+  PetscPrintf(PETSC_COMM_WORLD,  "  \\_____|_|  \\_\\_____|_|  |_|\n");
+  PetscPrintf(PETSC_COMM_WORLD,  "\n");
+  
   this->time = time;
   this->dt = dt;
-  this->N1 = N1;
-  this->N2 = N2;
-  this->N3 = N3;
+  this->numGhost = numGhost;
+  this->dim = dim;
   this->numVars = numVars;
 
   this->boundaryLeft   = boundaryLeft;
@@ -64,6 +74,23 @@ timeStepper::timeStepper(const int N1,
                           periodicBoundariesX2,
                           periodicBoundariesX3
                          );
+
+  /* Set N1, N2, N3 here after creating a grid(), so that they are correctly set
+   * according to dim */
+  this->N1 = prim->N1;
+  this->N2 = prim->N2;
+  this->N3 = prim->N3;
+  std::string deviceInfo = af::infoString();
+  
+  double availableBandwidth = bandwidthTest(10000);
+  PetscSynchronizedPrintf(PETSC_COMM_WORLD, 
+  "#### Rank %d of %d: System info ####\n %s \n  Local size       : %i x %i x %i\n  Memory Bandwidth : %g GB/sec\n\n",
+                          world_rank, world_size, deviceInfo.c_str(),
+                          prim->N1Total, prim->N2Total, prim->N3Total,
+                          availableBandwidth
+                         );  
+  PetscSynchronizedFlush(PETSC_COMM_WORLD, PETSC_STDOUT);
+
 
   primHalfStep = new grid(N1, N2, N3,
                           dim, numVars, numGhost,
@@ -198,43 +225,55 @@ timeStepper::timeStepper(const int N1,
                                 X3Start, X3End
                                );
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating metric at LEFT face...");
   XCoords->setXCoords(locations::LEFT);
   geomLeft    = new geometry(metric,
                              blackHoleSpin,
                              hSlope, 
                              *XCoords
                             );
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating metric at RIGHT face...");
   XCoords->setXCoords(locations::RIGHT);
   geomRight   = new geometry(metric,
                              blackHoleSpin,
                              hSlope,
                              *XCoords
                             );
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating metric at BOTTOM face...");
   XCoords->setXCoords(locations::BOTTOM);
   geomBottom  = new geometry(metric,
                              blackHoleSpin,
                              hSlope,
                              *XCoords
                             );
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating metric at TOP face...");
   XCoords->setXCoords(locations::TOP);
   geomTop     = new geometry(metric,
                              blackHoleSpin,
                              hSlope, 
                              *XCoords
                             );
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating metric at zone CENTER...");
   XCoords->setXCoords(locations::CENTER);
   geomCenter  = new geometry(metric,
                              blackHoleSpin,
                              hSlope,
                              *XCoords
                             );
-  geomCenter->computeConnectionCoeffs();
-  /* XCoords set to locations::CENTER */
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
 
+  PetscPrintf(PETSC_COMM_WORLD, "  Computing connections at zone CENTER...");
+  geomCenter->computeConnectionCoeffs();
+  PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
+  /* XCoords set to locations::CENTER */
 
   int numReads, numWrites;
   elem          = new fluidElement(*prim, *geomCenter,
@@ -390,3 +429,74 @@ timeStepper::~timeStepper()
   delete[] AHostPtr;
   delete[] bHostPtr;
 }
+
+/* Returns memory bandwidth in GB/sec */
+double timeStepper::memoryBandwidth(const double numReads,
+                                    const double numWrites,
+                                    const double numEvals,
+                                    const double timeElapsed
+                                    )
+{
+  switch (dim)
+  {
+    case 1:
+    return   (double)(N1 + 2*numGhost) 
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 2:
+    return   (double)(N1 + 2*numGhost) 
+           * (double)(N2 + 2*numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+    case 3:
+    return   (double)(N1 + 2*numGhost) 
+           * (double)(N2 + 2*numGhost)
+           * (double)(N3 + 2*numGhost)
+           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
+
+  }
+}
+
+double timeStepper::bandwidthTest(const int numEvals)
+{
+  grid prim(N1, N2, N3,
+            dim, 3, numGhost,
+            0, 0, 0
+           );
+
+  prim.vars[0] = af::randu(prim.vars[0].dims(0),
+                           prim.vars[0].dims(1),
+                           prim.vars[0].dims(2),
+                           f64
+                          );
+  prim.vars[1] = af::randu(prim.vars[1].dims(0),
+                           prim.vars[1].dims(1),
+                           prim.vars[1].dims(2),
+                           f64
+                          );
+  prim.vars[2] = af::randu(prim.vars[2].dims(0),
+                           prim.vars[2].dims(1),
+                           prim.vars[2].dims(2),
+                           f64
+                          );
+  prim.vars[2] = prim.vars[1] + prim.vars[0];
+  prim.vars[2].eval();
+  af::sync();
+
+  af::timer::start();
+  for (int n=0; n < numEvals; n++)
+  {
+    prim.vars[2] = prim.vars[1] + prim.vars[0];
+    prim.vars[2].eval();
+  }
+  af::sync();
+
+  int numReads  = 2;
+  int numWrites = 1;
+  double timeElapsed = af::timer::stop();
+
+  return memoryBandwidth(numReads, numWrites,
+                         numEvals, timeElapsed
+                        );
+}
+

@@ -19,6 +19,8 @@ namespace timeStepperSwitches
 
 class timeStepper
 {
+  int world_rank, world_size;
+
   grid *primGuessLineSearchTrial;
   grid *primGuessPlusEps;
   grid *primIC;
@@ -45,9 +47,17 @@ class timeStepper
   af::seq domainX1, domainX2, domainX3;
   array residualMask;
 
+  double memoryBandwidth(const double numReads,
+                         const double numWrites,
+                         const double numEvals,
+                         const double timeElapsed
+                        );
+
+  double bandwidthTest(const int numEvals);
+
   public:
     double dt, time;
-    int N1, N2, N3;
+    int N1, N2, N3, numGhost, dim;
     int numVars;
 
     int boundaryLeft, boundaryRight;
@@ -109,6 +119,8 @@ class timeStepper
                      int &numReads,
                      int &numWrites
                     );
+
+    double computeDt(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
     void initialConditions(int &numReads, int &numWrites);

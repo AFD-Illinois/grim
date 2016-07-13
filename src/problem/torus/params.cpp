@@ -6,11 +6,11 @@ namespace params
   int numDevices = 4;
 
   // Grid size options
-  int N1 = 256;
-  int N2 = 256;
-  int N3 = 8;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 64;
   int N3Full = 128;
-  int dim = 3;
+  int dim = 2;
   int numGhost = 3;
  
   // (Re)start options
@@ -122,6 +122,5 @@ namespace vars
   int B2  = 6 + params::conduction + params::viscosity;
   int B3  = 7 + params::conduction + params::viscosity;
   int dof = 8 + params::conduction + params::viscosity;
-
 };
 

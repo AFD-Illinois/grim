@@ -2,8 +2,10 @@
 
 void timeStepper::timeStep(int &numReads, int &numWrites)
 {
-  PetscPrintf(PETSC_COMM_WORLD, "  Time = %f, dt = %f\n\n", time, dt);
   af::timer timeStepTimer = af::timer::start();
+  PetscPrintf(PETSC_COMM_WORLD, "  Time = %f, dt = %f\n\n", time, dt);
+  int numReadsDt, numWritesDt;
+  computeDt(numReadsDt, numWritesDt);
 
   /* First take a half step */
   PetscPrintf(PETSC_COMM_WORLD, "  ---Half step--- \n");
@@ -360,8 +362,69 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                * prim->N3Local / timeStepTime
              );
   PetscPrintf(PETSC_COMM_WORLD, "   ---Total Performance  : %g Zone cycles/sec\n",
-                                 params::N1 * params::N2 * params::N3 
+                                 N1 * N2 * N3 
                                / timeStepTime
              );
 }
 
+double timeStepper::computeDt(int &numReads, int &numWrites)
+{
+  // Time step control
+  array minSpeedTemp,maxSpeedTemp;
+  array minSpeed,maxSpeed;
+  elemOld->computeMinMaxCharSpeeds(*geomCenter,
+                                   directions::X1,
+                                   minSpeedTemp, maxSpeedTemp,
+                                   numReads,numWrites
+                                  );
+  minSpeedTemp = minSpeedTemp/XCoords->dX1;
+  maxSpeedTemp = maxSpeedTemp/XCoords->dX1;
+  maxSpeed     = af::max(maxSpeedTemp,af::abs(minSpeedTemp));
+
+  if(params::dim>1)
+  {
+    elemOld->computeMinMaxCharSpeeds(*geomCenter,
+                                     directions::X2,
+                                     minSpeedTemp, maxSpeedTemp,
+                                     numReads,numWrites
+                                    );
+    minSpeedTemp = minSpeedTemp/XCoords->dX2;
+    maxSpeedTemp = maxSpeedTemp/XCoords->dX2;
+    maxSpeed    += af::max(maxSpeedTemp,af::abs(minSpeedTemp));
+  }
+
+  if(params::dim>2)
+  {
+    elemOld->computeMinMaxCharSpeeds(*geomCenter,
+                                     directions::X3,
+                                     minSpeedTemp, maxSpeedTemp,
+                                     numReads,numWrites);
+    minSpeedTemp = minSpeedTemp/XCoords->dX3;
+    maxSpeedTemp = maxSpeedTemp/XCoords->dX3;
+    maxSpeed    += af::max(maxSpeedTemp,af::abs(minSpeedTemp));
+  }
+  array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
+  double maxInvDt = maxInvDt_af.host<double>()[0];
+
+  /* Use MPI to find minimum over all processors */
+  if (world_rank == 0) 
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+	  {
+	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	    if( maxInvDt < temp)
+      {
+	      maxInvDt = temp;
+      }
+	  }
+  }
+  else
+  {
+    MPI_Send(&maxInvDt, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
+  MPI_Barrier(PETSC_COMM_WORLD);
+  MPI_Bcast(&maxInvDt,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+  MPI_Barrier(PETSC_COMM_WORLD);
+  dt = params::CourantFactor/maxInvDt;
+}
