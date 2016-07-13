@@ -174,12 +174,6 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
     BDotU += BCov[mu]*uCon[mu];
     ADotB += ACov[mu]*BCon[mu];
   }
-  
-  ASqr.eval();
-  BSqr.eval();
-  ADotU.eval();
-  BDotU.eval();
-  ADotB.eval();
 
   array A = (BDotU*BDotU)   - (BSqr + BDotU*BDotU)*csSqr;
   array B = 2.*(ADotU*BDotU - (ADotB + ADotU*BDotU)*csSqr);
@@ -193,11 +187,11 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
   
   condition = (minSpeed > -1.e-15);
   minSpeed  = minSpeed*(1-condition)-1.e-15*condition;
-  minSpeed.eval();
 
   condition = (maxSpeed < 1.e-15);
   maxSpeed  = maxSpeed*(1-condition)+1.e-15*condition;
-  maxSpeed.eval();
+
+  af::eval(minSpeed, maxSpeed);
   numWrites += 2;
   /* Reads: 0
    * -----
@@ -299,6 +293,7 @@ void riemannSolver::solve(const grid &primLeft,
    * Writes: 0
    * ------ */
 
+  std::vector<af::array *> arraysThatNeedEval;
   for (int var=0; var < primLeft.numVars; var++)
   {
     if (params::riemannSolver == riemannSolvers::HLL)
@@ -324,8 +319,9 @@ void riemannSolver::solve(const grid &primLeft,
            );
     }
 
-    flux.vars[var].eval();
+    arraysThatNeedEval.push_back(&flux.vars[var]);
   }
+  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   /* Reads:
    * -----
    *  fluxLeft[var], fluxRight[var], consLeft[var], consRight[var] : 4*numVars

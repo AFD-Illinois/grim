@@ -14,7 +14,6 @@ array reconstruction::minmod(array &x, array &y, array &z,
   array signz = 1.-2.*sign(z);
   
   array result = 0.25 * af::abs(signx + signy ) * (signx + signz ) * minOfAll;
-  result.eval();
 
   return result;
 }
@@ -72,6 +71,7 @@ void reconstruction::reconstructMM(const grid &prim,
                           		    )
 {
   int numReadsMinMod, numWritesMinMod;
+  std::vector<af::array *> arraysThatNeedEval;
   for(int var=0; var<prim.numVars; var++)
   {
   	//Note: we set dX=1., because the 1/dX in slope
@@ -83,9 +83,9 @@ void reconstruction::reconstructMM(const grid &prim,
   	primLeft.vars[var]  = prim.vars[var] - 0.5*slope;
   	primRight.vars[var] = prim.vars[var] + 0.5*slope;
 
-    primLeft.vars[var].eval();
-    primRight.vars[var].eval();
-
+    arraysThatNeedEval.push_back(&primLeft.vars[var]);
+    arraysThatNeedEval.push_back(&primRight.vars[var]);
   }
+  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
