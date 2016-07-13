@@ -21,6 +21,16 @@ grid::grid(const int N1,
   this->periodicBoundariesX2 = periodicBoundariesX2;
   this->periodicBoundariesX3 = periodicBoundariesX3;
 
+  if (dim==1)
+  {
+    this->N2 = 1;
+    this->N3 = 1;
+  }
+  else if (dim==2)
+  {
+    this->N3 = 1;
+  }
+
   hasHostPtrBeenAllocated = 0;
   havexCoordsBeenSet = 0; // Needed for VTS output
 
@@ -375,7 +385,6 @@ void grid::dumpVTS(const grid &xCoords,
 {
   if (havexCoordsBeenSet == 0)
   {
-    PetscPrintf(PETSC_COMM_WORLD, "Setting coordinates for VTS output...");
     DMDASetUniformCoordinates(dm,0.0,1.0,0.0,1.0,0.0,1.0);
     DMGetCoordinateDM(dm, &coordDM);
     DMGetCoordinates(dm, &coordVec);
@@ -445,7 +454,6 @@ void grid::dumpVTS(const grid &xCoords,
       DMDASetFieldName(dm, var, varNames[var].c_str());
     }
 
-    PetscPrintf(PETSC_COMM_WORLD, "done.\n");
   }
 
   copyVarsToGlobalVec();

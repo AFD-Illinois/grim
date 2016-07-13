@@ -13,6 +13,7 @@ namespace params
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = .5/N1;
   double Time = 0.;
+  double CourantFactor = 0.9;
   double finalTime = 0.5;
   int metric = metrics::MINKOWSKI;
   int restart = 0;

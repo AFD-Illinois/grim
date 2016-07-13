@@ -40,6 +40,11 @@ fluidElement::fluidElement(const grid &prim,
   set(prim, geom, numReads, numWrites);
 }
 
+fluidElement::~fluidElement()
+{
+  /* Nothing to be done */
+}
+
 void fluidElement::set(const grid &prim,
                        const geometry &geom,
                        int &numReads,

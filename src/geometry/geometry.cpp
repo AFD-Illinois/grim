@@ -7,7 +7,7 @@ geometry::geometry(const int metric,
                    const coordinatesGrid &XCoordsGrid
                   )
 {
-  PetscPrintf(PETSC_COMM_WORLD, "Setup metric\n");   
+  /* Differencing parameter for computing connections */
   GAMMA_EPS = 1.e-5;
   N1        = XCoordsGrid.N1;
   N2        = XCoordsGrid.N2;
@@ -53,12 +53,10 @@ geometry::geometry(const int metric,
   setxCoordsGrid();
 
   af::sync();
-  PetscPrintf(PETSC_COMM_WORLD, "Done initializing geometry!\n");   
 }
 
 void geometry::computeConnectionCoeffs()
 {
-  PetscPrintf(PETSC_COMM_WORLD, "Compute connections\n");
   array gammaDownDownDown[NDIM][NDIM][NDIM];
   array gCovPlus[NDIM-1][NDIM][NDIM];
   array gCovMinus[NDIM-1][NDIM][NDIM];
@@ -115,7 +113,6 @@ void geometry::computeConnectionCoeffs()
   }
 
   af::sync();
-  PetscPrintf(PETSC_COMM_WORLD, "Done with connections\n");
 }
 
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],

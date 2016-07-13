@@ -44,6 +44,8 @@ class fluidElement
                  int &numReads,
                  int &numWrites
                 );
+    ~fluidElement();
+
     void set(const grid &prim,
              const geometry &geom,
              int &numReads,

@@ -139,17 +139,12 @@ double computeLnOfh(double a, double r, double theta)
 
 void timeStepper::initialConditions(int &numReads,int &numWrites)
 {
-  int world_rank;
-  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
-  int world_size;
-  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
-
+  PetscPrintf(PETSC_COMM_WORLD, "  Generating torus initial conditions...");
   // Random number generator from PeTSC
   double randNum;
   PetscRandom randNumGen;
   PetscRandomCreate(PETSC_COMM_WORLD, &randNumGen);
   PetscRandomSetType(randNumGen, PETSCRAND48);
-
 
   //Let's ignore ArrayFire here - it's only the initial
   //conditions...
@@ -169,18 +164,6 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   array& B2 = primOld->vars[vars::B2];
   array& B3 = primOld->vars[vars::B3];
 
-
-  PetscPrintf(PETSC_COMM_WORLD, "Running on %i procs\n", world_size);
-  for(int proc=0;proc<world_size;proc++)
-    {
-      if(world_rank==proc)
-	{
-	  printf("Local size on proc %i : %i x %i x %i\n",proc,N1g,N2g,N3g);
-	  //af_print(xCoords[directions::X1],5);
-	}
-      MPI_Barrier(PETSC_COMM_WORLD);
-    }
-  
   double aBH = params::blackHoleSpin;
 
   for(int k=0;k<N3g;k++)
@@ -198,20 +181,19 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	  const double& beta2 = geomCenter->gCon[0][2](i,j,k).scalar<double>();
 	  const double& beta3 = geomCenter->gCon[0][3](i,j,k).scalar<double>();
 
-
 	  double lnOfh = 1.;
 	  if(r>=params::InnerEdgeRadius)
 	    lnOfh = computeLnOfh(aBH,r,theta);
 	  
 	  /* Region outside the torus */
 	  if(lnOfh<0. || r<params::InnerEdgeRadius)
-	    {
-	      Rho(i,j,k)=params::rhoFloorInFluidElement;
-	      U(i,j,k)=params::uFloorInFluidElement;
-	      U1(i,j,k)=0.;
-	      U2(i,j,k)=0.;
-	      U3(i,j,k)=0.;
-	    }
+	  {
+	    Rho(i,j,k)=params::rhoFloorInFluidElement;
+	    U(i,j,k)=params::uFloorInFluidElement;
+	    U1(i,j,k)=0.;
+	    U2(i,j,k)=0.;
+	    U3(i,j,k)=0.;
+	  }
 	  else
 	    {
 	      double h = exp(lnOfh);
@@ -224,7 +206,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 			       1./(Gamma-1.));
 	      PetscRandomGetValue(randNumGen, &randNum);
 	      U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.)
-		*(1. + params::InitialPerturbationAmplitude*(randNum-0.5));
+                  * (1. + params::InitialPerturbationAmplitude*(randNum-0.5));
 	  
 	      /* TODO: Should add random noise here */
 	  
@@ -238,7 +220,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      double expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
 	      double uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi))/2.);
 	      double uConPhiBL =   2.*aBH*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
-		/sqrt(A*Sigma*Delta)+ sqrt(Sigma/A)*uCovPhiBL/sin(theta);
+                          / sqrt(A*Sigma*Delta)+ sqrt(Sigma/A)*uCovPhiBL/sin(theta);
 
 	      double uConBL[NDIM];
 	      uConBL[0] = 0.;
@@ -250,14 +232,14 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      double transformBLToMKS[NDIM][NDIM];
 	      
 	      for (int alpha=0; alpha<NDIM; alpha++)
-		{
-		  for (int beta=0; beta<NDIM; beta++)
-		    {
-		      gCovBL[alpha][beta] = 0.;
-		      gConBL[alpha][beta] = 0.;
-		      transformBLToMKS[alpha][beta] = 0.;
+        {
+		      for (int beta=0; beta<NDIM; beta++)
+		      {
+		        gCovBL[alpha][beta] = 0.;
+		        gConBL[alpha][beta] = 0.;
+		        transformBLToMKS[alpha][beta] = 0.;
+		      }
 		    }
-		}
 	      
 	      double mu = 1 + aBH*aBH*cos(theta)*cos(theta)/(r*r);
 	      
@@ -266,8 +248,10 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      gCovBL[3][0] = gCovBL[0][3];
 	      gCovBL[1][1] = mu*r*r/Delta;
 	      gCovBL[2][2] = r*r*mu;
-	      gCovBL[3][3] = r*r*sin(theta)*sin(theta)*
-		(1. + aBH*aBH/(r*r) + 2.*aBH*aBH*sin(theta)*sin(theta)/(r*r*r*mu));
+	      gCovBL[3][3] =   r*r*sin(theta)*sin(theta)
+		                   * (1. + aBH*aBH/(r*r) 
+                             + 2.*aBH*aBH*sin(theta)*sin(theta)/(r*r*r*mu)
+                          );
 	      
 	      gConBL[0][0] = -1. -2.*(1 + aBH*aBH/(r*r))/(Delta*mu/r);
 	      gConBL[0][3] = -2.*aBH/(r*Delta*mu);
@@ -286,15 +270,16 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      /* Need to get uConBL[0] using u^mu u_mu = -1 */
 	      double AA = gCovBL[0][0];
 	      double BB = 2.*(gCovBL[0][1]*uConBL[1] +
-			      gCovBL[0][2]*uConBL[2] +
-			      gCovBL[0][3]*uConBL[3]
-			      );
-	      double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1] +
-		gCovBL[2][2]*uConBL[2]*uConBL[2] +
-		gCovBL[3][3]*uConBL[3]*uConBL[3] +
-		2.*(gCovBL[1][2]*uConBL[1]*uConBL[2] +
-		    gCovBL[1][3]*uConBL[1]*uConBL[3] +
-		    gCovBL[2][3]*uConBL[2]*uConBL[3]);
+			                  gCovBL[0][2]*uConBL[2] +
+			                  gCovBL[0][3]*uConBL[3]
+			                 );
+	      double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1]
+		                   + gCovBL[2][2]*uConBL[2]*uConBL[2]
+                       + gCovBL[3][3]*uConBL[3]*uConBL[3]
+                       + 2.*(  gCovBL[1][2]*uConBL[1]*uConBL[2]
+                             + gCovBL[1][3]*uConBL[1]*uConBL[3]
+                             + gCovBL[2][3]*uConBL[2]*uConBL[3]
+                            );
 	      
 	      double discriminent = BB*BB - 4.*AA*CC;
 	      uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
@@ -302,14 +287,14 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      double uConKS[NDIM];
 	      
 	      for (int alpha=0; alpha<NDIM; alpha++)
-		{
-		  uConKS[alpha] = 0.;
-		  
-		  for (int beta=0; beta<NDIM; beta++)
 		    {
-		      uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
+		      uConKS[alpha] = 0.;
+		  
+		      for (int beta=0; beta<NDIM; beta++)
+		      {
+		        uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
+		      }
 		    }
-		}
 	      
 	      /* Finally get the four-velocity in the X coordinates, which is modified
 	       * Kerr-Schild */
@@ -325,6 +310,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	      U2(i,j,k) = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
 	      U3(i,j,k) = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
 	    }
+
 	  B1(i,j,k) = 0.;
 	  B2(i,j,k) = 0.;
 	  B3(i,j,k) = 0.;
@@ -335,26 +321,27 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
   /* Communicate rhoMax to all processors */
   if (world_rank == 0) 
-    {
-      double temp; 
-      for(int i=1;i<world_size;i++)
-	{
-	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	  if(rhoMax < temp)
-	    rhoMax = temp;
-	}
-      }
-    else
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+	  {
+	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	    if(rhoMax < temp)
       {
-        MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	      rhoMax = temp;
       }
+	  }
+  }
+  else
+  {
+    MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
   MPI_Barrier(PETSC_COMM_WORLD);
   MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
   MPI_Barrier(PETSC_COMM_WORLD);
 
-  PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e\n",rhoMax);
-  Rho=Rho/rhoMax;
-  U=U/rhoMax;
+  Rho = Rho/rhoMax;
+  U   = U  /rhoMax;
 
   Rho.eval();
   U.eval();
@@ -371,100 +358,80 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   // Set vector potential
   const array& Rho_af = primOld->vars[vars::RHO];
   array rhoAvg = 
-    (af::shift(Rho_af,1,0,0)+af::shift(Rho_af,-1,0,0)
-     +af::shift(Rho_af,0,1,0)+af::shift(Rho_af,0,-1,0));
+    (  af::shift(Rho_af,1,0,0) + af::shift(Rho_af,-1,0,0)
+     + af::shift(Rho_af,0,1,0) + af::shift(Rho_af,0,-1,0)
+    );
   if(params::dim>2)
-    {
-      rhoAvg = (rhoAvg
-		+af::shift(Rho_af,0,0,1)+af::shift(Rho_af,0,0,-1))/6.;
-    }
+  {
+    rhoAvg = (rhoAvg + af::shift(Rho_af,0,0,1) + af::shift(Rho_af,0,0,-1) )/6.;
+  }
   else
-    {
-      rhoAvg = rhoAvg/4.;
-    }
+  {
+    rhoAvg = rhoAvg/4.;
+  }
   array zero = rhoAvg*0.;
-  array Avec = af::max(rhoAvg-0.2,zero)*
-    af::cos(xCoords[directions::X2]*
-	    (params::MagneticLoops-1));
+  array Avec =  af::max(rhoAvg-0.2,zero)
+              * af::cos(xCoords[directions::X2]*(params::MagneticLoops-1));
   Avec.eval();
  
   // Compute magnetic field 
-  const array& g = geomCenter->g;
+  const array& g   = geomCenter->g;
   const double dX1 = XCoords->dX1;
   const double dX2 = XCoords->dX2;
 
   primOld->vars[vars::B1] = 
-    (af::shift(Avec,0,-1,0)-af::shift(Avec,0,0,0)
-     +af::shift(Avec,-1,-1,0)-af::shift(Avec,-1,0,0))/
-    (2.*dX2*g);
+    (  af::shift(Avec,0,-1,0)  - af::shift(Avec,0,0,0)
+     + af::shift(Avec,-1,-1,0) - af::shift(Avec,-1,0,0)
+    )/(2.*dX2*g);
+
   primOld->vars[vars::B2] = 
-    (af::shift(Avec,0,0,0)-af::shift(Avec,-1,0,0)
-     +af::shift(Avec,0,-1,0)-af::shift(Avec,-1,-1,0))/
-    (2.*dX1*g);
+    (  af::shift(Avec,0,0,0)  - af::shift(Avec,-1,0,0)
+     + af::shift(Avec,0,-1,0) - af::shift(Avec,-1,-1,0)
+    )/(2.*dX1*g);
+  
+  // Set fields to zero in ghost zones
+  primOld->vars[vars::B1] *= residualMask;
+  primOld->vars[vars::B2] *= residualMask;
+
   primOld->vars[vars::B1].eval();
   primOld->vars[vars::B2].eval();
-
-  // Set fields to zero in ghost zones
-  // (Communication below only sets fields to correct value in inner GZ,
-  //  not on inner / outer boundary)
-  for(int i=0;i<params::numGhost;i++)
-    {
-      primOld->vars[vars::B1](i,span,span)=0.;
-      primOld->vars[vars::B2](i,span,span)=0.;
-      primOld->vars[vars::B1](N1g-1-i,span,span)=0.;
-      primOld->vars[vars::B2](N1g-1-i,span,span)=0.;
-      if(params::dim>1)
-	{
-	  primOld->vars[vars::B1](span,i,span)=0.;
-	  primOld->vars[vars::B2](span,i,span)=0.;
-	  primOld->vars[vars::B1](span,N2g-1-i,span)=0.;
-          primOld->vars[vars::B2](span,N2g-1-i,span)=0.;
-	}
-      if(params::dim>2)
-	{
-	  primOld->vars[vars::B1](span,span,i)=0.;
-	  primOld->vars[vars::B2](span,span,i)=0.;
-	  primOld->vars[vars::B1](span,span,N3g-1-i)=0.;
-          primOld->vars[vars::B2](span,span,N3g-1-i)=0.;
-	}
-   }
-  
 
   // We have used ghost zones in the previous steps -> need to communicate
   // before computing global quantities
   primOld->communicate();
 
   // Need to set fluid element to get b^2...
+  double BFactor;
   {
     elemOld->set(*primOld,*geomCenter,numReads,numWrites);
     const array& bSqr = elemOld->bSqr;
     const array& Pgas = elemOld->pressure;
     array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
     array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
-    double BFactor = BetaMin_af.host<double>()[0];
+    BFactor = BetaMin_af.host<double>()[0];
     BFactor = sqrt(BFactor/params::MinPlasmaBeta);
 
     /* Use MPI to find minimum over all processors */
     if (world_rank == 0) 
-      {
-	double temp; 
-	for(int i=1;i<world_size;i++)
-	  {
-	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    if(BFactor > temp)
-	      BFactor = temp;
-	  }
-      }
+    {
+	    double temp; 
+	    for(int i=1;i<world_size;i++)
+	    {
+	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	      if(BFactor > temp)
+        {
+	        BFactor = temp;
+        }
+	    }
+    }
     else
-      {
-        MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-      }
+    {
+      MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+    }
     MPI_Barrier(PETSC_COMM_WORLD);
     MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
     
-    PetscPrintf(PETSC_COMM_WORLD,"Bfactor = %e\n",BFactor);
-
     primOld->vars[vars::B1] *= BFactor;
     primOld->vars[vars::B2] *= BFactor;
     primOld->vars[vars::B3] *= BFactor;
@@ -473,37 +440,30 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     primOld->vars[vars::B3].eval();
   }
 
-  /*{
-    primOld->vars[vars::RHO](span,span,span)=1.e-20;
-    primOld->vars[vars::U](span,span,span)=1.e-20;
-    primOld->vars[vars::U1](span,span,span)=0.;
-    primOld->vars[vars::U2](span,span,span)=0.;
-    primOld->vars[vars::U3](span,span,span)=0.;
-    array Rl = xCoords[0];
-    primOld->vars[vars::B1](span,span,span)=1./Rl/Rl/Rl;
-    primOld->vars[vars::B2](span,span,span)=0.;
-    primOld->vars[vars::B3](span,span,span)=0.;
-    }*/
-
   if(params::conduction)
-    {
-      primOld->vars[vars::Q] = zero;
-      primOld->vars[vars::Q].eval();
-    }
+  {
+    primOld->vars[vars::Q] = zero;
+    primOld->vars[vars::Q].eval();
+  }
   if(params::viscosity)
-    {
-      primOld->vars[vars::DP] = zero;
-      primOld->vars[vars::DP].eval();
-    }
+  {
+    primOld->vars[vars::DP] = zero;
+    primOld->vars[vars::DP].eval();
+  }
 
   applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
 
   for (int var=0; var<vars::dof; var++) 
-    {
-        primOld->vars[var].eval();
-    }
+  {
+    primOld->vars[var].eval();
+  }
 
   af::sync();
+
+  PetscPrintf(PETSC_COMM_WORLD, "done\n");
+  PetscPrintf(PETSC_COMM_WORLD, "    ---Torus Initial Conditions--- \n");
+  PetscPrintf(PETSC_COMM_WORLD,"      rhoMax = %e\n",rhoMax);
+  PetscPrintf(PETSC_COMM_WORLD,"      Bfactor = %e\n",BFactor);
 
   fullStepDiagnostics(numReads,numWrites);
 }
@@ -678,8 +638,6 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
       prim->vars[vars::DP].eval();
     }
   if(params::conduction || params::viscosity) elem->set(*prim, *geom, numReads,numWrites);
-
-  //af::sync();
 }
 
 void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
@@ -700,55 +658,6 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   af::seq domainX2 = *primOld->domainX2;
   af::seq domainX3 = *primOld->domainX3;
   
-  // Time step control
-  array minSpeedTemp,maxSpeedTemp;
-  array minSpeed,maxSpeed;
-  elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-  minSpeedTemp = minSpeedTemp/XCoords->dX1;
-  maxSpeedTemp = maxSpeedTemp/XCoords->dX1;
-  //minSpeed=minSpeedTemp;
-  maxSpeed=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
-  if(params::dim>1)
-    {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      minSpeedTemp = minSpeedTemp/XCoords->dX2;
-      maxSpeedTemp = maxSpeedTemp/XCoords->dX2;
-      //minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed+=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
-    }
-  if(params::dim>2)
-    {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      minSpeedTemp = minSpeedTemp/XCoords->dX3;
-      maxSpeedTemp = maxSpeedTemp/XCoords->dX3;
-      //minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed+=af::max(maxSpeedTemp,af::abs(minSpeedTemp));
-    }
-  //maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
-  maxSpeed.eval();
-  array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
-  double maxInvDt = maxInvDt_af.host<double>()[0];
-  /* Use MPI to find minimum over all processors */
-  if (world_rank == 0) 
-    {
-      double temp; 
-      for(int i=1;i<world_size;i++)
-	{
-	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	  if( maxInvDt < temp)
-	    maxInvDt = temp;
-	}
-    }
-  else
-    {
-      MPI_Send(&maxInvDt, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-    }
-  MPI_Barrier(PETSC_COMM_WORLD);
-  MPI_Bcast(&maxInvDt,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-  MPI_Barrier(PETSC_COMM_WORLD);
-  dt = params::CourantFactor/maxInvDt;
-  PetscPrintf(PETSC_COMM_WORLD,"New dt = %e\n",dt);
-
   // On-the-fly observers
   bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
@@ -852,26 +761,33 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       MPI_Bcast(&EMag,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
       MPI_Barrier(PETSC_COMM_WORLD);
 
-      PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
-      PetscPrintf(PETSC_COMM_WORLD,"rhoMax = %e; betaMin = %e;\n",rhoMax,betaMin);
-      PetscPrintf(PETSC_COMM_WORLD,"Baryon Mass = %e; Magnetic Energy = %e\n",BaryonMass,EMag);
+      PetscPrintf(PETSC_COMM_WORLD, "\n");
+      PetscPrintf(PETSC_COMM_WORLD,"    ---Global quantities at t = %e--- \n", time);
+      PetscPrintf(PETSC_COMM_WORLD,"      rhoMax          = %e\n",  rhoMax);
+      PetscPrintf(PETSC_COMM_WORLD,"      betaMin         = %e\n", betaMin);
+      PetscPrintf(PETSC_COMM_WORLD,"      Baryon Mass     = %e\n", BaryonMass);
+      PetscPrintf(PETSC_COMM_WORLD,"      Magnetic Energy = %e\n", EMag);
     }
   if(WriteData)
     {
       long long int WriteIdx = floor(time/params::WriteDataEveryDt);
       if(WriteIdx==0)
-	{
-	  PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
-	  geomCenter->gCovGrid->dump("gCov","gCov.h5");
-	  geomCenter->gConGrid->dump("gCon","gCon.h5");
-	  geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
-	  geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
-	}
+	    {
+        PetscPrintf(PETSC_COMM_WORLD, "\n");
+        PetscPrintf(PETSC_COMM_WORLD, "  Printing metric at zone CENTER...");
+	      geomCenter->gCovGrid->dump("gCov","gCov.h5");
+	      geomCenter->gConGrid->dump("gCon","gCon.h5");
+	      geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
+	      geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
+        PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
+	    }
       std::string filename = "primVarsT";
       std::string filenameVTS = "primVarsT";
       std::string s_idx = std::to_string(WriteIdx);
       for(int i=0;i<6-s_idx.size();i++)
-	filename=filename+"0";
+      {
+  	    filename=filename+"0";
+      }
       filename=filename+s_idx;
       filenameVTS = filename;
       filename=filename+".h5";
@@ -1226,7 +1142,6 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
   // 3) 'Fix' the polar regions by correcting the firs
   // two active zones
   fixPoles(*primBC,*geomCenter,numReads,numWrites);
-  af::sync();
 };
 
 void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
