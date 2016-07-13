@@ -47,7 +47,6 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
   nu_emhd  = af::min(maxAlpha,params::ViscosityAlpha)*soundSpeed*soundSpeed*tau;
   chi_emhd.eval();
   nu_emhd.eval();
-  //af::sync();
 }
 
 

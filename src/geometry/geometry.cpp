@@ -88,7 +88,7 @@ void geometry::computeConnectionCoeffs()
       	gammaDownDownDown[mu][nu][lamda] = zero;
         computeGammaDownDownDown(mu,nu,lamda,
                                  gammaDownDownDown[mu][nu][lamda],
-				 gCovPlus,gCovMinus
+				                         gCovPlus,gCovMinus
                                 );
       }
     }
@@ -254,10 +254,17 @@ void geometry::setgCovInXCoords(const array XCoords[3],
   {
     case metrics::MINKOWSKI:
       
+      for (int mu=0; mu < NDIM; mu++)
+      {
+        for (int nu=0; nu < NDIM; nu++)
+        {
+          gCov[mu][nu] = zero;
+        }
+      }
       gCov[0][0] = -1.;
-      gCov[1][1] = 1.;
-      gCov[2][2] = 1.;
-      gCov[3][3] = 1.;
+      gCov[1][1] =  1.;
+      gCov[2][2] =  1.;
+      gCov[3][3] =  1.;
 
       break;
 
