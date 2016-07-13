@@ -2,7 +2,6 @@
 
 void timeStepper::computeResidual(const grid &primGuess,
                                   grid &residualGuess, 
-                                  const bool computeExplicitTerms,
                                   int &numReads,
                                   int &numWrites
                                  )
@@ -19,31 +18,8 @@ void timeStepper::computeResidual(const grid &primGuess,
 
   if (currentStep == timeStepperSwitches::HALF_STEP)
   {
-    if (computeExplicitTerms)
-    {
-      int numReadsExplicitSouces, numWritesExplicitSouces;
-      elemOld->computeExplicitSources(*geomCenter, *sourcesExplicit,
-                                      numReadsExplicitSouces, 
-                                      numWritesExplicitSouces
-                                     );
-      numReads  += numReadsExplicitSouces;
-      numWrites += numWritesExplicitSouces;
-    }
-    else
-    {
-      for (int var=0; var<vars::dof; var++)
-      {
-	      sourcesExplicit->vars[var] = 0.;
-      }
-    }
-
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
-				                            elemOld->tau,
-                                    numReadsImplicitSources,
-                                    numWritesImplicitSources
-                                   );
     elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
 				                         elemOld->tau,
                                  numReadsImplicitSources,
@@ -56,8 +32,8 @@ void timeStepper::computeResidual(const grid &primGuess,
                                      numReadsTimeDerivSources,
                                      numWritesTimeDerivSources
                                     );
-    numReads  += 2*numReadsImplicitSources  + numReadsTimeDerivSources;
-    numWrites += 2*numWritesImplicitSources + numWritesTimeDerivSources; 
+    numReads  += numReadsImplicitSources  + numReadsTimeDerivSources;
+    numWrites += numWritesImplicitSources + numWritesTimeDerivSources; 
 
     for (int var=0; var<residualGuess.numVars; var++)
     {
@@ -81,8 +57,6 @@ void timeStepper::computeResidual(const grid &primGuess,
     numReads  += 7*residualGuess.numVars;
 
     /* Normalization of the residualGuess */
-    //for (int var=0; var<vars::dof; var++)
-    //  residualGuess.vars[var] = residualGuess.vars[var]/geomCenter->g;
     if (params::conduction)
     {
       if(params::highOrderTermsConduction)
@@ -121,31 +95,8 @@ void timeStepper::computeResidual(const grid &primGuess,
 
   else if (currentStep == timeStepperSwitches::FULL_STEP)
   {
-    if (computeExplicitTerms)
-    {
-      int numReadsExplicitSouces, numWritesExplicitSouces;
-      elemHalfStep->computeExplicitSources(*geomCenter, *sourcesExplicit,
-                                           numReadsExplicitSouces,
-                                           numWritesExplicitSouces
-                                          );
-      numReads  += numReadsExplicitSouces;
-      numWrites += numWritesExplicitSouces;
-    }
-    else
-    {
-      for (int var=0; var<vars::dof; var++)
-      {
-	      sourcesExplicit->vars[var]=0.;
-      }
-    }
-
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
-				                            elemHalfStep->tau,
-                                    numReadsImplicitSources,
-                                    numWritesImplicitSources
-                                   );
     elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
 				                         elemHalfStep->tau,
                                  numReadsImplicitSources,
@@ -158,8 +109,8 @@ void timeStepper::computeResidual(const grid &primGuess,
                                           numReadsTimeDerivSources,
                                           numWritesTimeDerivSources
                                          );
-    numReads  += 2*numReadsImplicitSources  + numReadsTimeDerivSources;
-    numWrites += 2*numWritesImplicitSources + numWritesTimeDerivSources; 
+    numReads  += numReadsImplicitSources  + numReadsTimeDerivSources;
+    numWrites += numWritesImplicitSources + numWritesTimeDerivSources; 
 
     for (int var=0; var < residualGuess.numVars; var++)
     {
@@ -219,69 +170,14 @@ void timeStepper::computeResidual(const grid &primGuess,
 
   } /* End of timeStepperSwitches::FULL_STEP */
 
+  std::vector<af::array *> arraysThatNeedEval;
   //Zero the residual in global ghost zones
-  // TODO: prefill a mask with zero in the ghost zones and one in the bulk and
-  // and then do residual = residual*mask;
-  int N1Total = residualGuess.N1Total;
-  int N2Total = residualGuess.N2Total;
-  int N3Total = residualGuess.N3Total;
-
-  int N1Local = residualGuess.N1Local;
-  int N2Local = residualGuess.N2Local;
-  int N3Local = residualGuess.N3Local;
-
-  int numGhostX1 = residualGuess.numGhostX1;
-  int numGhostX2 = residualGuess.numGhostX2;
-  int numGhostX3 = residualGuess.numGhostX3;
-
   for (int var=0; var<residualGuess.numVars; var++) 
   {
-    /* Left boundary */
-    for(int i=0; i<numGhostX1; i++)
-    {
-	    residualGuess.vars[var](i,span,span)=0.;
-    }
-
-    /* Right boundary */
-    for(int i=N1Local+numGhostX1; i<N1Local + 2*numGhostX1; i++)
-    {
-	    residualGuess.vars[var](i,span,span)=0.;
-    }
-    
-    if(params::dim==1)
-	    continue;
-      
-    /* Bottom boundary */
-    for(int j=0; j < numGhostX2; j++)
-    {
-	    residualGuess.vars[var](span,j,span)=0.;
-    }
-      
-    /* Top boundary */
-    for(int j=N2Local+numGhostX2; j < N2Local+2*numGhostX2; j++)
-    {
-	    residualGuess.vars[var](span,j,span)=0.;
-    }
-      
-    if(params::dim==2)
-	    continue;
-      
-    /* Back boundary */
-    for(int k=0; k<numGhostX3; k++)
-    {
-	    residualGuess.vars[var](span,span,k)=0.;
-    }
-      
-    /* Front boundary */
-    for(int k=N3Local+numGhostX3; k<N3Local + 2*numGhostX3; k++)
-    {
-	    residualGuess.vars[var](span,span,k)=0.;
-    }
+    residualGuess.vars[var] *= residualMask;
+    arraysThatNeedEval.push_back(&residualGuess.vars[var]);
   }
+  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 
-  for (int var=0; var < residualGuess.numVars; var++)
-  {
-    residualGuess.vars[var].eval();
-  }
   numWrites += residualGuess.numVars;
 }

@@ -36,6 +36,23 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numWrites = numWritesElemSet + numWritesComputeFluxes; 
   double consOldTime = af::timer::stop(consOldTimer);
 
+  int numReadsExplicitSouces, numWritesExplicitSouces;
+  elemOld->computeExplicitSources(*geomCenter, *sourcesExplicit,
+                                  numReadsExplicitSouces, 
+                                  numWritesExplicitSouces
+                                 );
+  numReads  += numReadsExplicitSouces;
+  numWrites += numWritesExplicitSouces;
+
+  int numReadsImplicitSources, numWritesImplicitSources;
+  elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
+			                            elemOld->tau,
+                                  numReadsImplicitSources,
+                                  numWritesImplicitSources
+                                 );
+  numReads  += numReadsImplicitSources;
+  numWrites += numWritesImplicitSources;
+
   af::timer emhdGradientTimer = af::timer::start();
   if (params::viscosity || params::conduction)
   {
@@ -195,6 +212,21 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numReads  += numReadsElemSet;
   numWrites += numWritesElemSet; 
   double elemHalfStepTime = af::timer::stop(elemHalfStepTimer);
+
+  elemHalfStep->computeExplicitSources(*geomCenter, *sourcesExplicit,
+                                       numReadsExplicitSouces,
+                                       numWritesExplicitSouces
+                                      );
+  numReads  += numReadsExplicitSouces;
+  numWrites += numWritesExplicitSouces;
+
+  elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
+			                            elemHalfStep->tau,
+                                  numReadsImplicitSources,
+                                  numWritesImplicitSources
+                                 );
+  numReads  += numReadsImplicitSources;
+  numWrites += numWritesImplicitSources;
 
   emhdGradientTimer = af::timer::start();
   if (params::viscosity || params::conduction)

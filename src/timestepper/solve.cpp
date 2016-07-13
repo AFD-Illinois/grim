@@ -2,11 +2,6 @@
 
 void timeStepper::solve(grid &primGuess)
 {
-  /* Get the domain of the bulk */
-  af::seq domainX1 = *residual->domainX1;
-  af::seq domainX2 = *residual->domainX2;
-  af::seq domainX3 = *residual->domainX3;
-
   int world_rank;
   MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
   int world_size;
@@ -19,7 +14,7 @@ void timeStepper::solve(grid &primGuess)
     /* True residual, with explicit terms (not needed for Jacobian) */
     af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
-    computeResidual(primGuess, *residual, true, 
+    computeResidual(primGuess, *residual,
                     numReadsResidual, numWritesResidual
                    );
     for (int var=0; var < vars::numFluidVars; var++)
@@ -72,13 +67,12 @@ void timeStepper::solve(grid &primGuess)
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
                 globalresnorm,globalNonConverged
 		);
-//    if (globalNonConverged == 0)
-//    {
-//      break;
-//    }
+    if (globalNonConverged == 0)
+    {
+      break;
+    }
 
-    /* Residual without explicit terms, for faster Jacobian assembly */
-    computeResidual(primGuess, *residual, false,
+    computeResidual(primGuess, *residual,
                     numReadsResidual, numWritesResidual
                    );
 
@@ -96,7 +90,7 @@ void timeStepper::solve(grid &primGuess)
           (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
 	      + smallPrim*epsilon; 
 
-      computeResidual(*primGuessPlusEps, *residualPlusEps, false,
+      computeResidual(*primGuessPlusEps, *residualPlusEps,
                       numReadsResidual, numWritesResidual
                      );
 
@@ -165,7 +159,7 @@ void timeStepper::solve(grid &primGuess)
           primGuess.vars[var] + stepLength*deltaPrimSoA(span, span, span, var);
       } 
       /* ...and then compute the norm */
-      computeResidual(*primGuessLineSearchTrial, *residual, true,
+      computeResidual(*primGuessLineSearchTrial, *residual,
                       numReadsResidual, numWritesResidual
                      );
       for (int var=0; var<vars::numFluidVars; var++)
@@ -193,10 +187,10 @@ void timeStepper::solve(grid &primGuess)
         = stepLengthNoGhost*(1. - condition) + condition*nextStepLengthNoGhost;
       
       array conditionIndices = where(condition > 0);
-//      if (conditionIndices.elements() == 0)
-//      {
-//        break;
-//      }
+      if (conditionIndices.elements() == 0)
+      {
+        break;
+      }
     }
 
     /* stepLength has now been set */

@@ -321,6 +321,20 @@ timeStepper::timeStepper(const int N1,
   AHostPtr = new double [numFluidVars*numFluidVars*N1Total*N2Total*N3Total];
   bHostPtr = new double [numFluidVars*N1Total*N2Total*N3Total];
 
+  /* Mask for ghost zone residuals */
+  residualMask = af::constant(0.,
+                              residual->vars[0].dims(0),
+                              residual->vars[0].dims(1),
+                              residual->vars[0].dims(2),
+                              f64
+                             );
+  /* Get the domain of the bulk */
+  domainX1 = *residual->domainX1;
+  domainX2 = *residual->domainX2;
+  domainX3 = *residual->domainX3;
+
+  residualMask(domainX1, domainX2, domainX3) = 1.;
+
   initialConditions(numReads, numWrites);
   if (params::restart)
   {

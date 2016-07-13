@@ -34,7 +34,6 @@ class timeStepper
 
   void solve(grid &primGuess);
   void computeResidual(const grid &prim, grid &residual,
-		                   const bool ComputeExplicitTerms,
                        int &numReads,
                        int &numWrites
                       );
@@ -42,6 +41,9 @@ class timeStepper
   double linearSolverTime;
   double lineSearchTime;
   double jacobianAssemblyTime;
+
+  af::seq domainX1, domainX2, domainX3;
+  array residualMask;
 
   public:
     double dt, time;
