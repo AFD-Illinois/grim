@@ -85,6 +85,8 @@ namespace params
 
   extern int timeStepper;
   extern double InitialDt;
+  extern double CourantFactor;
+  extern double maxDtIncrement;
   extern double Time;
   extern double finalTime;
   extern int metric;
@@ -157,7 +159,6 @@ namespace params
   extern double MinPlasmaBeta;
   extern double MagneticLoops;
   extern double Adiabat;
-  extern double CourantFactor;
   extern double InitialPerturbationAmplitude;
   extern double ObserveEveryDt;
   extern double WriteDataEveryDt;
@@ -173,6 +174,9 @@ namespace params
   extern double sonicRadius;
   extern double mDot;
   extern double bMag;
+
+  /* shock tests */
+  extern std::string shockTest;
 };
 
 #endif /* GRIM_PARAMS_H_ */
