@@ -16,6 +16,7 @@ namespace params
   // (Re)start options
   double Time = 0.0;
   double InitialDt = 0.005;
+  double maxDtIncrement = 1.3;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
 

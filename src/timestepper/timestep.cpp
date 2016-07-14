@@ -426,5 +426,12 @@ double timeStepper::computeDt(int &numReads, int &numWrites)
   MPI_Barrier(PETSC_COMM_WORLD);
   MPI_Bcast(&maxInvDt,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
   MPI_Barrier(PETSC_COMM_WORLD);
-  dt = params::CourantFactor/maxInvDt;
+  
+  double newDt = params::CourantFactor/maxInvDt;
+    
+  if (newDt > params::maxDtIncrement*dt)
+  {
+    newDt = params::maxDtIncrement*dt;
+  }
+  dt = newDt;
 }
