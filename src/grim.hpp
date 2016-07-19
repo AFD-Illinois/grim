@@ -7,6 +7,7 @@
 #include "geometry/geometry.hpp"
 #include "physics/physics.hpp"
 #include "timestepper/timestepper.hpp"
+#include "radiation/radiation.hpp"
 
 static const char help[] = 
     "GRIM -- General Relativistic Implicit Magnetohydrodynamics";
