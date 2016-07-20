@@ -57,6 +57,9 @@ namespace params
   double ViscosityAlpha = 1.;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
+  
+  // Radiation
+  int radiation = 1;
 
   //Atmosphere parameters
   double MaxLorentzFactor = 10.;
@@ -76,8 +79,8 @@ namespace params
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 1;
-  int DoCylindrify = 1;
+  int DerefineThetaHorizon = 0;
+  int DoCylindrify = 0;
   double X1cyl = log(8.*Rin);
   double X2cyl = 1./N2;
 

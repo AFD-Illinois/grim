@@ -14,7 +14,7 @@ fluidElement::fluidElement(const grid &prim,
 		                 f64
            		      );
 
-  array zero = 0.*one;
+  zero = 0.*one;
   gammaLorentzFactor = zero;
 
   /* Allocate memory for gradients used in EMHD */
@@ -30,6 +30,9 @@ fluidElement::fluidElement(const grid &prim,
 	    for(int nu=0;nu<NDIM;nu++)
 	    {
 	      graduCov[nu][mu] = zero;
+        
+        eCov[mu][nu] = zero;
+        eCon[mu][nu] = zero;
 	    }
     }
     

@@ -125,6 +125,7 @@ include_directories(${PETSC_INCLUDES}
                     boundary
                     physics
                     timestepper
+                    radiation
                    )
 
 add_subdirectory(grid)
@@ -133,6 +134,7 @@ add_subdirectory(physics)
 add_subdirectory(reconstruction)
 add_subdirectory(boundary)
 add_subdirectory(timestepper)
+add_subdirectory(radiation)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 add_subdirectory(problem)

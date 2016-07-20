@@ -37,12 +37,24 @@ int main(int argc, char **argv)
                    params::X3Start, params::X3End
                   );
 
+    
     int numReads, numWrites;
     fluidElement elem(*ts.primOld, *ts.geomCenter, numReads, numWrites);
     
-
-    /*
-    PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
+    array tstCon[NDIM];
+    elem.constructTetrads(*ts.geomCenter);
+    elem.coordConToTetradCon(elem.uCon, tstCon);
+    
+    af_print(elem.uCon[0]);
+    af_print(tstCon[0]);
+    af_print(tstCon[1]);
+    af_print(tstCon[2]);
+    af_print(tstCon[3]);
+    
+    //elem.set()
+    
+    
+    /*PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
     int numReads, numWrites;
     ts.timeStep(numReads, numWrites);
 

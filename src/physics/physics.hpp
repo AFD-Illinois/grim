@@ -14,7 +14,7 @@ inline int DELTA(int const &mu, int const &nu)
 class fluidElement
 {
   public:
-    array one;
+    array zero, one;
 
     /* fluidElement parameters */
     array tau, chi_emhd, nu_emhd;
@@ -92,7 +92,27 @@ class fluidElement
                               const double dX[3],
                               int &numReads,
                               int &numWrites
-                             );                   
+                             );     
+                             
+    
+    void constructTetrads(const geometry &geom);
+    void tetradConToCoordCon(const array vTetrad[NDIM], array vCoord[NDIM]);
+    void coordConToTetradCon(const array vCoord[NDIM], array vTetrad[NDIM]);
+                             
+  private:
+    array eCon[NDIM][NDIM];
+    array eCov[NDIM][NDIM];
+    
+    void normalize(const geometry &geom, 
+                   array vCon[NDIM]
+                  );
+    void projectOut(const geometry &geom, 
+                    const array vConB[NDIM], 
+                    array vConA[NDIM]
+                   );
+    void normalizeNull(const geometry &geom, 
+                       array vCon[NDIM]
+                      );
 };
 
 class riemannSolver
