@@ -75,7 +75,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "orzag_tang")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
@@ -125,7 +125,7 @@ include_directories(${PETSC_INCLUDES}
                     boundary
                     physics
                     timestepper
-                    radiation
+                    #radiation
                    )
 
 add_subdirectory(grid)
@@ -134,7 +134,7 @@ add_subdirectory(physics)
 add_subdirectory(reconstruction)
 add_subdirectory(boundary)
 add_subdirectory(timestepper)
-add_subdirectory(radiation)
+#add_subdirectory(radiation)
 
 set(PROBLEM_DIR ${CMAKE_SOURCE_DIR}/problem/${PROBLEM})
 add_subdirectory(problem)
@@ -142,7 +142,7 @@ add_subdirectory(problem)
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
 target_link_libraries(grim grid geometry physics reconstruction
-                      timestepper problem boundary params
+                      timestepper problem boundary params #radiation
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}

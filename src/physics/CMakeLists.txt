@@ -1,4 +1,6 @@
-add_library(physics physics.cpp physics.hpp riemannsolver.cpp tetrads.cpp)
+add_library(physics physics.cpp physics.hpp riemannsolver.cpp tetrads.cpp
+            radiation/radiation.hpp radiation/manager.cpp
+           )
 target_link_libraries(physics reconstruction problem)
 
 set_source_files_properties(physicsPy.pyx PROPERTIES CYTHON_IS_CXX TRUE)
