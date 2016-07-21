@@ -5,8 +5,8 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 2048;
-  int N2 = 512;
+  int N1 = 512;
+  int N2 = 1;
   int N3 = 1;
 
   int dim = 1;
@@ -14,16 +14,16 @@ namespace params
 
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = 1e-5;
-  double Time = 0.;
-  double CourantFactor = 0.2;
-  double maxDtIncrement = 1.01;
-  double finalTime = 0.5;
+  double Time = 5.;
+  double CourantFactor = 0.5;
+  double maxDtIncrement = 1.3;
+  double finalTime = .001;
   double WriteDataEveryDt = 0.1;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
 
-  double X1Start = -2., X1End = 2.;
+  double X1Start = -1., X1End = 1.;
   double X2Start = 0., X2End = 1.;
   double X3Start = 0., X3End = 1.;
 
@@ -41,18 +41,18 @@ namespace params
   double bSqrFloorInFluidElement        = 1e-20;
   double temperatureFloorInFluidElement = 1e-20;
 
-  int conduction = 0;
-  int viscosity  = 0;
-  int highOrderTermsConduction = 0;
-  int highOrderTermsViscosity = 0;
-  double ConductionAlpha = 1.;
-  double ViscosityAlpha = 1.;
+  int conduction = 1;
+  int viscosity  = 1;
+  int highOrderTermsConduction = 1;
+  int highOrderTermsViscosity = 1;
+  double ConductionAlpha = 5.;
+  double ViscosityAlpha = 3.;
 
   double adiabaticIndex = 4./3;
 
-  std::string shockTest = "collision";
+  std::string shockTest = "stationary_shock_BVP_input";
 
-  double slopeLimTheta = 1;
+  double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::MINMOD;
   int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
