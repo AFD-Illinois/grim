@@ -5,4 +5,16 @@
 #include "../grid/grid.hpp"
 #include "../geometry/geometry.hpp"
 
+class photonManager
+{
+  public:
+    std::vector photons;
+
+    photonManager();
+    ~photonManager();
+
+    void addPhoton(photon *ph);
+
+};
+
 #endif /* GRIM_RADIATION_H_ */
