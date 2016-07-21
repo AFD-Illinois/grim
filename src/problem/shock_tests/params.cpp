@@ -14,10 +14,10 @@ namespace params
 
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = 1e-5;
-  double Time = 5.;
+  double Time = 0.;
   double CourantFactor = 0.5;
   double maxDtIncrement = 1.3;
-  double finalTime = .001;
+  double finalTime = 5.;
   double WriteDataEveryDt = 0.1;
   int metric = metrics::MINKOWSKI;
   int restart = 0;

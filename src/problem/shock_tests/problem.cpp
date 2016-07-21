@@ -8,12 +8,6 @@ namespace problemParams
   std::string qInputFile       = "shock_soln_q.txt";
   std::string dPInputFile      = "shock_soln_dP.txt"  ;
   std::string xCoordsInputFile = "shock_soln_xCoords.txt";
-
-  array rhoAnalytic;
-  array uAnalytic;
-  array u1Analytic;
-  array qAnalytic; 
-  array dPAnalytic;
 };
 
 void fluidElement::setFluidElementParameters(const geometry &geom)
@@ -294,13 +288,9 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     array &B2  = primOld->vars[vars::B2];
     array &B3  = primOld->vars[vars::B3];
 
-    /* Allocate memory for the arrays containing the analytic shock solution that
-     * is being used as the initial condition */
-    problemParams::rhoAnalytic = 0.*rho;
-    problemParams::uAnalytic   = 0.*rho;
-    problemParams::u1Analytic  = 0.*rho;
-    problemParams::qAnalytic   = 0.*rho;
-    problemParams::dPAnalytic  = 0.*rho;
+    array &rhoAnalytic = primIC->vars[vars::RHO];
+    array &uAnalytic   = primIC->vars[vars::U];
+    array &u1Analytic  = primIC->vars[vars::U1];
 
     array xCoords[3], XCoords[3];
     geomCenter->getXCoords(XCoords);
@@ -323,9 +313,9 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
       u(i+numGhost, span, span)   = u1D[iGlobal];
       u1(i+numGhost, span, span)  = u1_1D[iGlobal];
 
-      problemParams::rhoAnalytic(i+numGhost, span, span) = rho1D[iGlobal];
-      problemParams::uAnalytic(i+numGhost, span, span)   = u1D[iGlobal];
-      problemParams::u1Analytic(i+numGhost, span, span)  = u1_1D[iGlobal];
+      rhoAnalytic(i+numGhost, span, span) = rho1D[iGlobal];
+      uAnalytic(i+numGhost, span, span)   = u1D[iGlobal];
+      u1Analytic(i+numGhost, span, span)  = u1_1D[iGlobal];
 
       double pressure    = (params::adiabaticIndex - 1.)*u1D[iGlobal];
       double temperature = pressure/rho1D[iGlobal];
@@ -336,7 +326,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
                                );
       if (params::conduction)
       {
-        problemParams::qAnalytic(i+numGhost, span, span) = q1D[iGlobal];
+        array &qAnalytic   = primIC->vars[vars::Q];
+        qAnalytic(i+numGhost, span, span) = q1D[iGlobal];
 
         if (params::highOrderTermsConduction)
         {
@@ -357,7 +348,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
       if (params::viscosity)
       {
-        problemParams::dPAnalytic(i+numGhost, span, span) = dP1D[iGlobal];
+        array &dPAnalytic  = primIC->vars[vars::DP];
+        dPAnalytic(i+numGhost, span, span) = dP1D[iGlobal];
 
         if (params::highOrderTermsViscosity)
         {
@@ -443,11 +435,11 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if (params::shockTest == "stationary_shock_BVP_input")
   {
     elemOld->set(*primOld, *geomCenter, numReads, numWrites);
-    double errorRho = af::norm(af::flat(elemOld->rho - problemParams::rhoAnalytic));
-    double errorU   = af::norm(af::flat(elemOld->u   - problemParams::uAnalytic));
-    double errorU1  = af::norm(af::flat(elemOld->u1  - problemParams::u1Analytic));
-    double errorQ   = af::norm(af::flat(elemOld->q   - problemParams::qAnalytic));
-    double errordP  = af::norm(af::flat(elemOld->deltaP  - problemParams::dPAnalytic));
+    double errorRho = af::norm(af::flat(elemOld->rho - primIC->vars[vars::RHO]));
+    double errorU   = af::norm(af::flat(elemOld->u   - primIC->vars[vars::U]));
+    double errorU1  = af::norm(af::flat(elemOld->u1  - primIC->vars[vars::U1]));
+    double errorQ   = af::norm(af::flat(elemOld->q   - primIC->vars[vars::Q]));
+    double errordP  = af::norm(af::flat(elemOld->deltaP  - primIC->vars[vars::DP]));
 
     errorRho = errorRho/N1/N2/N3;
     errorU   = errorU/N1/N2/N3;

@@ -5,8 +5,8 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 512;
-  int N2 = 512;
+  int N1 = 64;
+  int N2 = 64;
   int N3 = 1;
 
   int dim = 2;

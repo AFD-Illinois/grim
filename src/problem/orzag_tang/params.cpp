@@ -3,6 +3,8 @@
 
 namespace params
 {
+  int numDevices = 1;
+
   int N1 = 256;
   int N2 = 256;
   int N3 = 1;
@@ -11,10 +13,13 @@ namespace params
 
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = .002;
+  double maxDtIncrement = 1.3;
   double CourantFactor = 0.9;
   double Time = 0.;
   double finalTime = 50.;
   int metric = metrics::MINKOWSKI;
+  int restart = 0;
+  std::string restartFile = "restartFile.h5";
   double hSlope = 0.3;
 
   int ObserveEveryNSteps = 10;
@@ -80,12 +85,22 @@ namespace params
   double InitialPerturbationAmplitude = 4e-2;
   double ObserveEveryDt = 1.;
   double WriteDataEveryDt = 100.;
+  
+  //Unused params - do we need to define them?
+  int DerefineThetaHorizon = 1;
+  int DoCylindrify = 1;
+  double X1cyl = 0.;
+  double X2cyl = 1./N2;
 };
 
 namespace vars
 {
-  int dof = 8+params::conduction+params::viscosity;
-  int Q = 8;
-  int DP = 9;
-};
+  int Q   = 5;
+  int DP  = 5 + params::conduction;
+  int numFluidVars = 5 + params::conduction + params::viscosity;
 
+  int B1  = 5 + params::conduction + params::viscosity;
+  int B2  = 6 + params::conduction + params::viscosity;
+  int B3  = 7 + params::conduction + params::viscosity;
+  int dof = 8 + params::conduction + params::viscosity;
+};
