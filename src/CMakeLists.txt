@@ -52,10 +52,10 @@ set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 
 # Configuration for Deathstar
-set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+#set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_icc/package")
-set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_icc/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
