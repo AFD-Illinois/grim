@@ -1,10 +1,26 @@
 #include "../problem.hpp"
 
+namespace problemParams
+{
+  std::string rhoInputFile     = "shock_soln_rho.txt";
+  std::string uInputFile       = "shock_soln_u.txt"  ;
+  std::string u1InputFile      = "shock_soln_u1.txt"  ;
+  std::string qInputFile       = "shock_soln_q.txt";
+  std::string dPInputFile      = "shock_soln_dP.txt"  ;
+  std::string xCoordsInputFile = "shock_soln_xCoords.txt";
+
+  array rhoAnalytic;
+  array uAnalytic;
+  array u1Analytic;
+  array qAnalytic; 
+  array dPAnalytic;
+};
+
 void fluidElement::setFluidElementParameters(const geometry &geom)
 {
-  tau = one;
-  chi_emhd = soundSpeed*soundSpeed*tau;
-  nu_emhd  = soundSpeed*soundSpeed*tau;
+  tau = 0.1 * one;
+  chi_emhd = params::ConductionAlpha * soundSpeed*soundSpeed*tau;
+  nu_emhd  = params::ViscosityAlpha  * soundSpeed*soundSpeed*tau;
 }
 
 void timeStepper::initialConditions(int &numReads,int &numWrites)
@@ -106,7 +122,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   }
   else if (params::shockTest == "collision")
   {
-    params::finalTime = 1.22;
+    params::finalTime      = 1.22;
+    params::maxDtIncrement = 1.01;
     rhoLeft       = 1.;         rhoRight      = 1.;
     pressureLeft  = 1.;         pressureRight = 1.;
     u1Left        = 5.;         u1Right       = -5.;
@@ -151,6 +168,215 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   primOld->vars[vars::B1](domainRightHalfX1, span, span)  = B1Right;
   primOld->vars[vars::B2](domainRightHalfX1, span, span)  = B2Right;
   primOld->vars[vars::B3](domainRightHalfX1, span, span)  = B3Right;
+
+  if (params::shockTest == "stationary_shock_BVP_input")
+  {
+    PetscPrintf(PETSC_COMM_WORLD, "Setting up initial conditions...");
+
+    int numGhost = params::numGhost;
+    double xCoords1D[N1];
+    double rho1D[N1];
+    double u1D[N1];
+    double u1_1D[N1];
+    double q1D[N1];
+    double dP1D[N1];
+
+    int rank;
+    MPI_Comm_rank(PETSC_COMM_WORLD, &rank); /* get current proc id */
+
+    if (rank==0)
+    {
+      FILE *rhoFile;
+      FILE *uFile;
+      FILE *u1File;
+      FILE *qFile;
+      FILE *dPFile;
+      FILE *xCoordsFile;
+  
+      char *rhoLine     = NULL;
+      char *uLine       = NULL;
+      char *u1Line      = NULL; 
+      char *qLine       = NULL; 
+      char *dPLine      = NULL; 
+      char *xCoordsLine = NULL;
+
+      size_t rhoLen     = 0; ssize_t rhoRead;
+      size_t uLen       = 0; ssize_t uRead;
+      size_t u1Len      = 0; ssize_t u1Read;
+      size_t qLen       = 0; ssize_t qRead;
+      size_t dPLen      = 0; ssize_t dPRead;
+      size_t xCoordsLen = 0; ssize_t xCoordsRead;
+
+      rhoFile     = fopen(problemParams::rhoInputFile.c_str(), "r");
+      uFile       = fopen(problemParams::uInputFile.c_str()  , "r");
+      u1File      = fopen(problemParams::u1InputFile.c_str() , "r");
+      qFile       = fopen(problemParams::qInputFile.c_str()  , "r");
+      dPFile      = fopen(problemParams::dPInputFile.c_str() , "r");
+      xCoordsFile = fopen(problemParams::xCoordsInputFile.c_str(), "r");
+
+      if (   rhoFile      == NULL 
+          || uFile        == NULL
+          || u1File       == NULL
+          || qFile        == NULL
+          || dPFile       == NULL
+          || xCoordsFile  == NULL
+        )
+      {
+        PetscPrintf(PETSC_COMM_WORLD, "Input data files not found!\n");
+        exit(1);
+      }
+
+      for (int i=0; i<N1; i++)
+      {
+        rhoRead     = getline(&rhoLine    , &rhoLen     , rhoFile);
+        uRead       = getline(&uLine      , &uLen       , uFile);
+        u1Read      = getline(&u1Line     , &u1Len      , u1File);
+        qRead       = getline(&qLine      , &qLen       , qFile);
+        dPRead      = getline(&dPLine     , &dPLen      , dPFile);
+        xCoordsRead = getline(&xCoordsLine, &xCoordsLen , xCoordsFile);
+
+        if (   rhoRead      == -1
+            || uRead        == -1
+            || u1Read       == -1
+            || qRead        == -1
+            || dPRead       == -1
+            || xCoordsRead  == -1
+          )
+        {
+          PetscPrintf(PETSC_COMM_WORLD,
+          "Found the input data files but error in reading them! Check number of grid zones in python script\n");
+          exit(1);
+        }
+
+        rho1D[i]     = atof(rhoLine);
+        u1D[i]       = atof(uLine);
+        u1_1D[i]     = atof(u1Line);
+        q1D[i]       = atof(qLine);
+        dP1D[i]      = atof(dPLine);
+        xCoords1D[i] = atof(xCoordsLine);
+      }
+
+      free(rhoLine);
+      free(uLine);
+      free(u1Line);
+      free(qLine);
+      free(dPLine);
+      free(xCoordsLine);
+
+      fclose(rhoFile);
+      fclose(uFile);
+      fclose(u1File);
+      fclose(qFile);
+      fclose(dPFile);
+      fclose(xCoordsFile);
+    }
+
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscPrintf(PETSC_COMM_WORLD, "file read complete\n");
+
+    /* Broadcast the data from rank 0 proc to all other procs */
+    MPI_Bcast(&rho1D[0]     , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(&u1D[0]       , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(&u1_1D[0]     , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(&q1D[0]       , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(&dP1D[0]      , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(&xCoords1D[0] , N1, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+    MPI_Barrier(PETSC_COMM_WORLD);
+    /* Broadcast complete */
+    PetscPrintf(PETSC_COMM_WORLD, "Broadcast complete\n");
+
+    array &rho = primOld->vars[vars::RHO];
+    array &u   = primOld->vars[vars::U];
+    array &u1  = primOld->vars[vars::U1];
+    array &u2  = primOld->vars[vars::U2];
+    array &u3  = primOld->vars[vars::U3];
+    array &B1  = primOld->vars[vars::B1];
+    array &B2  = primOld->vars[vars::B2];
+    array &B3  = primOld->vars[vars::B3];
+
+    /* Allocate memory for the arrays containing the analytic shock solution that
+     * is being used as the initial condition */
+    problemParams::rhoAnalytic = 0.*rho;
+    problemParams::uAnalytic   = 0.*rho;
+    problemParams::u1Analytic  = 0.*rho;
+    problemParams::qAnalytic   = 0.*rho;
+    problemParams::dPAnalytic  = 0.*rho;
+
+    array xCoords[3], XCoords[3];
+    geomCenter->getXCoords(XCoords);
+    geomCenter->XCoordsToxCoords(XCoords,xCoords);
+    array x1 = xCoords[directions::X1];
+
+    for (int i=0; i<primOld->N1Total - 2*numGhost; i++)
+    {
+      int iGlobal = i + primOld->iLocalStart;
+
+      if (fabs(x1(i+numGhost, 0, 0).scalar<double>() - xCoords1D[iGlobal]) > 1e-10)
+      {
+        PetscPrintf(PETSC_COMM_WORLD,
+                   "Mismatch in xCoords! Check x1 coords in python script. x1 grim = %.18f, x1 pBVP python solver = %.18f, i = %d\n",
+                 x1(i+numGhost, 0, 0).scalar<double>(), xCoords1D[iGlobal], i
+                 );
+        exit(1);
+      }
+      rho(i+numGhost, span, span) = rho1D[iGlobal];
+      u(i+numGhost, span, span)   = u1D[iGlobal];
+      u1(i+numGhost, span, span)  = u1_1D[iGlobal];
+
+      problemParams::rhoAnalytic(i+numGhost, span, span) = rho1D[iGlobal];
+      problemParams::uAnalytic(i+numGhost, span, span)   = u1D[iGlobal];
+      problemParams::u1Analytic(i+numGhost, span, span)  = u1_1D[iGlobal];
+
+      double pressure    = (params::adiabaticIndex - 1.)*u1D[iGlobal];
+      double temperature = pressure/rho1D[iGlobal];
+      double soundSpeed  = sqrt(params::adiabaticIndex*pressure
+                                /(rho1D[iGlobal] 
+                                  + params::adiabaticIndex*u1D[iGlobal]
+                                 )
+                               );
+      if (params::conduction)
+      {
+        problemParams::qAnalytic(i+numGhost, span, span) = q1D[iGlobal];
+
+        if (params::highOrderTermsConduction)
+        {
+          /* The evolved quantity is qTilde, but the initial data from the BVP
+           * solver is given for q.  Need to rescale. Taken from physics.cpp */
+          array &qTilde = primOld->vars[vars::Q];
+        
+          qTilde(i+numGhost, span, span) = 
+            q1D[iGlobal] / temperature 
+          / sqrt(rho1D[iGlobal] * params::ConductionAlpha * soundSpeed * soundSpeed);
+        }
+        else
+        {
+          array &q = primOld->vars[vars::Q];
+          q(i+numGhost, span, span) = q1D[iGlobal];
+        }
+      }
+
+      if (params::viscosity)
+      {
+        problemParams::dPAnalytic(i+numGhost, span, span) = dP1D[iGlobal];
+
+        if (params::highOrderTermsViscosity)
+        {
+          array &deltaPTilde = primOld->vars[vars::DP];
+
+          deltaPTilde(i+numGhost, span, span) = 
+            dP1D[iGlobal]
+          / sqrt(  temperature *rho1D[iGlobal] * params::ConductionAlpha 
+                 * soundSpeed * soundSpeed
+                );
+        }
+        else
+        {
+          array &dP = primOld->vars[vars::DP];
+          dP(i+numGhost, span, span) = dP1D[iGlobal];
+        }
+      }
+    }
+  } /* End of "stationary_shock_BVP_input" */
 
   for (int var=0; var < numVars; var++)
   {
@@ -214,6 +440,29 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       }
     }
 
+  if (params::shockTest == "stationary_shock_BVP_input")
+  {
+    elemOld->set(*primOld, *geomCenter, numReads, numWrites);
+    double errorRho = af::norm(af::flat(elemOld->rho - problemParams::rhoAnalytic));
+    double errorU   = af::norm(af::flat(elemOld->u   - problemParams::uAnalytic));
+    double errorU1  = af::norm(af::flat(elemOld->u1  - problemParams::u1Analytic));
+    double errorQ   = af::norm(af::flat(elemOld->q   - problemParams::qAnalytic));
+    double errordP  = af::norm(af::flat(elemOld->deltaP  - problemParams::dPAnalytic));
+
+    errorRho = errorRho/N1/N2/N3;
+    errorU   = errorU/N1/N2/N3;
+    errorU1  = errorU1/N1/N2/N3;
+    errorQ   = errorQ/N1/N2/N3;
+    errordP  = errordP/N1/N2/N3;
+
+    PetscPrintf(PETSC_COMM_WORLD, "\n");
+    PetscPrintf(PETSC_COMM_WORLD, "    ---EMHD Shock Diagnostics---\n");
+    PetscPrintf(PETSC_COMM_WORLD, "     Error in rho = %e\n", errorRho);
+    PetscPrintf(PETSC_COMM_WORLD, "     Error in u   = %e\n", errorU  );
+    PetscPrintf(PETSC_COMM_WORLD, "     Error in u1  = %e\n", errorU1 );
+    PetscPrintf(PETSC_COMM_WORLD, "     Error in q   = %e\n", errorQ  );
+    PetscPrintf(PETSC_COMM_WORLD, "     Error in dP  = %e\n", errordP );
+  }
 }
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
