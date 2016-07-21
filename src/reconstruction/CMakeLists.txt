@@ -7,7 +7,6 @@ set_source_files_properties(reconstructionPy.pyx
 
 cython_add_module(reconstructionPy
                   reconstructionPy.pyx
-                  ${CMAKE_SOURCE_DIR}/problem/${PROBLEM}/params.cpp
                   )
 
-target_link_libraries(reconstructionPy reconstruction)
+target_link_libraries(reconstructionPy reconstruction params)

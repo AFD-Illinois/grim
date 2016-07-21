@@ -40,6 +40,7 @@ int main(int argc, char **argv)
       PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|\n", n);
       ts.timeStep(numReads, numWrites);
     }
+    PetscPrintf(PETSC_COMM_WORLD, "\n===Program execution complete===\n\n");
   }
 
   PetscFinalize();  

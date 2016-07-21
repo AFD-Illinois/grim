@@ -54,3 +54,8 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
 
 }
+
+void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
+{
+
+}

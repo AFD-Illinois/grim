@@ -4,11 +4,8 @@ namespace problemParams
 {
   std::string rhoInputFile      = "atmosphere_soln_rho.txt";
   std::string uInputFile        = "atmosphere_soln_u.txt"  ;
-  std::string phiInputFile      = "atmosphere_soln_phi.txt";
+  std::string qInputFile        = "atmosphere_soln_phi.txt";
   std::string rCoordsInputFile  = "atmosphere_soln_rCoords.txt";
-  array rhoLeft, rhoRight;
-  array uLeft, uRight;
-  array u1Left, u1Right;
 };
 
 void fluidElement::setFluidElementParameters(const geometry &geom)
@@ -19,36 +16,18 @@ void fluidElement::setFluidElementParameters(const geometry &geom)
 
   array r = xCoords[directions::X1];
 
-  chi_emhd = rho * af::pow(r, 0.5);
+  chi_emhd = af::pow(r, 0.5);
   tau      = 1.2 * chi_emhd/ (soundSpeed * soundSpeed);
 }
 
 void timeStepper::initialConditions(int &numReads, int &numWrites)
 {
-  int world_rank;
-  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
-  int world_size;
-  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
-
-  const int N1g = primOld->N1Total;
-  const int N2g = primOld->N2Total;
-  const int N3g = primOld->N3Total;
-
-  PetscPrintf(PETSC_COMM_WORLD, "Running on %i procs\n", world_size);
-  for(int proc=0;proc<world_size;proc++)
-  {
-    if(world_rank==proc)
-	  {
-	    printf("Local size on proc %i : %i x %i x %i\n",proc,N1g,N2g,N3g);
-	  }
-    MPI_Barrier(PETSC_COMM_WORLD);
-  }
   PetscPrintf(PETSC_COMM_WORLD, "Setting up atmosphere...");
 
   int numGhost = params::numGhost;
   double rho1D[N1+2*numGhost];
   double u1D[N1+2*numGhost];
-  double phi1D[N1+2*numGhost];
+  double q1D[N1+2*numGhost];
   double rCoords1D[N1+2*numGhost];
 
   int rank;
@@ -58,27 +37,27 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   {
     FILE *rhoFile;
     FILE *uFile;
-    FILE *phiFile;
+    FILE *qFile;
     FILE *rCoordsFile;
   
     char *rhoLine     = NULL;
     char *uLine       = NULL;
-    char *phiLine     = NULL; 
+    char *qLine     = NULL; 
     char *rCoordsLine = NULL;
 
     size_t rhoLen     = 0; ssize_t rhoRead;
     size_t uLen       = 0; ssize_t uRead;
-    size_t phiLen     = 0; ssize_t phiRead;
+    size_t qLen       = 0; ssize_t qRead;
     size_t rCoordsLen = 0; ssize_t rCoordsRead;
 
     rhoFile     = fopen(problemParams::rhoInputFile.c_str(), "r");
     uFile       = fopen(problemParams::uInputFile.c_str()  , "r");
-    phiFile     = fopen(problemParams::phiInputFile.c_str(), "r");
+    qFile       = fopen(problemParams::qInputFile.c_str(), "r");
     rCoordsFile = fopen(problemParams::rCoordsInputFile.c_str(), "r");
 
     if (   rhoFile      == NULL 
         || uFile        == NULL
-        || phiFile      == NULL
+        || qFile        == NULL
         || rCoordsFile  == NULL
        )
     {
@@ -90,12 +69,12 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
     {
       rhoRead     = getline(&rhoLine    , &rhoLen     , rhoFile);
       uRead       = getline(&uLine      , &uLen       , uFile);
-      phiRead     = getline(&phiLine    , &phiLen     , phiFile);
+      qRead       = getline(&qLine      , &qLen       , qFile);
       rCoordsRead = getline(&rCoordsLine, &rCoordsLen , rCoordsFile);
 
       if (   rhoRead      == -1
           || uRead        == -1
-          || phiRead      == -1
+          || qRead        == -1
           || rCoordsRead  == -1
          )
       {
@@ -106,18 +85,18 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
 
       rho1D[i+numGhost]     = atof(rhoLine);
       u1D[i+numGhost]       = atof(uLine);
-      phi1D[i+numGhost]     = atof(phiLine);
+      q1D[i+numGhost]       = atof(qLine);
       rCoords1D[i+numGhost] = atof(rCoordsLine);
     }
 
     free(rhoLine);
     free(uLine);
-    free(phiLine);
+    free(qLine);
     free(rCoordsLine);
 
     fclose(rhoFile);
     fclose(uFile);
-    fclose(phiFile);
+    fclose(qFile);
     fclose(rCoordsFile);
   }
 
@@ -127,7 +106,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   /* Broadcast the data from rank 0 proc to all other procs */
   MPI_Bcast(&rho1D[0]     , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&u1D[0]       , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
-  MPI_Bcast(&phi1D[0]     , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&q1D[0]       , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Bcast(&rCoords1D[0] , N1+2*numGhost, MPIU_SCALAR, 0, PETSC_COMM_WORLD);
   MPI_Barrier(PETSC_COMM_WORLD);
   /* Broadcast complete */
@@ -165,7 +144,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
     if (params::conduction)
     {
       array &q = primOld->vars[vars::Q];
-      q(i, span, span) = phi1D[iGlobal];
+      q(i, span, span) = q1D[iGlobal];
     }
   }
 
@@ -220,23 +199,9 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
   //B2 = 1e-5/geomCenter->g;
   B3 = 1e-5/geomCenter->g;
 
-  af::seq leftBoundary(0, numGhost);
-  af::seq rightBoundary(primOld->N1Local + numGhost, 
-                        primOld->N1Local + 2*numGhost-1
-                       );
-  if (primOld->iLocalStart == 0)
-  {
-    problemParams::rhoLeft = rho(leftBoundary, span, span);
-    problemParams::uLeft   = u(leftBoundary,   span, span);
-    problemParams::u1Left  = u1(leftBoundary,  span, span);
-  }
-
-  if (primOld->iLocalEnd == N1)
-  {
-    problemParams::rhoRight = rho(rightBoundary, span, span); 
-    problemParams::uRight   = u(rightBoundary,   span, span); 
-    problemParams::u1Right  = u1(rightBoundary,  span, span); 
-  }
+  primIC->vars[vars::RHO] = rho;
+  primIC->vars[vars::U]   = u;
+  primIC->vars[vars::U1]  = u1;
   
   PetscPrintf(PETSC_COMM_WORLD, "done\n");
   /* Done with setting the initial conditions */
@@ -282,9 +247,15 @@ void timeStepper::setProblemSpecificBCs(
 
   if (primOld->iLocalStart == 0)
   {
-    primBC->vars[vars::RHO](leftBoundary, span, span) = problemParams::rhoLeft;
-    primBC->vars[vars::U](leftBoundary,   span, span) = problemParams::uLeft; 
-    primBC->vars[vars::U1](leftBoundary,  span, span) = problemParams::u1Left;
+    primBC->vars[vars::RHO](leftBoundary, span, span) = 
+      primIC->vars[vars::RHO](leftBoundary, span, span);
+
+    primBC->vars[vars::U](leftBoundary,   span, span) = 
+      primIC->vars[vars::U](leftBoundary, span, span);
+
+    primBC->vars[vars::U1](leftBoundary,  span, span) = 
+      primIC->vars[vars::U1](leftBoundary, span, span);
+
     primBC->vars[vars::U2](leftBoundary,  span, span) = 0.;
     primBC->vars[vars::U3](leftBoundary,  span, span) = 0.;
 
@@ -303,9 +274,15 @@ void timeStepper::setProblemSpecificBCs(
 
   if (primOld->iLocalEnd == N1)
   {
-    primBC->vars[vars::RHO](rightBoundary, span, span) =  problemParams::rhoRight;
-    primBC->vars[vars::U](rightBoundary,   span, span) =  problemParams::uRight;
-    primBC->vars[vars::U1](rightBoundary,  span, span) =  problemParams::u1Right;
+    primBC->vars[vars::RHO](rightBoundary, span, span) =
+      primIC->vars[vars::RHO](rightBoundary, span, span);
+
+    primBC->vars[vars::U](rightBoundary,   span, span) =
+      primIC->vars[vars::U](rightBoundary, span, span);
+
+    primBC->vars[vars::U1](rightBoundary,  span, span) =
+      primIC->vars[vars::U1](rightBoundary, span, span);
+
     primBC->vars[vars::U2](rightBoundary, span, span) = 0.;
     primBC->vars[vars::U3](rightBoundary, span, span) = 0.;
 
@@ -358,65 +335,6 @@ void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 
 void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
-
-  int world_rank;
-  MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
-  int world_size;
-  MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
-
-  af::seq domainX1 = *primOld->domainX1;
-  af::seq domainX2 = *primOld->domainX2;
-  af::seq domainX3 = *primOld->domainX3;
-  
-  // Time step control
-  array minSpeedTemp,maxSpeedTemp;
-  array minSpeed,maxSpeed;
-  elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X1,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-  minSpeedTemp = minSpeedTemp/XCoords->dX1;
-  maxSpeedTemp = maxSpeedTemp/XCoords->dX1;
-  minSpeed=minSpeedTemp;
-  maxSpeed=maxSpeedTemp;
-  if(params::dim>1)
-    {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X2,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      minSpeedTemp = minSpeedTemp/XCoords->dX2;
-      maxSpeedTemp = maxSpeedTemp/XCoords->dX2;
-      minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
-    }
-  if(params::dim>2)
-    {
-      elemOld->computeMinMaxCharSpeeds(*geomCenter,directions::X3,minSpeedTemp,maxSpeedTemp,numReads,numWrites);
-      minSpeedTemp = minSpeedTemp/XCoords->dX3;
-      maxSpeedTemp = maxSpeedTemp/XCoords->dX3;
-      minSpeed=af::min(minSpeed,minSpeedTemp);
-      maxSpeed=af::max(maxSpeed,maxSpeedTemp);
-    }
-  maxSpeed = af::max(maxSpeed,af::abs(minSpeed));
-  maxSpeed.eval();
-  array maxInvDt_af = af::max(af::max(af::max(maxSpeed,2),1),0);
-  double maxInvDt = maxInvDt_af.host<double>()[0];
-  /* Use MPI to find minimum over all processors */
-  if (world_rank == 0) 
-    {
-      double temp; 
-      for(int i=1;i<world_size;i++)
-	{
-	  MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	  if( maxInvDt < temp)
-	    maxInvDt = temp;
-	}
-    }
-  else
-    {
-      MPI_Send(&maxInvDt, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-    }
-  MPI_Barrier(PETSC_COMM_WORLD);
-  MPI_Bcast(&maxInvDt,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-  MPI_Barrier(PETSC_COMM_WORLD);
-  dt = params::CourantFactor/maxInvDt;
-  PetscPrintf(PETSC_COMM_WORLD,"New dt = %e\n",dt);
-
    bool WriteData = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
   if(WriteData)
   {

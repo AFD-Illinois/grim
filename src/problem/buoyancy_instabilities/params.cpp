@@ -5,17 +5,18 @@ namespace params
 {
   int numDevices = 4;
 
-  int N1 = 128;
-  int N2 = 128;
+  int N1 = 64;
+  int N2 = 64;
   int N3 = 128;
-  int dim = 3;
+  int dim = 2;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = 0.01;
   double CourantFactor = 0.5;
+  double maxDtIncrement = 1.3;
   double Time = 0;
-  double finalTime = 100000.;
+  double finalTime = 10.;
 
   int restart = 0;
   std::string restartFile = "restartFile.h5";
