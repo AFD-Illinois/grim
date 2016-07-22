@@ -1,6 +1,7 @@
 #include "radiation.hpp"
 
-photonManager::photonManager(int numPhotons_)
+photons::photons(const geometry& geom_, const int numPhotons_):
+  geom(geom_)
 {
   numPhotons = numPhotons_;
   
@@ -25,15 +26,15 @@ photonManager::photonManager(int numPhotons_)
   isActive = af::constant(0, numPhotons, u16);
 }
 
-photonManager::~photonManager()
+photons::~photons()
 {
   /* Nothing to do here? */
 }
 
 /* Add an array of photons to manager's pool */
-void photonManager::addPhotons(const int numToAdd)
+void photons::addPhotons(const int numToAdd)
 {
-  //photons.push_back(ph);
+  /* Ensure that pool does not overflow */
   if (numToAdd + af::where(isActive > 0).elements() > numPhotons)
   {
     PetscPrintf(PETSC_COMM_WORLD, "Trying to create more photons than pool allows!\n");
@@ -49,17 +50,14 @@ void photonManager::addPhotons(const int numToAdd)
   {
     /* Get indices of inactive elements in pool */
     array inactive = af::where(isActive == 0);
-    af_print(inactive);
     array needed = inactive(af::seq(0, numToAdd-1));
-    af_print(needed);
-    X[0](needed) = 0.;
     isActive(needed) = 1;
   }
   
 }
 
 /* Update a photon */
-void photonManager::updateOne()
+void photons::updateOne()
 {
   
 }
@@ -70,7 +68,7 @@ void photonManager::updateOne()
 }*/
 
 /* Update all photons by dt */
-void photonManager::update(const double dt)
+void photons::update(const double dt)
 {
   /* Integrate geodesics of active photons by dt */
   int numActive = af::where(isActive > 0).elements();

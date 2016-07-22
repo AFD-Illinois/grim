@@ -8,7 +8,7 @@ namespace problemParams
   std::string rCoordsInputFile  = "atmosphere_soln_rCoords.txt";
 };
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   array xCoords[3],XCoords[3];
   geom.getXCoords(XCoords);
@@ -340,23 +340,23 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   {
     const int WriteIdx = floor(time/params::WriteDataEveryDt);
     if(WriteIdx==0)
-	  {
-	    PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
-	    geomCenter->gCovGrid->dump("gCov","gCovCenter.h5");
-	    geomCenter->gConGrid->dump("gCon","gConCenter.h5");
-	    geomCenter->gGrid->dump("sqrtDetg","sqrtDetgCenter.h5");
-	    geomCenter->xCoordsGrid->dump("xCoords","xCoordsCenter.h5");
+    {
+      PetscPrintf(PETSC_COMM_WORLD, "Printing gCov\n");
+      geomCenter->gCovGrid->dump("gCov","gCovCenter.h5");
+      geomCenter->gConGrid->dump("gCon","gConCenter.h5");
+      geomCenter->gGrid->dump("sqrtDetg","sqrtDetgCenter.h5");
+      geomCenter->xCoordsGrid->dump("xCoords","xCoordsCenter.h5");
 
-	    geomLeft->gCovGrid->dump("gCov","gCovLeft.h5");
-	    geomLeft->gConGrid->dump("gCon","gConLeft.h5");
-	    geomLeft->gGrid->dump("sqrtDetg","sqrtDetgLeft.h5");
-	    geomLeft->xCoordsGrid->dump("xCoords","xCoordsLeft.h5");
+      geomLeft->gCovGrid->dump("gCov","gCovLeft.h5");
+      geomLeft->gConGrid->dump("gCon","gConLeft.h5");
+      geomLeft->gGrid->dump("sqrtDetg","sqrtDetgLeft.h5");
+      geomLeft->xCoordsGrid->dump("xCoords","xCoordsLeft.h5");
 
-	    geomBottom->gCovGrid->dump("gCov","gCovBottom.h5");
-	    geomBottom->gConGrid->dump("gCon","gConBottom.h5");
-	    geomBottom->gGrid->dump("sqrtDetg","sqrtDetgBottom.h5");
-	    geomBottom->xCoordsGrid->dump("xCoords","xCoordsBottom.h5");
-	  }
+      geomBottom->gCovGrid->dump("gCov","gCovBottom.h5");
+      geomBottom->gConGrid->dump("gCon","gConBottom.h5");
+      geomBottom->gGrid->dump("sqrtDetg","sqrtDetgBottom.h5");
+      geomBottom->xCoordsGrid->dump("xCoords","xCoordsBottom.h5");
+    }
       
     std::string filename   = "primVarsT";
     std::string filenameVTS= "primVarsT";
@@ -367,10 +367,10 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       
     for(int i=0;i<6-s_idx.size();i++)
     {
-	    filename=filename+"0";
-	    B1filename=B1filename+"0";
-	    B2filename=B2filename+"0";
-	    B3filename=B3filename+"0";
+      filename=filename+"0";
+      B1filename=B1filename+"0";
+      B2filename=B2filename+"0";
+      B3filename=B3filename+"0";
     }
       
     filename=filename+s_idx;

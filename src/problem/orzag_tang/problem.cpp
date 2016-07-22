@@ -33,7 +33,7 @@ void timeStepper::initialConditions(int &numReads, int &numWrites)
 
 }
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   tau = one;
   chi_emhd = 0.01 * one;

@@ -4,19 +4,22 @@
 #include "../../params.hpp"
 #include "../../grid/grid.hpp"
 #include "../../geometry/geometry.hpp"
+#include "../physics.hpp"
 #include <algorithm> // std::remove_if
 
-class photonManager
+/* The photons data structure. Handles what the photons can do
+ * themselves, namely move along their geodesics */
+class photons
 {
   public:
     int numPhotons;
-    //int photonSize;
 
     /* Radiation four-force vector */
 
-    photonManager(int numPhotons);
-    ~photonManager();
+    photons(const geometry& geom_, const int numPhotons);
+    ~photons();
 
+    /* This functionality provided by emission and interactions */
     void addPhotons(const int numToAdd);
     void updateOne();
     void update(const double dt);
@@ -36,7 +39,25 @@ class photonManager
     af::array iOrigin;
     af::array jOrigin;
     af::array isActive;
+    
+  private:
+    const geometry& geom;
 
+};
+
+/* The home of emission processes. */
+class emission
+{
+  public:
+    emission(const fluidElement &elem_, photons &ph_);
+    ~emission();
+    
+    void emit(const double dt);
+    
+  private:
+    photons& ph;
+    const fluidElement& elem;
+    
 };
 
 #endif /* GRIM_RADIATION_H_ */

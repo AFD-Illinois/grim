@@ -31,7 +31,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   double elemOldTime = af::timer::stop(elemOldTimer);
 
   af::timer consOldTimer = af::timer::start();
-  elemOld->computeFluxes(*geomCenter, 0, *consOld, 
+  elemOld->computeFluxes(0, *consOld, 
                          numReadsComputeFluxes, numWritesComputeFluxes
                         );
   numReads  = numReadsElemSet  + numReadsComputeFluxes;
@@ -39,7 +39,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   double consOldTime = af::timer::stop(consOldTimer);
 
   int numReadsExplicitSouces, numWritesExplicitSouces;
-  elemOld->computeExplicitSources(*geomCenter, *sourcesExplicit,
+  elemOld->computeExplicitSources(*sourcesExplicit,
                                   numReadsExplicitSouces, 
                                   numWritesExplicitSouces
                                  );
@@ -47,8 +47,8 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numWrites += numWritesExplicitSouces;
 
   int numReadsImplicitSources, numWritesImplicitSources;
-  elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
-			                            elemOld->tau,
+  elemOld->computeImplicitSources(*sourcesImplicitOld,
+                                  elemOld->tau,
                                   numReadsImplicitSources,
                                   numWritesImplicitSources
                                  );
@@ -63,7 +63,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     dX[0] = XCoords->dX1;
     dX[1] = XCoords->dX2;
     dX[2] = XCoords->dX3;
-    elemOld->computeEMHDGradients(*geomCenter, dX,
+    elemOld->computeEMHDGradients(dX,
                                   numReadsEMHDGradients,
                                   numWritesEMHDGradients
                                  );
@@ -215,15 +215,15 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numWrites += numWritesElemSet; 
   double elemHalfStepTime = af::timer::stop(elemHalfStepTimer);
 
-  elemHalfStep->computeExplicitSources(*geomCenter, *sourcesExplicit,
+  elemHalfStep->computeExplicitSources(*sourcesExplicit,
                                        numReadsExplicitSouces,
                                        numWritesExplicitSouces
                                       );
   numReads  += numReadsExplicitSouces;
   numWrites += numWritesExplicitSouces;
 
-  elemOld->computeImplicitSources(*geomCenter, *sourcesImplicitOld,
-			                            elemHalfStep->tau,
+  elemOld->computeImplicitSources(*sourcesImplicitOld,
+                                  elemHalfStep->tau,
                                   numReadsImplicitSources,
                                   numWritesImplicitSources
                                  );
@@ -238,7 +238,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     dX[0] = XCoords->dX1;
     dX[1] = XCoords->dX2;
     dX[2] = XCoords->dX3;
-    elemHalfStep->computeEMHDGradients(*geomCenter, dX,
+    elemHalfStep->computeEMHDGradients(dX,
                                        numReadsEMHDGradients,
                                        numWritesEMHDGradients
                                       );
@@ -372,8 +372,7 @@ double timeStepper::computeDt(int &numReads, int &numWrites)
   // Time step control
   array minSpeedTemp,maxSpeedTemp;
   array minSpeed,maxSpeed;
-  elemOld->computeMinMaxCharSpeeds(*geomCenter,
-                                   directions::X1,
+  elemOld->computeMinMaxCharSpeeds(directions::X1,
                                    minSpeedTemp, maxSpeedTemp,
                                    numReads,numWrites
                                   );
@@ -383,8 +382,7 @@ double timeStepper::computeDt(int &numReads, int &numWrites)
 
   if(params::dim>1)
   {
-    elemOld->computeMinMaxCharSpeeds(*geomCenter,
-                                     directions::X2,
+    elemOld->computeMinMaxCharSpeeds(directions::X2,
                                      minSpeedTemp, maxSpeedTemp,
                                      numReads,numWrites
                                     );
@@ -395,8 +393,7 @@ double timeStepper::computeDt(int &numReads, int &numWrites)
 
   if(params::dim>2)
   {
-    elemOld->computeMinMaxCharSpeeds(*geomCenter,
-                                     directions::X3,
+    elemOld->computeMinMaxCharSpeeds(directions::X3,
                                      minSpeedTemp, maxSpeedTemp,
                                      numReads,numWrites);
     minSpeedTemp = minSpeedTemp/XCoords->dX3;
@@ -411,13 +408,13 @@ double timeStepper::computeDt(int &numReads, int &numWrites)
   {
     double temp; 
     for(int i=1;i<world_size;i++)
-	  {
-	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    if( maxInvDt < temp)
+    {
+      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+      if( maxInvDt < temp)
       {
-	      maxInvDt = temp;
+        maxInvDt = temp;
       }
-	  }
+    }
   }
   else
   {

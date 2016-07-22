@@ -6,8 +6,8 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 8;
-  int N2 = 8;
+  int N1 = 192;
+  int N2 = 192;
   int N3 = 1;
   int N3Full = 128;
   int dim = 2;

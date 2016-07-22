@@ -1,5 +1,6 @@
 add_library(physics physics.cpp physics.hpp riemannsolver.cpp tetrads.cpp
-            radiation/radiation.hpp radiation/manager.cpp
+            radiation/radiation.hpp radiation/photons.cpp
+            radiation/emission.cpp
            )
 target_link_libraries(physics reconstruction grid geometry problem)
 

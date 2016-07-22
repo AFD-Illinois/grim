@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     //af_print(af::sum(af::sum(testvar.vars[2])));
     //PetscPrintf(PETSC_COMM_WORLD, "testsum = %e\n", testsum);
     
-    /*
+    
     timeStepper ts(params::N1, params::N2, params::N3,
                    params::dim, vars::dof, params::numGhost,
                    params::Time, params::InitialDt,
@@ -57,13 +57,13 @@ int main(int argc, char **argv)
                    params::X2Start, params::X2End,
                    params::X3Start, params::X3End
                   );
-     */
+     
     
     /*int numReads, numWrites;
     fluidElement elem(*ts.primOld, *ts.geomCenter, numReads, numWrites);
     
     array tstCon[NDIM];
-    elem.constructTetrads(*ts.geomCenter);
+    elem.constructTetrads();
     elem.coordConToTetradCon(elem.uCon, tstCon);
     
     af_print(elem.uCon[0]);
@@ -72,16 +72,19 @@ int main(int argc, char **argv)
     af_print(tstCon[2]);
     af_print(tstCon[3]);*/
     
-    photonManager manager(10);
-    manager.update(0.);
-    manager.addPhotons(2);
-    while (1)
-      manager.addPhotons(2);
+    /*photons ph(*ts.geomCenter, 10);
+    ph.update(0.);
+    ph.addPhotons(2);
+    
+    int numReads, numWrites;
+    fluidElement elem(*ts.primOld, *ts.geomCenter, numReads, numWrites);
+    
+    emission eM(elem, ph);*/
     
     //elem.set()
     
     
-    /*PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
+    PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
     int numReads, numWrites;
     ts.timeStep(numReads, numWrites);
 
@@ -97,7 +100,6 @@ int main(int argc, char **argv)
       ts.timeStep(numReads, numWrites);
     }
     PetscPrintf(PETSC_COMM_WORLD, "\n===Program execution complete===\n\n");
-    }*/
   }
   PetscFinalize();  
   return(0);

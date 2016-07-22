@@ -1,7 +1,7 @@
 #include "physics.hpp"
 
 riemannSolver::riemannSolver(const grid &prim,
-                             const geometry &geom
+                             geometry &geom
                             )
 {
   int N1 = prim.N1;
@@ -51,10 +51,9 @@ riemannSolver::~riemannSolver()
   delete elemFace;
 }
 
-void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
-			                                     const int dir,
-                                			     array &minSpeed,
-                                			     array &maxSpeed,
+void fluidElement::computeMinMaxCharSpeeds(const int dir,
+                                           array &minSpeed,
+                                           array &maxSpeed,
                                            int &numReads,
                                            int &numWrites
                                           )
@@ -148,10 +147,10 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
     BCon[mu] = zero;
 
     for(int nu=0;nu<NDIM; nu++)
-	  {
-	    ACon[mu] += geom.gCon[mu][nu]*ACov[nu];
-	    BCon[mu] += geom.gCon[mu][nu]*BCov[nu];
-	  }
+    {
+      ACon[mu] += geom->gCon[mu][nu]*ACov[nu];
+      BCon[mu] += geom->gCon[mu][nu]*BCov[nu];
+    }
   }
   numReads += 16;
   /* Reads:
@@ -203,8 +202,8 @@ void fluidElement::computeMinMaxCharSpeeds(const geometry &geom,
 
 void riemannSolver::solve(const grid &primLeft,
                           const grid &primRight,
-                          const geometry &geomLeft,
-                          const geometry &geomRight,
+                          geometry &geomLeft,
+                          geometry &geomRight,
                           const int dir,
                           grid &flux,
                           int &numReads,
@@ -245,13 +244,13 @@ void riemannSolver::solve(const grid &primLeft,
   elemFace->set(primRight, geomRight,
                 numReadsElemSet, numWritesElemSet
                );
-  elemFace->computeFluxes(geomRight, fluxDirection, *fluxLeft,
+  elemFace->computeFluxes(fluxDirection, *fluxLeft,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeFluxes(geomRight, 0,             *consLeft,
+  elemFace->computeFluxes(0,             *consLeft,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeMinMaxCharSpeeds(geomRight, dir, 
+  elemFace->computeMinMaxCharSpeeds(dir, 
                                     minSpeedLeft, maxSpeedLeft,
                                     numReadsCharSpeeds, numWritesCharSpeeds
                                    );
@@ -260,13 +259,13 @@ void riemannSolver::solve(const grid &primLeft,
   elemFace->set(primLeft, geomLeft,
                 numReadsElemSet, numWritesElemSet
                );
-  elemFace->computeFluxes(geomLeft, fluxDirection, *fluxRight,
+  elemFace->computeFluxes(fluxDirection, *fluxRight,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeFluxes(geomLeft, 0,             *consRight,
+  elemFace->computeFluxes(0,             *consRight,
                           numReadsComputeFluxes, numWritesComputeFluxes
                          );
-  elemFace->computeMinMaxCharSpeeds(geomLeft, dir, 
+  elemFace->computeMinMaxCharSpeeds(dir, 
                                     minSpeedRight, maxSpeedRight,
                                     numReadsCharSpeeds, numWritesCharSpeeds
                                    );
@@ -300,21 +299,21 @@ void riemannSolver::solve(const grid &primLeft,
     {
       flux.vars[var] = 
         (   maxSpeedLeft * af::shift(fluxLeft->vars[var], shiftX1, shiftX2, shiftX3) 
-			    - minSpeedLeft * fluxRight->vars[var]
-			    + minSpeedLeft * maxSpeedLeft 
-			    * (  consRight->vars[var]
-			       - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
-			      )
-			  )/(maxSpeedLeft - minSpeedLeft);
+          - minSpeedLeft * fluxRight->vars[var]
+          + minSpeedLeft * maxSpeedLeft 
+          * (  consRight->vars[var]
+             - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
+            )
+        )/(maxSpeedLeft - minSpeedLeft);
     }
     else if (params::riemannSolver == riemannSolvers::LOCAL_LAX_FRIEDRICH)
     {
       flux.vars[var] =
        0.5*(af::shift(fluxLeft->vars[var], shiftX1, shiftX2, shiftX3)
-	          + fluxRight->vars[var]
-	          - af::max(maxSpeedLeft,-minSpeedLeft)*
-     	      (  consRight->vars[var] 
-	           - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
+            + fluxRight->vars[var]
+            - af::max(maxSpeedLeft,-minSpeedLeft)*
+            (  consRight->vars[var] 
+             - af::shift(consLeft->vars[var], shiftX1, shiftX2, shiftX3)
             )
            );
     }

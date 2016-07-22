@@ -1,6 +1,6 @@
 #include "../problem.hpp"
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   tau = one;
   chi_emhd = soundSpeed*soundSpeed*tau;
@@ -15,11 +15,11 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   geomCenter->XCoordsToxCoords(XCoords->vars,xCoords);
 
   array cphi = af::cos(  params::k1*xCoords[directions::X1]
-                  		 + params::k2*xCoords[directions::X2]
+                       + params::k2*xCoords[directions::X2]
                       );
 
   array sphi = af::sin(  params::k1*xCoords[directions::X1]
-                  		 + params::k2*xCoords[directions::X2]
+                       + params::k2*xCoords[directions::X2]
                       );
 
   /* Initial conditions */
@@ -116,22 +116,22 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   
   //EMHD Sound wave
   array cphi = af::cos(  params::k1*xCoords[directions::X1]
-			 + params::k2*xCoords[directions::X2]
-			 + params::Omega*time
-			 );
+       + params::k2*xCoords[directions::X2]
+       + params::Omega*time
+       );
   
   array sphi = af::sin(  params::k1*xCoords[directions::X1]
-			 + params::k2*xCoords[directions::X2]
-			 + params::Omega*time
-			 );
+       + params::k2*xCoords[directions::X2]
+       + params::Omega*time
+       );
   
   array rhoAnalytic = 1. + (  params::Aw*cphi*(-0.518522524082246)
-			      + params::Aw*sphi*0.1792647678001878
-			      )*exp(params::Gamma*time);
+            + params::Aw*sphi*0.1792647678001878
+            )*exp(params::Gamma*time);
   
   array dPAnalytic = 0. + ( params::Aw*cphi*0.2909106062057657
-			    -params::Aw*sphi*0.02159452055336572
-			    )*exp(params::Gamma*time);
+          -params::Aw*sphi*0.02159452055336572
+          )*exp(params::Gamma*time);
 
   array uAnalytic = 2. + params::Aw*cphi*0.5516170736393813*exp(params::Gamma*time);
 

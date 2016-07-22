@@ -30,7 +30,7 @@ void fluidElement::coordConToTetradCon(const array vCoord[NDIM],
   eval(vTetrad[0], vTetrad[1], vTetrad[2], vTetrad[3]);
 }
 
-void fluidElement::constructTetrads(const geometry &geom)
+void fluidElement::constructTetrads()
 {
   const double SMALL_VECTOR = 1.e-30;
   /* BASIS VECTOR 0 */
@@ -39,7 +39,7 @@ void fluidElement::constructTetrads(const geometry &geom)
   {
     eCon[0][mu] = uCon[mu];
   }
-  normalize(geom, eCon[0]);
+  normalize(eCon[0]);
   
   /* BASIS VECTOR 1 */
   /* Adopt normalize bCon, enforce sanity checks */
@@ -49,7 +49,7 @@ void fluidElement::constructTetrads(const geometry &geom)
     trial[mu] = bCon[mu];
   }
   
-  normalize(geom, trial);
+  normalize(trial);
   
   /* Check norm of trial vector */
   array norm = zero;
@@ -57,7 +57,7 @@ void fluidElement::constructTetrads(const geometry &geom)
   {
     for (int nu = 0; nu < NDIM; nu++)
     {
-      norm += trial[mu]*trial[nu]*geom.gCov[mu][nu];
+      norm += trial[mu]*trial[nu]*geom->gCov[mu][nu];
     }
   }
   
@@ -90,16 +90,16 @@ void fluidElement::constructTetrads(const geometry &geom)
     trial_X2[mu] = trial[mu];
     trial_X3[mu] = trial[mu];
   }
-  projectOut(geom, X2v, trial_X2);
-  projectOut(geom, X3v, trial_X3);
+  projectOut(X2v, trial_X2);
+  projectOut(X3v, trial_X3);
   array norm_X2 = zero;
   array norm_X3 = zero;
   for (int mu = 0; mu < NDIM; mu++)
   {
     for (int nu = 0; nu < NDIM; nu++)
     {
-      norm_X2 += trial_X2[mu]*trial_X2[nu]*geom.gCov[mu][nu];
-      norm_X3 += trial_X3[mu]*trial_X3[nu]*geom.gCov[mu][nu];
+      norm_X2 += trial_X2[mu]*trial_X2[nu]*geom->gCov[mu][nu];
+      norm_X3 += trial_X3[mu]*trial_X3[nu]*geom->gCov[mu][nu];
     }
   }
   
@@ -109,8 +109,8 @@ void fluidElement::constructTetrads(const geometry &geom)
   int numParallelIndices_X3 = parallelIndices_X3.elements();
   
   /* Project out eCon[0] */
-  projectOut(geom, eCon[0], eCon[1]);
-  normalize(geom, eCon[1]);
+  projectOut(eCon[0], eCon[1]);
+  normalize(eCon[1]);
   
   /* BASIS VECTOR 2 */
   /* Adopt X2 unit basis vector */
@@ -128,9 +128,9 @@ void fluidElement::constructTetrads(const geometry &geom)
   }
   
   /* Project out eCon[0] and eCon[1] */
-  projectOut(geom, eCon[0], eCon[2]);
-  projectOut(geom, eCon[1], eCon[2]);
-  normalize(geom, eCon[2]);
+  projectOut(eCon[0], eCon[2]);
+  projectOut(eCon[1], eCon[2]);
+  normalize(eCon[2]);
   
   /* BASIS VECTOR 3 */
   /* Adopt X3 unit basis vector */
@@ -148,10 +148,10 @@ void fluidElement::constructTetrads(const geometry &geom)
   }
   
   /* Project out eCon[0], eCon[1], and eCon[2] */
-  projectOut(geom, eCon[0], eCon[3]);
-  projectOut(geom, eCon[1], eCon[3]);
-  projectOut(geom, eCon[2], eCon[3]);
-  normalize(geom, eCon[3]);
+  projectOut(eCon[0], eCon[3]);
+  projectOut(eCon[1], eCon[3]);
+  projectOut(eCon[2], eCon[3]);
+  normalize(eCon[3]);
   
   /* Make dual transformation matrix. Reset eCov first. */
   for (int mu = 0; mu < NDIM; mu++)
@@ -171,7 +171,7 @@ void fluidElement::constructTetrads(const geometry &geom)
     {
       for (int lambda = 0; lambda < NDIM; lambda++)
       {
-        eCov[mu][nu] += eCon[mu][lambda]*geom.gCov[lambda][nu];
+        eCov[mu][nu] += eCon[mu][lambda]*geom->gCov[lambda][nu];
       }
     }
   }
@@ -195,14 +195,14 @@ void fluidElement::constructTetrads(const geometry &geom)
   af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
-void fluidElement::normalize(const geometry &geom, array vCon[NDIM])
+void fluidElement::normalize(array vCon[NDIM])
 {
   array norm = zero;
   for (int mu = 0; mu < NDIM; mu++)
   {
     for (int nu = 0; nu < NDIM; nu++)
     {
-      norm += vCon[mu]*vCon[nu]*geom.gCov[mu][nu];
+      norm += vCon[mu]*vCon[nu]*geom->gCov[mu][nu];
     }
   }
   
@@ -214,8 +214,7 @@ void fluidElement::normalize(const geometry &geom, array vCon[NDIM])
   }
 }
 
-void fluidElement::projectOut(const geometry &geom, 
-                              const array vConB[NDIM], 
+void fluidElement::projectOut(const array vConB[NDIM], 
                               array vConA[NDIM])
 {
   array aDotB = zero;
@@ -225,7 +224,7 @@ void fluidElement::projectOut(const geometry &geom,
   {
     for (int nu = 0; nu < NDIM; nu++)
     {
-      vConBSquare += vConB[mu]*vConB[nu]*geom.gCov[mu][nu];
+      vConBSquare += vConB[mu]*vConB[nu]*geom->gCov[mu][nu];
     }
   }
   
@@ -233,7 +232,7 @@ void fluidElement::projectOut(const geometry &geom,
   {
     for (int nu = 0; nu < NDIM; nu++)
     {
-      aDotB += vConA[mu]*vConB[nu]*geom.gCov[mu][nu];
+      aDotB += vConA[mu]*vConB[nu]*geom->gCov[mu][nu];
     }
   }
   
@@ -243,23 +242,23 @@ void fluidElement::projectOut(const geometry &geom,
   }
 }
 
-/* Only needed for Compton scattering */
-void fluidElement::normalizeNull(const geometry &geom, array vCon[NDIM])
+/* Only needed for Compton scattering -- maybe should be moved */
+void fluidElement::normalizeNull(array vCon[NDIM])
 {
-  array A = geom.gCov[0][0];
+  array A = geom->gCov[0][0];
   array B = zero;
   array C = zero;
   
   for (int mu = 1; mu < NDIM; mu++)
   {
-    B += 2.*geom.gCov[mu][0]*vCon[mu];
+    B += 2.*geom->gCov[mu][0]*vCon[mu];
   }
   
   for (int mu = 1; mu < NDIM; mu++)
   {
     for (int nu = 1; nu < NDIM; nu++)
     {
-      C += geom.gCov[mu][nu]*vCon[mu]*vCon[nu];
+      C += geom->gCov[mu][nu]*vCon[mu]*vCon[nu];
     }
   }
   

@@ -8,8 +8,7 @@ cdef extern from "physics.hpp":
                  int &numReads,
                  int &numWrites
                 )
-    void computeFluxes(const geometry &geom, 
-                       const int direction,
+    void computeFluxes(const int direction,
                        grid &flux,
                        int &numReads,
                        int &numWrites

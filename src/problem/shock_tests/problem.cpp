@@ -10,7 +10,7 @@ namespace problemParams
   std::string xCoordsInputFile = "shock_soln_xCoords.txt";
 };
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   tau = 0.1 * one;
   chi_emhd = params::ConductionAlpha * soundSpeed*soundSpeed*tau;
@@ -394,20 +394,20 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     {
       long long int WriteIdx = floor(time/params::WriteDataEveryDt);
       if(WriteIdx==0)
-	    {
+      {
         PetscPrintf(PETSC_COMM_WORLD, "\n");
         PetscPrintf(PETSC_COMM_WORLD, "  Printing metric at zone CENTER...");
-	      geomCenter->gCovGrid->dump("gCov","gCov.h5");
-	      geomCenter->gConGrid->dump("gCon","gCon.h5");
-	      geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
-	      geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
+        geomCenter->gCovGrid->dump("gCov","gCov.h5");
+        geomCenter->gConGrid->dump("gCon","gCon.h5");
+        geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
+        geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
         PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
-	    }
+      }
       std::string filename = "primVarsT";
       std::string s_idx = std::to_string(WriteIdx);
       for(int i=0;i<6-s_idx.size();i++)
       {
-  	    filename=filename+"0";
+        filename=filename+"0";
       }
       filename=filename+s_idx;
       filename=filename+".h5";

@@ -40,78 +40,70 @@ class fluidElement
     array bNorm;
 
     fluidElement(const grid &prim,
-                 const geometry &geom,
+                 geometry &geom,
                  int &numReads,
                  int &numWrites
                 );
     ~fluidElement();
 
     void set(const grid &prim,
-             const geometry &geom,
+             geometry &geom,
              int &numReads,
              int &numWrites
             );
-    void setFluidElementParameters(const geometry &geom);
-    void computeFluxes(const geometry &geom, 
-                       const int direction,
+    void setFluidElementParameters();
+    void computeFluxes(const int direction,
                        grid &flux,
                        int &numReads,
                        int &numWrites
                       );                                
 
-    void computeMinMaxCharSpeeds(const geometry &geom,
-			                           const int dir,
-                    			       array &MinSpeed,
-                        				 array &MaxSpeed,
+    void computeMinMaxCharSpeeds(const int dir,
+                                 array &MinSpeed,
+                                 array &MaxSpeed,
                                  int &numReads,
                                  int &numWrites
                                 );
 
-    void computeTimeDerivSources(const geometry &geom,
-		  		                       const fluidElement &elemOld,
-                            		 const fluidElement &elemNew,
-                             		 const double dt,
+    void computeTimeDerivSources(const fluidElement &elemOld,
+                                 const fluidElement &elemNew,
+                                 const double dt,
                                  grid &sources,
                                  int &numReads,
                                  int &numWrites
-				                        );
+                                );
 
-    void computeImplicitSources(const geometry &geom,
-	  			                      grid &sources,
+    void computeImplicitSources(grid &sources,
                                 array &tauDamp,
                                 int &numReads,
                                 int &numWrites
-				                       );
+                               );
 
-    void computeExplicitSources(const geometry &geom,
-                      		      grid &sources,
+    void computeExplicitSources(grid &sources,
                                 int &numReads,
                                 int &numWrites
                                );
-    void computeEMHDGradients(const geometry &geom,
-                              const double dX[3],
+    void computeEMHDGradients(const double dX[3],
                               int &numReads,
                               int &numWrites
                              );     
                              
     
-    void constructTetrads(const geometry &geom);
+    void constructTetrads();
     void tetradConToCoordCon(const array vTetrad[NDIM], array vCoord[NDIM]);
     void coordConToTetradCon(const array vCoord[NDIM], array vTetrad[NDIM]);
                              
   private:
     array eCon[NDIM][NDIM];
     array eCov[NDIM][NDIM];
+    geometry *geom;
     
-    void normalize(const geometry &geom, 
-                   array vCon[NDIM]
+    void normalize(array vCon[NDIM]
                   );
-    void projectOut(const geometry &geom, 
-                    const array vConB[NDIM], 
+    void projectOut(const array vConB[NDIM], 
                     array vConA[NDIM]
                    );
-    void normalizeNull(const geometry &geom, 
-                       array vCon[NDIM]
+    void normalizeNull(array vCon[NDIM]
                       );
 };
 
@@ -126,13 +118,13 @@ class riemannSolver
     array minSpeedLeft,  maxSpeedLeft;
     array minSpeedRight, maxSpeedRight;
 
-    riemannSolver(const grid &prim, const geometry &geom);
+    riemannSolver(const grid &prim, geometry &geom);
     ~riemannSolver();
 
     void solve(const grid &primLeft,
                const grid &primRight,
-               const geometry &geomLeft,
-               const geometry &geomRight,
+               geometry &geomLeft,
+               geometry &geomRight,
                const int dir,
                grid &flux,
                int &numReads,
