@@ -1,7 +1,4 @@
-add_library(physics physics.cpp physics.hpp riemannsolver.cpp tetrads.cpp
-            radiation/radiation.hpp radiation/photons.cpp
-            radiation/emission.cpp
-           )
+add_library(physics physics.cpp physics.hpp riemannsolver.cpp tetrads.cpp)
 target_link_libraries(physics reconstruction grid geometry problem)
 
 set_source_files_properties(physicsPy.pyx PROPERTIES CYTHON_IS_CXX TRUE)
