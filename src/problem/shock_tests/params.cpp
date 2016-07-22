@@ -5,7 +5,7 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 512;
+  int N1 = 128;
   int N2 = 1;
   int N3 = 1;
 
@@ -17,13 +17,13 @@ namespace params
   double Time = 0.;
   double CourantFactor = 0.5;
   double maxDtIncrement = 1.3;
-  double finalTime = 5.;
+  double finalTime = 1.;
   double WriteDataEveryDt = 0.1;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
 
-  double X1Start = -1., X1End = 1.;
+  double X1Start = -.5, X1End = 1.5;
   double X2Start = 0., X2End = 1.;
   double X3Start = 0., X3End = 1.;
 
