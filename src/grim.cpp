@@ -1,27 +1,6 @@
 #include "grim.hpp"
 #include "params.hpp"
 
-/*
-class photonManager
-{
-  public:
-    int numPhotons;
-
-    photonManager(int nph);
-    ~photonManager();
-
-
-};
-
-photonManager::~photonManager()
-{}
-
-
-photonManager::photonManager(int nph)
-{
-
-}
-*/
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
@@ -33,19 +12,6 @@ int main(int argc, char **argv)
   /* Local scope so that destructors of all classes are called before
    * PetscFinalize() */
   {
-    //grid testvar(params::N1, params::N2, params::N3, params::dim,
-    //             3, params::numGhost, 0, 0, 0);
-    
-    //testvar.vars[0] = 1.;
-    //testvar.vars[1] = 2.;
-    //testvar.vars[2] = testvar.vars[0] + testvar.vars[1];
-    //testvar.vars[2] += 3;
-
-    //double testsum = af::sum<double>(testvar.vars[2]);    
-    //af_print(af::sum(af::sum(testvar.vars[2])));
-    //PetscPrintf(PETSC_COMM_WORLD, "testsum = %e\n", testsum);
-    
-    
     timeStepper ts(params::N1, params::N2, params::N3,
                    params::dim, vars::dof, params::numGhost,
                    params::Time, params::InitialDt,
@@ -58,32 +24,6 @@ int main(int argc, char **argv)
                    params::X3Start, params::X3End
                   );
      
-    
-    /*int numReads, numWrites;
-    fluidElement elem(*ts.primOld, *ts.geomCenter, numReads, numWrites);
-    
-    array tstCon[NDIM];
-    elem.constructTetrads();
-    elem.coordConToTetradCon(elem.uCon, tstCon);
-    
-    af_print(elem.uCon[0]);
-    af_print(tstCon[0]);
-    af_print(tstCon[1]);
-    af_print(tstCon[2]);
-    af_print(tstCon[3]);*/
-    
-    /*photons ph(*ts.geomCenter, 10);
-    ph.update(0.);
-    ph.addPhotons(2);
-    
-    int numReads, numWrites;
-    fluidElement elem(*ts.primOld, *ts.geomCenter, numReads, numWrites);
-    
-    emission eM(elem, ph);*/
-    
-    //elem.set()
-    
-    
     PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
     int numReads, numWrites;
     ts.timeStep(numReads, numWrites);

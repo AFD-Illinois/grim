@@ -58,9 +58,6 @@ namespace params
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
   
-  // Radiation
-  int radiation = 1;
-
   //Atmosphere parameters
   double MaxLorentzFactor = 10.;
   // Floors are Ampl*pow(radius,power)
