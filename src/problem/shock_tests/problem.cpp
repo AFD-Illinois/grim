@@ -357,7 +357,7 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
           deltaPTilde(i+numGhost, span, span) = 
             dP1D[iGlobal]
-          / sqrt(  temperature *rho1D[iGlobal] * params::ConductionAlpha 
+          / sqrt(  temperature *rho1D[iGlobal] * params::ViscosityAlpha 
                  * soundSpeed * soundSpeed
                 );
         }
@@ -367,6 +367,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
           dP(i+numGhost, span, span) = dP1D[iGlobal];
         }
       }
+      primOld->vars[vars::B1] = 1e-5;
+      
     }
   } /* End of "stationary_shock_BVP_input" */
 
