@@ -10,7 +10,7 @@ void timeStepper::computeResidual(const grid &primGuess,
   int numReadsElemSet, numWritesElemSet;
   int numReadsComputeFluxes, numWritesComputeFluxes;
   elem->set(primGuess, *geomCenter, numReadsElemSet, numWritesElemSet);
-  elem->computeFluxes(*geomCenter, 0, *cons, 
+  elem->computeFluxes(0, *cons, 
                       numReadsComputeFluxes, numWritesComputeFluxes
                      );
   numReads  += numReadsElemSet  + numReadsComputeFluxes;
@@ -20,15 +20,14 @@ void timeStepper::computeResidual(const grid &primGuess,
   {
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
-				                         elemOld->tau,
+    elem->computeImplicitSources(*sourcesImplicit,
+                                 elemOld->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );
-    elemOld->computeTimeDerivSources(*geomCenter,
-				                             *elemOld, *elem,
-		                         		     dt/2,
-                        				     *sourcesTimeDer,
+    elemOld->computeTimeDerivSources(*elemOld, *elem,
+                                     dt/2,
+                                     *sourcesTimeDer,
                                      numReadsTimeDerivSources,
                                      numWritesTimeDerivSources
                                     );
@@ -39,10 +38,10 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       residualGuess.vars[var] = 
         (cons->vars[var] - consOld->vars[var])/(dt/2.)
-  	  + divFluxes->vars[var]
+      + divFluxes->vars[var]
       + sourcesExplicit->vars[var]
-  	  + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
-	    + sourcesTimeDer->vars[var];
+      + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
+      + sourcesTimeDer->vars[var];
     }
 
     /* Reads:
@@ -61,15 +60,15 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       if(params::highOrderTermsConduction)
       {
-	      residualGuess.vars[vars::Q] *=
+        residualGuess.vars[vars::Q] *=
            elemOld->temperature 
-	       * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
+         * af::sqrt(elemOld->rho*elemOld->chi_emhd*elemOld->tau);
 
         numReads += 4;
       }
       else
       {
-	      residualGuess.vars[vars::Q] *= elemOld->tau;
+        residualGuess.vars[vars::Q] *= elemOld->tau;
         numReads += 1;
       }
     }
@@ -78,15 +77,15 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       if(params::highOrderTermsViscosity)
       {
-	      residualGuess.vars[vars::DP] *=
+        residualGuess.vars[vars::DP] *=
           af::sqrt(   elemOld->rho*elemOld->nu_emhd
-		                * elemOld->temperature*elemOld->tau
-		              );
+                    * elemOld->temperature*elemOld->tau
+                  );
         numReads += 4;
       }
       else
       {
-	      residualGuess.vars[vars::DP] *= elemOld->tau;
+        residualGuess.vars[vars::DP] *= elemOld->tau;
         numReads += 1;
       }
     }
@@ -97,15 +96,14 @@ void timeStepper::computeResidual(const grid &primGuess,
   {
     int numReadsImplicitSources, numReadsTimeDerivSources;
     int numWritesImplicitSources, numWritesTimeDerivSources;
-    elem->computeImplicitSources(*geomCenter, *sourcesImplicit,
-				                         elemHalfStep->tau,
+    elem->computeImplicitSources(*sourcesImplicit,
+                                 elemHalfStep->tau,
                                  numReadsImplicitSources,
                                  numWritesImplicitSources
                                 );
-    elemHalfStep->computeTimeDerivSources(*geomCenter,
-	                                			  *elemOld, *elem,
-					                                dt,
-					                                *sourcesTimeDer,
+    elemHalfStep->computeTimeDerivSources(*elemOld, *elem,
+                                          dt,
+                                          *sourcesTimeDer,
                                           numReadsTimeDerivSources,
                                           numWritesTimeDerivSources
                                          );
@@ -116,10 +114,10 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       residualGuess.vars[var] = 
         (cons->vars[var] - consOld->vars[var])/dt
-    	+ divFluxes->vars[var]
-	    + sourcesExplicit->vars[var]
-	    + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
-	    + sourcesTimeDer->vars[var];
+      + divFluxes->vars[var]
+      + sourcesExplicit->vars[var]
+      + 0.5*(sourcesImplicitOld->vars[var] + sourcesImplicit->vars[var])
+      + sourcesTimeDer->vars[var];
     }
     /* Reads:
      * -----
@@ -135,17 +133,17 @@ void timeStepper::computeResidual(const grid &primGuess,
     /* Normalization of the residualGuess */
     if (params::conduction)
     {
-	    if(params::highOrderTermsConduction)
+      if(params::highOrderTermsConduction)
       {
-	      residualGuess.vars[vars::Q] *= 
+        residualGuess.vars[vars::Q] *= 
           elemHalfStep->temperature
         * af::sqrt(elemHalfStep->rho*elemHalfStep->chi_emhd*elemHalfStep->tau);
 
         numReads += 4;
       }
-    	else
+      else
       {
-	      residualGuess.vars[vars::Q] *= elemHalfStep->tau;
+        residualGuess.vars[vars::Q] *= elemHalfStep->tau;
         numReads += 1;
       }
     }
@@ -154,16 +152,16 @@ void timeStepper::computeResidual(const grid &primGuess,
     {
       if (params::highOrderTermsViscosity)
       {
-	      residualGuess.vars[vars::DP] *= 
+        residualGuess.vars[vars::DP] *= 
           af::sqrt(   elemHalfStep->rho*elemHalfStep->nu_emhd
                     * elemHalfStep->temperature*elemHalfStep->tau
                   );
 
         numReads += 4;
       }
-	    else
+      else
       {
-	      residualGuess.vars[vars::DP] *= elemHalfStep->tau;
+        residualGuess.vars[vars::DP] *= elemHalfStep->tau;
         numReads += 1;
       }
     }

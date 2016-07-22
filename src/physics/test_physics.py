@@ -62,5 +62,5 @@ geom = geometryPy.geometryPy(geometryPy.MODIFIED_KERR_SCHILD,
                              XCoords
                             )
 elem = physicsPy.fluidElementPy(prim, geom)
-numReads, numWrites = elem.computeFluxes(geom, gridPy.X1, fluxesX1)
+numReads, numWrites = elem.computeFluxes(gridPy.X1, fluxesX1)
 print "numReads = ", numReads, " numWrites = ", numWrites

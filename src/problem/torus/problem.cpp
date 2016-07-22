@@ -1,9 +1,9 @@
 #include "torus.hpp"
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   array xCoords[3];
-  geom.getxCoords(xCoords);
+  geom->getxCoords(xCoords);
   array Radius = xCoords[0];
   array DynamicalTimescale = af::pow(Radius,1.5);
   DynamicalTimescale.eval();
@@ -169,152 +169,152 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   for(int k=0;k<N3g;k++)
     for(int j=0;j<N2g;j++)
       for(int i=0;i<N1g;i++)
-	{
-	  const int p = i+j*N1g+k*N2g;
-	  const double& r = xCoords[directions::X1](i,j,k).scalar<double>();
-	  const double& theta = xCoords[directions::X2](i,j,k).scalar<double>();
-	  const double& phi = xCoords[directions::X3](i,j,k).scalar<double>();
-	  const double& X2 = XCoords->vars[directions::X2](i,j,k).scalar<double>();
+  {
+    const int p = i+j*N1g+k*N2g;
+    const double& r = xCoords[directions::X1](i,j,k).scalar<double>();
+    const double& theta = xCoords[directions::X2](i,j,k).scalar<double>();
+    const double& phi = xCoords[directions::X3](i,j,k).scalar<double>();
+    const double& X2 = XCoords->vars[directions::X2](i,j,k).scalar<double>();
 
-	  const double& lapse = geomCenter->alpha(i,j,k).scalar<double>();
-	  const double& beta1 = geomCenter->gCon[0][1](i,j,k).scalar<double>();
-	  const double& beta2 = geomCenter->gCon[0][2](i,j,k).scalar<double>();
-	  const double& beta3 = geomCenter->gCon[0][3](i,j,k).scalar<double>();
+    const double& lapse = geomCenter->alpha(i,j,k).scalar<double>();
+    const double& beta1 = geomCenter->gCon[0][1](i,j,k).scalar<double>();
+    const double& beta2 = geomCenter->gCon[0][2](i,j,k).scalar<double>();
+    const double& beta3 = geomCenter->gCon[0][3](i,j,k).scalar<double>();
 
-	  double lnOfh = 1.;
-	  if(r>=params::InnerEdgeRadius)
-	    lnOfh = computeLnOfh(aBH,r,theta);
-	  
-	  /* Region outside the torus */
-	  if(lnOfh<0. || r<params::InnerEdgeRadius)
-	  {
-	    Rho(i,j,k)=params::rhoFloorInFluidElement;
-	    U(i,j,k)=params::uFloorInFluidElement;
-	    U1(i,j,k)=0.;
-	    U2(i,j,k)=0.;
-	    U3(i,j,k)=0.;
-	  }
-	  else
-	    {
-	      double h = exp(lnOfh);
-	      double Gamma = params::adiabaticIndex;
-	      double Kappa = params::Adiabat;
+    double lnOfh = 1.;
+    if(r>=params::InnerEdgeRadius)
+      lnOfh = computeLnOfh(aBH,r,theta);
+    
+    /* Region outside the torus */
+    if(lnOfh<0. || r<params::InnerEdgeRadius)
+    {
+      Rho(i,j,k)=params::rhoFloorInFluidElement;
+      U(i,j,k)=params::uFloorInFluidElement;
+      U1(i,j,k)=0.;
+      U2(i,j,k)=0.;
+      U3(i,j,k)=0.;
+    }
+    else
+      {
+        double h = exp(lnOfh);
+        double Gamma = params::adiabaticIndex;
+        double Kappa = params::Adiabat;
 
-	      /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
-	       * here is the rest mass energy density and P = C * rho^Gamma */
-	      Rho(i,j,k) = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
-			       1./(Gamma-1.));
-	      PetscRandomGetValue(randNumGen, &randNum);
-	      U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.)
+        /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
+         * here is the rest mass energy density and P = C * rho^Gamma */
+        Rho(i,j,k) = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
+             1./(Gamma-1.));
+        PetscRandomGetValue(randNumGen, &randNum);
+        U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.)
                   * (1. + params::InitialPerturbationAmplitude*(randNum-0.5));
-	  
-	      /* TODO: Should add random noise here */
-	  
-	      
-	      /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
-	       * Need to transform to (modified) Kerr-Schild */
-	      double A = computeA(aBH, r, theta);
-	      double Sigma = computeSigma(aBH, r, theta);
-	      double Delta = computeDelta(aBH, r, theta);
-	      double l = lFishboneMoncrief(aBH, params::PressureMaxRadius, M_PI/2.);
-	      double expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
-	      double uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi))/2.);
-	      double uConPhiBL =   2.*aBH*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
+    
+        /* TODO: Should add random noise here */
+    
+        
+        /* Fishbone-Moncrief u_phi is given in the Boyer-Lindquist coordinates.
+         * Need to transform to (modified) Kerr-Schild */
+        double A = computeA(aBH, r, theta);
+        double Sigma = computeSigma(aBH, r, theta);
+        double Delta = computeDelta(aBH, r, theta);
+        double l = lFishboneMoncrief(aBH, params::PressureMaxRadius, M_PI/2.);
+        double expOfMinus2Chi = Sigma*Sigma*Delta/(A*A*sin(theta)*sin(theta)) ;
+        double uCovPhiBL = sqrt((-1. + sqrt(1. + 4*l*l*expOfMinus2Chi))/2.);
+        double uConPhiBL =   2.*aBH*r*sqrt(1. + uCovPhiBL*uCovPhiBL)
                           / sqrt(A*Sigma*Delta)+ sqrt(Sigma/A)*uCovPhiBL/sin(theta);
 
-	      double uConBL[NDIM];
-	      uConBL[0] = 0.;
-	      uConBL[1] = 0.;
-	      uConBL[2] = 0.;
-	      uConBL[3] = uConPhiBL;
-	      
-	      double gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
-	      double transformBLToMKS[NDIM][NDIM];
-	      
-	      for (int alpha=0; alpha<NDIM; alpha++)
+        double uConBL[NDIM];
+        uConBL[0] = 0.;
+        uConBL[1] = 0.;
+        uConBL[2] = 0.;
+        uConBL[3] = uConPhiBL;
+        
+        double gCovBL[NDIM][NDIM], gConBL[NDIM][NDIM];
+        double transformBLToMKS[NDIM][NDIM];
+        
+        for (int alpha=0; alpha<NDIM; alpha++)
         {
-		      for (int beta=0; beta<NDIM; beta++)
-		      {
-		        gCovBL[alpha][beta] = 0.;
-		        gConBL[alpha][beta] = 0.;
-		        transformBLToMKS[alpha][beta] = 0.;
-		      }
-		    }
-	      
-	      double mu = 1 + aBH*aBH*cos(theta)*cos(theta)/(r*r);
-	      
-	      gCovBL[0][0] = -(1. - 2./(r*mu));
-	      gCovBL[0][3] = -2.*aBH*sin(theta)*sin(theta)/(r*mu);
-	      gCovBL[3][0] = gCovBL[0][3];
-	      gCovBL[1][1] = mu*r*r/Delta;
-	      gCovBL[2][2] = r*r*mu;
-	      gCovBL[3][3] =   r*r*sin(theta)*sin(theta)
-		                   * (1. + aBH*aBH/(r*r) 
+          for (int beta=0; beta<NDIM; beta++)
+          {
+            gCovBL[alpha][beta] = 0.;
+            gConBL[alpha][beta] = 0.;
+            transformBLToMKS[alpha][beta] = 0.;
+          }
+        }
+        
+        double mu = 1 + aBH*aBH*cos(theta)*cos(theta)/(r*r);
+        
+        gCovBL[0][0] = -(1. - 2./(r*mu));
+        gCovBL[0][3] = -2.*aBH*sin(theta)*sin(theta)/(r*mu);
+        gCovBL[3][0] = gCovBL[0][3];
+        gCovBL[1][1] = mu*r*r/Delta;
+        gCovBL[2][2] = r*r*mu;
+        gCovBL[3][3] =   r*r*sin(theta)*sin(theta)
+                       * (1. + aBH*aBH/(r*r) 
                              + 2.*aBH*aBH*sin(theta)*sin(theta)/(r*r*r*mu)
                           );
-	      
-	      gConBL[0][0] = -1. -2.*(1 + aBH*aBH/(r*r))/(Delta*mu/r);
-	      gConBL[0][3] = -2.*aBH/(r*Delta*mu);
-	      gConBL[3][0] = gConBL[0][3];
-	      gConBL[1][1] = Delta/(r*r*mu);
-	      gConBL[2][2] = 1./(r*r*mu);
-	      gConBL[3][3] = (1. - 2./(r*mu))/(sin(theta)*sin(theta)*Delta);
-	      
-	      transformBLToMKS[0][0] = 1.;
-	      transformBLToMKS[1][1] = 1.;
-	      transformBLToMKS[2][2] = 1.;
-	      transformBLToMKS[3][3] = 1.;
-	      transformBLToMKS[0][1] = 2.*r/Delta;
-	      transformBLToMKS[3][1] = aBH/Delta; 
-	      
-	      /* Need to get uConBL[0] using u^mu u_mu = -1 */
-	      double AA = gCovBL[0][0];
-	      double BB = 2.*(gCovBL[0][1]*uConBL[1] +
-			                  gCovBL[0][2]*uConBL[2] +
-			                  gCovBL[0][3]*uConBL[3]
-			                 );
-	      double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1]
-		                   + gCovBL[2][2]*uConBL[2]*uConBL[2]
+        
+        gConBL[0][0] = -1. -2.*(1 + aBH*aBH/(r*r))/(Delta*mu/r);
+        gConBL[0][3] = -2.*aBH/(r*Delta*mu);
+        gConBL[3][0] = gConBL[0][3];
+        gConBL[1][1] = Delta/(r*r*mu);
+        gConBL[2][2] = 1./(r*r*mu);
+        gConBL[3][3] = (1. - 2./(r*mu))/(sin(theta)*sin(theta)*Delta);
+        
+        transformBLToMKS[0][0] = 1.;
+        transformBLToMKS[1][1] = 1.;
+        transformBLToMKS[2][2] = 1.;
+        transformBLToMKS[3][3] = 1.;
+        transformBLToMKS[0][1] = 2.*r/Delta;
+        transformBLToMKS[3][1] = aBH/Delta; 
+        
+        /* Need to get uConBL[0] using u^mu u_mu = -1 */
+        double AA = gCovBL[0][0];
+        double BB = 2.*(gCovBL[0][1]*uConBL[1] +
+                        gCovBL[0][2]*uConBL[2] +
+                        gCovBL[0][3]*uConBL[3]
+                       );
+        double CC = 1. + gCovBL[1][1]*uConBL[1]*uConBL[1]
+                       + gCovBL[2][2]*uConBL[2]*uConBL[2]
                        + gCovBL[3][3]*uConBL[3]*uConBL[3]
                        + 2.*(  gCovBL[1][2]*uConBL[1]*uConBL[2]
                              + gCovBL[1][3]*uConBL[1]*uConBL[3]
                              + gCovBL[2][3]*uConBL[2]*uConBL[3]
                             );
-	      
-	      double discriminent = BB*BB - 4.*AA*CC;
-	      uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
-	      
-	      double uConKS[NDIM];
-	      
-	      for (int alpha=0; alpha<NDIM; alpha++)
-		    {
-		      uConKS[alpha] = 0.;
-		  
-		      for (int beta=0; beta<NDIM; beta++)
-		      {
-		        uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
-		      }
-		    }
-	      
-	      /* Finally get the four-velocity in the X coordinates, which is modified
-	       * Kerr-Schild */
-	      double uConMKS[NDIM];
-	      double rFactor = r;
-	      double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2);
-	      uConMKS[0] = uConKS[0];
-	      uConMKS[1] = uConKS[1]/rFactor;
-	      uConMKS[2] = uConKS[2]/hFactor;
-	      uConMKS[3] = uConKS[3];
-	      
-	      U1(i,j,k) = uConMKS[1] + pow(lapse, 2.)*beta1*uConMKS[0];
-	      U2(i,j,k) = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
-	      U3(i,j,k) = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
-	    }
+        
+        double discriminent = BB*BB - 4.*AA*CC;
+        uConBL[0] = -(BB + sqrt(discriminent))/(2.*AA);
+        
+        double uConKS[NDIM];
+        
+        for (int alpha=0; alpha<NDIM; alpha++)
+        {
+          uConKS[alpha] = 0.;
+      
+          for (int beta=0; beta<NDIM; beta++)
+          {
+            uConKS[alpha] += transformBLToMKS[alpha][beta]*uConBL[beta];
+          }
+        }
+        
+        /* Finally get the four-velocity in the X coordinates, which is modified
+         * Kerr-Schild */
+        double uConMKS[NDIM];
+        double rFactor = r;
+        double hFactor = M_PI + (1. - params::hSlope)*M_PI*cos(2.*M_PI*X2);
+        uConMKS[0] = uConKS[0];
+        uConMKS[1] = uConKS[1]/rFactor;
+        uConMKS[2] = uConKS[2]/hFactor;
+        uConMKS[3] = uConKS[3];
+        
+        U1(i,j,k) = uConMKS[1] + pow(lapse, 2.)*beta1*uConMKS[0];
+        U2(i,j,k) = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
+        U3(i,j,k) = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
+      }
 
-	  B1(i,j,k) = 0.;
-	  B2(i,j,k) = 0.;
-	  B3(i,j,k) = 0.;
-	}
+    B1(i,j,k) = 0.;
+    B2(i,j,k) = 0.;
+    B3(i,j,k) = 0.;
+  }
 
   array rhoMax_af = af::max(af::max(af::max(Rho,2),1),0);
   double rhoMax = rhoMax_af.host<double>()[0];
@@ -324,13 +324,13 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   {
     double temp; 
     for(int i=1;i<world_size;i++)
-	  {
-	    MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	    if(rhoMax < temp)
+    {
+      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+      if(rhoMax < temp)
       {
-	      rhoMax = temp;
+        rhoMax = temp;
       }
-	  }
+    }
   }
   else
   {
@@ -414,15 +414,15 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     /* Use MPI to find minimum over all processors */
     if (world_rank == 0) 
     {
-	    double temp; 
-	    for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      if(BFactor > temp)
+      double temp; 
+      for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+        if(BFactor > temp)
         {
-	        BFactor = temp;
+          BFactor = temp;
         }
-	    }
+      }
     }
     else
     {
@@ -534,7 +534,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
     {
       Bcov[m]=zero;
       for(int n=0;n<NDIM;n++)
-	Bcov[m]+=geom->gCov[n][m]*Bcon[n];
+  Bcov[m]+=geom->gCov[n][m]*Bcon[n];
       Bcov[m].eval();
     }
   array udotB = zero;
@@ -634,7 +634,7 @@ void applyFloor(grid* prim, fluidElement* elem, geometry* geom, int &numReads,in
 
       condition = deltaP>0.;
       prim->vars[vars::DP] = prim->vars[vars::DP]*
-	(condition/af::max(deltaP/dPmaxPlus,1.)+(1.-condition)/af::max(deltaP/dPmaxMinus,1.));
+  (condition/af::max(deltaP/dPmaxPlus,1.)+(1.-condition)/af::max(deltaP/dPmaxMinus,1.));
       prim->vars[vars::DP].eval();
     }
   if(params::conduction || params::viscosity) elem->set(*prim, *geom, numReads,numWrites);
@@ -668,19 +668,19 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       double rhoMax = rhoMax_af.host<double>()[0];
       /* Communicate rhoMax to all processors */
       if (world_rank == 0) 
-	{
-	  double temp; 
-	  for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      if(rhoMax < temp)
-		rhoMax = temp;
-	    }
-	}
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+        if(rhoMax < temp)
+    rhoMax = temp;
+      }
+  }
       else
-	{
-	  MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	}
+  {
+    MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
       MPI_Barrier(PETSC_COMM_WORLD);
       MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
       MPI_Barrier(PETSC_COMM_WORLD);
@@ -693,30 +693,30 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       double betaMin = BetaMin_af.host<double>()[0];
       /* Use MPI to find minimum over all processors */
       if (world_rank == 0) 
-	{
-	  double temp; 
-	  for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      if( betaMin > temp)
-		betaMin = temp;
-	  }
-	}
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+        if( betaMin > temp)
+    betaMin = temp;
+    }
+  }
       else
-	{
-	  MPI_Send(&betaMin, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	}
+  {
+    MPI_Send(&betaMin, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
       MPI_Barrier(PETSC_COMM_WORLD);
       MPI_Bcast(&betaMin,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
       MPI_Barrier(PETSC_COMM_WORLD);
       
       /* Get the domain of the bulk and volume element*/
-      elemOld->computeFluxes(*geomCenter,0, *consOld,numReads,numWrites);
+      elemOld->computeFluxes(0, *consOld,numReads,numWrites);
       double volElem = XCoords->dX1;
       if(params::dim>1)
-	volElem*=XCoords->dX2;
+  volElem*=XCoords->dX2;
       if(params::dim>2)
-	volElem*=XCoords->dX3;
+  volElem*=XCoords->dX3;
 
       // Integrate baryon mass
       array MassIntegrand = consOld->vars[vars::RHO]*volElem;
@@ -724,18 +724,18 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       double BaryonMass = BaryonMass_af.host<double>()[0];
       /* Communicate to all processors */
       if (world_rank == 0) 
-	{
-	  double temp; 
-	  for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      BaryonMass += temp;
-	    }
-	}
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+        BaryonMass += temp;
+      }
+  }
       else
-	{
-	  MPI_Send(&BaryonMass, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	}
+  {
+    MPI_Send(&BaryonMass, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
       MPI_Barrier(PETSC_COMM_WORLD);
       MPI_Bcast(&BaryonMass,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
       MPI_Barrier(PETSC_COMM_WORLD);
@@ -745,18 +745,18 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       double EMag = EMag_af.host<double>()[0];
       /* Communicate to all processors */
       if (world_rank == 0) 
-	{
-	  double temp; 
-	  for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      EMag += temp;
-	    }
-	}
+  {
+    double temp; 
+    for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+        EMag += temp;
+      }
+  }
       else
-	{
-	  MPI_Send(&EMag, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	}
+  {
+    MPI_Send(&EMag, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+  }
       MPI_Barrier(PETSC_COMM_WORLD);
       MPI_Bcast(&EMag,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
       MPI_Barrier(PETSC_COMM_WORLD);
@@ -772,21 +772,21 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     {
       long long int WriteIdx = floor(time/params::WriteDataEveryDt);
       if(WriteIdx==0)
-	    {
+      {
         PetscPrintf(PETSC_COMM_WORLD, "\n");
         PetscPrintf(PETSC_COMM_WORLD, "  Printing metric at zone CENTER...");
-	      geomCenter->gCovGrid->dump("gCov","gCov.h5");
-	      geomCenter->gConGrid->dump("gCon","gCon.h5");
-	      geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
-	      geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
+        geomCenter->gCovGrid->dump("gCov","gCov.h5");
+        geomCenter->gConGrid->dump("gCon","gCon.h5");
+        geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
+        geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
         PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
-	    }
+      }
       std::string filename = "primVarsT";
       std::string filenameVTS = "primVarsT";
       std::string s_idx = std::to_string(WriteIdx);
       for(int i=0;i<6-s_idx.size();i++)
       {
-  	    filename=filename+"0";
+        filename=filename+"0";
       }
       filename=filename+s_idx;
       filenameVTS = filename;
@@ -816,7 +816,7 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 }
 
 void dampedOutflowBC(grid& primBC, 
-		     const geometry& geom, int &numReads,int &numWrites)
+         const geometry& geom, int &numReads,int &numWrites)
 {
   const int numGhost = params::numGhost;
   if(primBC.iLocalStart == 0)
@@ -824,78 +824,78 @@ void dampedOutflowBC(grid& primBC,
       const array& g = geom.g;
 
       for(int i=0;i<numGhost;i++)
-	{
-	  primBC.vars[vars::RHO](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::RHO](numGhost,span,span);
-	  primBC.vars[vars::U](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::U](numGhost,span,span);
-	  primBC.vars[vars::B1](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::B1](numGhost,span,span);
-	  if(params::conduction)
-	    {
-	      primBC.vars[vars::Q](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::Q](numGhost,span,span);
-	    }
-	  if(params::viscosity)
-	    {
-	      primBC.vars[vars::DP](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::DP](numGhost,span,span);
-	    }
-	  double fac = (params::X1End-params::X1Start)/(params::N1-1.);
-	  fac = exp(fac*i);
-	  primBC.vars[vars::U1](i,span,span)=primBC.vars[vars::U1](numGhost,span,span)*fac;
-	  primBC.vars[vars::U2](i,span,span)=primBC.vars[vars::U2](numGhost,span,span)*(2.-fac);
-	  primBC.vars[vars::U3](i,span,span)=primBC.vars[vars::U3](numGhost,span,span)*(2.-fac);
-	  primBC.vars[vars::B2](i,span,span)=primBC.vars[vars::B2](numGhost,span,span)*(2.-fac);
-	  primBC.vars[vars::B3](i,span,span)=primBC.vars[vars::B3](numGhost,span,span)*(2.-fac);
-	}
+  {
+    primBC.vars[vars::RHO](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::RHO](numGhost,span,span);
+    primBC.vars[vars::U](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::U](numGhost,span,span);
+    primBC.vars[vars::B1](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::B1](numGhost,span,span);
+    if(params::conduction)
+      {
+        primBC.vars[vars::Q](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::Q](numGhost,span,span);
+      }
+    if(params::viscosity)
+      {
+        primBC.vars[vars::DP](i,span,span)=g(numGhost,span,span)/g(i,span,span)*primBC.vars[vars::DP](numGhost,span,span);
+      }
+    double fac = (params::X1End-params::X1Start)/(params::N1-1.);
+    fac = exp(fac*i);
+    primBC.vars[vars::U1](i,span,span)=primBC.vars[vars::U1](numGhost,span,span)*fac;
+    primBC.vars[vars::U2](i,span,span)=primBC.vars[vars::U2](numGhost,span,span)*(2.-fac);
+    primBC.vars[vars::U3](i,span,span)=primBC.vars[vars::U3](numGhost,span,span)*(2.-fac);
+    primBC.vars[vars::B2](i,span,span)=primBC.vars[vars::B2](numGhost,span,span)*(2.-fac);
+    primBC.vars[vars::B3](i,span,span)=primBC.vars[vars::B3](numGhost,span,span)*(2.-fac);
+  }
     }
 }
 
 void inflowCheck(grid& primBC,fluidElement& elemBC,
-		 const geometry& geom, int &numReads,int &numWrites)
+     geometry& geom, int &numReads,int &numWrites)
 {
   const int numGhost = params::numGhost;
   if(primBC.iLocalEnd == primBC.N1)
     {
       af::seq domainX1RightBoundary(primBC.N1Local+numGhost,
-				    primBC.N1Local+2*numGhost-1
-				    );
+            primBC.N1Local+2*numGhost-1
+            );
       elemBC.set(primBC,geom,numReads,numWrites);
       
       // Prefactor the lorentz factor
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-	= primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+  = primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-	= primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+  = primBC.vars[vars::U2](domainX1RightBoundary,span,span)
+  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-	= primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+  = primBC.vars[vars::U3](domainX1RightBoundary,span,span)
+  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       // Reset radial velocity if it is too small (i.e. incoming)
       primBC.vars[vars::U1].eval();
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-	= af::max(geom.gCon[0][1]*geom.alpha,
-		  primBC.vars[vars::U1])
-	(domainX1RightBoundary,span,span);
+  = af::max(geom.gCon[0][1]*geom.alpha,
+      primBC.vars[vars::U1])
+  (domainX1RightBoundary,span,span);
       primBC.vars[vars::U1].eval();
       primBC.vars[vars::U2].eval();
       primBC.vars[vars::U3].eval();
       // Recompute lorentz factor
       array vSqr = primBC.vars[vars::U1](domainX1RightBoundary,span,span)*0.;
       for(int i=0;i<3;i++)
-	for(int j=0;j<3;j++)
-	  vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
-	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
-	    primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
+  for(int j=0;j<3;j++)
+    vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
+      primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
+      primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
       double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
       double vSqrMin = 1.e-13;
       vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
       array newLorentzFactor = 1./sqrt(1.-vSqr);
       newLorentzFactor.eval();
       for(int i=0;i<3;i++)
-	{
-	  primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)=
-	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)
-	    *newLorentzFactor;
-	  primBC.vars[vars::U1+i].eval();
-	}
+  {
+    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)=
+      primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)
+      *newLorentzFactor;
+    primBC.vars[vars::U1+i].eval();
+  }
       elemBC.set(primBC,geom,numReads,numWrites);
     }
   if(primBC.iLocalStart == 0)
@@ -927,22 +927,22 @@ void inflowCheck(grid& primBC,fluidElement& elemBC,
       // Recompute lorentz factor
       array vSqr = primBC.vars[vars::U1](domainX1LeftBoundary,span,span)*0.;
       for(int i=0;i<3;i++)
-	for(int j=0;j<3;j++)
-	  vSqr += geom.gCov[i+1][j+1](domainX1LeftBoundary,span,span)*
-	    primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)*
-	    primBC.vars[vars::U1+j](domainX1LeftBoundary,span,span);
+  for(int j=0;j<3;j++)
+    vSqr += geom.gCov[i+1][j+1](domainX1LeftBoundary,span,span)*
+      primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)*
+      primBC.vars[vars::U1+j](domainX1LeftBoundary,span,span);
       double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
       double vSqrMin = 1.e-13;
       vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
       array newLorentzFactor = 1./sqrt(1.-vSqr);
       newLorentzFactor.eval();
       for(int i=0;i<3;i++)
-	{
-	  primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
-	    =primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
-	    *newLorentzFactor;
-	  primBC.vars[vars::U1+i].eval();
-	}
+  {
+    primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
+      =primBC.vars[vars::U1+i](domainX1LeftBoundary,span,span)
+      *newLorentzFactor;
+    primBC.vars[vars::U1+i].eval();
+  }
       elemBC.set(primBC,geom,numReads,numWrites);
     }
 }
@@ -959,79 +959,79 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
       int idx1 = numGhost+1;
       int idx2 = numGhost+2;
       primBC.vars[vars::RHO](span,idx0,span)=
-	primBC.vars[vars::RHO](span,idx2,span);
+  primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx0,span)=
-	primBC.vars[vars::U](span,idx2,span);
+  primBC.vars[vars::U](span,idx2,span);
       primBC.vars[vars::U1](span,idx0,span)=
-	primBC.vars[vars::U1](span,idx2,span);
+  primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx0,span)=
         primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx0,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
-	{
-	  primBC.vars[vars::Q](span,idx0,span)=
-	    primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
-	}
+  {
+    primBC.vars[vars::Q](span,idx0,span)=
+      primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
+  }
       if(params::viscosity)
-	{
-	  primBC.vars[vars::DP](span,idx0,span)=
-	    primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
-	}
+  {
+    primBC.vars[vars::DP](span,idx0,span)=
+      primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
+  }
 
       primBC.vars[vars::RHO](span,idx1,span)=
-	primBC.vars[vars::RHO](span,idx2,span);
+  primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx1,span)=
-	primBC.vars[vars::U](span,idx2,span);
+  primBC.vars[vars::U](span,idx2,span);
       primBC.vars[vars::U1](span,idx1,span)=
-	primBC.vars[vars::U1](span,idx2,span);
+  primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx1,span)=
         primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx1,span)=
         primBC.vars[vars::U3](span,idx2,span);
       if(params::conduction)
-	{
-	  primBC.vars[vars::Q](span,idx1,span)=
-	    primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
-	}
+  {
+    primBC.vars[vars::Q](span,idx1,span)=
+      primBC.vars[vars::Q](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
+  }
       if(params::viscosity)
         {
-	  primBC.vars[vars::DP](span,idx1,span)=
-	    primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
-	}
+    primBC.vars[vars::DP](span,idx1,span)=
+      primBC.vars[vars::DP](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
+  }
 
 
       for(int i=0;i<numGhost;i++)
-	{
-	  primBC.vars[vars::RHO](span,numGhost-1-i,span)=
-	    primBC.vars[vars::RHO](span,numGhost+i,span);
-	  primBC.vars[vars::U](span,numGhost-1-i,span)=
+  {
+    primBC.vars[vars::RHO](span,numGhost-1-i,span)=
+      primBC.vars[vars::RHO](span,numGhost+i,span);
+    primBC.vars[vars::U](span,numGhost-1-i,span)=
             primBC.vars[vars::U](span,numGhost+i,span);
-	  primBC.vars[vars::U1](span,numGhost-1-i,span)=
+    primBC.vars[vars::U1](span,numGhost-1-i,span)=
             primBC.vars[vars::U1](span,numGhost+i,span);
-	  primBC.vars[vars::U3](span,numGhost-1-i,span)=
+    primBC.vars[vars::U3](span,numGhost-1-i,span)=
             primBC.vars[vars::U3](span,numGhost+i,span);
-	  primBC.vars[vars::U2](span,numGhost-1-i,span)=
-	    primBC.vars[vars::U2](span,numGhost+i,span)*(-1.0);
-	  primBC.vars[vars::B1](span,numGhost-1-i,span)=
+    primBC.vars[vars::U2](span,numGhost-1-i,span)=
+      primBC.vars[vars::U2](span,numGhost+i,span)*(-1.0);
+    primBC.vars[vars::B1](span,numGhost-1-i,span)=
             primBC.vars[vars::B1](span,numGhost+i,span);
-	  primBC.vars[vars::B3](span,numGhost-1-i,span)=
+    primBC.vars[vars::B3](span,numGhost-1-i,span)=
             primBC.vars[vars::B3](span,numGhost+i,span);
-	  primBC.vars[vars::B2](span,numGhost-1-i,span)=
+    primBC.vars[vars::B2](span,numGhost-1-i,span)=
             primBC.vars[vars::B2](span,numGhost+i,span)*(-1.0);
-	  if(params::conduction)
-	    {
-	      primBC.vars[vars::Q](span,numGhost-1-i,span)=
-		primBC.vars[vars::Q](span,numGhost+i,span)*(-1.0);
-	    }
-	  if(params::viscosity)
-	    {
-	      primBC.vars[vars::DP](span,numGhost-1-i,span)=
+    if(params::conduction)
+      {
+        primBC.vars[vars::Q](span,numGhost-1-i,span)=
+    primBC.vars[vars::Q](span,numGhost+i,span)*(-1.0);
+      }
+    if(params::viscosity)
+      {
+        primBC.vars[vars::DP](span,numGhost-1-i,span)=
                 primBC.vars[vars::DP](span,numGhost+i,span)*(-1.0);
-	    }
-	}
+      }
+  }
       for(int var=0;var<vars::dof;var++)
-	primBC.vars[var].eval();
+  primBC.vars[var].eval();
     }
   if(primBC.jLocalEnd == primBC.N2)
     {
@@ -1042,11 +1042,11 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
       int idx1 = idx0-1;
       int idx2 = idx0-2;
       primBC.vars[vars::RHO](span,idx0,span)=
-	primBC.vars[vars::RHO](span,idx2,span);
+  primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx0,span)=
-	primBC.vars[vars::U](span,idx2,span);
+  primBC.vars[vars::U](span,idx2,span);
       primBC.vars[vars::U1](span,idx0,span)=
-	primBC.vars[vars::U1](span,idx2,span);
+  primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx0,span)=
         primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx0,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx0,span)=
@@ -1063,11 +1063,11 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
         }
 
       primBC.vars[vars::RHO](span,idx1,span)=
-	primBC.vars[vars::RHO](span,idx2,span);
+  primBC.vars[vars::RHO](span,idx2,span);
       primBC.vars[vars::U](span,idx1,span)=
-	primBC.vars[vars::U](span,idx2,span);
+  primBC.vars[vars::U](span,idx2,span);
       primBC.vars[vars::U1](span,idx1,span)=
-	primBC.vars[vars::U1](span,idx2,span);
+  primBC.vars[vars::U1](span,idx2,span);
       primBC.vars[vars::U2](span,idx1,span)=
         primBC.vars[vars::U2](span,idx2,span)*Theta(span,idx1,span)/Theta(span,idx2,span);
       primBC.vars[vars::U3](span,idx1,span)=
@@ -1084,37 +1084,37 @@ void fixPoles(grid& primBC, const geometry& geom, int &numReads,int &numWrites)
         }
 
       for(int i=0;i<numGhost;i++)
-	{
-	  primBC.vars[vars::RHO](span,primBC.N2Local+numGhost+i,span)=
+  {
+    primBC.vars[vars::RHO](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::RHO](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::U](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::U](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::U](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::U1](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::U1](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::U1](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::U3](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::U3](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::U3](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::U2](span,primBC.N2Local+numGhost+i,span)=
-	    primBC.vars[vars::U2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
-	  primBC.vars[vars::B1](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::U2](span,primBC.N2Local+numGhost+i,span)=
+      primBC.vars[vars::U2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+    primBC.vars[vars::B1](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::B1](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::B3](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::B3](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::B3](span,primBC.N2Local+numGhost-1-i,span);
-	  primBC.vars[vars::B2](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::B2](span,primBC.N2Local+numGhost+i,span)=
             primBC.vars[vars::B2](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
-	  if(params::conduction)
-	    {
-	      primBC.vars[vars::Q](span,primBC.N2Local+numGhost+i,span)=
-		primBC.vars[vars::Q](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
-	    }
-	  if(params::viscosity)
-	    {
-	      primBC.vars[vars::DP](span,primBC.N2Local+numGhost+i,span)=
+    if(params::conduction)
+      {
+        primBC.vars[vars::Q](span,primBC.N2Local+numGhost+i,span)=
+    primBC.vars[vars::Q](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
+      }
+    if(params::viscosity)
+      {
+        primBC.vars[vars::DP](span,primBC.N2Local+numGhost+i,span)=
                 primBC.vars[vars::DP](span,primBC.N2Local+numGhost-1-i,span)*(-1.0);
-	    }
-	}
+      }
+  }
 
       for(int var=0;var<vars::dof;var++)
-	primBC.vars[var].eval();
+  primBC.vars[var].eval();
     }
 }
 
@@ -1134,10 +1134,10 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
       elemBC = elemHalfStep;
     }
   //dampedOutflowBC(*primBC,*geomCenter,
-  //		  numReads,numWrites);
+  //      numReads,numWrites);
   // 2) Check that there is no inflow at the radial boundaries
   inflowCheck(*primBC,*elemBC,*geomCenter,
-  	      numReads,numWrites);
+          numReads,numWrites);
 
   // 3) 'Fix' the polar regions by correcting the firs
   // two active zones
@@ -1152,7 +1152,7 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
     {
       int idx = numGhost;
       fluxesX1->vars[vars::RHO](idx,span,span)=
-	af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
+  af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
       fluxesX1->vars[vars::RHO].eval();
     }
   if(primOld->iLocalEnd == primOld->N1)
@@ -1168,10 +1168,10 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
     {
       int idx = numGhost;
       for(int var=0;var<vars::dof;var++)
-	{
-	  fluxesX2->vars[var](span,idx,span)=0.;
-	  fluxesX2->vars[var].eval();
-	}
+  {
+    fluxesX2->vars[var](span,idx,span)=0.;
+    fluxesX2->vars[var].eval();
+  }
       fluxesX1->vars[vars::B2](span,idx-1,span)=fluxesX1->vars[vars::B2](span,idx,span)*(-1.0);
       fluxesX1->vars[vars::B2].eval();
     }
@@ -1179,10 +1179,10 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
     {
       int idx = primOld->N2Local+numGhost;
       for(int var=0;var<vars::dof;var++)
-	{
-	  fluxesX2->vars[var](span,idx,span)=0.;
-	  fluxesX2->vars[var].eval();
-	}
+  {
+    fluxesX2->vars[var](span,idx,span)=0.;
+    fluxesX2->vars[var].eval();
+  }
       fluxesX1->vars[vars::B2](span,idx,span)=fluxesX1->vars[vars::B2](span,idx-1,span)*(-1.0);
       fluxesX1->vars[vars::B2].eval();
     }

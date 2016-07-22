@@ -1,6 +1,6 @@
 #include "../problem.hpp"
 
-void fluidElement::setFluidElementParameters(const geometry &geom)
+void fluidElement::setFluidElementParameters()
 {
   tau = one;
   chi_emhd = soundSpeed*soundSpeed*tau;
@@ -42,15 +42,15 @@ double SolveT(const double R, const double C1, const double C2)
   while(fabs(Th-T0)>EpsT && fabs(Th-T1)>EpsT && fabs(fh)>ftol)
     {
       if(fh*f0<0.)
-	{
-	  T0=Th;
-	  f0=fh;
-	}
+  {
+    T0=Th;
+    f0=fh;
+  }
       else
-	{
-	  T1=Th;
-	  f1=fh;
-	}
+  {
+    T1=Th;
+    f1=fh;
+  }
       Th = (f1*T0-f0*T1)/(f1-f0);
       fh = FuncT(Th,R,C1,C2);
     }
@@ -94,17 +94,17 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
       const double Rl = host_R[i];
       double Tl,rhol,url,utl;
       if(Rl>2.+1.e-8)
-	{
-	  Tl = SolveT(Rl,C1,C2);
-	  rhol = pow(Tl/Kp,nPoly);
-	  url = -C1/Rl/Rl/pow(Tl,nPoly);
-	  utl = (2.*url/Rl+sqrt(url*url+1.-2./Rl))/(1.-2./Rl);
-	}
+  {
+    Tl = SolveT(Rl,C1,C2);
+    rhol = pow(Tl/Kp,nPoly);
+    url = -C1/Rl/Rl/pow(Tl,nPoly);
+    utl = (2.*url/Rl+sqrt(url*url+1.-2./Rl))/(1.-2./Rl);
+  }
       else
-	{
-	  Tl = 1.; rhol=params::rhoFloorInFluidElement;
-	  url=0.; utl=1.;
-	}
+  {
+    Tl = 1.; rhol=params::rhoFloorInFluidElement;
+    url=0.; utl=1.;
+  }
       T[i]=Tl; Rho0[i]=rhol; ur[i]=url; ut[i]=utl; 
       //printf("r=%e; rho=%e; T=%e;\n",Rl,rhol,Tl);
     }
@@ -118,13 +118,13 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     {
       const double Rl = host_R[i];
       for(int j=0;j<N2g;j++)
-	for(int k=0;k<N3g;k++)
-	  {
-	    primOld->vars[vars::RHO](i,j,k) = Rho0[i];
-	    primOld->vars[vars::U](i,j,k) = nPoly*Rho0[i]*T[i];
-	    primOld->vars[vars::U1](i,j,k) = (ur[i] + ut[i]*2./(Rl+2.))/Rl;
-	    primOld->vars[vars::B1](i,j,k)  = params::bMag/Rl/Rl/Rl; 
-	  }
+  for(int k=0;k<N3g;k++)
+    {
+      primOld->vars[vars::RHO](i,j,k) = Rho0[i];
+      primOld->vars[vars::U](i,j,k) = nPoly*Rho0[i]*T[i];
+      primOld->vars[vars::U1](i,j,k) = (ur[i] + ut[i]*2./(Rl+2.))/Rl;
+      primOld->vars[vars::B1](i,j,k)  = params::bMag/Rl/Rl/Rl; 
+    }
     }
   primOld->vars[vars::U2]  = 0.; 
   primOld->vars[vars::U3]  = 0.; 
@@ -161,21 +161,21 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
   for (int var=0; var<vars::dof; var++) 
     {
       for(int i=0;i<params::numGhost;i++)
-	primOld->vars[var](i,span,span)=primIC->vars[var](i,span,span);
+  primOld->vars[var](i,span,span)=primIC->vars[var](i,span,span);
       for(int i=params::N1+params::numGhost;i<params::N1+2*params::numGhost;i++)
-	primOld->vars[var](i,span,span)=primIC->vars[var](i,span,span);
+  primOld->vars[var](i,span,span)=primIC->vars[var](i,span,span);
       if(params::dim==1)
-	continue;
+  continue;
       for(int i=0;i<params::numGhost;i++)
-	primOld->vars[var](span,i,span)=primIC->vars[var](span,i,span);
+  primOld->vars[var](span,i,span)=primIC->vars[var](span,i,span);
       for(int i=params::N2+params::numGhost;i<params::N2+2*params::numGhost;i++)
-	primOld->vars[var](span,i,span)=primIC->vars[var](span,i,span);
+  primOld->vars[var](span,i,span)=primIC->vars[var](span,i,span);
       if(params::dim==2)
-	continue;
+  continue;
       for(int i=0;i<params::numGhost;i++)
-	primOld->vars[var](span,span,i)=primIC->vars[var](span,span,i);
+  primOld->vars[var](span,span,i)=primIC->vars[var](span,span,i);
       for(int i=params::N3+params::numGhost;i<params::N3+2*params::numGhost;i++)
-	primOld->vars[var](span,span,i)=primIC->vars[var](span,span,i);
+  primOld->vars[var](span,span,i)=primIC->vars[var](span,span,i);
     }
   for (int var=0; var<vars::dof; var++)
     primOld->vars[var].eval();

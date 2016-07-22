@@ -23,8 +23,7 @@ int main(int argc, char **argv)
                    params::X2Start, params::X2End,
                    params::X3Start, params::X3End
                   );
-
-
+     
     PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
     int numReads, numWrites;
     ts.timeStep(numReads, numWrites);
@@ -42,7 +41,6 @@ int main(int argc, char **argv)
     }
     PetscPrintf(PETSC_COMM_WORLD, "\n===Program execution complete===\n\n");
   }
-
   PetscFinalize();  
   return(0);
 }

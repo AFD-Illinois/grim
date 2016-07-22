@@ -34,8 +34,7 @@ cdef class fluidElementPy(object):
                    ):
     cdef int numReads  = 0
     cdef int numWrites = 0
-    self.elemPtr.computeFluxes(geom.getGeometryPtr()[0],
-                               direction,
+    self.elemPtr.computeFluxes(direction,
                                flux.getGridPtr()[0],
                                numReads, numWrites
                               )

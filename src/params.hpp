@@ -125,7 +125,7 @@ namespace params
   extern double adiabaticIndex;
   extern double ConductionAlpha;
   extern double ViscosityAlpha;
-
+  
   extern double slopeLimTheta;
   extern int reconstruction;
   extern int riemannSolver;

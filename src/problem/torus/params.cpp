@@ -3,12 +3,12 @@
 namespace params
 {
   // 4 GPUs on SAVIO
-  int numDevices = 4;
+  int numDevices = 1;
 
   // Grid size options
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 64;
+  int N1 = 192;
+  int N2 = 192;
+  int N3 = 1;
   int N3Full = 128;
   int dim = 2;
   int numGhost = 3;
@@ -57,7 +57,7 @@ namespace params
   double ViscosityAlpha = 1.;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
-
+  
   //Atmosphere parameters
   double MaxLorentzFactor = 10.;
   // Floors are Ampl*pow(radius,power)
@@ -76,8 +76,8 @@ namespace params
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 1;
-  int DoCylindrify = 1;
+  int DerefineThetaHorizon = 0;
+  int DoCylindrify = 0;
   double X1cyl = log(8.*Rin);
   double X2cyl = 1./N2;
 

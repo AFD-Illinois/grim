@@ -23,6 +23,12 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
+# Configuration for aristophanes
+#set(PETSC_DIR "/home/bryan10/Documents/software/petsc_3.7.2_installation") 
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/home/bryan10/Documents/software/arrayfire/build/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+
 # Configuration for SAVIO
 #set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
@@ -134,6 +140,7 @@ add_subdirectory(problem)
 add_executable(grim grim.cpp grim.hpp params.hpp)
 
 target_link_libraries(grim grid geometry physics reconstruction
+                      timestepper problem boundary params
                       timestepper problem boundary params
                       ${MATH_LIBRARIES} 
                       ${PETSC_LIBRARIES}
