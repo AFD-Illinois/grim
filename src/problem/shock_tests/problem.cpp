@@ -127,7 +127,9 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     B2Left        = 10.;        B2Right       = -10.;
     B3Left        = 0.;         B3Right       = 0.;
   }
-  else if (params::shockTest == "stationary_shock")
+  else if (   params::shockTest == "stationary_shock" 
+           || params::shockTest == "stationary_shock_BVP_input"
+          )
   {
     rhoLeft       = 1.;         rhoRight      = 3.08312999;
     pressureLeft  = 1*(params::adiabaticIndex-1.); 
@@ -162,6 +164,11 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   primOld->vars[vars::B1](domainRightHalfX1, span, span)  = B1Right;
   primOld->vars[vars::B2](domainRightHalfX1, span, span)  = B2Right;
   primOld->vars[vars::B3](domainRightHalfX1, span, span)  = B3Right;
+
+  for (int var=0; var<vars::dof; var++)
+  {
+    primIC->vars[var] = primOld->vars[var];
+  }
 
   if (params::shockTest == "stationary_shock_BVP_input")
   {
@@ -437,11 +444,20 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   if (params::shockTest == "stationary_shock_BVP_input")
   {
     elemOld->set(*primOld, *geomCenter, numReads, numWrites);
-    double errorRho = af::norm(af::flat(elemOld->rho - primIC->vars[vars::RHO]));
-    double errorU   = af::norm(af::flat(elemOld->u   - primIC->vars[vars::U]));
-    double errorU1  = af::norm(af::flat(elemOld->u1  - primIC->vars[vars::U1]));
-    double errorQ   = af::norm(af::flat(elemOld->q   - primIC->vars[vars::Q]));
-    double errordP  = af::norm(af::flat(elemOld->deltaP  - primIC->vars[vars::DP]));
+    double errorRho = 
+      af::norm(af::flat(elemOld->rho - primIC->vars[vars::RHO])(domainX1, span, span));
+
+    double errorU   = 
+      af::norm(af::flat(elemOld->u   - primIC->vars[vars::U])(domainX1, span, span));
+
+    double errorU1  = 
+      af::norm(af::flat(elemOld->u1  - primIC->vars[vars::U1])(domainX1, span, span));
+
+    double errorQ   = 
+      af::norm(af::flat(elemOld->q   - primIC->vars[vars::Q])(domainX1, span, span));
+
+    double errordP  = 
+      af::norm(af::flat(elemOld->deltaP  - primIC->vars[vars::DP])(domainX1, span, span));
 
     errorRho = errorRho/N1/N2/N3;
     errorU   = errorU/N1/N2/N3;
@@ -461,6 +477,42 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 
 void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 {
+  if (params::shockTest == "stationary_shock_BVP_input")
+  {
+    int numGhost = params::numGhost;
+    // 1) Choose which primitive variables are corrected.
+    grid* primBC;
+    if(currentStep == timeStepperSwitches::HALF_STEP)
+    {
+      primBC = primOld;
+    }
+    else
+    {
+      primBC = primHalfStep;
+    }
+    af::seq leftBoundary(0, numGhost-2);
+    af::seq rightBoundary(primOld->N1Local + numGhost+2, 
+                          primOld->N1Local + 2*numGhost-1
+                         );
+
+    if (primOld->iLocalStart == 0)
+    {
+      for (int var=0; var < vars::dof; var++)
+      {
+        primBC->vars[var](leftBoundary, span, span) = 
+          primIC->vars[var](leftBoundary, span, span);
+      }
+    }
+
+    if (primOld->iLocalStart == N1)
+    {
+      for (int var=0; var < vars::dof; var++)
+      {
+        primBC->vars[var](rightBoundary, span, span) = 
+          primIC->vars[var](rightBoundary, span, span);
+      }
+    }
+  }
 
 }
 
