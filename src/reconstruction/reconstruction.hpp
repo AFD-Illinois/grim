@@ -22,6 +22,12 @@ namespace reconstruction
                    int &numWrites
                   );
 
+  array slopePPM(const int dir,const double dX,
+		               const array& in,
+                   int &numReads,
+                   int &numWrites
+                  );
+
   array slope(const int dir,const double dX,
 		          const array& in,
               int &numReads,
@@ -37,6 +43,14 @@ namespace reconstruction
                     );
 
   void reconstructWENO5(const grid &prim,
+                  			const int dir,
+                  			grid &primLeft,
+                  			grid &primRight,
+                        int &numReads,
+                        int &numWrites
+                  		 );
+
+  void reconstructPPM(const grid &prim,
                   			const int dir,
                   			grid &primLeft,
                   			grid &primRight,

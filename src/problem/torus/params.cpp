@@ -6,18 +6,18 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 192;
-  int N2 = 192;
-  int N3 = 1;
-  int N3Full = 128;
-  int dim = 2;
+  int N1 = 140;
+  int N2 = 128;
+  int N3 = 32;
+  int N3Full = 64;
+  int dim = 3;
   int numGhost = 3;
  
   // (Re)start options
-  double Time = 0.0;
+  double Time = 3862.00001;
   double InitialDt = 0.005;
   double maxDtIncrement = 1.3;
-  int restart = 0;
+  int restart = 1;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -27,7 +27,7 @@ namespace params
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double CourantFactor = 0.9;
-  double finalTime = 2000.;
+  double finalTime = 6000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid size options
@@ -78,7 +78,7 @@ namespace params
   double hSlope = 0.3;
   int DerefineThetaHorizon = 0;
   int DoCylindrify = 0;
-  double X1cyl = log(8.*Rin);
+  double X1cyl = log(4.*Rin);
   double X2cyl = 1./N2;
 
   // Boundary Conditions

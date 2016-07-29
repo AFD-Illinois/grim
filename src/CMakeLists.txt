@@ -30,10 +30,10 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 #set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Configuration for SAVIO
-#set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire_new/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
+set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
+set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire_new/arrayfire/build/package")
+set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
 # Configuration for lmc
 #set(PETSC_DIR "/bhhome/manic/petsc_installation")
@@ -52,10 +52,10 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 
 # Configuration for Deathstar
-set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+#set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_icc/package")
-set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_icc/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
@@ -75,7 +75,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "orzag_tang")
+set(PROBLEM "torus")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

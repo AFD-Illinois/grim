@@ -1,4 +1,4 @@
-add_library(reconstruction reconstruction.hpp minmod.cpp weno5.cpp
+add_library(reconstruction reconstruction.hpp minmod.cpp weno5.cpp ppm.cpp
             reconstruction.cpp)
 target_link_libraries(reconstruction ${ArrayFire_LIBRARIES})
 

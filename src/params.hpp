@@ -61,7 +61,7 @@ namespace reconstructionOptions
 {
   enum
   {
-    MINMOD, WENO5
+    MINMOD, WENO5, PPM
   };
 };
 
