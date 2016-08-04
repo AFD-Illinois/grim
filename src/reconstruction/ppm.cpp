@@ -80,6 +80,8 @@ array reconstruction::slopePPM(const int dir,const double dX, const array& in,
   return (rightV-leftV)/dX;
 }
 
+// PPM algorithm, adapted from HARM code (by X. Guan)
+// ref. Colella && Woodward's PPM paper
 void reconstruction::reconstructPPM(const grid &prim,
 				    const int dir,
 				    grid &primLeft,

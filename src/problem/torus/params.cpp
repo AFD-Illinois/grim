@@ -3,7 +3,7 @@
 namespace params
 {
   // 4 GPUs on SAVIO
-  int numDevices = 1;
+  int numDevices = 4;
 
   // Grid size options
   int N1 = 140;
@@ -14,10 +14,10 @@ namespace params
   int numGhost = 3;
  
   // (Re)start options
-  double Time = 3862.00001;
+  double Time = 0.0;
   double InitialDt = 0.005;
   double maxDtIncrement = 1.3;
-  int restart = 1;
+  int restart = 0;
   std::string restartFile = "restartFile.h5";
 
   // Observation / checkpointing intervals
@@ -63,7 +63,7 @@ namespace params
   // Floors are Ampl*pow(radius,power)
   double RhoFloorAmpl = 1.e-3;
   double UFloorAmpl = 1.e-5;
-  double RhoFloorSlope = -1.5;
+  double RhoFloorSlope = -2.5;
   double UFloorSlope = -2.5;
   // Floors for magnetically dominated regions
   double BsqrOverRhoMax = 10.;
@@ -76,8 +76,8 @@ namespace params
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 0;
-  int DoCylindrify = 0;
+  int DerefineThetaHorizon = 1;
+  int DoCylindrify = 1;
   double X1cyl = log(4.*Rin);
   double X2cyl = 1./N2;
 
@@ -100,8 +100,8 @@ namespace params
   
   // Reconstruction options
   double slopeLimTheta = 2.;
-  int reconstruction = reconstructionOptions::MINMOD;
-  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
+  int reconstruction = reconstructionOptions::PPM;
+  int riemannSolver  = riemannSolvers::HLL;
 
 
   //Parameters controlling accuracy of nonlinear solver

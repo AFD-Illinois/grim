@@ -766,30 +766,35 @@ void inflowCheck(grid& primBC,fluidElement& elemBC,
       
       // Prefactor the lorentz factor
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U2](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U3](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       // Reset radial velocity if it is too small (i.e. incoming)
       primBC.vars[vars::U1].eval();
+      array minUr = geom.gCon[0][1]*geom.alpha;
+      for(int i=0;i<numGhost;i++)
+	{
+	  minUr(primBC.N1Local+numGhost+i,span,span)
+	    =minUr(primBC.N1Local+numGhost-1,span,span);
+	}
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  = af::max(geom.gCon[0][1]*geom.alpha,
-      primBC.vars[vars::U1])
-  (domainX1RightBoundary,span,span);
+	= af::max(minUr,primBC.vars[vars::U1])
+	(domainX1RightBoundary,span,span);
       primBC.vars[vars::U1].eval();
       primBC.vars[vars::U2].eval();
       primBC.vars[vars::U3].eval();
       // Recompute lorentz factor
       array vSqr = primBC.vars[vars::U1](domainX1RightBoundary,span,span)*0.;
       for(int i=0;i<3;i++)
-  for(int j=0;j<3;j++)
-    vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
-      primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
-      primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
+	for(int j=0;j<3;j++)
+	  vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
       double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
       double vSqrMin = 1.e-13;
       vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
@@ -1045,7 +1050,7 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
   inflowCheck(*primBC,*elemBC,*geomCenter,
           numReads,numWrites);
 
-  // 3) 'Fix' the polar regions by correcting the firs
+  // 3) 'Fix' the polar regions by correcting the first
   // two active zones
   fixPoles(*primBC,*geomCenter,numReads,numWrites);
 };
@@ -1058,7 +1063,7 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
     {
       int idx = numGhost;
       fluxesX1->vars[vars::RHO](idx,span,span)=
-  af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
+	af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
       fluxesX1->vars[vars::RHO].eval();
     }
   if(primOld->iLocalEnd == primOld->N1)
