@@ -6,11 +6,11 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 192;
-  int N2 = 192;
-  int N3 = 1;
-  int N3Full = 128;
-  int dim = 2;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 32;
+  int N3Full = 64;
+  int dim = 3;
   int numGhost = 3;
  
   // (Re)start options
@@ -27,7 +27,7 @@ namespace params
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double CourantFactor = 0.9;
-  double finalTime = 2000.;
+  double finalTime = 6000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Grid size options
@@ -63,7 +63,7 @@ namespace params
   // Floors are Ampl*pow(radius,power)
   double RhoFloorAmpl = 1.e-3;
   double UFloorAmpl = 1.e-5;
-  double RhoFloorSlope = -1.5;
+  double RhoFloorSlope = -2.5;
   double UFloorSlope = -2.5;
   // Floors for magnetically dominated regions
   double BsqrOverRhoMax = 10.;
@@ -76,9 +76,9 @@ namespace params
 
   // Grid parameters
   double hSlope = 0.3;
-  int DerefineThetaHorizon = 0;
-  int DoCylindrify = 0;
-  double X1cyl = log(8.*Rin);
+  int DerefineThetaHorizon = 1;
+  int DoCylindrify = 1;
+  double X1cyl = log(4.*Rin);
   double X2cyl = 1./N2;
 
   // Boundary Conditions
@@ -100,8 +100,8 @@ namespace params
   
   // Reconstruction options
   double slopeLimTheta = 2.;
-  int reconstruction = reconstructionOptions::MINMOD;
-  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
+  int reconstruction = reconstructionOptions::PPM;
+  int riemannSolver  = riemannSolvers::HLL;
 
 
   //Parameters controlling accuracy of nonlinear solver

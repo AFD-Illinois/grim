@@ -13,6 +13,10 @@ inline int DELTA(int const &mu, int const &nu)
 
 class fluidElement
 {
+  void computeEMHDGradients(const double dX[3],
+                            int &numReads,
+                            int &numWrites
+                           );     
   public:
     array zero, one;
 
@@ -79,15 +83,11 @@ class fluidElement
                                 int &numWrites
                                );
 
-    void computeExplicitSources(grid &sources,
+    void computeExplicitSources(const double dX[3],
+                                grid &sources,
                                 int &numReads,
                                 int &numWrites
                                );
-    void computeEMHDGradients(const double dX[3],
-                              int &numReads,
-                              int &numWrites
-                             );     
-                             
     
     void constructTetrads();
     void tetradConToCoordCon(const array vTetrad[NDIM], array vCoord[NDIM]);

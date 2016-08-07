@@ -1,4 +1,5 @@
 #include "torus.hpp"
+#include "ObserversTorus.hpp"
 
 void fluidElement::setFluidElementParameters()
 {
@@ -663,110 +664,15 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
   if(ObserveData)
     {
-      //Find maximum density
-      array rhoMax_af = af::max(af::max(af::max(primOld->vars[vars::RHO](domainX1,domainX2,domainX3),2),1),0);
-      double rhoMax = rhoMax_af.host<double>()[0];
-      /* Communicate rhoMax to all processors */
-      if (world_rank == 0) 
-  {
-    double temp; 
-    for(int i=1;i<world_size;i++)
-      {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-        if(rhoMax < temp)
-    rhoMax = temp;
-      }
-  }
-      else
-  {
-    MPI_Send(&rhoMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-  }
-      MPI_Barrier(PETSC_COMM_WORLD);
-      MPI_Bcast(&rhoMax,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-      MPI_Barrier(PETSC_COMM_WORLD);
-      
-      // Find minimum beta
-      const array& bSqr = elemOld->bSqr;
-      const array& Pgas = elemOld->pressure;
-      array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
-      array BetaMin_af = af::min(af::min(af::min(PlasmaBeta(domainX1,domainX2,domainX3),2),1),0);
-      double betaMin = BetaMin_af.host<double>()[0];
-      /* Use MPI to find minimum over all processors */
-      if (world_rank == 0) 
-  {
-    double temp; 
-    for(int i=1;i<world_size;i++)
-      {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-        if( betaMin > temp)
-    betaMin = temp;
-    }
-  }
-      else
-  {
-    MPI_Send(&betaMin, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-  }
-      MPI_Barrier(PETSC_COMM_WORLD);
-      MPI_Bcast(&betaMin,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-      MPI_Barrier(PETSC_COMM_WORLD);
-      
-      /* Get the domain of the bulk and volume element*/
-      elemOld->computeFluxes(0, *consOld,numReads,numWrites);
+      PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
+      ComputeMinMaxVariables(elemOld,primOld,geomCenter);
       double volElem = XCoords->dX1;
       if(params::dim>1)
-  volElem*=XCoords->dX2;
+	volElem*=XCoords->dX2;
       if(params::dim>2)
-  volElem*=XCoords->dX3;
-
-      // Integrate baryon mass
-      array MassIntegrand = consOld->vars[vars::RHO]*volElem;
-      array BaryonMass_af = af::sum(af::flat(MassIntegrand(domainX1, domainX2, domainX3)),0);
-      double BaryonMass = BaryonMass_af.host<double>()[0];
-      /* Communicate to all processors */
-      if (world_rank == 0) 
-  {
-    double temp; 
-    for(int i=1;i<world_size;i++)
-      {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-        BaryonMass += temp;
-      }
-  }
-      else
-  {
-    MPI_Send(&BaryonMass, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-  }
-      MPI_Barrier(PETSC_COMM_WORLD);
-      MPI_Bcast(&BaryonMass,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-      MPI_Barrier(PETSC_COMM_WORLD);
-      // Integrate magnetic energy
-      array EMagIntegrand = volElem*elemOld->bSqr*0.5*geomCenter->g;
-      array EMag_af = af::sum(af::flat(EMagIntegrand(domainX1, domainX2, domainX3)),0);
-      double EMag = EMag_af.host<double>()[0];
-      /* Communicate to all processors */
-      if (world_rank == 0) 
-  {
-    double temp; 
-    for(int i=1;i<world_size;i++)
-      {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-        EMag += temp;
-      }
-  }
-      else
-  {
-    MPI_Send(&EMag, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-  }
-      MPI_Barrier(PETSC_COMM_WORLD);
-      MPI_Bcast(&EMag,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-      MPI_Barrier(PETSC_COMM_WORLD);
-
-      PetscPrintf(PETSC_COMM_WORLD, "\n");
-      PetscPrintf(PETSC_COMM_WORLD,"    ---Global quantities at t = %e--- \n", time);
-      PetscPrintf(PETSC_COMM_WORLD,"      rhoMax          = %e\n",  rhoMax);
-      PetscPrintf(PETSC_COMM_WORLD,"      betaMin         = %e\n", betaMin);
-      PetscPrintf(PETSC_COMM_WORLD,"      Baryon Mass     = %e\n", BaryonMass);
-      PetscPrintf(PETSC_COMM_WORLD,"      Magnetic Energy = %e\n", EMag);
+	volElem*=XCoords->dX3;
+      ComputeEnergyIntegrals(elemOld,primOld,geomCenter,volElem);
+      ComputeBoundaryFluxes(elemOld,primOld,geomCenter,volElem);
     }
   if(WriteData)
     {
@@ -860,30 +766,35 @@ void inflowCheck(grid& primBC,fluidElement& elemBC,
       
       // Prefactor the lorentz factor
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U1](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U2](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U2](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-  = primBC.vars[vars::U3](domainX1RightBoundary,span,span)
-  /elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
+	= primBC.vars[vars::U3](domainX1RightBoundary,span,span)
+	/elemBC.gammaLorentzFactor(domainX1RightBoundary,span,span);
       // Reset radial velocity if it is too small (i.e. incoming)
       primBC.vars[vars::U1].eval();
+      array minUr = geom.gCon[0][1]*geom.alpha;
+      for(int i=0;i<numGhost;i++)
+	{
+	  minUr(primBC.N1Local+numGhost+i,span,span)
+	    =minUr(primBC.N1Local+numGhost-1,span,span);
+	}
       primBC.vars[vars::U1](domainX1RightBoundary,span,span)
-  = af::max(geom.gCon[0][1]*geom.alpha,
-      primBC.vars[vars::U1])
-  (domainX1RightBoundary,span,span);
+	= af::max(minUr,primBC.vars[vars::U1])
+	(domainX1RightBoundary,span,span);
       primBC.vars[vars::U1].eval();
       primBC.vars[vars::U2].eval();
       primBC.vars[vars::U3].eval();
       // Recompute lorentz factor
       array vSqr = primBC.vars[vars::U1](domainX1RightBoundary,span,span)*0.;
       for(int i=0;i<3;i++)
-  for(int j=0;j<3;j++)
-    vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
-      primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
-      primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
+	for(int j=0;j<3;j++)
+	  vSqr += geom.gCov[i+1][j+1](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+i](domainX1RightBoundary,span,span)*
+	    primBC.vars[vars::U1+j](domainX1RightBoundary,span,span);
       double vSqrMax = 1.-1./params::MaxLorentzFactor/params::MaxLorentzFactor;
       double vSqrMin = 1.e-13;
       vSqr = af::max(af::min(vSqr,vSqrMax),vSqrMin);
@@ -1139,7 +1050,7 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
   inflowCheck(*primBC,*elemBC,*geomCenter,
           numReads,numWrites);
 
-  // 3) 'Fix' the polar regions by correcting the firs
+  // 3) 'Fix' the polar regions by correcting the first
   // two active zones
   fixPoles(*primBC,*geomCenter,numReads,numWrites);
 };
@@ -1152,7 +1063,7 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
     {
       int idx = numGhost;
       fluxesX1->vars[vars::RHO](idx,span,span)=
-  af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
+	af::min(fluxesX1->vars[vars::RHO](idx,span,span),0.);
       fluxesX1->vars[vars::RHO].eval();
     }
   if(primOld->iLocalEnd == primOld->N1)

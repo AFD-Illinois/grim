@@ -420,7 +420,8 @@ void fluidElement::computeImplicitSources(grid &sources,
   }
 }
 
-void fluidElement::computeExplicitSources(grid &sources,
+void fluidElement::computeExplicitSources(const double dX[3],
+                                          grid &sources,
                                           int &numReads,
                                           int &numWrites
                                          )
@@ -468,8 +469,14 @@ void fluidElement::computeExplicitSources(grid &sources,
     // First, compute part of the source terms
     // shared by conduction and viscosity, i.e. 
     // u_{\mu;\nu} and u^{\mu}_{;\mu}
-    // Note that the derivatives are all precomputed 
-    // in computeEMHDGradients
+    // First computer derivatives using computeEMHDGradients
+    int numReadsEMHDGradients, numWritesEMHDGradients;
+    computeEMHDGradients(dX,
+                         numReadsEMHDGradients,
+                         numWritesEMHDGradients
+                        );
+    numReads  += numReadsEMHDGradients;
+    numWrites += numWritesEMHDGradients;
 
     // Compute divergence. We could compute it from the derivatives of uCon,
     //    but we already have u_{\mu;\nu}, so let's make use of it

@@ -437,24 +437,10 @@ double timeStepper::memoryBandwidth(const double numReads,
                                     const double timeElapsed
                                     )
 {
-  switch (dim)
-  {
-    case 1:
-    return   (double)(N1 + 2*numGhost) 
-           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-
-    case 2:
-    return   (double)(N1 + 2*numGhost) 
-           * (double)(N2 + 2*numGhost)
-           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-
-    case 3:
-    return   (double)(N1 + 2*numGhost) 
-           * (double)(N2 + 2*numGhost)
-           * (double)(N3 + 2*numGhost)
-           * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
-
-  }
+  return   (double)(prim->N1Total)
+         * (double)(prim->N2Total)
+         * (double)(prim->N3Total)
+         * 8. * (numReads + numWrites) * numEvals /timeElapsed/1e9;
 }
 
 double timeStepper::bandwidthTest(const int numEvals)

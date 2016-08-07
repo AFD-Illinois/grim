@@ -79,8 +79,13 @@ void fluidElement::constructTetrads()
   }
   
   /* Check to see if trial is parallel to X2 or X3 */
-  array X2v[NDIM] = zero;
-  array X3v[NDIM] = zero;
+  array X2v[NDIM];
+  array X3v[NDIM];
+  for (int mu=0; mu < NDIM; mu++)
+  {
+    X2v[mu] = zero;
+    X3v[mu] = zero;
+  }
   array trial_X2[NDIM];
   array trial_X3[NDIM];
   for (int mu = 0; mu < NDIM; mu++)

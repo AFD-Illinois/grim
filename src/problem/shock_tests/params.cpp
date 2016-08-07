@@ -5,7 +5,7 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 128;
+  int N1 = 4096;
   int N2 = 1;
   int N3 = 1;
 
@@ -15,10 +15,10 @@ namespace params
   int timeStepper = timeStepping::EXPLICIT;
   double InitialDt = 1e-5;
   double Time = 0.;
-  double CourantFactor = 0.5;
+  double CourantFactor = 0.25;
   double maxDtIncrement = 1.3;
-  double finalTime = 1.;
-  double WriteDataEveryDt = 0.1;
+  double finalTime = 5.;
+  double WriteDataEveryDt = 0.01;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
