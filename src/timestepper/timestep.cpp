@@ -39,12 +39,18 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   double consOldTime = af::timer::stop(consOldTimer);
 
   int numReadsExplicitSouces, numWritesExplicitSouces;
-  elemOld->computeExplicitSources(*sourcesExplicit,
-                                  numReadsExplicitSouces, 
+  af::timer explicitSourcesTimer = af::timer::start();
+  double dX[3];
+  dX[0] = XCoords->dX1;
+  dX[1] = XCoords->dX2;
+  dX[2] = XCoords->dX3;
+  elemOld->computeExplicitSources(dX, *sourcesExplicit,
+                                  numReadsExplicitSouces,
                                   numWritesExplicitSouces
                                  );
   numReads  += numReadsExplicitSouces;
   numWrites += numWritesExplicitSouces;
+  double explicitSourcesTime = af::timer::stop(explicitSourcesTimer);
 
   int numReadsImplicitSources, numWritesImplicitSources;
   elemOld->computeImplicitSources(*sourcesImplicitOld,
@@ -55,23 +61,6 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numReads  += numReadsImplicitSources;
   numWrites += numWritesImplicitSources;
 
-  af::timer emhdGradientTimer = af::timer::start();
-  if (params::viscosity || params::conduction)
-  {
-    int numReadsEMHDGradients, numWritesEMHDGradients;
-    double dX[3];
-    dX[0] = XCoords->dX1;
-    dX[1] = XCoords->dX2;
-    dX[2] = XCoords->dX3;
-    elemOld->computeEMHDGradients(dX,
-                                  numReadsEMHDGradients,
-                                  numWritesEMHDGradients
-                                 );
-    numReads  += numReadsEMHDGradients;
-    numWrites += numWritesEMHDGradients;
-  }
-  double emhdGradientTime = af::timer::stop(emhdGradientTimer);
-  
   af::timer divFluxTimer = af::timer::start();
   int numReadsDivFluxes, numWritesDivFluxes;
   computeDivOfFluxes(*primOld, numReadsDivFluxes, numWritesDivFluxes);
@@ -151,13 +140,10 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   PetscPrintf(PETSC_COMM_WORLD, "     Conserved vars Old  : %g secs, %g %\n",
                                  consOldTime, consOldTime/halfStepTime * 100
              );
-  if (params::viscosity || params::conduction)
-  {
-    PetscPrintf(PETSC_COMM_WORLD, "     EMHD gradients      : %g secs, %g %\n",
-                                 emhdGradientTime, 
-                                 emhdGradientTime/halfStepTime * 100
-               );
-  }
+  PetscPrintf(PETSC_COMM_WORLD, "     Explicit sources    : %g secs, %g %\n",
+                               explicitSourcesTime, 
+                               explicitSourcesTime/halfStepTime * 100
+             );
   PetscPrintf(PETSC_COMM_WORLD, "     Divergence of fluxes: %g secs, %g %\n",
                                  divFluxTime, divFluxTime/halfStepTime * 100
              );
@@ -215,12 +201,14 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
   numWrites += numWritesElemSet; 
   double elemHalfStepTime = af::timer::stop(elemHalfStepTimer);
 
-  elemHalfStep->computeExplicitSources(*sourcesExplicit,
+  explicitSourcesTimer = af::timer::start();
+  elemHalfStep->computeExplicitSources(dX, *sourcesExplicit,
                                        numReadsExplicitSouces,
                                        numWritesExplicitSouces
                                       );
   numReads  += numReadsExplicitSouces;
   numWrites += numWritesExplicitSouces;
+  explicitSourcesTime = af::timer::stop(explicitSourcesTimer);
 
   elemOld->computeImplicitSources(*sourcesImplicitOld,
                                   elemHalfStep->tau,
@@ -229,23 +217,6 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                  );
   numReads  += numReadsImplicitSources;
   numWrites += numWritesImplicitSources;
-
-  emhdGradientTimer = af::timer::start();
-  if (params::viscosity || params::conduction)
-  {
-    int numReadsEMHDGradients, numWritesEMHDGradients;
-    double dX[3];
-    dX[0] = XCoords->dX1;
-    dX[1] = XCoords->dX2;
-    dX[2] = XCoords->dX3;
-    elemHalfStep->computeEMHDGradients(dX,
-                                       numReadsEMHDGradients,
-                                       numWritesEMHDGradients
-                                      );
-    numReads  += numReadsEMHDGradients;
-    numWrites += numWritesEMHDGradients;
-  }
-  emhdGradientTime = af::timer::stop(emhdGradientTimer);
 
   divFluxTimer = af::timer::start();
   computeDivOfFluxes(*primHalfStep, numReadsDivFluxes, numWritesDivFluxes);
@@ -316,13 +287,10 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                  elemHalfStepTime, 
                                  elemHalfStepTime/fullStepTime * 100
              );
-  if (params::viscosity || params::conduction)
-  {
-    PetscPrintf(PETSC_COMM_WORLD, "     EMHD gradients      : %g secs, %g %\n",
-                                 emhdGradientTime, 
-                                 emhdGradientTime/fullStepTime * 100
-               );
-  }
+  PetscPrintf(PETSC_COMM_WORLD, "     Explicit sources    : %g secs, %g %\n",
+                               explicitSourcesTime, 
+                               explicitSourcesTime/fullStepTime * 100
+             );
   PetscPrintf(PETSC_COMM_WORLD, "     Divergence of fluxes: %g secs, %g %\n",
                                  divFluxTime, divFluxTime/fullStepTime * 100
              );

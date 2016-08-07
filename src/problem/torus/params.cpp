@@ -3,11 +3,11 @@
 namespace params
 {
   // 4 GPUs on SAVIO
-  int numDevices = 4;
+  int numDevices = 1;
 
   // Grid size options
-  int N1 = 140;
-  int N2 = 128;
+  int N1 = 64;
+  int N2 = 64;
   int N3 = 32;
   int N3Full = 64;
   int dim = 3;
