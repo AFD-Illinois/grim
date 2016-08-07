@@ -11,7 +11,6 @@ void timeStepper::solve(grid &primGuess)
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
   {
-    /* True residual, with explicit terms (not needed for Jacobian) */
     af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
     computeResidual(primGuess, *residual,
@@ -72,13 +71,9 @@ void timeStepper::solve(grid &primGuess)
       break;
     }
 
-    computeResidual(primGuess, *residual,
-                    numReadsResidual, numWritesResidual
-                   );
-
     /* Assemble the Jacobian in Struct of Arrays format where the physics
      * operations are all vectorized */
-    for (int row=0; row < vars::numFluidVars; row++)
+    for (int row=0; row < residual->numVars; row++)
     {
       /* Recommended value of Jacobian differencing parameter to achieve fp64
        * machine precision */
