@@ -36,9 +36,9 @@ set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 #set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
 
 # Configuration for gordon
-set(PETSC_DIR "/home/manic/petsc_3.7.3_installation") 
-set(ArrayFire_ROOT_DIR "/home/manic/arrayfire/build/package")
-set(INTEL_MKL_ROOT_DIR "/opt/intel/composer_xe_2013_sp1.2.144/mkl")
+#set(PETSC_DIR "/home/manic/petsc_3.7.3_installation") 
+#set(ArrayFire_ROOT_DIR "/home/manic/arrayfire/build/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/composer_xe_2013_sp1.2.144/mkl")
 
 # Configuration for lmc
 #set(PETSC_DIR "/bhhome/manic/petsc_installation")
@@ -51,10 +51,13 @@ set(INTEL_MKL_ROOT_DIR "/opt/intel/composer_xe_2013_sp1.2.144/mkl")
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
 
 # Configuration for Stampede
-#set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
+set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+# CPU
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+# GPU
+set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_new/arrayfire/build/package")
 
 # Configuration for Deathstar
 #set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")

@@ -33,13 +33,20 @@ int main(int argc, char **argv)
     PetscPrintf(PETSC_COMM_WORLD, "\n  Kernel compilation complete\n");
 
     int n=0;
-    while(ts.time<params::finalTime)
+    int StopRunning = 0;
+    while(ts.time<params::finalTime && StopRunning==0)
     {
       n++;
       PetscPrintf(PETSC_COMM_WORLD, "\n|----Time step %d----|\n", n);
       ts.timeStep(numReads, numWrites);
+      //Checkpoint if running out of time
+      StopRunning = ts.CheckWallClockTermination();
     }
     PetscPrintf(PETSC_COMM_WORLD, "\n===Program execution complete===\n\n");
+    if(StopRunning)
+      PetscPrintf(PETSC_COMM_WORLD, "\n Termination reason: WallClock\n");
+    else
+      PetscPrintf(PETSC_COMM_WORLD, "\n Termination reason: Final Time\n");
   }
   PetscFinalize();  
   return(0);

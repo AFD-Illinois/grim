@@ -6,10 +6,10 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 64;
-  int N2 = 64;
-  int N3 = 32;
-  int N3Full = 64;
+  int N1 = 256;
+  int N2 = 256;
+  int N3 = 128;
+  int N3Full = 128;
   int dim = 3;
   int numGhost = 3;
  
@@ -19,7 +19,11 @@ namespace params
   double maxDtIncrement = 1.3;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
-
+  std::string restartFileName = "restartFileName.txt";
+  std::string restartFileTime = "restartFileTime.txt";
+  // Maximum run time, in seconds
+  double MaxWallTime = 3600*23.5;
+  
   // Observation / checkpointing intervals
   double ObserveEveryDt = .1;
   double WriteDataEveryDt = 2.;
@@ -78,7 +82,7 @@ namespace params
   double hSlope = 0.3;
   int DerefineThetaHorizon = 1;
   int DoCylindrify = 1;
-  double X1cyl = log(4.*Rin);
+  double X1cyl = log(8.*Rin);
   double X2cyl = 1./N2;
 
   // Boundary Conditions
@@ -101,7 +105,7 @@ namespace params
   // Reconstruction options
   double slopeLimTheta = 2.;
   int reconstruction = reconstructionOptions::PPM;
-  int riemannSolver  = riemannSolvers::HLL;
+  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
 
   //Parameters controlling accuracy of nonlinear solver

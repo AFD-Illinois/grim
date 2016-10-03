@@ -1,4 +1,5 @@
 #include "timestepper.hpp"
+#include <fstream>
 
 timeStepper::timeStepper(const int N1, 
                          const int N2,
@@ -375,33 +376,63 @@ timeStepper::timeStepper(const int N1,
   residualMask(domainX1, domainX2, domainX3) = 1.;
 
   initialConditions(numReads, numWrites);
-  if (params::restart)
+
+  struct stat fileInfoName;
+  struct stat fileInfoTime;
+  if (
+      params::restart || 
+      ( (stat(params::restartFileName.c_str(), &fileInfoName) == 0) && 
+	(stat(params::restartFileTime.c_str(), &fileInfoTime) == 0) ) 
+     )
   {
     struct stat fileInfo;
     int rank;
     MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
 
-    if (rank==0)
-    {
-      if (stat(params::restartFile.c_str(), &fileInfo) == 0)
+    if((stat(params::restartFileName.c_str(), &fileInfoName) == 0) &&
+       (stat(params::restartFileTime.c_str(), &fileInfoTime) == 0) )
       {
-        /* File exists */
-        PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", 
-                    params::restartFile.c_str()
-                   ); 
+	std::ifstream fTime(params::restartFileTime.c_str());
+	double RestartTime;
+	fTime>>RestartTime;
+	this->time = RestartTime;
+	if (rank==0)
+	  {
+	    PetscPrintf(PETSC_COMM_WORLD, "\n Restarting from file %s at time %e\n\n",
+			params::restartFileName.c_str(),
+			RestartTime
+			);
+	  }
+	fTime.close();
+	std::ifstream fName(params::restartFileName.c_str());
+	std::string mFileName;
+	fName>>mFileName;
+	primOld->load("primitives",mFileName);
       }
-      else
+    else
       {
-        /* File does not exist */
-        PetscPrintf(PETSC_COMM_WORLD, "\n");
-        PetscPrintf(PETSC_COMM_WORLD, "Restart file %s does not exist\n",
-                    params::restartFile.c_str()
-                   );
-        MPI_Abort(PETSC_COMM_WORLD, 1);
+	if (rank==0)
+	  {
+	    if (stat(params::restartFile.c_str(), &fileInfo) == 0)
+	      {
+		/* File exists */
+		PetscPrintf(PETSC_COMM_WORLD, "\nFound restart file: %s\n\n", 
+			    params::restartFile.c_str()
+			    ); 
+	      }
+	    else
+	      {
+		/* File does not exist */
+		PetscPrintf(PETSC_COMM_WORLD, "\n");
+		PetscPrintf(PETSC_COMM_WORLD, "Restart file %s does not exist\n",
+			    params::restartFile.c_str()
+			    );
+		MPI_Abort(PETSC_COMM_WORLD, 1);
+	      }
+	  }
+	
+	primOld->load("primitives", params::restartFile);
       }
-    }
-
-    primOld->load("primitives", params::restartFile);
     // Need to call the diagnostics to reset the time step !!!
     fullStepDiagnostics(numReads, numWrites);
   }

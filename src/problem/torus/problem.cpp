@@ -1,5 +1,7 @@
 #include "torus.hpp"
 #include "ObserversTorus.hpp"
+#include "../../timer.hpp"
+#include <fstream>
 
 void fluidElement::setFluidElementParameters()
 {
@@ -664,6 +666,9 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
   if(ObserveData)
     {
+      TimeStamp tStep;
+      double ElapsedTime = tStep-TimeWhenExecutableStarted();
+      PetscPrintf(PETSC_COMM_WORLD, "\n Elapsed Time = %e seconds \n", ElapsedTime);
       PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
       ComputeMinMaxVariables(elemOld,primOld,geomCenter);
       double volElem = XCoords->dX1;
@@ -697,9 +702,9 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       filename=filename+s_idx;
       filenameVTS = filename;
       filename=filename+".h5";
+      primOld->dump("primitives",filename);
 
       filenameVTS=filenameVTS+".vts";
-      primOld->dump("primitives",filename);
       std::string varNames[vars::dof];
       varNames[vars::RHO] = "rho";
       varNames[vars::U]   = "u";
@@ -719,6 +724,35 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       }
       primOld->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
     }
+}
+
+int timeStepper::CheckWallClockTermination()
+{
+  TimeStamp tStep;
+  double ElapsedTime = tStep-TimeWhenExecutableStarted();
+  int StopRunning = (ElapsedTime>=params::MaxWallTime ? 1 : 0);
+  // Need communication to make sure that all processes agree on the measured time!
+  MPI_Bcast(&StopRunning,1,MPI_INT,0,PETSC_COMM_WORLD);
+  if(StopRunning)
+    {
+      long long int WriteIdx = floor(time*100);
+      std::string filename = "restartVarsT";
+      std::string s_idx = std::to_string(WriteIdx);
+      for(int i=0;i<8-s_idx.size();i++)
+	{
+	  filename=filename+"0";
+	}
+      filename=filename+s_idx;
+      filename=filename+".h5";
+      primOld->dump("primitives",filename);
+      std::ofstream fName(params::restartFileName.c_str());
+      fName<<filename<<std::endl;
+      fName.close();
+      std::ofstream fTime(params::restartFileTime.c_str());
+      fTime<<time<<std::endl;
+      fTime.close();
+    }
+  return StopRunning;
 }
 
 void dampedOutflowBC(grid& primBC, 

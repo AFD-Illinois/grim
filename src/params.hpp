@@ -95,6 +95,9 @@ namespace params
 
   extern int restart;
   extern std::string restartFile;
+  extern std::string restartFileName;
+  extern std::string restartFileTime;
+  extern double MaxWallTime;
 
   extern double X1Start, X1End;
   extern double X2Start, X2End;
