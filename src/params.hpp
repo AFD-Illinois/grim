@@ -166,12 +166,14 @@ namespace params
   extern int ObserveEveryNSteps;
   extern int StepNumber;
 
+  /* Torus parameters */
   extern double InnerEdgeRadius ;
   extern double PressureMaxRadius;
   extern double MinPlasmaBeta;
   extern double MagneticLoops;
   extern double Adiabat;
   extern double InitialPerturbationAmplitude;
+  extern bool   UseMADdisk;
   extern double ObserveEveryDt;
   extern double WriteDataEveryDt;
 

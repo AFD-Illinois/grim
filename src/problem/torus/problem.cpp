@@ -373,8 +373,17 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     rhoAvg = rhoAvg/4.;
   }
   array zero = rhoAvg*0.;
-  array Avec =  af::max(rhoAvg-0.2,zero)
-              * af::cos(xCoords[directions::X2]*(params::MagneticLoops-1));
+  array Avec = zero;
+  if(params::UseMADdisk)
+    {
+      array Radius = xCoords[directions::X1];
+      Avec = af::max(zero,rhoAvg*rhoAvg*af::pow(Radius,4));
+    }
+  else
+    {
+      Avec = af::max(rhoAvg-0.2,zero)
+	* af::cos(xCoords[directions::X2]*(params::MagneticLoops-1));
+    }
   Avec.eval();
  
   // Compute magnetic field 
@@ -409,31 +418,86 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     elemOld->set(*primOld,*geomCenter,numReads,numWrites);
     const array& bSqr = elemOld->bSqr;
     const array& Pgas = elemOld->pressure;
-    array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
-    array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
-    BFactor = BetaMin_af.host<double>()[0];
-    BFactor = sqrt(BFactor/params::MinPlasmaBeta);
-
-    /* Use MPI to find minimum over all processors */
-    if (world_rank == 0) 
-    {
-      double temp; 
-      for(int i=1;i<world_size;i++)
+    
+    if(params::UseMADdisk)
       {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-        if(BFactor > temp)
-        {
-          BFactor = temp;
-        }
+	double PmagMax = af::max(af::max(af::mas(bSqr/2.,2),1),0);
+	/* Use MPI to find maximum over all processors */
+	if (world_rank == 0) 
+	  {
+	    double temp; 
+	    for(int i=1;i<world_size;i++)
+	      {
+		MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+		if(PmagMax < temp)
+		  {
+		    PmagMax = temp;
+		  }
+	      }
+	  }
+	else
+	  {
+	    MPI_Send(&PmagMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	  }
+     	double PgasMax = af::max(af::max(af::mas(Pgas,2),1),0);
+	/* Use MPI to find maximum over all processors */
+	if (world_rank == 0) 
+	  {
+	    double temp; 
+	    for(int i=1;i<world_size;i++)
+	      {
+		MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+		if(PgasMax < temp)
+		  {
+		    PgasMax = temp;
+		  }
+	      }
+	  }
+	else
+	  {
+	    MPI_Send(&PgasMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	  }
+
+	/* Now proc 0 has the data to compute 
+	   PgasMax / PmagMax */
+	if (world_rank == 0)
+	  {
+	    double betaDisk = PgasMax / PmagMax;
+	    BFactor = sqrt(betaDisk/params::MinPlasmaBeta);
+	  }
+	/* Send results to other procs */
+	MPI_Barrier(PETSC_COMM_WORLD);
+	MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+	MPI_Barrier(PETSC_COMM_WORLD);
       }
-    }
     else
-    {
-      MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-    }
-    MPI_Barrier(PETSC_COMM_WORLD);
-    MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
-    MPI_Barrier(PETSC_COMM_WORLD);
+      {
+	array PlasmaBeta = 2.*(Pgas+1.e-13)/(bSqr+1.e-18);
+	array BetaMin_af = af::min(af::min(af::min(PlasmaBeta,2),1),0);
+	BFactor = BetaMin_af.host<double>()[0];
+	BFactor = sqrt(BFactor/params::MinPlasmaBeta);
+	
+	/* Use MPI to find minimum over all processors */
+	if (world_rank == 0) 
+	  {
+	    double temp; 
+	    for(int i=1;i<world_size;i++)
+	      {
+		MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+		if(BFactor > temp)
+		  {
+		    BFactor = temp;
+		  }
+	      }
+	  }
+	else
+	  {
+	    MPI_Send(&BFactor, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+	  }
+	MPI_Barrier(PETSC_COMM_WORLD);
+	MPI_Bcast(&BFactor,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+	MPI_Barrier(PETSC_COMM_WORLD);
+      }
     
     primOld->vars[vars::B1] *= BFactor;
     primOld->vars[vars::B2] *= BFactor;
@@ -650,16 +714,34 @@ void timeStepper::halfStepDiagnostics(int &numReads,int &numWrites)
 
 void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
 {
+  af::seq domainX1 = *primOld->domainX1;
+  af::seq domainX2 = *primOld->domainX2;
+  af::seq domainX3 = *primOld->domainX3;
+
+  // Check for Nan's
+  array conditionNan = elemOld->zero;
+  for(int var=0;var<vars::dof;var++)
+    {
+      conditionNan = conditionNan+af::isNaN(primOld->vars[var]);
+    }
+  double NaNnorm = af::norm(af::flat(conditionNan(domainX1,domainX2,domainX3)),
+			    AF_NORM_VECTOR_1);
+  if(NaNnorm>0)
+    {
+      std::cout<<"Found "<<NaNnorm<<" NaN's in data! Bad points will be set to atmopshere."<<std::endl;
+      array NaNIdx = where(conditionNan>0.);
+      for(int var=0;var<vars::dof;var++)
+	{
+	  primOld->vars[var](NaNIdx)=0.;
+	}
+    }
+
   applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
 
   int world_rank;
   MPI_Comm_rank(PETSC_COMM_WORLD, &world_rank);
   int world_size;
   MPI_Comm_size(PETSC_COMM_WORLD, &world_size);
-
-  af::seq domainX1 = *primOld->domainX1;
-  af::seq domainX2 = *primOld->domainX2;
-  af::seq domainX3 = *primOld->domainX3;
   
   // On-the-fly observers
   bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
