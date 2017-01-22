@@ -154,7 +154,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                  jacobianAssemblyTime,
                                  jacobianAssemblyTime/halfStepTime * 100
              );
-  PetscPrintf(PETSC_COMM_WORLD, "     |- CPU linear solver: %g secs, %g %\n",
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Linear solver    : %g secs, %g %\n",
                                  linearSolverTime, 
                                  linearSolverTime/halfStepTime * 100
              );
@@ -301,7 +301,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
                                  jacobianAssemblyTime,
                                  jacobianAssemblyTime/fullStepTime * 100
              );
-  PetscPrintf(PETSC_COMM_WORLD, "     |- CPU linear solver: %g secs, %g %\n",
+  PetscPrintf(PETSC_COMM_WORLD, "     |- Linear solver    : %g secs, %g %\n",
                                  linearSolverTime, 
                                  linearSolverTime/fullStepTime * 100
              );

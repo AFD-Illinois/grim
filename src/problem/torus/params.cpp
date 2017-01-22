@@ -114,6 +114,9 @@ namespace params
   double nonlinearsolve_atol = 1.e-3;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
+
+  // Linear solver options
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
   
 };
 

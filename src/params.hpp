@@ -73,6 +73,14 @@ namespace riemannSolvers
   };
 };
 
+namespace linearSolvers
+{
+  enum
+  {
+    GPU_BATCH_SOLVER, CPU_BATCH_SOLVER
+  };
+};
+
 namespace params
 {
   extern int numDevices;
@@ -139,6 +147,7 @@ namespace params
   extern double nonlinearsolve_atol;
   extern double JacobianAssembleEpsilon;
   extern double linesearchfloor;
+  extern int    linearSolver;
 
   //Atmosphere parameters
   extern double MaxLorentzFactor;
