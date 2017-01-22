@@ -19,7 +19,7 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
+set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
 # 
@@ -57,7 +57,7 @@ set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 # CPU
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 # GPU
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_new/arrayfire/build/package")
+set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
 
 # Configuration for Deathstar
 #set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
