@@ -5,7 +5,7 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 4096;
+  int N1 = 512;
   int N2 = 1;
   int N3 = 1;
 
@@ -22,6 +22,8 @@ namespace params
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
+  std::string restartFileName = "restartFileName.txt";
+  std::string restartFileTime = "restartFileTime.txt";
 
   double X1Start = -.5, X1End = 1.5;
   double X2Start = 0., X2End = 1.;
@@ -63,6 +65,9 @@ namespace params
   double nonlinearsolve_atol = 1.e-20;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
+
+  // Linear solver options
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
 
   //Unused params - do we need to define them?
   double hSlope = 0.3;

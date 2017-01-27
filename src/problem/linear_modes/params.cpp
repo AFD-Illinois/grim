@@ -5,8 +5,8 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 64;
-  int N2 = 64;
+  int N1 = 32;
+  int N2 = 32;
   int N3 = 1;
 
   int dim = 2;
@@ -17,10 +17,12 @@ namespace params
   double maxDtIncrement = 1.3;
   double Time = 0.;
   double CourantFactor = 0.9;
-  double finalTime = 0.5;
+  double finalTime = 2.;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
+  std::string restartFileName = "restartFileName.txt";
+  std::string restartFileTime = "restartFileTime.txt";
 
   double X1Start = 0., X1End = 1.;
   double X2Start = 0., X2End = 1.;
@@ -42,8 +44,8 @@ namespace params
 
   int conduction = 1;
   int viscosity  = 1;
-  int highOrderTermsConduction = 0;
-  int highOrderTermsViscosity = 0;
+  int highOrderTermsConduction = 1;
+  int highOrderTermsViscosity = 1;
   double ConductionAlpha = 1.;
   double ViscosityAlpha = 1.;
 
@@ -65,6 +67,9 @@ namespace params
   double nonlinearsolve_atol = 1.e-20;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
+  
+  // Linear solver options
+  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
 
   //Unused params - do we need to define them?
   double hSlope = 0.3;

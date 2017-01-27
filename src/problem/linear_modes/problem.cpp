@@ -79,6 +79,30 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   primOld->vars[vars::DP]  += params::Aw*cphi*0.2909106062057657
                     -params::Aw*sphi*0.02159452055336572;
 
+  array pressure    = (params::adiabaticIndex - 1.)*primOld->vars[vars::U];
+  array temperature = pressure/primOld->vars[vars::RHO];
+  array soundSpeed  = af::sqrt(params::adiabaticIndex*pressure
+                               / (primOld->vars[vars::RHO]
+                                  + params::adiabaticIndex * primOld->vars[vars::U]
+                                 )
+                              );
+
+  if (params::highOrderTermsConduction)
+  {
+    primOld->vars[vars::Q] = 
+      primOld->vars[vars::Q] / temperature
+    / af::sqrt(primOld->vars[vars::RHO] * params::ConductionAlpha * soundSpeed * soundSpeed);
+  }
+
+  if (params::highOrderTermsViscosity)
+  {
+    primOld->vars[vars::DP] = 
+      primOld->vars[vars::DP]
+    / af::sqrt(  temperature * primOld->vars[vars::RHO] * params::ViscosityAlpha
+               * soundSpeed * soundSpeed
+              );
+  }
+
   for (int var=0; var < numVars; var++)
   {
     primOld->vars[var].eval();
@@ -155,15 +179,17 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
                             - params::Aw*sphi*0.016758537530754618
                            ) * exp(params::Gamma*time);
   
-  double errorRho = af::norm(af::flat(primOld->vars[vars::RHO] - rhoAnalytic));
-  double errorU   = af::norm(af::flat(primOld->vars[vars::U]   - uAnalytic));
-  double errorU1  = af::norm(af::flat(primOld->vars[vars::U1]  - u1Analytic));
-  double errorU2  = af::norm(af::flat(primOld->vars[vars::U2]  - u2Analytic));
-  double errorQ   = af::norm(af::flat(primOld->vars[vars::Q]   - qAnalytic));
-  double errordP  = af::norm(af::flat(primOld->vars[vars::DP]  - dPAnalytic));
+  elemOld->set(*primOld, *geomCenter, numReads, numWrites);
 
-  double errorB1  = af::norm(af::flat(primOld->vars[vars::B1] - B1Analytic));
-  double errorB2  = af::norm(af::flat(primOld->vars[vars::B2] - B2Analytic));
+  double errorRho = af::norm(af::flat(elemOld->rho     - rhoAnalytic));
+  double errorU   = af::norm(af::flat(elemOld->u       - uAnalytic));
+  double errorU1  = af::norm(af::flat(elemOld->u1      - u1Analytic));
+  double errorU2  = af::norm(af::flat(elemOld->u2      - u2Analytic));
+  double errorB1  = af::norm(af::flat(elemOld->B1      - B1Analytic));
+  double errorB2  = af::norm(af::flat(elemOld->B2      - B2Analytic));
+  double errorQ   = af::norm(af::flat(elemOld->q       - qAnalytic));
+  double errordP  = af::norm(af::flat(elemOld->deltaP  - dPAnalytic));
+
   
   errorRho = errorRho/N1/N2/N3;
   errorU   = errorU/N1/N2/N3;
@@ -192,6 +218,12 @@ void timeStepper::setProblemSpecificBCs(int &numReads,int &numWrites)
 }
 
 void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
+{
+
+}
+
+
+int timeStepper::CheckWallClockTermination()
 {
 
 }
