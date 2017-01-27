@@ -51,19 +51,19 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
 
 # Configuration for Stampede
-set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
-set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+#set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
+#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 # CPU
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 # GPU
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
+#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
 
 # Configuration for Deathstar
-#set(PETSC_DIR "/home/mani/Downloads/petsc_3.6.3_installation")
+set(PETSC_DIR "/home/mani/Downloads/petsc_3.7.5_installation")
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_icc/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
+set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
@@ -83,7 +83,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "shock_tests")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
