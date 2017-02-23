@@ -421,7 +421,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     
     if(params::UseMADdisk)
       {
-	double PmagMax = af::max(af::max(af::mas(bSqr/2.,2),1),0);
+	array PmagMax_af = af::max(af::max(af::max(bSqr/2.,2),1),0);
+	double PmagMax = PmagMax_af.host<double>()[0];
 	/* Use MPI to find maximum over all processors */
 	if (world_rank == 0) 
 	  {
@@ -439,7 +440,8 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 	  {
 	    MPI_Send(&PmagMax, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
 	  }
-     	double PgasMax = af::max(af::max(af::mas(Pgas,2),1),0);
+     	array PgasMax_af = af::max(af::max(af::max(Pgas,2),1),0);
+	double PgasMax = PgasMax_af.host<double>()[0];
 	/* Use MPI to find maximum over all processors */
 	if (world_rank == 0) 
 	  {

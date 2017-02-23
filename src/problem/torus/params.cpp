@@ -7,9 +7,9 @@ namespace params
 
   // Grid size options
   int N1 = 256;
-  int N2 = 256;
-  int N3 = 128;
-  int N3Full = 128;
+  int N2 = 128;
+  int N3 = 64;
+  int N3Full = 64;
   int dim = 3;
   int numGhost = 3;
  
@@ -31,25 +31,25 @@ namespace params
   // Timestepper opts
   int timeStepper = timeStepping::EXPLICIT;
   double CourantFactor = 0.9;
-  double finalTime = 6000.;
+  double finalTime = 20000.;
   int metric = metrics::MODIFIED_KERR_SCHILD;
 
   // Initial conditions
-  bool   UseMADdisk = false;
+  bool   UseMADdisk = true;
   double adiabaticIndex = 5./3;
-  double blackHoleSpin = 0.9375;
-  double InnerEdgeRadius = 6.;
-  double PressureMaxRadius = 12.;
+  double blackHoleSpin = 0.5;
+  double InnerEdgeRadius = 15.;
+  double PressureMaxRadius = 32.;
   /* MinPlasmaBeta is min(Pgas/Pmag) for SANE
      disks, but max(Pgas)/max(Pmag) for MAD! */
-  double MinPlasmaBeta  = 15.;
+  double MinPlasmaBeta  = 100.;
   double MagneticLoops = 1;
   double Adiabat = 0.001;
   double InitialPerturbationAmplitude = 4.e-2;
 
   // Grid size options
   double Rin = 0.85*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 55.;
+  double Rout = 3000.;
 
   // EMHD model
   int conduction = 1;
@@ -85,7 +85,7 @@ namespace params
   double hSlope = 0.3;
   int DerefineThetaHorizon = 1;
   int DoCylindrify = 1;
-  double X1cyl = log(8.*Rin);
+  double X1cyl = log(4.*Rin);
   double X2cyl = 1./N2;
 
   // Boundary Conditions
