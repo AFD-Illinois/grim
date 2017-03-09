@@ -82,8 +82,9 @@ void timeStepper::solve(grid &primGuess)
       array smallPrim = af::abs(primGuess.vars[row])<.5*epsilon;
 
       primGuessPlusEps->vars[row]  = 
-          (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
-	      + smallPrim*epsilon; 
+	  primGuess.vars[row]
+	+ epsilon*primGuess.vars[row]*(1.-smallPrim)
+	+ smallPrim*epsilon; 
 
       computeResidual(*primGuessPlusEps, *residualPlusEps,
                       numReadsResidual, numWritesResidual
