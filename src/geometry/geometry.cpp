@@ -237,9 +237,13 @@ void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
        - gCov[0][1]*gCov[1][0]*gCov[2][2]  
        - gCov[0][2]*gCov[1][1]*gCov[2][0])/gDet;
 
-  for(int d=0;d<4;d++)
-    for(int dd=0;dd<4;dd++)
-      gCon[d][dd].eval();
+  for(int mu=0; mu < NDIM; mu++)
+  {
+	  for(int nu=0; nu < NDIM; nu++)
+    {
+	    gCon[mu][nu].eval();
+    }
+  }
 
 }
 
@@ -282,45 +286,58 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       /* theta = pi*X2 + 0.5*(1 - H_SLOPE)*sin(2*pi*X2) 
 	  -         => dtheta/dX2 = pi + pi*(1 - H_SLOPE)*cos(2*pi*X2) */
       array dtheta_dX2 =  M_PI 
-	+ M_PI*(1 - hSlope)
-	*af::cos(2*M_PI*XCoords[directions::X2]);
+                        + M_PI*(1 - hSlope) * af::cos(2*M_PI*XCoords[directions::X2]);
       array dtheta_dX1 = zero;
       
       if(params::DoCylindrify)
-	{
-	  array XCoordsPlusEps[3];
-	  array xCoordsPlusEps[3];
-	  array XCoordsMinusEps[3];
-	  array xCoordsMinusEps[3];
+	    {
+	      array XCoordsPlusEps[3];
+	      array xCoordsPlusEps[3];
+	      array XCoordsMinusEps[3];
+	      array xCoordsMinusEps[3];
 	  
-	  for(int d=0;d<3;d++)
-	    {
-	      XCoordsPlusEps[d] = XCoords[d];
-	      xCoordsPlusEps[d] = xCoords[d];
-	      XCoordsMinusEps[d] = XCoords[d];
-	      xCoordsMinusEps[d] = xCoords[d];
-	    }
-	  XCoordsPlusEps[directions::X1]+=GAMMA_EPS;
-	  XCoordsMinusEps[directions::X1]-=GAMMA_EPS;
-	  XCoordsToxCoords(XCoordsPlusEps,xCoordsPlusEps);      
-	  XCoordsToxCoords(XCoordsMinusEps,xCoordsMinusEps);      
-	  dr_dX1 = (xCoordsPlusEps[directions::X1]-xCoordsMinusEps[directions::X1])/(2.*GAMMA_EPS);
-	  dtheta_dX1 = (xCoordsPlusEps[directions::X2]-xCoordsMinusEps[directions::X2])/(2.*GAMMA_EPS);
+	      for(int d=0;d<3;d++)
+	      {
+	        XCoordsPlusEps[d]  = XCoords[d];
+	        xCoordsPlusEps[d]  = xCoords[d];
+	        XCoordsMinusEps[d] = XCoords[d];
+	        xCoordsMinusEps[d] = xCoords[d];
+	      }
+	      XCoordsPlusEps[directions::X1]  += GAMMA_EPS;
+	      XCoordsToxCoords(XCoordsPlusEps,  xCoordsPlusEps);      
 
-	  for(int d=0;d<3;d++)
-	    {
-	      XCoordsPlusEps[d] = XCoords[d];
-	      xCoordsPlusEps[d] = xCoords[d];
-	      XCoordsMinusEps[d] = XCoords[d];
-              xCoordsMinusEps[d] = xCoords[d];
+	      XCoordsMinusEps[directions::X1] -= GAMMA_EPS;
+	      XCoordsToxCoords(XCoordsMinusEps, xCoordsMinusEps);      
+	      
+        dr_dX1     = (  xCoordsPlusEps[directions::X1] 
+                      - xCoordsMinusEps[directions::X1]
+                     )/(2.*GAMMA_EPS);
+
+	      dtheta_dX1 = (  xCoordsPlusEps[directions::X2] 
+                      - xCoordsMinusEps[directions::X2]
+                     )/(2.*GAMMA_EPS);
+
+	      for(int d=0;d<3;d++)
+	      {
+	        XCoordsPlusEps[d]  = XCoords[d];
+	        xCoordsPlusEps[d]  = xCoords[d];
+	        XCoordsMinusEps[d] = XCoords[d];
+          xCoordsMinusEps[d] = xCoords[d];
+	      }
+	      XCoordsPlusEps[directions::X2]  += GAMMA_EPS;
+	      XCoordsToxCoords(XCoordsPlusEps, xCoordsPlusEps);
+
+	      XCoordsMinusEps[directions::X2] -= GAMMA_EPS;
+	      XCoordsToxCoords(XCoordsMinusEps, xCoordsMinusEps);
+	      
+        dr_dX2     = (  xCoordsPlusEps[directions::X1] 
+                      - xCoordsMinusEps[directions::X1]
+                     )/(2.*GAMMA_EPS);
+
+	      dtheta_dX2 = (  xCoordsPlusEps[directions::X2] 
+                      - xCoordsMinusEps[directions::X2]
+                     )/(2.*GAMMA_EPS);
 	    }
-	  XCoordsPlusEps[directions::X2]+=GAMMA_EPS;
-	  XCoordsMinusEps[directions::X2]-=GAMMA_EPS;
-	  XCoordsToxCoords(XCoordsPlusEps,xCoordsPlusEps);      
-	  XCoordsToxCoords(XCoordsMinusEps,xCoordsMinusEps);
-	  dr_dX2 = (xCoordsPlusEps[directions::X1]-xCoordsMinusEps[directions::X1])/(2.*GAMMA_EPS);
-	  dtheta_dX2 = (xCoordsPlusEps[directions::X2]-xCoordsMinusEps[directions::X2])/(2.*GAMMA_EPS);
-	}
 
       dr_dX1.eval();
       dtheta_dX1.eval();
@@ -346,12 +363,12 @@ void geometry::setgCovInXCoords(const array XCoords[3],
       gCov[1][0] = gCov[0][1];
 
       /* ( (1 + 2*r/sigma)*dr/dX1*dr/dX1 + sigma*dtheta_dX1*dtheta_dX1) dX1 dX1 */
-      gCov[1][1] = (1. + 2*r/sigma) * dr_dX1 * dr_dX1
-	+ (sigma) * dtheta_dX1 * dtheta_dX1;
+      gCov[1][1] = (1. + 2*r/sigma) * dr_dX1 * dr_dX1 
+                  + (sigma) * dtheta_dX1 * dtheta_dX1;
   
       /* 2*((1 + 2*r/sigma)*dr/dX1*dr/dX2 + sigma * dtheta_dX1 * dtheta_dX2) dX1 dX2 */
       gCov[1][2] = (1. + 2*r/sigma) * dr_dX1 * dr_dX2
-	+ (sigma) * dtheta_dX1 * dtheta_dX2;
+	                + (sigma) * dtheta_dX1 * dtheta_dX2;
 
       /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX1) dX1 dphi */
       gCov[1][3] =
@@ -365,11 +382,11 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
       /* (sigma*dtheta/dX2*dtheta/dX2 + (1 + 2*r/sigma)*dr/dX2*dr/dX2) dX2 dX2 */
       gCov[2][2] = sigma*dtheta_dX2*dtheta_dX2
-	+ (1. + 2*r/sigma) * dr_dX2 * dr_dX2;
+	                + (1. + 2*r/sigma) * dr_dX2 * dr_dX2;
 
       /* -(2*a*(1 + 2.*r/sigma)*sin(theta)^2*dr/dX2) dX2 dphi */
       gCov[2][3] = 
-	-blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX2;
+	      -blackHoleSpin*(1. + 2.*r/sigma)*af::pow(af::sin(theta), 2.)*dr_dX2;
 
       /* -(4*a*r*sin(theta)^2/sigma) dphi dt */
       gCov[3][0] = gCov[0][3];
@@ -387,16 +404,19 @@ void geometry::setgCovInXCoords(const array XCoords[3],
                       )
                    );
 
-      for(int d=0;d<4;d++)
-	for(int dd=0;dd<4;dd++)
-	  gCov[d][dd].eval();
+      for(int mu=0; mu < NDIM; mu++)
+      {
+	      for(int nu=0; nu < NDIM; nu++)
+        {
+	        gCov[mu][nu].eval();
+        }
+      }
       
       break;
   }
 
 
 }
-
 
 void geometry::XCoordsToxCoords(const array XCoords[3], 
                                 array xCoords[3]
@@ -428,69 +448,81 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
       // close to the pole axis and the black hole are wide
       // cylinders instead of cones.
       if(params::DoCylindrify)
-	{
-
-	  array Xgrid[3];
-	  array xGam[3];
-	  for(int d=0;d<3;d++)
 	    {
-	      Xgrid[d]=XCoords[d];
-	      xGam[d]=xCoords[d];
-	    }
-	  // Transform lower hemisphere and ghost zones
-	  // to upper hemisphere, 0<theta<pi/2
-	  array IsMirrored = Xgrid[directions::X2]>0.5;
-	  Xgrid[directions::X2] = Xgrid[directions::X2]*(1-IsMirrored)
-	    + IsMirrored*(1.-Xgrid[directions::X2]);
-	  xGam[directions::X2] = xGam[directions::X2]*(1-IsMirrored)
-	    + IsMirrored* (M_PI-xGam[directions::X2]);
-	  array IsGhost = Xgrid[directions::X2]<0.;
-	  Xgrid[directions::X2] = Xgrid[directions::X2]*(1-IsGhost)
-            + IsGhost*(-(1.0)*Xgrid[directions::X2]);
-	  xGam[directions::X2] = xGam[directions::X2]*(1-IsGhost)
-            + IsGhost* (-(1.0)*xGam[directions::X2]);
 
-	  // We cylindrify the region with 
-	  // X1 < params::X1cyl
-	  // X2 < params::X2cyl
-	  array X0[3];
-	  for(int d=0;d<3;d++)
-	    X0[d] = Xgrid[d]*1.;
-	  X0[directions::X1] = params::X1cyl;
-	  X0[directions::X2] = params::X2cyl;
-	  X0[directions::X3]=0.;
-	  array R_cyl = GammieRadius(X0[directions::X1]);
-	  array Theta_cyl = ThetaNoCyl(X0[directions::X1],X0[directions::X2]);
-	  array X1_tr = af::log(0.5*(R_cyl+exp(params::X1Start)));
+	      array Xgrid[3];
+	      array xGam[3];
+	      for(int d=0;d<3;d++)
+	      {
+	        Xgrid[d]=XCoords[d];
+	        xGam[d]=xCoords[d];
+	      }
+	      // Transform lower hemisphere and ghost zones
+	      // to upper hemisphere, 0<theta<pi/2
+	      array IsMirrored = Xgrid[directions::X2]>0.5;
+
+	      Xgrid[directions::X2] =   (1-IsMirrored) * Xgrid[directions::X2]
+	                              + IsMirrored     * (1.-Xgrid[directions::X2]);
+
+	      xGam[directions::X2] =    (1-IsMirrored) * xGam[directions::X2]
+	                              + IsMirrored     * (M_PI-xGam[directions::X2]);
+
+        array IsGhost = Xgrid[directions::X2]<0.;
+
+	      Xgrid[directions::X2] = (1-IsGhost) * Xgrid[directions::X2]
+                                + IsGhost   * (-(1.0)*Xgrid[directions::X2]);
+
+	      xGam[directions::X2] = (1-IsGhost) * xGam[directions::X2]
+                                + IsGhost  * (-(1.0)*xGam[directions::X2]);
+
+	      // We cylindrify the region with 
+	      // X1 < params::X1cyl
+	      // X2 < params::X2cyl
+	      array X0[3];
+	      for(int d=0;d<3;d++)
+        {
+	        X0[d] = Xgrid[d]*1.;
+        }
+
+	      X0[directions::X1] = params::X1cyl;
+	      X0[directions::X2] = params::X2cyl;
+	      X0[directions::X3] = 0.;
+
+	      array R_cyl     = GammieRadius(X0[directions::X1]);
+	      array Theta_cyl = ThetaNoCyl(X0[directions::X1],X0[directions::X2]);
+	      array X1_tr     = af::log(0.5*(R_cyl+exp(params::X1Start)));
 	  
-	  array Xtr[3];
-	  array xcyl[3];
-	  for(int d=0;d<3;d++)
-	    {
-	      Xtr[d]=Xgrid[d];
-	      xcyl[d]=xGam[d];
-	    }
-	  Xtr[directions::X1]=X1_tr;
+	      array Xtr[3];
+	      array xcyl[3];
+	      for(int d=0;d<3;d++)
+	      {
+	        Xtr[d]  = Xgrid[d];
+	        xcyl[d] = xGam[d];
+	      }
+	      Xtr[directions::X1] = X1_tr;
 	  
-	  // Sasha's new theta
-	  array f1 = func1(X0,Xgrid);
-	  array f2 = func2(X0,Xgrid);
-	  array dftr = func2(X0,Xtr)-func1(X0,Xtr);
-	  array sinth = maxs(xGam[directions::X1]*f1, xGam[directions::X1]*f2, GammieRadius(Xtr[directions::X1])*af::abs(dftr)+1.e-20 ) / xGam[directions::X1]; 
-	  array th = af::asin(sinth);
-	  th.eval();
+	      // Sasha's new theta
+	      array f1    = func1(X0,Xgrid);
+	      array f2    = func2(X0,Xgrid);
+	      array dftr  = func2(X0,Xtr)-func1(X0,Xtr);
+	      array sinth = maxs(xGam[directions::X1]*f1, 
+                           xGam[directions::X1]*f2, 
+                           GammieRadius(Xtr[directions::X1])*af::abs(dftr)+1.e-20 
+                          ) / xGam[directions::X1]; 
+	      array th = af::asin(sinth);
+	      th.eval();
 
-	  // Move ghost zones and lower hemisphere points
-	  // back to their correct theta
-	  th = th*(1-IsGhost*2);
-	  xcyl[directions::X2] = IsMirrored*(M_PI-th)
-	    +(1-IsMirrored)*th;
-	  for(int d=0;d<3;d++)
-	    {
-	      xCoords[d]=xcyl[d];
-	      xCoords[d].eval();
-	    }
-	}
+	      // Move ghost zones and lower hemisphere points
+	      // back to their correct theta
+	      th                   = th*(1-IsGhost*2);
+	      xcyl[directions::X2] = IsMirrored*(M_PI-th) + (1-IsMirrored)*th;
+	      
+        for(int d=0;d<3;d++)
+	      {
+	        xCoords[d]=xcyl[d];
+	        xCoords[d].eval();
+	      }
+	    } /* End of params::DoCylindrify */
       
       break;
   }
@@ -516,33 +548,33 @@ void geometry::computeGammaDownDownDown(const int eta,
    * for +EPS and -EPS, we cut storage requirements by half.*/
 
   if(nu>0)
-    {
-      /* Handle +EPS first */
-      out += 0.5*gCovPlus[nu-1][eta][mu]/(2.*GAMMA_EPS); 
-      /* Now do -EPS */
-      out -= 0.5*gCovMinus[nu-1][eta][mu]/(2.*GAMMA_EPS);
-      /* End of d(g_eta_mu)/dX^nu */
-    }
+  {
+    /* Handle +EPS first */
+    out += 0.5*gCovPlus[nu-1][eta][mu]/(2.*GAMMA_EPS); 
+    /* Now do -EPS */
+    out -= 0.5*gCovMinus[nu-1][eta][mu]/(2.*GAMMA_EPS);
+    /* End of d(g_eta_mu)/dX^nu */
+  }
 
   /* Now, d(g_eta_nu)/dX^mu */
   if(mu>0)
-    {
-      /* +EPS first */
-      out += 0.5*gCovPlus[mu-1][eta][nu]/(2.*GAMMA_EPS);
-      /* Now do -EPS */
-      out -= 0.5*gCovMinus[mu-1][eta][nu]/(2.*GAMMA_EPS);
-      /* End of d(g_eta_nu)/dX^mu */
-    }
+  {
+    /* +EPS first */
+    out += 0.5*gCovPlus[mu-1][eta][nu]/(2.*GAMMA_EPS);
+    /* Now do -EPS */
+    out -= 0.5*gCovMinus[mu-1][eta][nu]/(2.*GAMMA_EPS);
+    /* End of d(g_eta_nu)/dX^mu */
+  }
 
   /* Finally, d(g_mu_nu)/dX^eta */
   if(eta>0)
-    {
-      /* +EPS first */
-      out -= 0.5*gCovPlus[eta-1][mu][nu]/(2.*GAMMA_EPS);
-      /* Now do -EPS */
-      out += 0.5*gCovMinus[eta-1][mu][nu]/(2.*GAMMA_EPS);
-      /* End of d(g_mu_nu)/dX^eta */
-    }
+  {
+    /* +EPS first */
+    out -= 0.5*gCovPlus[eta-1][mu][nu]/(2.*GAMMA_EPS);
+    /* Now do -EPS */
+    out += 0.5*gCovMinus[eta-1][mu][nu]/(2.*GAMMA_EPS);
+    /* End of d(g_mu_nu)/dX^eta */
+  }
 
   out.eval();
 }
