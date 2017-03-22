@@ -35,6 +35,8 @@ class geometry
     array g;
     array gCov[NDIM][NDIM];
     array gCon[NDIM][NDIM];
+    array dxdX[NDIM][NDIM];
+    array dXdx[NDIM][NDIM];
 
     array gammaUpDownDown[NDIM][NDIM][NDIM];
 
@@ -46,6 +48,8 @@ class geometry
     ~geometry();
 
     void computeConnectionCoeffs();
+    void computeTransformationMatrices();
+    void conXTox(const array conX[NDIM], array conx[NDIM]);
     void getXCoords(array tXCoords[3]) const
     {
       for(int d=0;d<3;d++) tXCoords[d]=XCoords[d];

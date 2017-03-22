@@ -26,6 +26,7 @@ class timeStepper
   grid *primIC;
   grid *residual;
   grid *residualPlusEps;
+  grid *dump;
 
   array residualSoA;
   array jacobianSoA;

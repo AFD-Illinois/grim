@@ -13,31 +13,32 @@ void fluidElement::setFluidElementParameters()
   tau = DynamicalTimescale;
 
   if(params::conduction)
-    {
-      array Qmax = params::ConductionClosureFactor*rho*pow(soundSpeed,3.);
-      double lambda = 0.01;
-      array yCon = af::abs(q)/Qmax;
-      yCon = af::exp(-(yCon-1.)/lambda);
-      yCon.eval();
-      array fdCon = yCon/(yCon+1.)+1.e-5;
-      tau=af::min(tau,DynamicalTimescale*fdCon);
-    }
+  {
+    array Qmax = params::ConductionClosureFactor*rho*pow(soundSpeed,3.);
+    double lambda = 0.01;
+    array yCon = af::abs(q)/Qmax;
+    yCon = af::exp(-(yCon-1.)/lambda);
+    yCon.eval();
+    array fdCon = yCon/(yCon+1.)+1.e-5;
+    tau=af::min(tau,DynamicalTimescale*fdCon);
+  }
   if(params::viscosity)
-    {
-      array dPmod = af::max(pressure-2./3.*deltaP,params::bSqrFloorInFluidElement)/af::max(pressure+1./3.*deltaP,params::bSqrFloorInFluidElement);
-      array dPmaxPlus = af::min(params::ViscosityClosureFactor*bSqr*0.5*dPmod,1.49*pressure/1.07);
-      array dPmaxMinus = af::max(-params::ViscosityClosureFactor*bSqr,-2.99*pressure/1.07);
+  {
+    array dPmod =  af::max(pressure-2./3.*deltaP,params::bSqrFloorInFluidElement)
+                 / af::max(pressure+1./3.*deltaP,params::bSqrFloorInFluidElement);
+    array dPmaxPlus  = af::min(params::ViscosityClosureFactor*bSqr*0.5*dPmod,1.49*pressure/1.07);
+    array dPmaxMinus = af::max(-params::ViscosityClosureFactor*bSqr,-2.99*pressure/1.07);
 
-      array condition = deltaP>0.;
-      array dPmax = condition*dPmaxPlus + (1.-condition)*dPmaxMinus;
+    array condition = deltaP>0.;
+    array dPmax = condition*dPmaxPlus + (1.-condition)*dPmaxMinus;
 
-      double lambda = 0.01;
-      array yVis = af::abs(deltaP)/(af::abs(dPmax)+params::bSqrFloorInFluidElement);
-      yVis = af::exp(-(yVis-1.)/lambda);
-      yVis.eval();
-      array fdVis = yVis/(yVis+1.)+1.e-5;
-      tau=af::min(tau,DynamicalTimescale*fdVis);
-    }
+    double lambda = 0.01;
+    array yVis = af::abs(deltaP)/(af::abs(dPmax)+params::bSqrFloorInFluidElement);
+    yVis = af::exp(-(yVis-1.)/lambda);
+    yVis.eval();
+    array fdVis = yVis/(yVis+1.)+1.e-5;
+    tau=af::min(tau,DynamicalTimescale*fdVis);
+  }
   tau.eval();
   
   // maxAlpha is an upper bound on the value of ConductionAlpha,ViscosityAlpha
@@ -723,20 +724,23 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   // Check for Nan's
   array conditionNan = elemOld->zero;
   for(int var=0;var<vars::dof;var++)
-    {
-      conditionNan = conditionNan+af::isNaN(primOld->vars[var]);
-    }
+  {
+    conditionNan = conditionNan+af::isNaN(primOld->vars[var]);
+  }
   double NaNnorm = af::norm(af::flat(conditionNan(domainX1,domainX2,domainX3)),
-			    AF_NORM_VECTOR_1);
+			                      AF_NORM_VECTOR_1
+                           );
   if(NaNnorm>0)
-    {
-      std::cout<<"Found "<<NaNnorm<<" NaN's in data! Bad points will be set to atmopshere."<<std::endl;
-      array NaNIdx = where(conditionNan>0.);
-      for(int var=0;var<vars::dof;var++)
-	{
-	  primOld->vars[var](NaNIdx)=0.;
-	}
-    }
+  {
+    std::cout << "Found " << NaNnorm 
+              << " NaN's in data! Bad points will be set to atmopshere." 
+              << std::endl;
+    array NaNIdx = where(conditionNan>0.);
+    for(int var=0;var<vars::dof;var++)
+	  {
+	    primOld->vars[var](NaNIdx)=0.;
+	  }
+  }
 
   applyFloor(primOld,elemOld,geomCenter,numReads,numWrites);
 
@@ -749,65 +753,106 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
   bool ObserveData = (floor(time/params::ObserveEveryDt) != floor((time-dt)/params::ObserveEveryDt));
   bool WriteData   = (floor(time/params::WriteDataEveryDt) != floor((time-dt)/params::WriteDataEveryDt));
   if(ObserveData)
-    {
-      TimeStamp tStep;
-      double ElapsedTime = tStep-TimeWhenExecutableStarted();
-      PetscPrintf(PETSC_COMM_WORLD, "\n Elapsed Time = %e seconds \n", ElapsedTime);
-      PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
-      ComputeMinMaxVariables(elemOld,primOld,geomCenter);
-      double volElem = XCoords->dX1;
-      if(params::dim>1)
-	volElem*=XCoords->dX2;
-      if(params::dim>2)
-	volElem*=XCoords->dX3;
-      ComputeEnergyIntegrals(elemOld,primOld,geomCenter,volElem);
-      ComputeBoundaryFluxes(elemOld,primOld,geomCenter,volElem);
-    }
-  if(WriteData)
-    {
-      long long int WriteIdx = floor(time/params::WriteDataEveryDt);
-      if(WriteIdx==0)
-      {
-        PetscPrintf(PETSC_COMM_WORLD, "\n");
-        PetscPrintf(PETSC_COMM_WORLD, "  Printing metric at zone CENTER...");
-        geomCenter->gCovGrid->dump("gCov","gCov.h5");
-        geomCenter->gConGrid->dump("gCon","gCon.h5");
-        geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
-        geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
-        PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
-      }
-      std::string filename = "primVarsT";
-      std::string filenameVTS = "primVarsT";
-      std::string s_idx = std::to_string(WriteIdx);
-      for(int i=0;i<6-s_idx.size();i++)
-      {
-        filename=filename+"0";
-      }
-      filename=filename+s_idx;
-      filenameVTS = filename;
-      filename=filename+".h5";
-      primOld->dump("primitives",filename);
+  {
+    TimeStamp tStep;
+    double ElapsedTime = tStep-TimeWhenExecutableStarted();
+    PetscPrintf(PETSC_COMM_WORLD, "\n Elapsed Time = %e seconds \n", ElapsedTime);
+    PetscPrintf(PETSC_COMM_WORLD,"Global quantities at t = %e\n",time);
 
-      filenameVTS=filenameVTS+".vts";
-      std::string varNames[vars::dof];
-      varNames[vars::RHO] = "rho";
-      varNames[vars::U]   = "u";
-      varNames[vars::U1]  = "u1";
-      varNames[vars::U2]  = "u2";
-      varNames[vars::U3]  = "u3";
-      varNames[vars::B1]  = "B1";
-      varNames[vars::B2]  = "B2";
-      varNames[vars::B3]  = "B3";
-      if (params::conduction)
-      {
-        varNames[vars::Q]   = "q";
-      }
-      if (params::viscosity)
-      {
-        varNames[vars::DP]  = "dP";
-      }
-      primOld->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
+    ComputeMinMaxVariables(elemOld,primOld,geomCenter);
+
+    double volElem = XCoords->dX1;
+    if(params::dim>1) 
+    {
+      volElem*=XCoords->dX2;
     }
+    
+    if(params::dim>2)
+    {
+	    volElem*=XCoords->dX3;
+    }
+      
+    ComputeEnergyIntegrals(elemOld,primOld,geomCenter,volElem);
+    ComputeBoundaryFluxes(elemOld,primOld,geomCenter,volElem);
+  }
+
+  if(WriteData)
+  {
+    long long int WriteIdx = floor(time/params::WriteDataEveryDt);
+    if(WriteIdx==0)
+    {
+      PetscPrintf(PETSC_COMM_WORLD, "\n");
+      PetscPrintf(PETSC_COMM_WORLD, "  Printing metric at zone CENTER...");
+      geomCenter->gCovGrid->dump("gCov","gCov.h5");
+      geomCenter->gConGrid->dump("gCon","gCon.h5");
+      geomCenter->gGrid->dump("sqrtDetg","sqrtDetg.h5");
+      geomCenter->xCoordsGrid->dump("xCoords","xCoords.h5");
+      PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
+    }
+      
+    std::string filename = "primVarsT";
+    std::string filenameVTS = "primVarsT";
+    std::string s_idx = std::to_string(WriteIdx);
+      
+    for(int i=0;i<6-s_idx.size();i++)
+    {
+      filename=filename+"0";
+    }
+    filename=filename+s_idx;
+    filenameVTS = filename;
+    filename=filename+".h5";
+    primOld->dump("primitives",filename);
+
+    filenameVTS=filenameVTS+".vts";
+    std::string varNames[dumpVars::dof];
+    varNames[dumpVars::RHO] = "rho";
+    varNames[dumpVars::U]   = "u";
+    varNames[dumpVars::U1]  = "u1";
+    varNames[dumpVars::U2]  = "u2";
+    varNames[dumpVars::U3]  = "u3";
+    varNames[dumpVars::B1]  = "B1";
+    varNames[dumpVars::B2]  = "B2";
+    varNames[dumpVars::B3]  = "B3";
+    if (params::conduction)
+    {
+      varNames[dumpVars::Q]   = "q";
+    }
+    if (params::viscosity)
+    {
+      varNames[dumpVars::DP]  = "dP";
+    }
+    
+    dump->vars[dumpVars::RHO] = elemOld->rho;
+    dump->vars[dumpVars::U]   = elemOld->u;
+
+    array uConxCoords[NDIM];
+    array bConxCoords[NDIM];
+    geomCenter->conXTox(elemOld->uCon, uConxCoords);
+    geomCenter->conXTox(elemOld->bCon, bConxCoords);
+    
+    /* 3-velocity v^i = u^i/u^t */
+
+    dump->vars[dumpVars::U1] = uConxCoords[1]/uConxCoords[0];
+    dump->vars[dumpVars::U2] = uConxCoords[2]/uConxCoords[0];
+    dump->vars[dumpVars::U3] = uConxCoords[3]/uConxCoords[0];
+
+    /* Magnetic field 3-vector B^i = *(F)^{it} = b^i u^t - b^t u^i */
+
+    dump->vars[dumpVars::B1] =   bConxCoords[1] * uConxCoords[0]
+                               - bConxCoords[0] * uConxCoords[1];
+
+    dump->vars[dumpVars::B2] =   bConxCoords[2] * uConxCoords[0]
+                               - bConxCoords[0] * uConxCoords[2];
+
+    dump->vars[dumpVars::B3] =   bConxCoords[3] * uConxCoords[0]
+                               - bConxCoords[0] * uConxCoords[3];
+
+    dump->vars[dumpVars::Q]    = elemOld->q; 
+    dump->vars[dumpVars::DP]   = elemOld->deltaP; 
+    dump->vars[dumpVars::BSQR] = elemOld->bSqr;
+
+    dump->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
+  }
 }
 
 int timeStepper::CheckWallClockTermination()

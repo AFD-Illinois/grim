@@ -35,11 +35,14 @@ geometry::geometry(const int metric,
     {
       gCov[mu][nu] = zero;
       gCon[mu][nu] = zero;
+      dxdX[mu][nu] = zero;
+      dXdx[mu][nu] = zero;
     }
   }
   
   setgCovInXCoords(XCoords, gCov);
   setgDetAndgConFromgCov(gCov, gDet, gCon);
+  computeTransformationMatrices();
 
   g = af::sqrt(-gDet);
   alpha = 1./af::sqrt(-gCon[0][0]);
@@ -64,17 +67,17 @@ void geometry::computeConnectionCoeffs()
     array XCoordsPlus[NDIM-1];
     array XCoordsMinus[NDIM-1];
     for (int d = 0; d<NDIM-1; d++)
-      {
-	for(int dd=0;dd<NDIM-1;dd++)
-	  {
-	    XCoordsPlus[dd] = this->XCoords[dd];
-	    XCoordsMinus[dd] = this->XCoords[dd];
-	  }
-	XCoordsPlus[d]+=GAMMA_EPS;
-	XCoordsMinus[d]-=GAMMA_EPS;
-	setgCovInXCoords(XCoordsPlus,gCovPlus[d]);
-	setgCovInXCoords(XCoordsMinus,gCovMinus[d]);
-      }
+    {
+	    for(int dd=0;dd<NDIM-1;dd++)
+	    {
+	      XCoordsPlus[dd]  = XCoords[dd];
+	      XCoordsMinus[dd] = XCoords[dd];
+	    }
+	    XCoordsPlus[d]+=GAMMA_EPS;
+	    XCoordsMinus[d]-=GAMMA_EPS;
+	    setgCovInXCoords(XCoordsPlus,gCovPlus[d]);
+	    setgCovInXCoords(XCoordsMinus,gCovMinus[d]);
+    }
   }
 
   for (int mu=0; mu<NDIM; mu++)
@@ -418,6 +421,61 @@ void geometry::setgCovInXCoords(const array XCoords[3],
 
 }
 
+void geometry::conXTox(const array conX[NDIM],
+                       array conx[NDIM]
+                      )
+{
+  for (int mu=0; mu < NDIM; mu++)
+  {
+    conx[mu] = zero;
+    for (int NU=0; NU < NDIM; NU++)
+    {
+      conx[mu] += dxdX[mu][NU] * conX[NU];
+    }
+  }
+  af::eval(conx[0], conx[1], conx[2], conx[3]);
+}
+
+void geometry::computeTransformationMatrices()
+{
+  array XCoordsPlusEps[NDIM-1];
+	array xCoordsPlusEps[NDIM-1];
+	array XCoordsMinusEps[NDIM-1];
+	array xCoordsMinusEps[NDIM-1];
+	  
+  /* We don't deal with transformations involving (mu, nu)=0. Therefore, set to
+   * identity */
+  dxdX[0][0] = 1.;
+
+  for (int i=0; i < NDIM-1; i++)
+  {
+    for (int j=0; j < NDIM-1; j++)
+    {
+	    for(int d=0; d < NDIM-1; d++)
+	    {
+	      XCoordsPlusEps[d]  = XCoords[d];
+	      xCoordsPlusEps[d]  = xCoords[d];
+	      XCoordsMinusEps[d] = XCoords[d];
+	      xCoordsMinusEps[d] = xCoords[d];
+	    }
+	    XCoordsPlusEps[j]  += GAMMA_EPS;
+	    XCoordsToxCoords(XCoordsPlusEps,  xCoordsPlusEps);      
+
+	    XCoordsMinusEps[j] -= GAMMA_EPS;
+	    XCoordsToxCoords(XCoordsMinusEps, xCoordsMinusEps);
+
+      int mu = i+1;
+      int nu = j+1;
+      dxdX[mu][nu] = (xCoordsPlusEps[i] - xCoordsMinusEps[i])/(2.*GAMMA_EPS);
+
+      dxdX[mu][nu].eval();
+    }
+  }
+
+  array dxdXDet = zero;
+  setgDetAndgConFromgCov(dxdX, dxdXDet, dXdx);
+}
+
 void geometry::XCoordsToxCoords(const array XCoords[3], 
                                 array xCoords[3]
                                ) const
@@ -435,7 +493,9 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
     case metrics::MODIFIED_KERR_SCHILD:
       
       xCoords[directions::X1] = GammieRadius(XCoords[directions::X1]);
-      xCoords[directions::X2] = ThetaNoCyl(XCoords[directions::X1],XCoords[directions::X2]); 
+      xCoords[directions::X2] = ThetaNoCyl(XCoords[directions::X1],
+                                           XCoords[directions::X2]
+                                          );
       xCoords[directions::X3] = XCoords[directions::X3];
 
       xCoords[directions::X1].eval();

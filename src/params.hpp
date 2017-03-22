@@ -17,6 +17,18 @@ namespace vars
   extern int numFluidVars;
 };
 
+
+namespace dumpVars
+{
+  enum
+  {
+    RHO, U, U1, U2, U3
+  };
+  extern int Q, DP;
+  extern int B1, B2, B3, BSQR;
+  extern int dof;
+};
+
 namespace locations
 {
   enum
@@ -106,6 +118,7 @@ namespace params
   extern std::string restartFileName;
   extern std::string restartFileTime;
   extern double MaxWallTime;
+  extern int numDumpVars;
 
   extern double X1Start, X1End;
   extern double X2Start, X2End;

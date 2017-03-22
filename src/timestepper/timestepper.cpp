@@ -219,6 +219,13 @@ timeStepper::timeStepper(const int N1,
                   periodicBoundariesX3
                  );
 
+  dump = new grid(N1, N2, N3,
+                  dim, dumpVars::dof, numGhost,
+                  periodicBoundariesX1,
+                  periodicBoundariesX2,
+                  periodicBoundariesX3
+                 );
+
   XCoords = new coordinatesGrid(N1, N2, N3,
                                 dim, numGhost,
                                 X1Start, X1End,
