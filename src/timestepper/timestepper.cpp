@@ -447,7 +447,7 @@ timeStepper::timeStepper(const int N1,
 
 timeStepper::~timeStepper()
 {
-  delete prim, primHalfStep, primOld;
+  delete prim, primHalfStep, primOld, primIC;
   delete cons, consOld;
   delete sourcesExplicit, sourcesImplicit, sourcesImplicitOld, sourcesTimeDer;
   delete primLeft, primRight;
@@ -458,6 +458,7 @@ timeStepper::~timeStepper()
   delete elem, elemOld, elemHalfStep;
   delete riemann;
   delete geomLeft, geomRight, geomBottom, geomTop, geomCenter;
+  delete dump;
 
   delete primGuessLineSearchTrial;
   delete primGuessPlusEps;

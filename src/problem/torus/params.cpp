@@ -6,8 +6,8 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 64;
-  int N2 = 64;
+  int N1 = 128;
+  int N2 = 128;
   int N3 = 64;
   int N3Full = 64;
   int dim = 2;
@@ -140,9 +140,10 @@ namespace dumpVars
   int Q   = 5;
   int DP  = 5 + params::conduction;
 
-  int B1   = 5 + params::conduction + params::viscosity;
-  int B2   = 6 + params::conduction + params::viscosity;
-  int B3   = 7 + params::conduction + params::viscosity;
-  int BSQR = 8 + params::conduction + params::viscosity;
-  int dof  = 9 + params::conduction + params::viscosity;
+  int B1    = 5 + params::conduction + params::viscosity;
+  int B2    = 6 + params::conduction + params::viscosity;
+  int B3    = 7 + params::conduction + params::viscosity;
+  int BSQR  = 8 + params::conduction + params::viscosity;
+  int GAMMA = 9 + params::conduction + params::viscosity;
+  int dof   = 10 + params::conduction + params::viscosity;
 };

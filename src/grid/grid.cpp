@@ -451,6 +451,13 @@ void grid::dumpVTS(const grid &xCoords,
 
     for (int var=0; var<numVars; var++)
     {
+      if (varNames[var].empty())
+      {
+        PetscPrintf(PETSC_COMM_WORLD,
+                    "varNames[%d] not assigned a variable name\n", var
+                   );
+        exit(1);
+      }
       DMDASetFieldName(dm, var, varNames[var].c_str());
     }
 

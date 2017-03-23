@@ -26,7 +26,6 @@ class timeStepper
   grid *primIC;
   grid *residual;
   grid *residualPlusEps;
-  grid *dump;
 
   array residualSoA;
   array jacobianSoA;
@@ -77,6 +76,7 @@ class timeStepper
     grid *emfX1, *emfX2, *emfX3;
     grid *divFluxes;
     grid *divB;
+    grid *dump;
 
     geometry *geomLeft,   *geomRight;
     geometry *geomBottom, *geomTop;

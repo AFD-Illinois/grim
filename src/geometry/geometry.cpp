@@ -118,6 +118,8 @@ void geometry::computeConnectionCoeffs()
   af::sync();
 }
 
+/* Inverse of a 4 x 4 matrix :
+ * WARNING: ONLY WORKS FOR SYMMETRIC MATRICES */
 void geometry::setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
                                       array &gDet,
                                       array gCon[NDIM][NDIM]
@@ -472,8 +474,37 @@ void geometry::computeTransformationMatrices()
     }
   }
 
-  array dxdXDet = zero;
-  setgDetAndgConFromgCov(dxdX, dxdXDet, dXdx);
+  /* Inverse of a 3 x 3 matrix */
+  array dxdXDet =   dxdX[1][1] * dxdX[2][2] * dxdX[3][3]
+                  + dxdX[2][1] * dxdX[3][2] * dxdX[1][3]
+                  + dxdX[3][1] * dxdX[1][2] * dxdX[2][3]
+                  - dxdX[1][1] * dxdX[3][2] * dxdX[2][3]
+                  - dxdX[3][1] * dxdX[2][2] * dxdX[1][3]
+                  - dxdX[2][1] * dxdX[1][2] * dxdX[3][3];
+
+  dXdx[0][0] = 1.;
+
+  dXdx[1][1] = dxdX[2][2] * dxdX[3][3] - dxdX[2][3] * dxdX[3][2];
+  dXdx[1][2] = dxdX[1][3] * dxdX[3][2] - dxdX[1][2] * dxdX[3][3];
+  dXdx[1][3] = dxdX[1][2] * dxdX[2][3] - dxdX[1][3] * dxdX[2][2];
+
+  dXdx[2][1] = dxdX[2][3] * dxdX[3][1] - dxdX[2][1] * dxdX[3][3];
+  dXdx[2][2] = dxdX[1][1] * dxdX[3][3] - dxdX[1][3] * dxdX[3][1];
+  dXdx[2][3] = dxdX[1][3] * dxdX[2][1] - dxdX[1][1] * dxdX[2][3];
+
+  dXdx[3][1] = dxdX[2][1] * dxdX[3][2] - dxdX[2][2] * dxdX[3][1];
+  dXdx[3][2] = dxdX[1][2] * dxdX[3][1] - dxdX[1][1] * dxdX[3][2];
+  dXdx[3][3] = dxdX[1][1] * dxdX[2][2] - dxdX[1][2] * dxdX[2][1];
+
+  for (int i=1; i < NDIM-1; i++)
+  {
+    for (int j=1; j < NDIM-1; j++)
+    {
+      dXdx[i][j] = dXdx[i][j]/dxdXDet;
+
+      dXdx[i][j].eval();
+    }
+  }
 }
 
 void geometry::XCoordsToxCoords(const array XCoords[3], 
@@ -483,6 +514,7 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
   switch (metric)
   {
     case metrics::MINKOWSKI:
+      /* (x1, x2, x3) == (x, y, z) */
       
       xCoords[directions::X1] = XCoords[directions::X1];
       xCoords[directions::X2] = XCoords[directions::X2];
@@ -491,6 +523,14 @@ void geometry::XCoordsToxCoords(const array XCoords[3],
       break;
 
     case metrics::MODIFIED_KERR_SCHILD:
+      /* (x1, x2, x3) == (r, theta, phi)
+       * 
+       * where, in general,
+       * 
+       *    r     == r(X1, X2, X3)
+       *    theta == theta(X1, X2, X3)
+       *    phi   == phi(X1, X2, X3)
+       */
       
       xCoords[directions::X1] = GammieRadius(XCoords[directions::X1]);
       xCoords[directions::X2] = ThetaNoCyl(XCoords[directions::X1],

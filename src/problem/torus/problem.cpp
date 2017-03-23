@@ -790,29 +790,31 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
       PetscPrintf(PETSC_COMM_WORLD, "done\n\n");
     }
       
-    std::string filename = "primVarsT";
-    std::string filenameVTS = "primVarsT";
+    std::string filename    = "primVarsT";
+    std::string filenameVTS = "dump";
     std::string s_idx = std::to_string(WriteIdx);
       
     for(int i=0;i<6-s_idx.size();i++)
     {
-      filename=filename+"0";
+      filename    = filename    + "0";
+      filenameVTS = filenameVTS + "0";
     }
-    filename=filename+s_idx;
-    filenameVTS = filename;
-    filename=filename+".h5";
-    primOld->dump("primitives",filename);
+    filename    = filename    + s_idx + ".h5";
+    filenameVTS = filenameVTS + s_idx + ".vts";
+    
+    primOld->dump("primitives", filename);
 
-    filenameVTS=filenameVTS+".vts";
     std::string varNames[dumpVars::dof];
-    varNames[dumpVars::RHO] = "rho";
-    varNames[dumpVars::U]   = "u";
-    varNames[dumpVars::U1]  = "u1";
-    varNames[dumpVars::U2]  = "u2";
-    varNames[dumpVars::U3]  = "u3";
-    varNames[dumpVars::B1]  = "B1";
-    varNames[dumpVars::B2]  = "B2";
-    varNames[dumpVars::B3]  = "B3";
+    varNames[dumpVars::RHO]   = "rho";
+    varNames[dumpVars::U]     = "u";
+    varNames[dumpVars::U1]    = "u1";
+    varNames[dumpVars::U2]    = "u2";
+    varNames[dumpVars::U3]    = "u3";
+    varNames[dumpVars::B1]    = "B1";
+    varNames[dumpVars::B2]    = "B2";
+    varNames[dumpVars::B3]    = "B3";
+    varNames[dumpVars::BSQR]  = "bSqr";
+    varNames[dumpVars::GAMMA] = "gamma";
     if (params::conduction)
     {
       varNames[dumpVars::Q]   = "q";
@@ -850,6 +852,25 @@ void timeStepper::fullStepDiagnostics(int &numReads,int &numWrites)
     dump->vars[dumpVars::Q]    = elemOld->q; 
     dump->vars[dumpVars::DP]   = elemOld->deltaP; 
     dump->vars[dumpVars::BSQR] = elemOld->bSqr;
+
+    /* uCon[0] = lorentzFactor/alpha, where alpha = 1/(-gCon[0][0])^{1/2}
+     * 
+     * To get the lorentzFactor, we need gCon[0][0] in x Coords. Performing the
+     * transformation here: */
+    array gCon00xCoords = 0.*geomCenter->gCon[0][0];
+    for (int MU=0; MU < NDIM; MU++)
+    {
+      for (int NU=0; NU < NDIM; NU++)
+      {
+        gCon00xCoords +=  geomCenter->dxdX[0][MU]
+                        * geomCenter->dxdX[0][NU]
+                        * geomCenter->gCon[MU][NU];
+      }
+    }
+    array alphaxCoords  = 1./af::sqrt(-gCon00xCoords);
+    array lorentzFactor = uConxCoords[0] * alphaxCoords;
+
+    dump->vars[dumpVars::GAMMA] = lorentzFactor;
 
     dump->dumpVTS(*geomCenter->xCoordsGrid, varNames, filenameVTS);
   }

@@ -25,7 +25,7 @@ namespace dumpVars
     RHO, U, U1, U2, U3
   };
   extern int Q, DP;
-  extern int B1, B2, B3, BSQR;
+  extern int B1, B2, B3, BSQR, GAMMA;
   extern int dof;
 };
 
