@@ -11,6 +11,12 @@ void timeStepper::solve(grid &primGuess)
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
   {
+    // This is needed because if rho < rhoMin (u < uMin),
+    // then fluidElement sets rho=rhoMin (u=uMin)
+    // This can lead to singular Jacobian matrices...
+    primGuess.vars[vars::RHO] = af::max(primGuess.vars[vars::RHO],params::rhoFloorInFluidElement);
+    primGuess.vars[vars::U] = af::max(primGuess.vars[vars::U],params::uFloorInFluidElement);
+
     af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
     computeResidual(primGuess, *residual,
@@ -118,6 +124,51 @@ void timeStepper::solve(grid &primGuess)
      * x = deltaPrim
      * b = -residual  */
     batchLinearSolve(jacobianAoS, bAoS, deltaPrimAoS);
+
+    /*const int N1 = residual->vars[0].dims(0);
+    const int N2 = residual->vars[0].dims(1);
+    const int N3 = residual->vars[0].dims(2);
+    const int numFluidVars = vars::numFluidVars;
+    array xCoords[3];
+    geomCenter->getxCoords(xCoords);
+    for(int i=3;i<N1-3;i++)
+      for(int j=3;j<N2-3;j++)
+	for(int k=3;k<N3-3;k++)
+	  {
+	    bool Output = false;
+	    for(int v=0;v<numFluidVars && (!Output);v++)
+	      {
+		const double& mData = deltaPrimAoS(v,i,j,k).scalar<double>();
+		if(isnan(mData))
+		  Output=true;
+	      }
+	    if(Output)
+	      {
+		std::cout<<"Found NaN at point:"<<std::endl;
+		std::cout<<xCoords[directions::X1](i,j,k).scalar<double>()<<","
+			 <<xCoords[directions::X2](i,j,k).scalar<double>()<<","
+			 <<xCoords[directions::X3](i,j,k).scalar<double>()<<std::endl;
+		std::cout<<"Old variables:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<primGuess.vars[v](i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+		std::cout<<"Jacobian:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  {
+		    for(int vv=0;vv<numFluidVars;vv++)
+		      std::cout<<jacobianAoS(v*numFluidVars+vv,i,j,k).scalar<double>()<<",";
+		    std::cout<<std::endl;
+		  }
+		std::cout<<"Residual:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<bAoS(v,i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+		std::cout<<"Solution:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<deltaPrimAoS(v,i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+	      }
+	      }*/
 
     /* Done with the solve. Now rearrange from AoS -> SoA */
     array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
