@@ -10,10 +10,12 @@ class geometry
     array zero;
     array XCoords[3];
     array xCoords[3];
+
     void setgCovInXCoords(const array XCoords[NDIM], array gCov[NDIM][NDIM]);
     void setgDetAndgConFromgCov(const array gCov[NDIM][NDIM],
                                 array &gDet, array gCon[NDIM][NDIM]
                                );
+    void computeTransformationMatrices();
     void computeGammaDownDownDown(const int eta,
                                   const int mu,
                                   const int nu,
@@ -35,6 +37,8 @@ class geometry
     array g;
     array gCov[NDIM][NDIM];
     array gCon[NDIM][NDIM];
+    array dxdX[NDIM][NDIM];
+    array dXdx[NDIM][NDIM];
 
     array gammaUpDownDown[NDIM][NDIM][NDIM];
 
@@ -46,6 +50,7 @@ class geometry
     ~geometry();
 
     void computeConnectionCoeffs();
+    void conXTox(const array conX[NDIM], array conx[NDIM]);
     void getXCoords(array tXCoords[3]) const
     {
       for(int d=0;d<3;d++) tXCoords[d]=XCoords[d];

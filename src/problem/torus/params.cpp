@@ -6,11 +6,11 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
-  int N1 = 256;
+  int N1 = 128;
   int N2 = 128;
   int N3 = 64;
   int N3Full = 64;
-  int dim = 3;
+  int dim = 2;
   int numGhost = 3;
  
   // (Re)start options
@@ -25,7 +25,7 @@ namespace params
   double MaxWallTime = 3600*23.5;
   
   // Observation / checkpointing intervals
-  double ObserveEveryDt = .1;
+  double ObserveEveryDt   = .1;
   double WriteDataEveryDt = 2.;
 
   // Timestepper opts
@@ -119,7 +119,7 @@ namespace params
   double linesearchfloor = 1.e-24;
 
   // Linear solver options
-  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
+  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
   
 };
 
@@ -135,3 +135,15 @@ namespace vars
   int dof = 8 + params::conduction + params::viscosity;
 };
 
+namespace dumpVars
+{
+  int Q   = 5;
+  int DP  = 5 + params::conduction;
+
+  int B1    = 5 + params::conduction + params::viscosity;
+  int B2    = 6 + params::conduction + params::viscosity;
+  int B3    = 7 + params::conduction + params::viscosity;
+  int BSQR  = 8 + params::conduction + params::viscosity;
+  int GAMMA = 9 + params::conduction + params::viscosity;
+  int dof   = 10 + params::conduction + params::viscosity;
+};
