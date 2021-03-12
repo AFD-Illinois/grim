@@ -9,61 +9,25 @@
 #
 # cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpic++ /location/to/grim/src 
 
-cmake_minimum_required(VERSION 2.8)
-
-project(grim)
+cmake_minimum_required(VERSION 3.10)
+project(grim LANGUAGES C CXX)
+set (CMAKE_CXX_STANDARD 11)
 
 # ------------------------------USER OPTIONS----------------------------------#
 # Options for icc:
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp")
+set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
-# Set custom install folders here
-# 
-# Configuration for aristophanes
-#set(PETSC_DIR "/home/bryan10/Documents/software/petsc_3.7.2_installation") 
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/home/bryan10/Documents/software/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+# TACC or user provided dependencies
+set(PETSC_DIR "$ENV{TACC_PETSC_DIR}")
+set(INTEL_MKL_ROOT_DIR "$ENV{TACC_MKL_DIR}")
 
-# Configuration for SAVIO
-#set(PETSC_DIR "/global/scratch/manic/petsc_installation_3.7.0") 
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/global/scratch/manic/arrayfire_new/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/global/software/sl-6.x86_64/modules/langs/intel/2016.1.150/mkl")
-
-# Configuration for gordon
-#set(PETSC_DIR "/home/manic/petsc_3.7.3_installation") 
-#set(ArrayFire_ROOT_DIR "/home/manic/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/intel/composer_xe_2013_sp1.2.144/mkl")
-
-# Configuration for lmc
-#set(PETSC_DIR "/bhhome/manic/petsc_installation")
-#set(ArrayFire_ROOT_DIR "/bhhome/manic/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/bhhome/manic/intel/mkl")
-
-# Configuration for Maverick
-#set(PETSC_DIR "/home/03669/tg829690/petsc_installation_3.7.0")
-#set(ArrayFire_ROOT_DIR "/home/03669/tg829690/arrayfire/build/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
-
-# Configuration for Stampede
-set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
-set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
-# CPU
-#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
-# GPU
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
-
-# Configuration for Deathstar
-#set(PETSC_DIR "/home/mani/Downloads/petsc_3.7.5_installation")
-#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
-#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
-#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
+# These are installed to grim source dir
+set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
+set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
 
 # Double or float precision?
 set(REAL "double")
