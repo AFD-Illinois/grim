@@ -44,7 +44,7 @@ if [[ "$*" == *"dep"* ]]; then
   cd ../../..
 fi
 
-if [[ "$*" == "petsc" ]]; then
+if [[ "$*" == *"petsc"* ]]; then
   cd external
   wget https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-${PETSC_VER}.tar.gz
   tar xf petsc-${PETSC_VER}.tar.gz
@@ -60,9 +60,9 @@ if [[ "$*" == "petsc" ]]; then
 
   ./configure --prefix=$PWD/../petsc --with-debugging=0 \
   COPTFLAGS=${internal_COPTFLAGS} CXXOPTFLAGS=${internal_CXXOPTFLAGS} \
-  --with-hdf5=1 --with-clean=1 --with-mpi-dir=${MPI_DIR} \
-  --with-memalign=64 --known-level1-dcache-size=32768 --known-level1-dcache-linesize=64 \
-  --known-level1-dcache-assoc=8
+  --with-hdf5=1 --with-clean=1 --with-mpi-dir=${MPI_DIR} #\
+  #--with-memalign=64 --known-level1-dcache-size=32768 --known-level1-dcache-linesize=64 \
+  #--known-level1-dcache-assoc=8
 
   make -j$NPROC
   make install
@@ -85,3 +85,6 @@ fi
 cd build
 make -j$NPROC
 cp grim ..
+
+echo "On BH, run the following to load MKL correctly"
+echo ". /opt/intel/oneapi/setvars.sh"
