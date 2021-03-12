@@ -1,3 +1,7 @@
+# External libraries
+# Modify if switched to submodules
+external/
+
 # Compiled source #
 ###################
 *.com
@@ -13,6 +17,7 @@
 *.elf
 *.pyo
 *.pyc
+grim
  
 # Libraries #
 #############

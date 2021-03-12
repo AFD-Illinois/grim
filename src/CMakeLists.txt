@@ -22,12 +22,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp")
 set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
 # TACC or user provided dependencies
-set(PETSC_DIR "$ENV{TACC_PETSC_DIR}")
-set(INTEL_MKL_ROOT_DIR "$ENV{TACC_MKL_DIR}")
+#set(PETSC_DIR "$ENV{TACC_PETSC_DIR}")
+#set(INTEL_MKL_ROOT_DIR "$ENV{TACC_MKL_DIR}")
+
+# MKL on BH
+set(INTEL_MKL_ROOT_DIR "/opt/intel/oneapi/mkl/latest/")
 
 # These are installed to grim source dir
 set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
+set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc")
 
 # Double or float precision?
 set(REAL "double")

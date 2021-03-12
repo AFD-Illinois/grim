@@ -2,6 +2,7 @@
 #include "ObserversTorus.hpp"
 #include "../../timer.hpp"
 #include <fstream>
+#include <iostream>
 
 void fluidElement::setFluidElementParameters()
 {
