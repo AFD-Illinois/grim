@@ -119,6 +119,8 @@ grid::grid(const int N1,
       break;
   }
 
+  DMSetUp(dm);
+
   DMDAGetCorners
   (dm, &iLocalStart, &jLocalStart, &kLocalStart,
        &N1Local,     &N2Local,     &N3Local
