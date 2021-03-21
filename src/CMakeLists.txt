@@ -19,7 +19,7 @@ set (CMAKE_CXX_STANDARD 11)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp")
-set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
+set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
 
 # TACC or user provided dependencies
 #set(PETSC_DIR "$ENV{TACC_PETSC_DIR}")
