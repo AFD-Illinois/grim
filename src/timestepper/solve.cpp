@@ -1,5 +1,7 @@
 #include "timestepper.hpp"
 
+#include "lapacke.h"
+
 void timeStepper::solve(grid &primGuess)
 {
   int world_rank;

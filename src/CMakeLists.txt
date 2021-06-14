@@ -17,21 +17,22 @@ set (CMAKE_CXX_STANDARD 11)
 # Options for icc:
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp")
-set(ARCH "OpenCL") # Choose CPU/OpenCL/CUDA
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fopenmp -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp -fPIC")
+set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # TACC or user provided dependencies
 #set(PETSC_DIR "$ENV{TACC_PETSC_DIR}")
 #set(INTEL_MKL_ROOT_DIR "$ENV{TACC_MKL_DIR}")
 
 # MKL on BH
-set(INTEL_MKL_ROOT_DIR "/opt/intel/oneapi/mkl/latest/")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/oneapi/mkl/latest/")
 
 # These are installed to grim source dir
 set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
 set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc")
+set(PETSC_ARCH "")
 
 # Double or float precision?
 set(REAL "double")
@@ -51,7 +52,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "linear_modes")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
@@ -60,7 +61,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 set(ArrayFire_DIR "${ArrayFire_ROOT_DIR}/share/ArrayFire/cmake")
 
 # Needed to link python interfaces to precompiled .so libraries
-set(BUILD_SHARED_LIBS "ON")
+set(BUILD_SHARED_LIBS "OFF")
 
 # Need to find all packages before starting compilation, so that all headers
 # needed by the code are included.
@@ -77,6 +78,7 @@ find_library(MATH_LIBRARIES m REQUIRED)
 find_package(PETSc REQUIRED)
 find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Development)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 find_package(LAPACKE REQUIRED)
@@ -94,13 +96,14 @@ include_directories(${PETSC_INCLUDES}
                     ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
-                    ${LAPACKE_INCLUDES}
                     grid
                     geometry
                     reconstruction
                     boundary
                     physics
                     timestepper
+                    ${Python3_INCLUDE_DIRS}
+                    ${LAPACKE_INCLUDES}
                    )
 
 add_subdirectory(grid)
@@ -630,6 +633,7 @@ message("C_FLAGS          : " ${CMAKE_C_FLAGS})
 message("CXX_FLAGS        : " ${CMAKE_CXX_FLAGS})
 message("PETSc dir        : " ${PETSC_DIR})
 message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
+message("Python3 dir      : " ${Python3_INCLUDE_DIRS})
 message("MKL dir          : " ${LAPACKE_INCLUDES})
 message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
 message("Build dir        : " ${CMAKE_BINARY_DIR})

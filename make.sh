@@ -46,6 +46,7 @@ fi
 
 if [[ "$*" == *"petsc"* ]]; then
   cd external
+  rm -rf petsc-${PETSC_VER} petsc-${PETSC_VER}.tar.gz
   wget https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-${PETSC_VER}.tar.gz
   tar xf petsc-${PETSC_VER}.tar.gz
   cd petsc-${PETSC_VER}
@@ -60,7 +61,7 @@ if [[ "$*" == *"petsc"* ]]; then
 
   ./configure --prefix=$PWD/../petsc --with-debugging=0 \
   COPTFLAGS=${internal_COPTFLAGS} CXXOPTFLAGS=${internal_CXXOPTFLAGS} \
-  --with-hdf5=1 --with-clean=1 --with-mpi-dir=${MPI_DIR} #\
+  --with-hdf5=1 --with-clean=1 --with-mpi-dir=$(dirname $(which mpicc))/.. #\
   #--with-memalign=64 --known-level1-dcache-size=32768 --known-level1-dcache-linesize=64 \
   #--known-level1-dcache-assoc=8
 
@@ -77,7 +78,7 @@ if [[ "$*" == *"clean"* ]]; then
   if [[ $USE_INTEL != "0" ]]; then
     cmake -DCMAKE_C_COMPILER=mpiicc -DCMAKE_CXX_COMPILER=mpiicpc ../src
   else
-    cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx ../src
+    cmake -DPETSC_EXECUTABLE_RUNS=ON -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx ../src
   fi
   cd ..
 fi

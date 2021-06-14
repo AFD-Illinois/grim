@@ -5,11 +5,11 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 32;
-  int N2 = 32;
-  int N3 = 1;
+  int N1 = 256;
+  int N2 = 256;
+  int N3 = 256;
 
-  int dim = 2;
+  int dim = 3;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -17,7 +17,8 @@ namespace params
   double maxDtIncrement = 1.3;
   double Time = 0.;
   double CourantFactor = 0.9;
-  double finalTime = 2.;
+  double finalTime = 20.;
+  double MaxWallTime = 3600*23.5;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
   std::string restartFile = "restartFile.h5";
@@ -81,6 +82,18 @@ namespace params
 };
 
 namespace vars
+{
+  int Q   = 5;
+  int DP  = 5 + params::conduction;
+  int numFluidVars = 5 + params::conduction + params::viscosity;
+
+  int B1  = 5 + params::conduction + params::viscosity;
+  int B2  = 6 + params::conduction + params::viscosity;
+  int B3  = 7 + params::conduction + params::viscosity;
+  int dof = 8 + params::conduction + params::viscosity;
+};
+
+namespace dumpVars
 {
   int Q   = 5;
   int DP  = 5 + params::conduction;
