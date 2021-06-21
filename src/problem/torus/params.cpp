@@ -6,10 +6,16 @@ namespace params
   int numDevices = 1;
 
   // Grid size options
+  // Will be on 32 nodes
+  //int N1 = 384;
+  //int N2 = 192;
+  //int N3 = 192;
+  //int N3Full = 192;
+  // So on 4 nodes:
   int N1 = 192;
-  int N2 = 128;
-  int N3 = 128;
-  int N3Full = 64;
+  int N2 = 96;
+  int N3 = 96;
+  int N3Full = 96;
   int dim = 3;
   int numGhost = 3;
 
@@ -49,7 +55,7 @@ namespace params
 
   // Grid size options
   double Rin = 0.85*(1.+sqrt(1.-blackHoleSpin*blackHoleSpin));
-  double Rout = 3000.;
+  double Rout = 1000.;
 
   // EMHD model
   int conduction = 1;
@@ -119,7 +125,7 @@ namespace params
   double linesearchfloor = 1.e-24;
 
   // Linear solver options
-  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
 
 };
 

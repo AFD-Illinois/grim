@@ -5,9 +5,9 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 256;
-  int N2 = 256;
-  int N3 = 256;
+  int N1 = 384;
+  int N2 = 192;
+  int N3 = 192;
 
   int dim = 3;
   int numGhost = 3;
@@ -17,7 +17,7 @@ namespace params
   double maxDtIncrement = 1.3;
   double Time = 0.;
   double CourantFactor = 0.9;
-  double finalTime = 20.;
+  double finalTime = 0.1;
   double MaxWallTime = 3600*23.5;
   int metric = metrics::MINKOWSKI;
   int restart = 0;
@@ -68,9 +68,9 @@ namespace params
   double nonlinearsolve_atol = 1.e-20;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
-  
+
   // Linear solver options
-  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
 
   //Unused params - do we need to define them?
   double hSlope = 0.3;

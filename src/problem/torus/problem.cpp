@@ -160,23 +160,24 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
   const int N2g = primOld->N2Total;
   const int N3g = primOld->N3Total;
 
-  array& Rho = primOld->vars[vars::RHO];
-  array& U = primOld->vars[vars::U];
-  array& U1 = primOld->vars[vars::U1];
-  array& U2 = primOld->vars[vars::U2];
-  array& U3 = primOld->vars[vars::U3];
-  array& B1 = primOld->vars[vars::B1];
-  array& B2 = primOld->vars[vars::B2];
-  array& B3 = primOld->vars[vars::B3];
+  // C++ is for squares
+  double *Rho_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *U_tmp =  (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *U1_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *U2_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *U3_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *B1_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *B2_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
+  double *B3_tmp = (double*) malloc(N1g*N2g*N3g*sizeof(double));
 
   double aBH = params::blackHoleSpin;
 
-//#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(3)
   for(int k=0;k<N3g;k++)
     for(int j=0;j<N2g;j++)
       for(int i=0;i<N1g;i++)
   {
-    const int p = i+j*N1g+k*N2g;
+    const int p = k*N2g*N1g + j*N1g + i;
     const double& r = xCoords[directions::X1](i,j,k).scalar<double>();
     const double& theta = xCoords[directions::X2](i,j,k).scalar<double>();
     const double& phi = xCoords[directions::X3](i,j,k).scalar<double>();
@@ -187,18 +188,16 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
     const double& beta2 = geomCenter->gCon[0][2](i,j,k).scalar<double>();
     const double& beta3 = geomCenter->gCon[0][3](i,j,k).scalar<double>();
 
-    double lnOfh = 1.;
-    if(r>=params::InnerEdgeRadius)
-      lnOfh = computeLnOfh(aBH,r,theta);
+    double lnOfh = (r>=params::InnerEdgeRadius) ? computeLnOfh(aBH,r,theta) : 1.;
 
     /* Region outside the torus */
     if(lnOfh<0. || r<params::InnerEdgeRadius)
     {
-      Rho(i,j,k)=params::rhoFloorInFluidElement;
-      U(i,j,k)=params::uFloorInFluidElement;
-      U1(i,j,k)=0.;
-      U2(i,j,k)=0.;
-      U3(i,j,k)=0.;
+      Rho_tmp[p]=params::rhoFloorInFluidElement;
+      U_tmp[p]=params::uFloorInFluidElement;
+      U1_tmp[p]=0.;
+      U2_tmp[p]=0.;
+      U3_tmp[p]=0.;
     }
     else
       {
@@ -208,10 +207,10 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
 
         /* Solve for rho using the definition of h = (rho + u + P)/rho where rho
          * here is the rest mass energy density and P = C * rho^Gamma */
-        Rho(i,j,k) = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
+        Rho_tmp[p] = pow((h-1)*(Gamma-1.)/(Kappa*Gamma), 
              1./(Gamma-1.));
         PetscRandomGetValue(randNumGen, &randNum);
-        U(i,j,k) =  Kappa * pow(Rho(i,j,k), Gamma)/(Gamma-1.)
+        U_tmp[p] =  Kappa * pow(Rho_tmp[p], Gamma)/(Gamma-1.)
                   * (1. + params::InitialPerturbationAmplitude*(randNum-0.5));
 
         /* TODO: Should add random noise here */
@@ -311,15 +310,56 @@ void timeStepper::initialConditions(int &numReads,int &numWrites)
         uConMKS[2] = uConKS[2]/hFactor;
         uConMKS[3] = uConKS[3];
 
-        U1(i,j,k) = uConMKS[1] + pow(lapse, 2.)*beta1*uConMKS[0];
-        U2(i,j,k) = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
-        U3(i,j,k) = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
+        U1_tmp[p] = uConMKS[1] + pow(lapse, 2.)*beta1*uConMKS[0];
+        U2_tmp[p] = uConMKS[2] + pow(lapse, 2.)*beta2*uConMKS[0];
+        U3_tmp[p] = uConMKS[3] + pow(lapse, 2.)*beta3*uConMKS[0];
       }
 
-    B1(i,j,k) = 0.;
-    B2(i,j,k) = 0.;
-    B3(i,j,k) = 0.;
+    B1_tmp[p] = 0.;
+    B2_tmp[p] = 0.;
+    B3_tmp[p] = 0.;
   }
+  array& Rho = primOld->vars[vars::RHO];
+  array& U = primOld->vars[vars::U];
+  array& U1 = primOld->vars[vars::U1];
+  array& U2 = primOld->vars[vars::U2];
+  array& U3 = primOld->vars[vars::U3];
+  array& B1 = primOld->vars[vars::B1];
+  array& B2 = primOld->vars[vars::B2];
+  array& B3 = primOld->vars[vars::B3];
+
+  for(int k=0;k<N3g;k++)
+    for(int j=0;j<N2g;j++)
+      for(int i=0;i<N1g;i++)
+  {
+    const int p = k*N2g*N1g + j*N1g + i;
+    Rho(i, j, k) = Rho_tmp[p];
+    U(i, j, k) = U_tmp[p];
+    U1(i, j, k) = U1_tmp[p];
+    U2(i, j, k) = U2_tmp[p];
+    U3(i, j, k) = U3_tmp[p];
+    B1(i, j, k) = B1_tmp[p];
+    B2(i, j, k) = B2_tmp[p];
+    B3(i, j, k) = B3_tmp[p];   
+  }
+
+  Rho.eval();
+  U.eval();
+  U1.eval();
+  U2.eval();
+  U3.eval();
+  B1.eval();
+  B2.eval();
+  B3.eval();
+
+  free(Rho_tmp);
+  free(U_tmp);
+  free(U1_tmp);
+  free(U2_tmp);
+  free(U3_tmp);
+  free(B1_tmp);
+  free(B2_tmp);
+  free(B3_tmp);
 
   PetscPrintf(PETSC_COMM_WORLD, "  Renormalizing...");
 

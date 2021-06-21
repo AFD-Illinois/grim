@@ -1,6 +1,6 @@
 #include "timestepper.hpp"
 
-#include "lapacke.h"
+//#include "lapacke.h"
 
 void timeStepper::solve(grid &primGuess)
 {
@@ -278,35 +278,33 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
                 prim->N3Total
                );
   }
-  else if (params::linearSolver == linearSolvers::CPU_BATCH_SOLVER)
-  {
-    A.host(AHostPtr);
-    b.host(bHostPtr);
-  
-    #pragma omp parallel for
-    for (int k=0; k<N3Total; k++)
-    {
-      for (int j=0; j<N2Total; j++)
-      {
-        for (int i=0; i<N1Total; i++)
-        {
-          int pivot[numVars];
-  
-          const int spatialIndex = 
-            i +  N1Total*(j + (N2Total*k) );
-  
-          LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, 
-                        &AHostPtr[numVars*numVars*spatialIndex], numVars, 
-                        pivot, &bHostPtr[numVars*spatialIndex], numVars
-                       );
-  
-        }
-      }
-    }
-  
-    /* Copy solution to x on device */
-    x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
-  }
+//  else if (params::linearSolver == linearSolvers::CPU_BATCH_SOLVER)
+//  {
+//    A.host(AHostPtr);
+//    b.host(bHostPtr);
+
+//    #pragma omp parallel for
+//    for (int k=0; k<N3Total; k++)
+//    {
+//      for (int j=0; j<N2Total; j++)
+//      {
+//        for (int i=0; i<N1Total; i++)
+//        {
+//          int pivot[numVars];
+
+//          const int spatialIndex = 
+//            i +  N1Total*(j + (N2Total*k) );
+
+//          LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, 
+//                        &AHostPtr[numVars*numVars*spatialIndex], numVars, 
+//                        pivot, &bHostPtr[numVars*spatialIndex], numVars
+//                       );
+//        }
+//      }
+//    }
+//    /* Copy solution to x on device */
+//    x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
+//  }
 
   linearSolverTime += af::timer::stop(linearSolverTimer);
 }

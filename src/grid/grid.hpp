@@ -4,6 +4,8 @@
 #include "../params.hpp"
 #include <petsc.h>
 #include <petscviewerhdf5.h>
+
+#define AF_API_VERSION 36
 #include <arrayfire.h>
 
 using af::array;

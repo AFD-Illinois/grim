@@ -31,8 +31,8 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 # These are installed to grim source dir
 set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
-set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc")
-set(PETSC_ARCH "")
+set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc-3.14.5/")
+set(PETSC_ARCH "arch-olcf-summit-opt")
 
 # Double or float precision?
 set(REAL "double")
@@ -75,13 +75,15 @@ set(BUILD_SHARED_LIBS "OFF")
 find_library(MATH_LIBRARIES m REQUIRED)
 
 # External packages
+#find_package(PkgConfig REQUIRED) 
 find_package(PETSc REQUIRED)
+#pkg_check_modules(PETSC REQUIRED PETSc)
 find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Development)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
-find_package(LAPACKE REQUIRED)
+#find_package(LAPACKE REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
