@@ -5,8 +5,8 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 32;
-  int N2 = 32;
+  int N1 = 192;
+  int N2 = 192;
   int N3 = 1;
 
   int dim = 2;
@@ -81,6 +81,18 @@ namespace params
 };
 
 namespace vars
+{
+  int Q   = 5;
+  int DP  = 5 + params::conduction;
+  int numFluidVars = 5 + params::conduction + params::viscosity;
+
+  int B1  = 5 + params::conduction + params::viscosity;
+  int B2  = 6 + params::conduction + params::viscosity;
+  int B3  = 7 + params::conduction + params::viscosity;
+  int dof = 8 + params::conduction + params::viscosity;
+};
+
+namespace dumpVars
 {
   int Q   = 5;
   int DP  = 5 + params::conduction;

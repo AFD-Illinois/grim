@@ -23,29 +23,37 @@ array reconstruction::slopeMM(const int dir,const double dX, const array& in,
                               int &numWrites
                              )
 {
-  double filter1D[]  = {1,-1, 0, /* Forward difference */
-                        0, 1,-1  /* Backward difference */
-                       };
-  array filter;
+  int X1_plus,  X2_plus,  X3_plus;
+  int X1_minus, X2_minus, X3_minus;
   switch (dir)
   {
     case directions::X1:
-    	filter =  array(3, 1, 1, 2, filter1D)/dX;
+	
+	X1_plus  = -1; X2_plus  = 0; X3_plus  = 0;
+	X1_minus =  1; X2_minus = 0; X3_minus = 0;
+
     	break;
 
     case directions::X2:
-    	filter =  array(1, 3, 1, 2, filter1D)/dX;
+	
+	X1_plus  = 0; X2_plus  = -1; X3_plus  = 0;
+	X1_minus = 0; X2_minus =  1; X3_minus = 0;
+
     	break;
 
     case directions::X3:
-    	filter =  array(1, 1, 3, 2, filter1D)/dX;
+	
+	X1_plus  = 0; X2_plus  = 0; X3_plus  = -1;
+	X1_minus = 0; X2_minus = 0; X3_minus =  1;
+
     	break;
   }
   
-  array dvar_dX = convolve(in, filter);
-  
-  array forwardDiff  = dvar_dX(span, span, span, 0);
-  array backwardDiff = dvar_dX(span, span, span, 1);
+  array in_plus  = af::shift(in, X1_plus,  X2_plus,  X3_plus );
+  array in_minus = af::shift(in, X1_minus, X2_minus, X3_minus);
+
+  array forwardDiff  = (in_plus -  in)/dX;
+  array backwardDiff = (in - in_minus)/dX;
   array centralDiff  = backwardDiff + forwardDiff;
   
   /* TODO: add an argument to slopeLimTheta.*/
@@ -71,7 +79,6 @@ void reconstruction::reconstructMM(const grid &prim,
                           		    )
 {
   int numReadsMinMod, numWritesMinMod;
-  std::vector<af::array *> arraysThatNeedEval;
   for(int var=0; var<prim.numVars; var++)
   {
   	//Note: we set dX=1., because the 1/dX in slope
@@ -82,10 +89,8 @@ void reconstruction::reconstructMM(const grid &prim,
                          );
   	primLeft.vars[var]  = prim.vars[var] - 0.5*slope;
   	primRight.vars[var] = prim.vars[var] + 0.5*slope;
-
-    arraysThatNeedEval.push_back(&primLeft.vars[var]);
-    arraysThatNeedEval.push_back(&primRight.vars[var]);
+	
+	//af::eval(primLeft.vars[var], primRight.vars[var]);
   }
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 

@@ -85,11 +85,9 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     consOld->vars[vars::B3] - 0.5*dt*divFluxes->vars[vars::B3];
 
   prim->vars[vars::B1] = cons->vars[vars::B1]/geomCenter->g;
-  prim->vars[vars::B1].eval();
   prim->vars[vars::B2] = cons->vars[vars::B2]/geomCenter->g;
-  prim->vars[vars::B2].eval();
   prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
-  prim->vars[vars::B3].eval();
+
   double inductionEqnTime = af::timer::stop(inductionEqnTimer);
 
   primGuessPlusEps->vars[vars::B1] = prim->vars[vars::B1];
@@ -233,11 +231,11 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
     consOld->vars[vars::B3] - dt*divFluxes->vars[vars::B3];
 
   prim->vars[vars::B1] = cons->vars[vars::B1]/geomCenter->g;
-  prim->vars[vars::B1].eval();
+  //prim->vars[vars::B1].eval();
   prim->vars[vars::B2] = cons->vars[vars::B2]/geomCenter->g;
-  prim->vars[vars::B2].eval();
+  //prim->vars[vars::B2].eval();
   prim->vars[vars::B3] = cons->vars[vars::B3]/geomCenter->g;
-  prim->vars[vars::B3].eval();
+  //prim->vars[vars::B3].eval();
   inductionEqnTime = af::timer::stop(inductionEqnTimer);
 
   primGuessPlusEps->vars[vars::B1] = prim->vars[vars::B1];
@@ -335,7 +333,7 @@ void timeStepper::timeStep(int &numReads, int &numWrites)
              );
 }
 
-double timeStepper::computeDt(int &numReads, int &numWrites)
+void timeStepper::computeDt(int &numReads, int &numWrites)
 {
   // Time step control
   array minSpeedTemp,maxSpeedTemp;
