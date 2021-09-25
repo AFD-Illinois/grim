@@ -190,7 +190,6 @@ void fluidElement::computeMinMaxCharSpeeds(const int dir,
   condition = (maxSpeed < 1.e-15);
   maxSpeed  = maxSpeed*(1-condition)+1.e-15*condition;
 
-  af::eval(minSpeed, maxSpeed);
   numWrites += 2;
   /* Reads: 0
    * -----
@@ -292,7 +291,6 @@ void riemannSolver::solve(const grid &primLeft,
    * Writes: 0
    * ------ */
 
-  std::vector<af::array *> arraysThatNeedEval;
   for (int var=0; var < primLeft.numVars; var++)
   {
     if (params::riemannSolver == riemannSolvers::HLL)
@@ -317,10 +315,7 @@ void riemannSolver::solve(const grid &primLeft,
             )
            );
     }
-
-    arraysThatNeedEval.push_back(&flux.vars[var]);
   }
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   /* Reads:
    * -----
    *  fluxLeft[var], fluxRight[var], consLeft[var], consRight[var] : 4*numVars

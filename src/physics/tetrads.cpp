@@ -12,7 +12,6 @@ void fluidElement::tetradConToCoordCon(const array vTetrad[NDIM],
       vCoord[mu] += eCon[nu][mu]*vTetrad[nu];
     }
   }
-  eval(vCoord[0], vCoord[1], vCoord[2], vCoord[3]);
 }
 
 /* Pass contravariant vectors */
@@ -27,7 +26,6 @@ void fluidElement::coordConToTetradCon(const array vCoord[NDIM],
       vTetrad[mu] += eCov[mu][nu]*vCoord[nu];
     }
   }
-  eval(vTetrad[0], vTetrad[1], vTetrad[2], vTetrad[3]);
 }
 
 void fluidElement::constructTetrads()
@@ -186,18 +184,6 @@ void fluidElement::constructTetrads()
   {
     eCov[0][nu] *= -1.;
   }
-  
-  /* Explicitly evaluate */
-  std::vector<af::array *> arraysThatNeedEval;
-  for (int mu = 0; mu < NDIM; mu++)
-  {
-    for (int nu = 0; nu < NDIM; nu++)
-    {
-      arraysThatNeedEval.push_back(&eCon[mu][nu]);   
-      arraysThatNeedEval.push_back(&eCov[mu][nu]);     
-    }
-  }
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
 void fluidElement::normalize(array vCon[NDIM])
