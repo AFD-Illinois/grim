@@ -7,7 +7,6 @@
 #include "../physics/physics.hpp"
 #include "../geometry/geometry.hpp"
 #include "../boundary/boundary.hpp"
-#include "mkl.h"
 
 namespace timeStepperSwitches
 {
@@ -76,6 +75,7 @@ class timeStepper
     grid *emfX1, *emfX2, *emfX3;
     grid *divFluxes;
     grid *divB;
+    grid *dump;
 
     geometry *geomLeft,   *geomRight;
     geometry *geomBottom, *geomTop;
@@ -120,7 +120,7 @@ class timeStepper
                      int &numWrites
                     );
 
-    double computeDt(int &numReads, int &numWrites);
+    void computeDt(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
     void initialConditions(int &numReads, int &numWrites);

@@ -29,8 +29,8 @@ void reconstruction::reconstruct(const grid &prim,
   case reconstructionOptions::PPM:
 
       reconstruction::reconstructPPM(prim, dir, primLeft, primRight,
-                                       numReads, numWrites
-                                      );
+                                     numReads, numWrites
+                                    );
 
       break;
   }
@@ -38,7 +38,7 @@ void reconstruction::reconstruct(const grid &prim,
 }
 
 array reconstruction::slope(const int dir, const double dX,
-			                      const array& in,
+			    const array& in,
                             int &numReads,
                             int &numWrites
                            )
@@ -56,5 +56,9 @@ array reconstruction::slope(const int dir, const double dX,
     case reconstructionOptions::PPM:
 
       return reconstruction::slopePPM(dir,dX,in, numReads, numWrites);
+
+    default:
+
+      return reconstruction::slopeMM(dir,dX,in, numReads, numWrites);
    }
 }

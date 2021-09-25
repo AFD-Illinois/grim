@@ -11,6 +11,12 @@ void timeStepper::solve(grid &primGuess)
        nonLinearIter < params::maxNonLinearIter; nonLinearIter++
       )
   {
+    // This is needed because if rho < rhoMin (u < uMin),
+    // then fluidElement sets rho=rhoMin (u=uMin)
+    // This can lead to singular Jacobian matrices...
+    primGuess.vars[vars::RHO] = af::max(primGuess.vars[vars::RHO],params::rhoFloorInFluidElement);
+    primGuess.vars[vars::U] = af::max(primGuess.vars[vars::U],params::uFloorInFluidElement);
+
     af::timer jacobianAssemblyTimer = af::timer::start();
     int numReadsResidual, numWritesResidual;
     computeResidual(primGuess, *residual,
@@ -82,8 +88,9 @@ void timeStepper::solve(grid &primGuess)
       array smallPrim = af::abs(primGuess.vars[row])<.5*epsilon;
 
       primGuessPlusEps->vars[row]  = 
-          (1. + epsilon)*primGuess.vars[row]*(1.-smallPrim)
-	      + smallPrim*epsilon; 
+	  primGuess.vars[row]
+	+ epsilon*primGuess.vars[row]*(1.-smallPrim)
+	+ smallPrim*epsilon; 
 
       computeResidual(*primGuessPlusEps, *residualPlusEps,
                       numReadsResidual, numWritesResidual
@@ -117,6 +124,51 @@ void timeStepper::solve(grid &primGuess)
      * x = deltaPrim
      * b = -residual  */
     batchLinearSolve(jacobianAoS, bAoS, deltaPrimAoS);
+
+    /*const int N1 = residual->vars[0].dims(0);
+    const int N2 = residual->vars[0].dims(1);
+    const int N3 = residual->vars[0].dims(2);
+    const int numFluidVars = vars::numFluidVars;
+    array xCoords[3];
+    geomCenter->getxCoords(xCoords);
+    for(int i=3;i<N1-3;i++)
+      for(int j=3;j<N2-3;j++)
+	for(int k=3;k<N3-3;k++)
+	  {
+	    bool Output = false;
+	    for(int v=0;v<numFluidVars && (!Output);v++)
+	      {
+		const double& mData = deltaPrimAoS(v,i,j,k).scalar<double>();
+		if(isnan(mData))
+		  Output=true;
+	      }
+	    if(Output)
+	      {
+		std::cout<<"Found NaN at point:"<<std::endl;
+		std::cout<<xCoords[directions::X1](i,j,k).scalar<double>()<<","
+			 <<xCoords[directions::X2](i,j,k).scalar<double>()<<","
+			 <<xCoords[directions::X3](i,j,k).scalar<double>()<<std::endl;
+		std::cout<<"Old variables:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<primGuess.vars[v](i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+		std::cout<<"Jacobian:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  {
+		    for(int vv=0;vv<numFluidVars;vv++)
+		      std::cout<<jacobianAoS(v*numFluidVars+vv,i,j,k).scalar<double>()<<",";
+		    std::cout<<std::endl;
+		  }
+		std::cout<<"Residual:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<bAoS(v,i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+		std::cout<<"Solution:"<<std::endl;
+		for(int v=0;v<numFluidVars;v++)
+		  std::cout<<deltaPrimAoS(v,i,j,k).scalar<double>()<<",";
+		std::cout<<std::endl;
+	      }
+	      }*/
 
     /* Done with the solve. Now rearrange from AoS -> SoA */
     array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
@@ -203,56 +255,22 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
   int N2Total = residual->N2Total;
   int N3Total = residual->N3Total;
 
-  if (params::linearSolver == linearSolvers::GPU_BATCH_SOLVER)
-  {
-    /* Resize A and b in order to pass into solve() */
-    array AModDim = af::moddims(A, numVars, numVars,
-                                N1Total * N2Total * N3Total
-                               );
-    array bModDim = af::moddims(b, numVars, 1,
-                                N1Total * N2Total * N3Total
-                               );
+  /* Resize A and b in order to pass into solve() */
+  array AModDim = af::moddims(A, numVars, numVars,
+                              N1Total * N2Total * N3Total
+                             );
+  array bModDim = af::moddims(b, numVars, 1,
+                              N1Total * N2Total * N3Total
+                             );
 
-    array soln = af::solve(AModDim, bModDim);
-    af::sync(); /* Need to sync() cause solve is non-blocking. 
-                   Not doing so leads to erroneus performence metrics. */
+  array soln = af::solve(AModDim, bModDim);
   
-    x = moddims(soln,
-                numVars,
-                prim->N1Total,
-                prim->N2Total,
-                prim->N3Total
-               );
-  }
-  else if (params::linearSolver == linearSolvers::CPU_BATCH_SOLVER)
-  {
-    A.host(AHostPtr);
-    b.host(bHostPtr);
-  
-    #pragma omp parallel for
-    for (int k=0; k<N3Total; k++)
-    {
-      for (int j=0; j<N2Total; j++)
-      {
-        for (int i=0; i<N1Total; i++)
-        {
-          int pivot[numVars];
-  
-          const int spatialIndex = 
-            i +  N1Total*(j + (N2Total*k) );
-  
-          LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, 
-                        &AHostPtr[numVars*numVars*spatialIndex], numVars, 
-                        pivot, &bHostPtr[numVars*spatialIndex], numVars
-                       );
-  
-        }
-      }
-    }
-  
-    /* Copy solution to x on device */
-    x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
-  }
+  x = moddims(soln,
+              numVars,
+              prim->N1Total,
+              prim->N2Total,
+              prim->N3Total
+             );
 
   linearSolverTime += af::timer::stop(linearSolverTimer);
 }

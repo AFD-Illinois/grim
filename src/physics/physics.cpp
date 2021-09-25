@@ -173,47 +173,13 @@ void fluidElement::set(const grid &prim,
                               - (1./3.)*(DELTA(mu, nu) + uCon[mu]*uCov[nu])
                              );
       }
+
     }
   }
 
   numReads  = 42;
   numWrites = 38;
   
-  std::vector<af::array *> arraysThatNeedEval{
-      &gammaLorentzFactor,
-          &uCon[0], &uCon[1], &uCon[2], &uCon[3],
-          &uCov[0], &uCov[1], &uCov[2], &uCov[3],
-          &bCon[0], &bCon[1], &bCon[2], &bCon[3],
-          &bCov[0], &bCov[1], &bCov[2], &bCov[3],
-          &bSqr, &bNorm,
-          &TUpDown[0][0], &TUpDown[0][1],
-          &TUpDown[0][2], &TUpDown[0][3],
-          &TUpDown[1][0], &TUpDown[1][1],
-          &TUpDown[1][2], &TUpDown[1][3],
-          &TUpDown[2][0], &TUpDown[2][1],
-          &TUpDown[2][2], &TUpDown[2][3],
-          &TUpDown[3][0], &TUpDown[3][1],
-          &TUpDown[3][2], &TUpDown[3][3],
-          &NUp[0], &NUp[1], &NUp[2], &NUp[3]
-          };
-
-  if (params::conduction)
-  {
-    arraysThatNeedEval.push_back(&q);
-
-    numReads  += 1;
-    numWrites += 1;
-  }
-
-  if (params::viscosity)
-  {
-    arraysThatNeedEval.push_back(&deltaP);
-
-    numReads  += 1;
-    numWrites += 1;
-  }
-
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
 void fluidElement::computeFluxes(const int dir,
@@ -236,36 +202,18 @@ void fluidElement::computeFluxes(const int dir,
   flux.vars[vars::B2]  = g*(bCon[2]*uCon[dir] - bCon[dir]*uCon[2]);
   flux.vars[vars::B3]  = g*(bCon[3]*uCon[dir] - bCon[dir]*uCon[3]);
 
-  std::vector<af::array *> arraysThatNeedEval{
-                &flux.vars[vars::RHO],  
-                &flux.vars[vars::U],  
-                &flux.vars[vars::U1],  
-                &flux.vars[vars::U2],  
-                &flux.vars[vars::U3],  
-                &flux.vars[vars::B1],  
-                &flux.vars[vars::B2],  
-                &flux.vars[vars::B3]  
-              };
   numReads  = 12;
   numWrites = 8;
 
   if (params::conduction)
   {
     flux.vars[vars::Q] = g*(uCon[dir] * qTilde);
-    arraysThatNeedEval.push_back(&flux.vars[vars::Q]);
-    numReads++;
-    numWrites++;
   }
 
   if (params::viscosity)
   {
     flux.vars[vars::DP] = g*(uCon[dir] * deltaPTilde);
-    arraysThatNeedEval.push_back(&flux.vars[vars::DP]);
-    numReads++;
-    numWrites++;
   }
-
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
 void fluidElement::computeTimeDerivSources(const fluidElement &elemOld,
@@ -285,8 +233,6 @@ void fluidElement::computeTimeDerivSources(const fluidElement &elemOld,
 
   if (params::conduction || params::viscosity)
   {
-    std::vector<af::array *> arraysThatNeedEval;
-
     // Non-ideal pieces. Note that we only compute
     // the terms proportional to time derivatives. 
 
@@ -335,7 +281,6 @@ void fluidElement::computeTimeDerivSources(const fluidElement &elemOld,
         sources.vars[vars::DP] -= 0.5*geom->g*divuCov*deltaPTilde;
       }
       
-      arraysThatNeedEval.push_back(&sources.vars[vars::DP]);
     } /* End of viscosity specific terms */
     
     // -------------------------------------
@@ -365,10 +310,7 @@ void fluidElement::computeTimeDerivSources(const fluidElement &elemOld,
         sources.vars[vars::Q] -= 0.5*geom->g*divuCov*qTilde;
       }
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::Q]);
     } /* End of conduction */
-
-    af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 
   } /* End of EMHD: viscosity || conduction */
 
@@ -391,8 +333,6 @@ void fluidElement::computeImplicitSources(grid &sources,
 
   if (params::conduction || params::viscosity)
   {
-    std::vector<af::array *> arraysThatNeedEval;
-
     // Non-ideal pieces. Note that we only compute
     // the terms treated implicitly. 
     // Look at viscosity-specific terms
@@ -402,7 +342,6 @@ void fluidElement::computeImplicitSources(grid &sources,
       //computing the residual!
       sources.vars[vars::DP] = geom->g*(deltaPTilde)/tauDamp;
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::DP]);
     } /* End of viscosity specific terms */
   
     // -------------------------------------
@@ -413,10 +352,8 @@ void fluidElement::computeImplicitSources(grid &sources,
       //computing the residual!
       sources.vars[vars::Q] = geom->g*(qTilde)/tauDamp;
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::Q]);
     } /* End of conduction */
 
-    af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   }
 }
 
@@ -451,17 +388,6 @@ void fluidElement::computeExplicitSources(const double dX[3],
       }
     }
   }
-
-  std::vector<af::array *> arraysThatNeedEval{
-                &sources.vars[vars::RHO],  
-                &sources.vars[vars::U],  
-                &sources.vars[vars::U1],  
-                &sources.vars[vars::U2],  
-                &sources.vars[vars::U3],  
-                &sources.vars[vars::B1],  
-                &sources.vars[vars::B2],  
-                &sources.vars[vars::B3]  
-              };
 
   if (params::conduction || params::viscosity)
   {
@@ -527,7 +453,6 @@ void fluidElement::computeExplicitSources(const double dX[3],
         sources.vars[vars::DP] -= 0.5*geom->g*divuCov*deltaPTilde;
       }
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::DP]);
     } /* End of viscosity specific terms */
     
     // -------------------------------------
@@ -568,12 +493,10 @@ void fluidElement::computeExplicitSources(const double dX[3],
         sources.vars[vars::Q] -= 0.5*geom->g*divuCov*qTilde;
       }
 
-      arraysThatNeedEval.push_back(&sources.vars[vars::Q]);
     } /* End of conduction */
 
   } /* End of EMHD: viscosity || conduction */
 
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 }
 
 void fluidElement::computeEMHDGradients(const double dX[3],
@@ -627,17 +550,6 @@ void fluidElement::computeEMHDGradients(const double dX[3],
       }
     }
   }
-  std::vector<af::array *> arraysThatNeedEval{
-          &graduCov[0][0], &graduCov[0][1],
-          &graduCov[0][2], &graduCov[0][3],
-          &graduCov[1][0], &graduCov[1][1],
-          &graduCov[1][2], &graduCov[1][3],
-          &graduCov[2][0], &graduCov[2][1],
-          &graduCov[2][2], &graduCov[2][3],
-          &graduCov[3][0], &graduCov[3][1],
-          &graduCov[3][2], &graduCov[3][3]
-          };
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
   
   if(params::conduction)
   {

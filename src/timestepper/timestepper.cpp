@@ -219,6 +219,13 @@ timeStepper::timeStepper(const int N1,
                   periodicBoundariesX3
                  );
 
+  dump = new grid(N1, N2, N3,
+                  dim, dumpVars::dof, numGhost,
+                  periodicBoundariesX1,
+                  periodicBoundariesX2,
+                  periodicBoundariesX3
+                 );
+
   XCoords = new coordinatesGrid(N1, N2, N3,
                                 dim, numGhost,
                                 X1Start, X1End,
@@ -440,7 +447,7 @@ timeStepper::timeStepper(const int N1,
 
 timeStepper::~timeStepper()
 {
-  delete prim, primHalfStep, primOld;
+  delete prim, primHalfStep, primOld, primIC;
   delete cons, consOld;
   delete sourcesExplicit, sourcesImplicit, sourcesImplicitOld, sourcesTimeDer;
   delete primLeft, primRight;
@@ -451,6 +458,7 @@ timeStepper::~timeStepper()
   delete elem, elemOld, elemHalfStep;
   delete riemann;
   delete geomLeft, geomRight, geomBottom, geomTop, geomCenter;
+  delete dump;
 
   delete primGuessLineSearchTrial;
   delete primGuessPlusEps;
