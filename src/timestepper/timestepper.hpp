@@ -120,7 +120,7 @@ class timeStepper
                      int &numWrites
                     );
 
-    double computeDt(int &numReads, int &numWrites);
+    void computeDt(int &numReads, int &numWrites);
 
     /* Function definitions in the problem folder */
     void initialConditions(int &numReads, int &numWrites);

@@ -1,7 +1,5 @@
 #include "timestepper.hpp"
 
-//#include "lapacke.h"
-
 void timeStepper::solve(grid &primGuess)
 {
   int world_rank;
@@ -257,54 +255,22 @@ void timeStepper::batchLinearSolve(const array &A, const array &b, array &x)
   int N2Total = residual->N2Total;
   int N3Total = residual->N3Total;
 
-  if (params::linearSolver == linearSolvers::GPU_BATCH_SOLVER)
-  {
-    /* Resize A and b in order to pass into solve() */
-    array AModDim = af::moddims(A, numVars, numVars,
-                                N1Total * N2Total * N3Total
-                               );
-    array bModDim = af::moddims(b, numVars, 1,
-                                N1Total * N2Total * N3Total
-                               );
+  /* Resize A and b in order to pass into solve() */
+  array AModDim = af::moddims(A, numVars, numVars,
+                              N1Total * N2Total * N3Total
+                             );
+  array bModDim = af::moddims(b, numVars, 1,
+                              N1Total * N2Total * N3Total
+                             );
 
-    array soln = af::solve(AModDim, bModDim);
-    af::sync(); /* Need to sync() cause solve is non-blocking. 
-                   Not doing so leads to erroneus performence metrics. */
+  array soln = af::solve(AModDim, bModDim);
   
-    x = moddims(soln,
-                numVars,
-                prim->N1Total,
-                prim->N2Total,
-                prim->N3Total
-               );
-  }
-//  else if (params::linearSolver == linearSolvers::CPU_BATCH_SOLVER)
-//  {
-//    A.host(AHostPtr);
-//    b.host(bHostPtr);
-
-//    #pragma omp parallel for
-//    for (int k=0; k<N3Total; k++)
-//    {
-//      for (int j=0; j<N2Total; j++)
-//      {
-//        for (int i=0; i<N1Total; i++)
-//        {
-//          int pivot[numVars];
-
-//          const int spatialIndex = 
-//            i +  N1Total*(j + (N2Total*k) );
-
-//          LAPACKE_dgesv(LAPACK_COL_MAJOR, numVars, 1, 
-//                        &AHostPtr[numVars*numVars*spatialIndex], numVars, 
-//                        pivot, &bHostPtr[numVars*spatialIndex], numVars
-//                       );
-//        }
-//      }
-//    }
-//    /* Copy solution to x on device */
-//    x = array(numVars, N1Total, N2Total, N3Total, bHostPtr);
-//  }
+  x = moddims(soln,
+              numVars,
+              prim->N1Total,
+              prim->N2Total,
+              prim->N3Total
+             );
 
   linearSolverTime += af::timer::stop(linearSolverTimer);
 }

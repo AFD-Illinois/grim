@@ -14,7 +14,7 @@
 
 ARRAYFIRE_VER=3.6.4
 ARRAYFIRE_SCRIPT=ArrayFire-v${ARRAYFIRE_VER}_Linux_x86_64.sh
-PETSC_VER=3.14.5
+PETSC_VER=3.15.4
 NPROC=12
 USE_INTEL=0 # Bash comes with some tradeoffs.  Booleans are one of them.
 
@@ -59,14 +59,13 @@ if [[ "$*" == *"petsc"* ]]; then
     internal_CXXOPTFLAGS='-O3 -march=native -mtune=native -funroll-loops'
   fi
 
-  #./configure --prefix=$PWD/../petsc --with-debugging=0 \
-  #COPTFLAGS=${internal_COPTFLAGS} CXXOPTFLAGS=${internal_CXXOPTFLAGS} \
-  #--with-hdf5=1 --with-clean=1 --with-mpi-dir=$(dirname $(which mpicc))/.. \
-  #--download-fblaslapack
-  #--with-64-bit-indices
+  ./configure --prefix=$PWD/../petsc --with-debugging=0 \
+  COPTFLAGS=${internal_COPTFLAGS} CXXOPTFLAGS=${internal_CXXOPTFLAGS} \
+  --with-hdf5=1 --with-clean=1 --with-mpi-dir=$(dirname $(which mpicc))/.. \
+  --download-fblaslapack
   #--with-memalign=64 --known-level1-dcache-size=32768 --known-level1-dcache-linesize=64 \
   #--known-level1-dcache-assoc=8
-  python config/examples/arch-olcf-summit-opt.py
+  #python config/examples/arch-olcf-summit-opt.py
 
   make -j$NPROC
   make install

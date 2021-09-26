@@ -17,8 +17,9 @@ set (CMAKE_CXX_STANDARD 11)
 # Options for icc:
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fopenmp -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenmp -fPIC")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -L/lib/x86_64-linux-gnu -lcuda -lresolv")
 set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # TACC or user provided dependencies
@@ -31,8 +32,24 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 # These are installed to grim source dir
 set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
-set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc-3.14.5/")
-set(PETSC_ARCH "arch-olcf-summit-opt")
+set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc/")
+set(PETSC_ARCH "")
+#set(PETSC_DIR "${PETSC_DIR}")
+set(PETSC_EXECUTABLE_RUNS 1)
+
+# Old configurations
+# Configuration for aimp
+#set(PETSC_DIR "/home/mchandra/workspace/petsc-3.15.4-installation")
+#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+#set(ArrayFire_ROOT_DIR "/home/mchandra/workspace/arrayfire/build/")
+
+
+# Configuration for Deathstar
+#set(PETSC_DIR "/home/mani/Downloads/petsc_3.7.5_installation")
+#set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
+#set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
+#set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
 # Double or float precision?
 set(REAL "double")
@@ -84,6 +101,7 @@ find_package(Python3 REQUIRED COMPONENTS Development)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
 #find_package(LAPACKE REQUIRED)
+find_package(CUDA REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
@@ -127,7 +145,7 @@ target_link_libraries(grim grid geometry physics reconstruction
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}
                       ${ArrayFire_LIBRARIES}
-                      ${LAPACK_LIBRARIES}
+		      ${CUDA_LIBRARIES}
                      )
 
 set(NUM_PROCS 4)
@@ -637,6 +655,7 @@ message("PETSc dir        : " ${PETSC_DIR})
 message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
 message("Python3 dir      : " ${Python3_INCLUDE_DIRS})
 message("MKL dir          : " ${LAPACKE_INCLUDES})
+message("CUDA LIBS        : " ${CUDA_LIBRARIES})
 message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
 message("Build dir        : " ${CMAKE_BINARY_DIR})
 message("")

@@ -16,21 +16,21 @@ array reconstruction::slopePPM(const int dir,const double dX, const array& in,
       x1Shift = 1; y1Shift = 0;  z1Shift = 0;
       x3Shift = -1; y3Shift = 0;  z3Shift = 0;
       x4Shift = -2; y4Shift = 0;  z4Shift = 0;
-    	break;
+      break;
 
     case directions::X2:
       x0Shift =  0; y0Shift = 2; z0Shift = 0;
       x1Shift =  0; y1Shift = 1; z1Shift = 0;
       x3Shift =  0; y3Shift = -1; z3Shift = 0;
       x4Shift =  0; y4Shift = -2; z4Shift = 0;
-    	break;
+      break;
 
     case directions::X3:
       x0Shift =  0; y0Shift =  0; z0Shift = 2;
       x1Shift =  0; y1Shift =  0; z1Shift = 1;
       x3Shift =  0; y3Shift =  0; z3Shift = -1;
       x4Shift =  0; y4Shift =  0; z4Shift = -2;
-    	break;
+      break;
   }
   
   array y0 = af::shift(in, x0Shift, y0Shift, z0Shift);
@@ -61,8 +61,6 @@ array reconstruction::slopePPM(const int dir,const double dX, const array& in,
   // Base high-order PPM reconstruction
   array leftV = 0.5*(y2+y1)-1./6.*(DQ2-DQ1);
   array rightV = 0.5*(y3+y2)-1./6.*(DQ3-DQ2);
-  leftV.eval();
-  rightV.eval();
   
   // Corrections
   array corr1 = ((rightV-y2)*(y2-leftV)<=0.);
@@ -72,8 +70,6 @@ array reconstruction::slopePPM(const int dir,const double dX, const array& in,
   array corr3 = (qd*(qd+qe)<0.);
   leftV = leftV*(1.-corr1)+corr1*y2;
   rightV = rightV*(1.-corr1)+corr1*y2;
-  leftV.eval();
-  rightV.eval();
   
   leftV = leftV*(1.-corr2)+corr2*(3.*y2-2.*rightV);
   rightV = rightV*corr2+(1.-corr2)*rightV*(1.-corr3)+(1.-corr2)*corr3*(3.*y2-2.*leftV);
@@ -149,8 +145,6 @@ void reconstruction::reconstructPPM(const grid &prim,
     // Base high-order PPM reconstruction
     array leftV = 0.5*(y2+y1)-1./6.*(DQ2-DQ1);
     array rightV = 0.5*(y3+y2)-1./6.*(DQ3-DQ2);
-    leftV.eval();
-    rightV.eval();
     
     // Corrections
     array corr1 = ((rightV-y2)*(y2-leftV)<=0.);
@@ -160,15 +154,11 @@ void reconstruction::reconstructPPM(const grid &prim,
     array corr3 = (qd*(qd+qe)<0.);
     leftV = leftV*(1.-corr1)+corr1*y2;
     rightV = rightV*(1.-corr1)+corr1*y2;
-    leftV.eval();
-    rightV.eval();
     
     leftV = leftV*(1.-corr2)+corr2*(3.*y2-2.*rightV);
     rightV = rightV*corr2+(1.-corr2)*rightV*(1.-corr3)+(1.-corr2)*corr3*(3.*y2-2.*leftV);
 
     primLeft.vars[var] = leftV;
     primRight.vars[var] = rightV;
-    primLeft.vars[var].eval();
-    primRight.vars[var].eval();
   }
 }
