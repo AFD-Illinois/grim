@@ -42,7 +42,6 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
         array dFluxX1_dX1 = convolve(fluxesX1->vars[var], filterX1);
 
         divFluxes->vars[var] = dFluxX1_dX1;
-        divFluxes->vars[var].eval();
       }
 
       break;
@@ -100,7 +99,6 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
         array dFluxX2_dX2 = convolve(fluxesX2->vars[var], filterX2);
         
         divFluxes->vars[var] = dFluxX1_dX1 + dFluxX2_dX2;
-        divFluxes->vars[var].eval();
       }
 
       break;
@@ -176,7 +174,6 @@ void timeStepper::computeDivOfFluxes(const grid &primFlux,
         array dFluxX3_dX3 = convolve(fluxesX3->vars[var], filterX3);
 
         divFluxes->vars[var] = dFluxX1_dX1 + dFluxX2_dX2 + dFluxX3_dX3;
-        divFluxes->vars[var].eval();
       }
 
       break;
