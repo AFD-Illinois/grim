@@ -49,28 +49,28 @@ void timeStepper::solve(grid &primGuess)
     int globalNonConverged = localNonConverged;
     if (world_rank == 0)
     {
-	    double temp;
-	    int Nel;
-	    for(int i=1;i<world_size;i++)
-	    {
-	      MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
-	      globalresnorm+=temp;
-	      globalNonConverged+=Nel;
-	    }
+      double temp;
+      int Nel;
+      for(int i=1;i<world_size;i++)
+      {
+        MPI_Recv(&temp, 1, MPI_DOUBLE, i, i, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	MPI_Recv(&Nel, 1, MPI_INT, i, i+world_size, PETSC_COMM_WORLD,MPI_STATUS_IGNORE);
+	globalresnorm+=temp;
+	globalNonConverged+=Nel;
+      }
     }
     else
     {
-	    MPI_Send(&localresnorm, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
-	    MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
+      MPI_Send(&localresnorm, 1, MPI_DOUBLE, 0, world_rank, PETSC_COMM_WORLD);
+      MPI_Send(&localNonConverged, 1, MPI_INT, 0, world_rank+world_size, PETSC_COMM_WORLD);
     }
     MPI_Barrier(PETSC_COMM_WORLD);
-    MPI_Bcast(&globalresnorm,1,MPI_DOUBLE,0,PETSC_COMM_WORLD);
+    MPI_Bcast(&globalresnorm, 1, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
-    MPI_Bcast(&globalNonConverged,1,MPI_INT,0,PETSC_COMM_WORLD);
+    MPI_Bcast(&globalNonConverged, 1, MPI_INT, 0, PETSC_COMM_WORLD);
     MPI_Barrier(PETSC_COMM_WORLD);
     PetscPrintf(PETSC_COMM_WORLD, " ||Residual|| = %g; %i pts haven't converged\n", 
-                globalresnorm,globalNonConverged
+                globalresnorm, globalNonConverged
 		);
     if (globalNonConverged == 0)
     {
@@ -118,57 +118,11 @@ void timeStepper::solve(grid &primGuess)
     /* RHS of Ax = b in Array of Structs format */
     array bAoS = -af::reorder(residualSoA, 3, 0, 1, 2);
 
-
     /* Now solve Ax = b using direct inversion, where
      * A = Jacobian
      * x = deltaPrim
      * b = -residual  */
     batchLinearSolve(jacobianAoS, bAoS, deltaPrimAoS);
-
-    /*const int N1 = residual->vars[0].dims(0);
-    const int N2 = residual->vars[0].dims(1);
-    const int N3 = residual->vars[0].dims(2);
-    const int numFluidVars = vars::numFluidVars;
-    array xCoords[3];
-    geomCenter->getxCoords(xCoords);
-    for(int i=3;i<N1-3;i++)
-      for(int j=3;j<N2-3;j++)
-	for(int k=3;k<N3-3;k++)
-	  {
-	    bool Output = false;
-	    for(int v=0;v<numFluidVars && (!Output);v++)
-	      {
-		const double& mData = deltaPrimAoS(v,i,j,k).scalar<double>();
-		if(isnan(mData))
-		  Output=true;
-	      }
-	    if(Output)
-	      {
-		std::cout<<"Found NaN at point:"<<std::endl;
-		std::cout<<xCoords[directions::X1](i,j,k).scalar<double>()<<","
-			 <<xCoords[directions::X2](i,j,k).scalar<double>()<<","
-			 <<xCoords[directions::X3](i,j,k).scalar<double>()<<std::endl;
-		std::cout<<"Old variables:"<<std::endl;
-		for(int v=0;v<numFluidVars;v++)
-		  std::cout<<primGuess.vars[v](i,j,k).scalar<double>()<<",";
-		std::cout<<std::endl;
-		std::cout<<"Jacobian:"<<std::endl;
-		for(int v=0;v<numFluidVars;v++)
-		  {
-		    for(int vv=0;vv<numFluidVars;vv++)
-		      std::cout<<jacobianAoS(v*numFluidVars+vv,i,j,k).scalar<double>()<<",";
-		    std::cout<<std::endl;
-		  }
-		std::cout<<"Residual:"<<std::endl;
-		for(int v=0;v<numFluidVars;v++)
-		  std::cout<<bAoS(v,i,j,k).scalar<double>()<<",";
-		std::cout<<std::endl;
-		std::cout<<"Solution:"<<std::endl;
-		for(int v=0;v<numFluidVars;v++)
-		  std::cout<<deltaPrimAoS(v,i,j,k).scalar<double>()<<",";
-		std::cout<<std::endl;
-	      }
-	      }*/
 
     /* Done with the solve. Now rearrange from AoS -> SoA */
     array deltaPrimSoA = af::reorder(deltaPrimAoS, 1, 2, 3, 0);
