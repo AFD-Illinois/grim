@@ -15,13 +15,11 @@ void timeStepper::fluxCT(int &numReads,
       0.5*(  emfX3->vars[0]
            + shift(emfX3->vars[0], 0, -1, 0)
           );
-    fluxesX1->vars[vars::B2].eval();
 
     fluxesX2->vars[vars::B1] =
       -0.5*(  emfX3->vars[0]
             + shift(emfX3->vars[0], -1, 0, 0)
            );
-    fluxesX2->vars[vars::B1].eval();
 
     fluxesX2->vars[vars::B2] = 0.;
 
@@ -31,25 +29,21 @@ void timeStepper::fluxCT(int &numReads,
         -0.5*(  emfX2->vars[0]
               + shift(emfX2->vars[0], 0, 0, -1)
              );
-      fluxesX1->vars[vars::B3].eval();
 
       fluxesX2->vars[vars::B3] =
         0.5*(  emfX1->vars[0]
              + shift(emfX1->vars[0], 0, 0, -1)
             );
-      fluxesX2->vars[vars::B3].eval();
       
       fluxesX3->vars[vars::B1] =
         0.5*(  emfX2->vars[0]
              + shift(emfX2->vars[0], -1, 0, 0)
             );
-      fluxesX3->vars[vars::B1].eval();
 
       fluxesX3->vars[vars::B2] =
         -0.5*(  emfX1->vars[0]
               + shift(emfX1->vars[0], 0, -1, 0)
              );
-      fluxesX3->vars[vars::B2].eval();
 
       fluxesX3->vars[vars::B3] = 0.;
     }
@@ -69,8 +63,6 @@ void timeStepper::computeEMF(int &numReadsEMF,
             - shift(fluxesX2->vars[vars::B1], 1, 0, 0)
            );
 
-    emfX3->vars[0].eval();
-
     if (fluxesX1->dim == 3)
     {
       emfX1->vars[0] =
@@ -79,7 +71,6 @@ void timeStepper::computeEMF(int &numReadsEMF,
               - fluxesX3->vars[vars::B2]
               - shift(fluxesX3->vars[vars::B2], 0, 1, 0)
              );
-      emfX1->vars[0].eval();
 
       emfX2->vars[0] =
         0.25*(  fluxesX3->vars[vars::B1]
@@ -87,7 +78,6 @@ void timeStepper::computeEMF(int &numReadsEMF,
               - fluxesX1->vars[vars::B3]
               - shift(fluxesX1->vars[vars::B3], 0, 0, 1)
              );
-      emfX2->vars[0].eval();
     }
   }
 }
