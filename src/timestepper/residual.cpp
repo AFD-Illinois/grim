@@ -55,6 +55,8 @@ void timeStepper::computeResidual(const grid &primGuess,
      * residualGuess[var] : numVars */
     numReads  += 7*residualGuess.numVars;
 
+    /* TODO: Need to make computeResidual() physics agnostic: 
+     * the following code to normalize the residual needs to put somewhere else */
     /* Normalization of the residualGuess */
     if (params::conduction)
     {
@@ -168,14 +170,11 @@ void timeStepper::computeResidual(const grid &primGuess,
 
   } /* End of timeStepperSwitches::FULL_STEP */
 
-  std::vector<af::array *> arraysThatNeedEval;
   //Zero the residual in global ghost zones
   for (int var=0; var<residualGuess.numVars; var++) 
   {
     residualGuess.vars[var] *= residualMask;
-    arraysThatNeedEval.push_back(&residualGuess.vars[var]);
   }
-  af::eval(arraysThatNeedEval.size(), &arraysThatNeedEval[0]);
 
   numWrites += residualGuess.numVars;
 }

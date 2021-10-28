@@ -5,11 +5,11 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 192;
-  int N2 = 192;
-  int N3 = 1;
+  int N1 = 96;
+  int N2 = 96;
+  int N3 = 64;
 
-  int dim = 2;
+  int dim = 3;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -58,18 +58,18 @@ namespace params
 
   double slopeLimTheta = 2;
   int reconstruction = reconstructionOptions::MINMOD;
-  int riemannSolver  = riemannSolvers::HLL;
+  int riemannSolver  = riemannSolvers::LOCAL_LAX_FRIEDRICH;
 
   int maxNonLinearIter = 3;
   int maxLineSearchIters = 3;
+
+  // Perf testing parameters
+  int nIters = 10;
 
   //Parameters controlling accuracy of nonlinear solver
   double nonlinearsolve_atol = 1.e-20;
   double JacobianAssembleEpsilon = 4.e-8;
   double linesearchfloor = 1.e-24;
-  
-  // Linear solver options
-  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
 
   //Unused params - do we need to define them?
   double hSlope = 0.3;

@@ -17,8 +17,9 @@ project(grim)
 # Options for icc:
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -L/lib/x86_64-linux-gnu -lcuda -lresolv")
 set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # Set custom install folders here
@@ -51,13 +52,20 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
 
 # Configuration for Stampede
-set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
-set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+#set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
+#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
 # CPU
 #set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
 # GPU
-set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
+#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
+
+# Configuration for aimp
+set(PETSC_DIR "/home/mchandra/workspace/petsc-3.15.4-installation")
+#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
+#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
+set(ArrayFire_ROOT_DIR "/home/mchandra/workspace/arrayfire/build/")
+
 
 # Configuration for Deathstar
 #set(PETSC_DIR "/home/mani/Downloads/petsc_3.7.5_installation")
@@ -83,7 +91,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "performance_testing")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
@@ -111,7 +119,7 @@ find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
-find_package(LAPACKE REQUIRED)
+find_package(CUDA REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
@@ -126,7 +134,6 @@ include_directories(${PETSC_INCLUDES}
                     ${YAML_INCLUDES}
                     ${ArrayFire_INCLUDE_DIRS}
                     ${PYTHON_NUMPY_INCLUDE_DIR}
-                    ${LAPACKE_INCLUDES}
                     grid
                     geometry
                     reconstruction
@@ -154,7 +161,7 @@ target_link_libraries(grim grid geometry physics reconstruction
                       ${PETSC_LIBRARIES}
                       ${YAML_LIBRARIES}
                       ${ArrayFire_LIBRARIES}
-                      ${LAPACK_LIBRARIES}
+		      ${CUDA_LIBRARIES}
                      )
 
 set(NUM_PROCS 4)
@@ -662,7 +669,7 @@ message("C_FLAGS          : " ${CMAKE_C_FLAGS})
 message("CXX_FLAGS        : " ${CMAKE_CXX_FLAGS})
 message("PETSc dir        : " ${PETSC_DIR})
 message("ArrayFire dir    : " ${ArrayFire_ROOT_DIR})
-message("MKL dir          : " ${LAPACKE_INCLUDES})
+message("CUDA LIBS        : " ${CUDA_LIBRARIES})
 message("NumPy dir        : " ${PYTHON_NUMPY_INCLUDE_DIR})
 message("Build dir        : " ${CMAKE_BINARY_DIR})
 message("")

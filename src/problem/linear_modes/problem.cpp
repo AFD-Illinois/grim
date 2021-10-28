@@ -225,5 +225,5 @@ void timeStepper::applyProblemSpecificFluxFilter(int &numReads,int &numWrites)
 
 int timeStepper::CheckWallClockTermination()
 {
-
+  return 0;
 }

@@ -204,6 +204,9 @@ namespace params
 
   /* shock tests */
   extern std::string shockTest;
+
+  /* Perf testing */
+  extern int nIters;
 };
 
 #endif /* GRIM_PARAMS_H_ */
