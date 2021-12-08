@@ -15,14 +15,12 @@ project(grim)
 
 # ------------------------------USER OPTIONS----------------------------------#
 # Options for icc:
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
+# Configs for specific machines -- for Summit set on cmdline, see make_summit.sh
 # Options for gcc:
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -g -fopenmp")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -L/lib/x86_64-linux-gnu -lcuda -lresolv")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fopenmp")
 set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
-# Set custom install folders here
 # 
 # Configuration for aristophanes
 #set(PETSC_DIR "/home/bryan10/Documents/software/petsc_3.7.2_installation") 
@@ -51,20 +49,11 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/home/03669/tg829690/arrayfire/build/package")
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.3.187/mkl")
 
-# Configuration for Stampede
-#set(PETSC_DIR "/work/03669/tg829690/petsc_installation_3.7.0")
-#set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
-#set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
-# CPU
-#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire/build/package")
-# GPU
-#set(ArrayFire_ROOT_DIR "/work/03669/tg829690/arrayfire_with_batch_solver/arrayfire/build/package")
-
 # Configuration for aimp
-set(PETSC_DIR "/home/mchandra/workspace/petsc-3.15.4-installation")
+#set(PETSC_DIR "/home/mchandra/workspace/petsc-3.15.4-installation")
 #set(YAML_ROOT_DIR "/home1/03669/tg829690/yaml-cpp/build")
 #set(INTEL_MKL_ROOT_DIR "/opt/apps/intel/15/composer_xe_2015.2.164/mkl")
-set(ArrayFire_ROOT_DIR "/home/mchandra/workspace/arrayfire/build/")
+#set(ArrayFire_ROOT_DIR "/home/mchandra/workspace/arrayfire/build/")
 
 
 # Configuration for Deathstar
@@ -91,7 +80,7 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "performance_testing")
+set(PROBLEM "torus")
 # Now choose problem specific options in the respective problem folder in
 # src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#

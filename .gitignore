@@ -13,6 +13,7 @@
 *.elf
 *.pyo
 *.pyc
+grim
  
 # Libraries #
 #############
