@@ -5,11 +5,11 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 192;
-  int N2 = 192;
-  int N3 = 1;
+  int N1 = 288;
+  int N2 = 128;
+  int N3 = 128;
 
-  int dim = 2;
+  int dim = 3;
   int numGhost = 3;
 
   int timeStepper = timeStepping::EXPLICIT;
@@ -69,7 +69,7 @@ namespace params
   double linesearchfloor = 1.e-24;
   
   // Linear solver options
-  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
 
   //Unused params - do we need to define them?
   double hSlope = 0.3;

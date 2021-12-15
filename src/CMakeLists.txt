@@ -21,7 +21,30 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fopenmp")
 set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
-# 
+# Double or float precision?
+set(REAL "double")
+
+# Choose the problem to be solved:
+#
+# 1) linear_modes
+# 2) shock_tests
+# 3) advection_test
+# 4) magnetized_field_loop_advection
+# 5) orzag_tang
+# 6) magnetized_explosion
+# 7) atmosphere
+# 8) bondi_inflow
+# 10) anisotropic_conduction
+# 11) torus
+# 12) buoyancy_instabilities
+# 13) bondi_viscous
+
+set(PROBLEM "torus")
+
+# Remember choose problem specific options in the respective problem folder in
+# src/problem/
+
+# Configuration options for particular machines, deprecated
 # Configuration for aristophanes
 #set(PETSC_DIR "/home/bryan10/Documents/software/petsc_3.7.2_installation") 
 #set(YAML_ROOT_DIR "/global/home/users/manic/yaml-cpp/build")
@@ -62,27 +85,6 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 #set(ArrayFire_ROOT_DIR "/home/mani/Downloads/arrayfire/build_gcc/package")
 #set(INTEL_MKL_ROOT_DIR "/opt/intel/mkl")
 
-# Double or float precision?
-set(REAL "double")
-
-# Choose the problem to be solved:
-#
-# 1) linear_modes
-# 2) shock_tests
-# 3) advection_test
-# 4) magnetized_field_loop_advection
-# 5) orzag_tang
-# 6) magnetized_explosion
-# 7) atmosphere
-# 8) bondi_inflow
-# 10) anisotropic_conduction
-# 11) torus
-# 12) buoyancy_instabilities
-# 13) bondi_viscous
-
-set(PROBLEM "torus")
-# Now choose problem specific options in the respective problem folder in
-# src/problem/
 # ------------------------------END OF USER OPTIONS---------------------------#
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

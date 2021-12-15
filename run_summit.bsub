@@ -9,14 +9,25 @@
 NNODES=1
 
 # Make bsub behave like sbatch, moving to CWD
-cd $LS_SUBCWD
+# But don't cd anywhere under $HOME, that would be bad
+if [[ "$(realpath $LS_SUBCWD)" !=  *"home"* ]]; then
+  cd $LS_SUBCWD
+fi
 
 # Stuff for posterity
 date
 echo "Job run on nodes:"
 jsrun -n $NNODES -r 1 hostname
 
-module load gcc cuda petsc/3.15.0 boost
+module load gcc cuda/11.4 petsc boost nsight-systems
+
+# Arrayfire configuration:
+# Limit kernel lengths for performance
+export AF_CUDA_MAX_JIT_LEN=30
+# Cache to a directory the compute nodes can actually *see*
+export AF_JIT_KERNEL_CACHE_DIRECTORY=$(realpath $PWD)/.arrayfire
+# Debugging output
+#export AF_TRACE=all
 
 # Tell OpenMP explicitly what it's dealing with
 # This also ensures that if we set e.g. NTHREADS=6,
@@ -35,6 +46,8 @@ export OMP_NUM_THREADS=24
 # -g # GPU per rs
 # -c # CPU cores (physical) per rs (total of 42=(22-1)*2, but 7 is such an awkward number)
 # -b binding strat *within* a resource set
+# -l latency optimization in choosing cores (CPU-CPU, GPU-CPU, CPU-MEM)
 
 # The "smpiargs" argument is used to tell Spectrum MPI we're GPU-aware
-jsrun --smpiargs="-gpu" -n $(( $NNODES * 6 )) -r 6 -a 1 -g 1 -d packed -c 6 -b packed:6 -l GPU-CPU ~/grim/grim
+jsrun --smpiargs="-gpu" -n $(( $NNODES * 6 )) -r 6 -a 1 -g 1 -d packed -c 6 -b packed:6 -l GPU-CPU \
+      nsys profile --capture-range=cudaProfilerApi -o grim_%q{OMPI_COMM_WORLD_RANK} ~/grim/grim

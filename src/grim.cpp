@@ -1,6 +1,8 @@
 #include "grim.hpp"
 #include "params.hpp"
 
+#include "cuda_profiler_api.h"
+
 int main(int argc, char **argv)
 { 
   PetscInitialize(&argc, &argv, NULL, help);
@@ -31,6 +33,8 @@ int main(int argc, char **argv)
     af::sync();
 
     PetscPrintf(PETSC_COMM_WORLD, "\n  Kernel compilation complete\n");
+
+    cudaProfilerStart();
 
     int n=0;
     int StopRunning = 0;

@@ -10,9 +10,9 @@ namespace params
   int N2 = 128;
   int N3 = 64;
   int N3Full = 64;
-  int dim = 2;
+  int dim = 3;
   int numGhost = 3;
- 
+
   // (Re)start options
   double Time = 0.0;
   double InitialDt = 0.005;
@@ -23,7 +23,7 @@ namespace params
   std::string restartFileTime = "restartFileTime.txt";
   // Maximum run time, in seconds
   double MaxWallTime = 3600*23.5;
-  
+
   // Observation / checkpointing intervals
   double ObserveEveryDt   = .1;
   double WriteDataEveryDt = 2.;
@@ -64,7 +64,7 @@ namespace params
   double ViscosityAlpha = 1.;
   double ConductionClosureFactor = 1.;
   double ViscosityClosureFactor = 1.;
-  
+
   //Atmosphere parameters
   double MaxLorentzFactor = 10.;
   // Floors are Ampl*pow(radius,power)
@@ -104,7 +104,7 @@ namespace params
   double uFloorInFluidElement           = 1e-20;
   double bSqrFloorInFluidElement        = 1e-20;
   double temperatureFloorInFluidElement = 1e-20;
-  
+
   // Reconstruction options
   double slopeLimTheta = 2.;
   int reconstruction = reconstructionOptions::PPM;
@@ -119,8 +119,7 @@ namespace params
   double linesearchfloor = 1.e-24;
 
   // Linear solver options
-  int linearSolver = linearSolvers::CPU_BATCH_SOLVER;
-  
+  int linearSolver = linearSolvers::GPU_BATCH_SOLVER;
 };
 
 namespace vars

@@ -4,12 +4,17 @@
 # USE:
 # ./make.sh [clean]
 
-module load gcc cuda petsc/3.15.0 boost
-
 NPROC=
 if [[ $(hostname) == "login"* ]]; then
   NPROC=16
 fi
+
+if [ ! -d build ]; then
+  echo "Run \"./make_summit.sh clean\" first!"
+  exit
+fi
+
+module load gcc cuda/11.4 petsc boost python
 
 if [[ "$*" == *"clean"* ]]; then
   rm -rf build
@@ -17,7 +22,7 @@ if [[ "$*" == *"clean"* ]]; then
   cd build
   cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx \
         -DPETSC_EXECUTABLE_RUNS=1 \
-        -DArrayFire_ROOT_DIR=/gpfs/alpine/proj-shared/ast171/libs/arrayfire \
+        -DArrayFire_ROOT_DIR=/gpfs/alpine/proj-shared/ast171/libs/arrayfire-cuda114 \
         ../src
   cd ..
 fi
