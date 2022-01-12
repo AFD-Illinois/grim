@@ -16,6 +16,8 @@ fi
 
 module load gcc cuda/11.4 petsc boost python
 
+module list
+
 if [[ "$*" == *"clean"* ]]; then
   rm -rf build
   mkdir build
