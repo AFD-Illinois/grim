@@ -1,7 +1,7 @@
 #include "grim.hpp"
 #include "params.hpp"
 
-#include "cuda_profiler_api.h"
+//#include "cuda_profiler_api.h"
 
 int main(int argc, char **argv)
 { 
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
                    params::X2Start, params::X2End,
                    params::X3Start, params::X3End
                   );
-     
+
     PetscPrintf(PETSC_COMM_WORLD, "  Generating compute kernels...\n\n");
     int numReads, numWrites;
     ts.timeStep(numReads, numWrites);
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
     PetscPrintf(PETSC_COMM_WORLD, "\n  Kernel compilation complete\n");
 
-    cudaProfilerStart();
+    //cudaProfilerStart();
 
     int n=0;
     int StopRunning = 0;
@@ -52,6 +52,6 @@ int main(int argc, char **argv)
     else
       PetscPrintf(PETSC_COMM_WORLD, "\n Termination reason: Final Time\n");
   }
-  PetscFinalize();  
+  PetscFinalize();
   return(0);
 }

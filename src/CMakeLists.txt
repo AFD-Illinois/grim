@@ -19,7 +19,7 @@ project(grim)
 # Options for gcc:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fopenmp")
-set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
+set(ARCH "CPU") # Choose CPU/OpenCL/CUDA
 
 # Double or float precision?
 set(REAL "double")
@@ -39,10 +39,13 @@ set(REAL "double")
 # 12) buoyancy_instabilities
 # 13) bondi_viscous
 
-set(PROBLEM "torus")
+set(PROBLEM "linear_modes")
 
 # Remember choose problem specific options in the respective problem folder in
 # src/problem/
+
+set(ArrayFire_ROOT_DIR "external/arrayfire")
+
 
 # Configuration options for particular machines, deprecated
 # Configuration for aristophanes
@@ -110,7 +113,7 @@ find_package(Cython REQUIRED)
 find_package(NumPy REQUIRED)
 #find_package(YAML REQUIRED)
 find_package(ArrayFire REQUIRED)
-find_package(CUDA REQUIRED)
+#find_package(CUDA REQUIRED)
 
 if (ARCH STREQUAL "CPU")
   set(ArrayFire_LIBRARIES ${ArrayFire_CPU_LIBRARIES})
