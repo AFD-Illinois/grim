@@ -3,11 +3,11 @@
 
 namespace params
 {
-  int numDevices = 1;
+  int numDevices = 2;
 
-  int N1 = 288;
-  int N2 = 128;
-  int N3 = 128;
+  int N1 = 64;
+  int N2 = 64;
+  int N3 = 64;
 
   int dim = 3;
   int numGhost = 3;
