@@ -7,7 +7,7 @@
 # If a different compiler than the one cmake detects is needed, then the
 # recommended way is to do the following:
 #
-# cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpic++ /location/to/grim/src 
+# cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpic++ /location/to/grim/src
 
 cmake_minimum_required(VERSION 3.10)
 project(grim LANGUAGES C CXX)
@@ -18,8 +18,8 @@ set (CMAKE_CXX_STANDARD 11)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -vec-threshold0 -qopt-report=5 -qopt-report-phase=vec -xhost")
 # Configs for specific machines -- for Summit set on cmdline, see make_summit.sh
 # Options for gcc:
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fopenmp")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fopenmp -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -fopenmp -fPIC")
 set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 
 # TACC or user provided dependencies
@@ -32,7 +32,7 @@ set(ARCH "CUDA") # Choose CPU/OpenCL/CUDA
 # These are installed to grim source dir
 set(YAML_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/yaml-cpp/build")
 set(ArrayFire_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/arrayfire")
-set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc/")
+set(PETSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/petsc")
 set(PETSC_ARCH "")
 #set(PETSC_DIR "${PETSC_DIR}")
 set(PETSC_EXECUTABLE_RUNS 1)

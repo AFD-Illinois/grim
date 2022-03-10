@@ -15,33 +15,34 @@
 ARRAYFIRE_VER=3.6.4
 ARRAYFIRE_SCRIPT=ArrayFire-v${ARRAYFIRE_VER}_Linux_x86_64.sh
 PETSC_VER=3.15.4
-NPROC=12
+NPROC=56
 USE_INTEL=0 # Bash comes with some tradeoffs.  Booleans are one of them.
 
 if [[ $(hostname -f) == "bh"* ]]; then
   module load gnu mpich phdf5
 fi
 
-if [[ "$*" == *"dep"* ]]; then
-  rm ArrayFire*
-  rm -rf external
-  mkdir external
+if [[ "$*" == *"arrayfire"* ]]; then
+  mkdir -p external
   cd external
 
-  # Arrayfire
-  wget https://arrayfire.s3.amazonaws.com/$ARRAYFIRE_VER/$ARRAYFIRE_SCRIPT
-  chmod +x $ARRAYFIRE_SCRIPT
-  ./$ARRAYFIRE_SCRIPT --prefix=$PWD --include-subdir --skip-license
+  rm -rf arrayfire-master
+  git clone github:arrayfire/arrayfire arrayfire-master
+  cd arrayfire-master
 
-  # YAML
-  git clone https://github.com/jbeder/yaml-cpp
-  cd yaml-cpp
   mkdir build
   cd build
-  cmake -DYAML_BUILD_SHARED_LIBS=ON ..
-  make -j$NPROC
 
-  cd ../../..
+  cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx \
+        -DAF_BUILD_CPU=OFF -DAF_BUILD_OPENCL=OFF -DAF_BUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF \
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/Code/grim/external/arrayfire ..
+        #-DBOOST_ROOT=$HOME/grim/external/boost_1_76_0 -DBOOST_INCLUDEDIR=$HOME/grim/external/boost_1_76_0/boost \
+        #-DBoost_NO_SYSTEM_PATHS=ON ..
+  
+  make -j$NPROC
+  
+  make install
+  cd ../..
 fi
 
 if [[ "$*" == *"petsc"* ]]; then
@@ -72,6 +73,8 @@ if [[ "$*" == *"petsc"* ]]; then
 
   cd ../..
 fi
+
+
 
 if [[ "$*" == *"clean"* ]]; then
   rm -rf build
