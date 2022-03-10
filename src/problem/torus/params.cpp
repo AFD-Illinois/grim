@@ -16,6 +16,7 @@ namespace params
   int N2 = 96;
   int N3 = 96;
   int N3Full = 96;
+
   int dim = 3;
   int numGhost = 3;
 

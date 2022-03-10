@@ -5,9 +5,9 @@ namespace params
 {
   int numDevices = 1;
 
-  int N1 = 384;
-  int N2 = 192;
-  int N3 = 192;
+  int N1 = 288;
+  int N2 = 128;
+  int N3 = 128;
 
   int dim = 3;
   int numGhost = 3;
