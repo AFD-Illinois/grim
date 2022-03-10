@@ -35,7 +35,7 @@ if [[ "$*" == *"arrayfire"* ]]; then
 
   cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx \
         -DAF_BUILD_CPU=OFF -DAF_BUILD_OPENCL=OFF -DAF_BUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/external/arrayfire ..
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/../../arrayfire ..
         #-DBOOST_ROOT=$HOME/grim/external/boost_1_76_0 -DBOOST_INCLUDEDIR=$HOME/grim/external/boost_1_76_0/boost \
         #-DBoost_NO_SYSTEM_PATHS=ON ..
   
